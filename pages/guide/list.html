@@ -1,0 +1,1604 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>抖音开店流程动态指南</title>
+  <style>
+    :root {
+      --bg: #f4f6f9;
+      --panel: #ffffff;
+      --panel-strong: #f9fbfd;
+      --ink: #111827;
+      --muted: #647084;
+      --line: #e4e9f1;
+      --line-strong: #cfd8e6;
+      --nav: #121826;
+      --nav-soft: #1c2637;
+      --nav-text: #d9e2ef;
+      --primary: #05806f;
+      --primary-soft: #e2f5f1;
+      --accent: #dd4d3b;
+      --accent-soft: #fdebe7;
+      --blue: #2568d9;
+      --blue-soft: #e6efff;
+      --gold: #b57b12;
+      --gold-soft: #fff2d6;
+      --ok: #168260;
+      --shadow: 0 22px 55px rgba(17, 24, 39, .12);
+      --shadow-soft: 0 10px 26px rgba(17, 24, 39, .08);
+      --radius: 8px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(18, 24, 38, .04) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(37, 104, 217, .09), transparent 340px),
+        var(--bg);
+      background-size: 28px 28px, auto, auto;
+      letter-spacing: 0;
+    }
+
+    button, input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .app-shell {
+      min-height: 100dvh;
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    h1, h2, h3, p {
+      margin: 0;
+    }
+
+    .stage-done {
+      color: #59d8b2;
+      font-size: 12px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    main {
+      padding: 20px 28px;
+      min-width: 0;
+      position: relative;
+      overflow: hidden;
+      background:
+        linear-gradient(135deg, rgba(5, 128, 111, .1), transparent 28%),
+        linear-gradient(225deg, rgba(221, 77, 59, .1), transparent 30%),
+        linear-gradient(180deg, #f9fbff 0, #f4f7fb 420px, #f7f9fc 100%);
+    }
+
+    main::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(90deg, rgba(37, 104, 217, .06) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(5, 128, 111, .05) 1px, transparent 1px);
+      background-size: 36px 36px;
+      mask-image: linear-gradient(180deg, #000, transparent 68%);
+    }
+
+    main > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0;
+      align-items: stretch;
+      margin-bottom: 22px;
+    }
+
+    .hero > div:first-child {
+      padding: 36px 48px;
+      min-height: 260px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(118deg, rgba(255, 255, 255, .94) 0 46%, rgba(236, 246, 255, .84) 46% 100%),
+        linear-gradient(135deg, rgba(5, 128, 111, .24), rgba(37, 104, 217, .22) 55%, rgba(221, 77, 59, .18));
+      box-shadow: 0 24px 60px rgba(37, 104, 217, .16);
+      display: grid;
+      align-content: end;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero > div:first-child::before {
+      content: "";
+      position: absolute;
+      inset: 22px 24px auto auto;
+      width: 156px;
+      height: 86px;
+      border: 1px solid rgba(37, 104, 217, .18);
+      background:
+        linear-gradient(90deg, rgba(5, 128, 111, .16) 35%, transparent 35%),
+        linear-gradient(180deg, rgba(17, 24, 39, .08) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 18px;
+      border-radius: var(--radius);
+      opacity: .9;
+    }
+
+    .hero > div:first-child::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0 0;
+      height: 6px;
+      background: linear-gradient(90deg, var(--primary), var(--blue), var(--gold), var(--accent));
+    }
+
+    .hero h2 {
+      font-size: clamp(28px, 4vw, 48px);
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .hero-kicker {
+      width: fit-content;
+      min-height: 30px;
+      padding: 6px 10px;
+      margin-bottom: 14px;
+      border: 1px solid rgba(5, 128, 111, .18);
+      border-radius: 999px;
+      color: var(--primary);
+      background: rgba(226, 245, 241, .78);
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .hero p {
+      margin-top: 12px;
+      color: #4e5b6d;
+      font-size: 16px;
+      line-height: 1.7;
+      max-width: 760px;
+    }
+
+    .hero-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .hero-chip {
+      min-height: 32px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      color: #243247;
+      background: rgba(255, 255, 255, .72);
+      border: 1px solid rgba(37, 104, 217, .14);
+      box-shadow: 0 8px 18px rgba(17, 24, 39, .06);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0 12px;
+      gap: 16px;
+    }
+
+    .brand-compact {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-mark-compact {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #4f6ef7, #818cf8);
+      display: grid;
+      place-items: center;
+      box-shadow: 0 8px 16px rgba(79, 110, 247, .25);
+    }
+
+    .brand-mark-compact svg {
+      width: 16px;
+      height: 16px;
+      fill: #fff;
+    }
+
+    .brand-text-compact h1 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.2;
+    }
+
+    .brand-text-compact p {
+      margin: 0;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .top-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .progress-compact {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .progress-label {
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .bar-compact {
+      width: 100px;
+      height: 6px;
+      background: var(--line);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .bar-compact span {
+      display: block;
+      height: 100%;
+      width: 0;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #4f6ef7, #818cf8, #a5b4fc);
+      transition: width .28s ease-out;
+    }
+
+    .progress-compact .progress-number {
+      font-size: 12px;
+      color: var(--ink);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      min-width: 40px;
+    }
+
+    .top-bar .controls {
+      display: flex;
+      gap: 8px;
+      margin-top: 0;
+    }
+
+    .top-bar .icon-btn {
+      min-height: 36px;
+      width: 36px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: var(--radius);
+      display: grid;
+      place-items: center;
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+    }
+
+    .top-bar .icon-btn:hover {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+    }
+
+    .top-bar .icon-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    main .stage-nav {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+      padding: 0;
+    }
+
+    main .stage-tab {
+      min-height: 56px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      text-align: left;
+      display: grid;
+      grid-template-columns: 32px 1fr auto;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 12px rgba(17, 24, 39, .06);
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    main .stage-tab:hover,
+    main .stage-tab:focus-visible {
+      border-color: color-mix(in srgb, var(--stage-color, var(--primary)) 40%, var(--line));
+      background: color-mix(in srgb, var(--stage-color, var(--primary)) 4%, #fff);
+      outline: none;
+    }
+
+    main .stage-tab.active {
+      border-color: var(--stage-color, var(--primary));
+      background: color-mix(in srgb, var(--stage-color, var(--primary)) 6%, #fff);
+      box-shadow: 0 8px 20px color-mix(in srgb, var(--stage-color, var(--primary)) 12%, transparent);
+      transform: translateY(-2px);
+    }
+
+    main .stage-title {
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.25;
+      color: var(--ink);
+    }
+
+    main .stage-count {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 2px;
+    }
+
+    .status-card {
+      padding: 18px;
+      border-radius: var(--radius);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, .96), rgba(248, 252, 255, .9)),
+        linear-gradient(135deg, rgba(5, 128, 111, .16), rgba(37, 104, 217, .13) 58%, rgba(221, 77, 59, .1));
+      border: 1px solid rgba(37, 104, 217, .14);
+      box-shadow: 0 22px 46px rgba(37, 104, 217, .13);
+      color: var(--ink);
+    }
+
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .status-card .metric {
+      border-bottom-color: rgba(37, 104, 217, .12);
+    }
+
+    .metric:last-child {
+      border-bottom: none;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .status-card .metric span {
+      color: #607086;
+    }
+
+    .status-card .metric strong {
+      color: #17324d;
+    }
+
+    .metric strong {
+      font-size: 16px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .flow-map {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(7, minmax(28px, 1fr));
+      grid-auto-rows: minmax(34px, auto);
+      gap: 10px 8px;
+      margin-bottom: 24px;
+      padding: 24px;
+      border: 1px solid rgba(37, 104, 217, .14);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, .9), rgba(248, 252, 255, .82)),
+        linear-gradient(135deg, rgba(5, 128, 111, .12), rgba(37, 104, 217, .1), rgba(221, 77, 59, .08));
+      box-shadow: 0 22px 48px rgba(37, 104, 217, .12);
+      overflow: hidden;
+    }
+
+    .flow-map::before {
+      content: "";
+      position: absolute;
+      inset: 22px;
+      border-radius: var(--radius);
+      background:
+        radial-gradient(circle at 12% 20%, rgba(5, 128, 111, .12), transparent 26%),
+        radial-gradient(circle at 82% 16%, rgba(37, 104, 217, .12), transparent 25%),
+        radial-gradient(circle at 72% 84%, rgba(221, 77, 59, .1), transparent 28%);
+      opacity: .9;
+      pointer-events: none;
+    }
+
+    .flow-map::after {
+      content: "";
+      position: absolute;
+      inset: 44px 48px;
+      border: 2px dashed rgba(37, 104, 217, .18);
+      border-radius: var(--radius);
+      pointer-events: none;
+    }
+
+    .maze-link {
+      position: relative;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .maze-link::before,
+    .maze-link::after {
+      content: "";
+      position: absolute;
+      background:
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, .48) 0 8px, transparent 8px 17px),
+        linear-gradient(90deg, color-mix(in srgb, var(--link-color, var(--primary)) 58%, #bfe8ff), color-mix(in srgb, var(--link-color, var(--primary)) 30%, #ffe0f2));
+      border-radius: 999px;
+      box-shadow:
+        0 0 0 4px rgba(255, 255, 255, .76),
+        0 8px 18px color-mix(in srgb, var(--link-color, var(--primary)) 16%, transparent);
+    }
+
+    .maze-link.h::before {
+      left: -22px;
+      right: -22px;
+      top: 50%;
+      height: 6px;
+      transform: translateY(-50%);
+    }
+
+    .maze-link.v::before {
+      top: -18px;
+      bottom: -18px;
+      left: 50%;
+      width: 6px;
+      transform: translateX(-50%);
+    }
+
+    .flow-node {
+      position: relative;
+      z-index: 2;
+      border: 2px solid color-mix(in srgb, var(--stage-color, var(--primary)) 26%, #ffffff);
+      background:
+        radial-gradient(circle at 18% 18%, rgba(255, 255, 255, .96), transparent 27%),
+        radial-gradient(circle at 88% 18%, color-mix(in srgb, var(--stage-color, var(--primary)) 16%, transparent), transparent 34%),
+        linear-gradient(145deg, rgba(255, 255, 255, .98), color-mix(in srgb, var(--stage-soft, var(--primary-soft)) 78%, #ffffff)),
+        linear-gradient(135deg, var(--stage-soft, var(--primary-soft)), #fff);
+      border-radius: 22px;
+      min-height: 104px;
+      padding: 14px 13px;
+      display: grid;
+      grid-template-columns: 40px 1fr;
+      align-content: center;
+      gap: 10px;
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, .72),
+        0 7px 0 color-mix(in srgb, var(--stage-color, var(--primary)) 13%, #e3ebf5),
+        0 18px 32px color-mix(in srgb, var(--stage-color, var(--primary)) 13%, rgba(17, 24, 39, .08));
+      transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease, background .22s ease;
+      text-align: left;
+      transform: rotate(var(--tilt, 0deg));
+    }
+
+    .flow-node.active {
+      transform: translateY(-8px) scale(1.04) rotate(var(--tilt, 0deg));
+      border-color: var(--stage-color, var(--primary));
+      background:
+        radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 1), transparent 30%),
+        radial-gradient(circle at 88% 18%, color-mix(in srgb, var(--stage-color, var(--primary)) 24%, transparent), transparent 36%),
+        linear-gradient(145deg, rgba(255, 255, 255, .99), color-mix(in srgb, var(--stage-soft, var(--primary-soft)) 86%, #ffffff)),
+        linear-gradient(135deg, var(--stage-soft, var(--primary-soft)), #fff);
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, .78),
+        0 8px 0 color-mix(in srgb, var(--stage-color, var(--primary)) 24%, #e3ebf5),
+        0 28px 52px color-mix(in srgb, var(--stage-color, var(--primary)) 22%, transparent);
+      animation: node-bob 1.8s ease-in-out infinite;
+    }
+
+    .flow-node:hover,
+    .flow-node:focus-visible {
+      outline: none;
+      transform: translateY(-7px) scale(1.03) rotate(var(--tilt, 0deg));
+      border-color: var(--stage-color, var(--primary));
+    }
+
+    .flow-node.active .flow-node-head {
+      outline: 4px solid color-mix(in srgb, var(--stage-color, var(--primary)) 18%, #fff);
+    }
+
+    .flow-node.done {
+      border-color: color-mix(in srgb, var(--stage-color, var(--primary)) 42%, var(--line));
+      background:
+        radial-gradient(circle at 18% 18%, rgba(255, 255, 255, .96), transparent 28%),
+        linear-gradient(145deg, rgba(255, 255, 255, .96), rgba(245, 255, 251, .9)),
+        linear-gradient(135deg, var(--stage-soft, var(--primary-soft)), #fff);
+    }
+
+    .flow-node::before {
+      content: "";
+      position: absolute;
+      inset: auto 18px 8px auto;
+      width: 34px;
+      height: 8px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--stage-color, var(--primary)) 12%, rgba(17, 24, 39, .08));
+    }
+
+    .flow-node-head {
+      position: relative;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      color: #fff;
+      background:
+        radial-gradient(circle at 30% 24%, rgba(255, 255, 255, .54), transparent 31%),
+        linear-gradient(145deg, color-mix(in srgb, var(--stage-color, var(--primary)) 72%, #ffffff), var(--stage-color, var(--primary)));
+      box-shadow:
+        inset 0 -3px 0 rgba(0, 0, 0, .12),
+        0 9px 16px color-mix(in srgb, var(--stage-color, var(--primary)) 20%, transparent);
+      font-weight: 850;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .flow-node.done .flow-node-head {
+      background:
+        radial-gradient(circle at 30% 24%, rgba(255, 255, 255, .48), transparent 31%),
+        linear-gradient(145deg, #45d9aa, var(--ok));
+    }
+
+    .flow-node-head svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .node-dot {
+      display: none;
+    }
+
+    .flow-node h3 {
+      font-size: 15px;
+      line-height: 1.35;
+      margin-bottom: 4px;
+      color: #243044;
+      font-weight: 850;
+    }
+
+    .flow-node p {
+      width: fit-content;
+      min-height: 22px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      color: color-mix(in srgb, var(--stage-color, var(--primary)) 62%, #374151);
+      background: color-mix(in srgb, var(--stage-color, var(--primary)) 10%, #ffffff);
+      font-size: 12px;
+      line-height: 1.5;
+      font-weight: 700;
+    }
+
+    .maze-runner {
+      position: absolute;
+      z-index: 5;
+      width: 76px;
+      height: 63px;
+      left: var(--runner-left, 8%);
+      top: var(--runner-top, 16%);
+      transform: translate(-50%, 2px);
+      pointer-events: none;
+      filter: drop-shadow(0 14px 14px rgba(17, 24, 39, .16));
+      transition: left .78s cubic-bezier(.22, 1, .36, 1), top .78s cubic-bezier(.22, 1, .36, 1);
+    }
+
+    .person-sprite {
+      position: absolute;
+      inset: 0;
+      transform-origin: center;
+      --runner-direction: 1;
+      animation: runner-bounce 1.1s ease-in-out infinite;
+    }
+
+    .person-sprite.facing-left {
+      --runner-direction: -1;
+    }
+
+    .person-sprite svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      display: block;
+    }
+
+    .run-arm-front,
+    .run-leg-back {
+      transform-origin: 58px 46px;
+      animation: limb-swing-a .52s ease-in-out infinite;
+    }
+
+    .run-arm-back,
+    .run-leg-front {
+      transform-origin: 58px 46px;
+      animation: limb-swing-b .52s ease-in-out infinite;
+    }
+
+    @keyframes runner-bounce {
+      0%, 100% {
+        transform: scaleX(var(--runner-direction)) translateY(0) rotate(-2deg);
+      }
+      50% {
+        transform: scaleX(var(--runner-direction)) translateY(-8px) rotate(2deg);
+      }
+    }
+
+    @keyframes limb-swing-a {
+      0%, 100% { transform: rotate(-10deg); }
+      50% { transform: rotate(16deg); }
+    }
+
+    @keyframes limb-swing-b {
+      0%, 100% { transform: rotate(14deg); }
+      50% { transform: rotate(-14deg); }
+    }
+
+    @keyframes node-bob {
+      0%, 100% {
+        transform: translateY(-8px) scale(1.04) rotate(var(--tilt, 0deg));
+      }
+      50% {
+        transform: translateY(-13px) scale(1.045) rotate(var(--tilt, 0deg));
+      }
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .stage-panel,
+    .detail-panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, .92);
+      box-shadow: 0 18px 42px rgba(17, 24, 39, .1);
+      backdrop-filter: blur(8px);
+    }
+
+    .panel-head {
+      padding: 22px;
+      border-bottom: 1px solid var(--line);
+      background:
+        linear-gradient(90deg, rgba(255, 255, 255, .92), rgba(248, 251, 255, .92)),
+        linear-gradient(135deg, var(--active-soft, var(--primary-soft)), transparent);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .panel-head h3 {
+      font-size: 22px;
+      line-height: 1.25;
+    }
+
+    .panel-head p {
+      margin-top: 8px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .pill {
+      white-space: nowrap;
+      min-height: 34px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pill svg {
+      width: 15px;
+      height: 15px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    .steps {
+      padding: 16px;
+      display: grid;
+      gap: 13px;
+    }
+
+    .step-card {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(180deg, #ffffff, #fbfcfe),
+        linear-gradient(135deg, var(--stage-color, var(--primary)), transparent);
+      padding: 15px;
+      display: grid;
+      grid-template-columns: 44px 1fr auto;
+      gap: 12px;
+      align-items: start;
+      box-shadow: 0 6px 16px rgba(17, 24, 39, .04);
+      overflow: hidden;
+      transition: transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
+    }
+
+    .step-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 4px;
+      background: var(--stage-color, var(--primary));
+      opacity: 0;
+      transition: opacity .18s ease;
+    }
+
+    .step-card:hover,
+    .step-card:focus-within,
+    .step-card.selected {
+      border-color: color-mix(in srgb, var(--stage-color, var(--primary)) 45%, var(--line));
+      background: #fbfefd;
+      transform: translateY(-1px);
+      box-shadow: 0 12px 26px color-mix(in srgb, var(--stage-color, var(--primary)) 16%, transparent);
+    }
+
+    .step-card.selected::before {
+      opacity: 1;
+    }
+
+    .step-number {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      color: var(--ink);
+      background: color-mix(in srgb, var(--stage-color, var(--primary)) 10%, #eef3f8);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .step-card.done .step-number {
+      color: #fff;
+      background: var(--ok);
+    }
+
+    .step-main h4 {
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.35;
+    }
+
+    .step-main p {
+      margin-top: 6px;
+      color: #5f6d7f;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .step-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      color: color-mix(in srgb, var(--stage-color, var(--primary)) 52%, #243247);
+      background: color-mix(in srgb, var(--stage-color, var(--primary)) 10%, #eef3f8);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .check-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+      display: grid;
+      place-items: center;
+    }
+
+    .check-btn svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .step-card.done .check-btn {
+      color: #fff;
+      background: var(--ok);
+      border-color: var(--ok);
+    }
+
+    @supports not (color: color-mix(in srgb, red, white)) {
+      .step-card:hover,
+      .step-card:focus-within,
+      .step-card.selected {
+        border-color: rgba(15, 123, 108, .55);
+        box-shadow: 0 12px 26px rgba(5, 128, 111, .1);
+      }
+    }
+
+    .detail-panel {
+      position: sticky;
+      top: 24px;
+      overflow: hidden;
+    }
+
+    .detail-accent {
+      height: 9px;
+      background: var(--primary);
+    }
+
+    .detail-body {
+      padding: 22px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, .96), rgba(249, 251, 255, .94)),
+        linear-gradient(135deg, var(--detail-soft, var(--primary-soft)), transparent);
+    }
+
+    .detail-kicker {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .detail-body h3 {
+      font-size: 25px;
+      line-height: 1.25;
+      margin-bottom: 10px;
+    }
+
+    .detail-body p {
+      color: #536174;
+      line-height: 1.7;
+    }
+
+    .detail-list {
+      display: grid;
+      gap: 10px;
+      padding: 0;
+      margin: 18px 0 0;
+      list-style: none;
+    }
+
+    .detail-list li {
+      display: grid;
+      grid-template-columns: 24px 1fr;
+      gap: 9px;
+      color: #405066;
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    .detail-list svg {
+      width: 19px;
+      height: 19px;
+      margin-top: 1px;
+      stroke: var(--primary);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .empty {
+      display: none;
+      padding: 42px 20px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .empty strong {
+      display: block;
+      color: var(--ink);
+      margin-bottom: 6px;
+      font-size: 18px;
+    }
+
+    @media (max-width: 1100px) {
+      main .stage-nav {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      main {
+        padding: 24px;
+      }
+
+      .hero,
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .detail-panel {
+        position: static;
+      }
+    }
+
+    @media (max-width: 760px) {
+      main {
+        padding: 16px;
+      }
+
+      .brand {
+        align-items: flex-start;
+      }
+
+      .top-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .top-bar-right {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .bar-compact {
+        width: 80px;
+      }
+
+      main .stage-nav {
+        grid-template-columns: 1fr;
+      }
+
+      .flow-map {
+        grid-template-columns: 1fr;
+        grid-auto-rows: auto;
+        padding: 16px;
+        gap: 12px;
+      }
+
+      .flow-map::after,
+      .maze-link {
+        display: none;
+      }
+
+      .flow-node {
+        grid-column: 1 !important;
+        grid-row: auto !important;
+      }
+
+      .maze-runner {
+        display: none;
+      }
+
+      .panel-head {
+        display: grid;
+      }
+
+      .step-card {
+        grid-template-columns: 38px 1fr;
+      }
+
+      .step-number,
+      .check-btn {
+        width: 38px;
+        height: 38px;
+      }
+
+      .check-btn {
+        grid-column: 2;
+        justify-self: start;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <main>
+      <div class="top-bar">
+        <div class="brand-compact">
+          <div class="brand-mark-compact" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M16.3 4.2c.7 2.1 1.9 3.6 3.7 4.4v3.8a8.8 8.8 0 0 1-3.5-.9v4.9a6.2 6.2 0 1 1-6.2-6.2c.4 0 .8 0 1.2.1v3.9c-.4-.2-.8-.3-1.2-.3a2.4 2.4 0 1 0 2.4 2.4V4.2h3.6Z"/></svg>
+          </div>
+          <div class="brand-text-compact">
+            <h1>抖音开店流程</h1>
+            <p>动态流程指南</p>
+          </div>
+        </div>
+        <div class="top-bar-right">
+          <div class="progress-compact">
+            <span class="progress-label">总完成度</span>
+            <div class="bar-compact"><span id="progressBar"></span></div>
+            <strong class="progress-number" id="progressText">0 / 13</strong>
+          </div>
+          <div class="controls" id="topControls">
+            <button class="icon-btn" id="prevBtn" type="button" aria-label="上一阶段" title="上一阶段">
+              <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+            <button class="icon-btn" id="playBtn" type="button" aria-label="自动播放" title="自动播放">
+              <svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7Z"/></svg>
+            </button>
+            <button class="icon-btn" id="nextBtn" type="button" aria-label="下一阶段" title="下一阶段">
+              <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <section class="hero">
+        <div>
+          <div class="hero-kicker">跨部门开店 SOP · 13 步闭环</div>
+          <h2>从资料准备到保证金充值，一屏掌控开店进度</h2>
+          <p>按四个阶段组织关键事项，适合运营、财务、法务和门店管理协同推进。</p>
+          <div class="hero-chips" aria-label="流程特性">
+            <span class="hero-chip">资料流转</span>
+            <span class="hero-chip">平台审核</span>
+            <span class="hero-chip">内部审批</span>
+            <span class="hero-chip">财务闭环</span>
+          </div>
+        </div>
+      </section>
+
+      <nav class="stage-nav" id="stageNav" aria-label="流程阶段"></nav>
+
+      <section class="flow-map" id="flowMap" aria-label="流程地图"></section>
+
+      <section class="content-grid">
+        <article class="stage-panel">
+          <div class="panel-head">
+            <div>
+              <h3 id="stageTitle">一.开店前资料准备</h3>
+              <p id="stageSummary">集中完成平台与公司审批前置材料，减少后续退回。</p>
+            </div>
+            <span class="pill" id="stagePill">
+              <svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
+              <span>0 / 5</span>
+            </span>
+          </div>
+          <div class="steps" id="steps"></div>
+          <div class="empty" id="emptyState">
+            <strong>未找到匹配步骤</strong>
+            <span>换一个关键词试试</span>
+          </div>
+        </article>
+
+        <aside class="detail-panel" aria-label="步骤详情">
+          <div class="detail-accent" id="detailAccent"></div>
+          <div class="detail-body">
+            <div class="detail-kicker" id="detailKicker">步骤 1</div>
+            <h3 id="detailTitle">电话号码申请</h3>
+            <p id="detailDescription">在 BPM 中发起电话号码申请，为平台注册和后续验证准备可用手机号。</p>
+            <ul class="detail-list" id="detailList"></ul>
+          </div>
+        </aside>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const stages = [
+      {
+        title: "一.开店前资料准备",
+        short: "资料准备",
+        color: "#12b8a6",
+        soft: "#dcfbf5",
+        summary: "集中完成平台与公司审批前置材料，减少后续退回。",
+        steps: [
+          {
+            title: "电话号码申请",
+            desc: "在 BPM 中发起电话号码申请，为平台注册和后续验证准备可用手机号。",
+            tags: ["BPM", "手机号", "审批"],
+            checklist: ["确认使用属地", "选择申请电话类型", "提交新增申请"]
+          },
+          {
+            title: "营业执照申请",
+            desc: "调取或申请对应主体的营业执照材料，用于主体资质填写。",
+            tags: ["档案系统", "主体资质"],
+            checklist: ["确认公司主体", "检索商标或主体信息", "下载/调取证照"]
+          },
+          {
+            title: "法人证件申请",
+            desc: "准备法人证件或会员档案借调材料，支撑平台实名与资质校验。",
+            tags: ["法人", "档案借调"],
+            checklist: ["确认法人身份信息", "发起证件借调", "记录材料有效期"]
+          },
+          {
+            title: "店铺授权书",
+            desc: "根据开店主体、品牌、平台要求生成授权书文案。",
+            tags: ["授权书", "法务"],
+            checklist: ["确认授权主体", "确认被授权主体", "生成标准文案"]
+          },
+          {
+            title: "授权书盖章",
+            desc: "走盖章流程，输出可提交平台审核的授权书扫描件。",
+            tags: ["盖章", "扫描件"],
+            checklist: ["提交盖章申请", "跟进用印", "归档盖章文件"]
+          }
+        ]
+      },
+      {
+        title: "二.平台开店",
+        short: "平台开店",
+        color: "#5b7cff",
+        soft: "#ebefff",
+        summary: "完成抖音平台入驻信息提交、审核、账户验证和财务打款确认。",
+        steps: [
+          {
+            title: "主体资质填写部分",
+            desc: "填写公司主体、证照、法人、授权等平台要求的基础资质。",
+            tags: ["抖音平台", "主体"],
+            checklist: ["录入主体信息", "上传资质文件", "核对证照一致性"]
+          },
+          {
+            title: "店铺信息",
+            desc: "配置店铺名称、类型、类目、联系人等线上店铺基础信息。",
+            tags: ["店铺资料", "类目"],
+            checklist: ["确认店铺命名", "选择经营类目", "填写联系人信息"]
+          },
+          {
+            title: "平台审核",
+            desc: "提交后等待平台审核，并根据驳回原因补齐或修正材料。",
+            tags: ["审核", "补充材料"],
+            checklist: ["提交审核", "跟踪审核状态", "处理驳回反馈"]
+          },
+          {
+            title: "账户验证",
+            desc: "按平台要求完成账户实名、手机号或对公账户相关验证。",
+            tags: ["验证", "账户"],
+            checklist: ["完成手机号验证", "完成主体验证", "确认账户可用"]
+          },
+          {
+            title: "财务打款金额检查",
+            desc: "查看平台财务打款金额并完成核验，保证账户验证闭环。",
+            tags: ["财务", "打款"],
+            checklist: ["查询打款金额", "反馈验证金额", "记录验证结果"]
+          }
+        ]
+      },
+      {
+        title: "三.公司开店",
+        short: "公司开店",
+        color: "#ffad33",
+        soft: "#fff0cf",
+        summary: "通过 SLM 发起门店申请，完成公司内部开店审批。",
+        steps: [
+          {
+            title: "SLM门店申请",
+            desc: "在 SLM 中发起门店申请，补齐门店基础资料、经营信息和内部审批要求。",
+            tags: ["SLM", "门店申请", "内部审批"],
+            checklist: ["进入 SLM 门店申请入口", "填写门店基础与经营信息", "提交并跟进审批结果"]
+          }
+        ]
+      },
+      {
+        title: "四.保证金申请与充值",
+        short: "保证金",
+        color: "#ff6b8a",
+        soft: "#ffe8ef",
+        summary: "完成内部保证金申请和汇联易充值，保障店铺上线条件。",
+        steps: [
+          {
+            title: "保证金申请-BPM",
+            desc: "在 BPM 发起保证金申请，明确金额、店铺主体和费用用途。",
+            tags: ["BPM", "保证金"],
+            checklist: ["确认保证金金额", "填写申请理由", "跟进审批节点"]
+          },
+          {
+            title: "保证金充值-汇联易",
+            desc: "审批通过后通过汇联易完成充值或报销相关动作。",
+            tags: ["汇联易", "充值"],
+            checklist: ["创建汇联易单据", "上传审批材料", "确认充值完成"]
+          }
+        ]
+      }
+    ];
+
+    const totalSteps = stages.reduce((sum, stage) => sum + stage.steps.length, 0);
+    const saved = JSON.parse(localStorage.getItem("douyin-guide-done") || "{}");
+    let activeStage = 0;
+    let activeStep = 0;
+    let playing = false;
+    let timer = null;
+    let query = "";
+
+    const stageNav = document.getElementById("stageNav");
+    const flowMap = document.getElementById("flowMap");
+    const stepsEl = document.getElementById("steps");
+    const emptyState = document.getElementById("emptyState");
+    const stageTitle = document.getElementById("stageTitle");
+    const stageSummary = document.getElementById("stageSummary");
+    const stagePill = document.getElementById("stagePill");
+    const progressText = document.getElementById("progressText");
+    const progressBar = document.getElementById("progressBar");
+    const currentStageMetric = document.getElementById("currentStageMetric");
+    const detailAccent = document.getElementById("detailAccent");
+    const detailKicker = document.getElementById("detailKicker");
+    const detailTitle = document.getElementById("detailTitle");
+    const detailDescription = document.getElementById("detailDescription");
+    const detailList = document.getElementById("detailList");
+    const searchInput = document.getElementById("searchInput");
+    const playIcon = document.getElementById("playIcon");
+    const stagePanelEl = document.querySelector(".stage-panel");
+    const detailPanelEl = document.querySelector(".detail-panel");
+
+    function key(stageIndex, stepIndex) {
+      return `${stageIndex}-${stepIndex}`;
+    }
+
+    function doneCountForStage(stageIndex) {
+      return stages[stageIndex].steps.filter((_, stepIndex) => saved[key(stageIndex, stepIndex)]).length;
+    }
+
+    function totalDone() {
+      return stages.reduce((count, stage, stageIndex) => {
+        return count + stage.steps.filter((_, stepIndex) => saved[key(stageIndex, stepIndex)]).length;
+      }, 0);
+    }
+
+    function iconCheck() {
+      return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+    }
+
+    function flatSteps() {
+      return stages.flatMap((stage, stageIndex) => stage.steps.map((step, stepIndex) => ({
+        stage,
+        stageIndex,
+        step,
+        stepIndex
+      })));
+    }
+
+    function mazePosition(index) {
+      const rowBlock = Math.floor(index / 4);
+      const offset = index % 4;
+      return {
+        row: rowBlock * 2 + 1,
+        col: rowBlock % 2 === 0 ? offset * 2 + 1 : 7 - offset * 2
+      };
+    }
+
+    function runnerCoordinates(pos) {
+      return {
+        left: `${((pos.col - 0.5) / 7) * 100}%`,
+        top: `${((pos.row - 0.05) / 7) * 100}%`
+      };
+    }
+
+    function runnerFacesRight(index, nodes) {
+      const current = mazePosition(index);
+      const nextIndex = index < nodes.length - 1 ? index + 1 : index - 1;
+      const next = mazePosition(Math.max(0, nextIndex));
+      if (next.col !== current.col) return next.col > current.col;
+      const lookIndex = nextIndex < nodes.length - 1 ? nextIndex + 1 : nextIndex - 1;
+      const look = mazePosition(Math.max(0, lookIndex));
+      return look.col > next.col;
+    }
+
+    function currentFlatIndex() {
+      return flatSteps().findIndex(item => item.stageIndex === activeStage && item.stepIndex === activeStep);
+    }
+
+    function setActiveByFlatIndex(index) {
+      const nodes = flatSteps();
+      const normalized = (index + nodes.length) % nodes.length;
+      activeStage = nodes[normalized].stageIndex;
+      activeStep = nodes[normalized].stepIndex;
+      render();
+    }
+
+    function renderNav() {
+      stageNav.innerHTML = stages.map((stage, index) => {
+        const done = doneCountForStage(index);
+        return `
+          <button class="stage-tab ${index === activeStage ? "active" : ""}" type="button" data-stage="${index}" aria-current="${index === activeStage ? "step" : "false"}">
+            <span class="stage-index" style="background:${stage.color}">${index + 1}</span>
+            <span>
+              <span class="stage-title">${stage.title}</span>
+              <span class="stage-count">${stage.steps.length} 个步骤</span>
+            </span>
+            <span class="stage-done">${done}/${stage.steps.length}</span>
+          </button>
+        `;
+      }).join("");
+
+      stageNav.querySelectorAll("button").forEach(button => {
+        button.addEventListener("click", () => {
+          activeStage = Number(button.dataset.stage);
+          activeStep = 0;
+          render();
+        });
+      });
+    }
+
+    function renderFlowMap() {
+      const nodes = flatSteps();
+      if (!flowMap.dataset.ready) {
+        const nodeMarkup = nodes.map(({ stage, stageIndex, step, stepIndex }, index) => {
+          const pos = mazePosition(index);
+          const tilt = [-1.4, 1.1, -.7, 1.5, .8, -1.2, 1.3, -.9, 1.6, -.6, 1, -1.5, .7][index % 13];
+          return `
+            <button class="flow-node" type="button" data-flat="${index}" data-stage="${stageIndex}" data-step="${stepIndex}" style="--stage-color:${stage.color}; --stage-soft:${stage.soft}; --tilt:${tilt}deg; grid-column:${pos.col}; grid-row:${pos.row}">
+              <span class="flow-node-head">${index + 1}</span>
+              <span>
+                <h3>${step.title}</h3>
+                <p>${stage.short}</p>
+              </span>
+            </button>
+          `;
+        }).join("");
+
+        const links = nodes.slice(0, -1).map((item, index) => {
+          const current = mazePosition(index);
+          const next = mazePosition(index + 1);
+          const stage = item.stage;
+          const klass = current.row === next.row ? "h" : "v";
+          const row = current.row === next.row ? current.row : Math.min(current.row, next.row) + 1;
+          const col = current.row === next.row ? Math.min(current.col, next.col) + 1 : current.col;
+          return `<span class="maze-link ${klass}" style="--link-color:${stage.color}; grid-column:${col}; grid-row:${row}"></span>`;
+        }).join("");
+
+        const runner = `
+          <span class="maze-runner" aria-hidden="true">
+            <span class="person-sprite">
+              <svg viewBox="0 0 120 96" role="img">
+                <defs>
+                  <linearGradient id="runnerSuitGrad" x1="34" y1="18" x2="76" y2="82" gradientUnits="userSpaceOnUse">
+                    <stop class="runner-soft-stop" offset="0" stop-color="#dcfbf5"/>
+                    <stop class="runner-color-stop" offset="1" stop-color="#12b8a6"/>
+                  </linearGradient>
+                </defs>
+                <ellipse cx="60" cy="86" rx="34" ry="7" fill="rgba(17,24,39,.12)"/>
+                <path class="runner-trail" d="M45 43c-12 0-21 6-27 15" fill="none" stroke="#dcfbf5" stroke-width="8" stroke-linecap="round"/>
+                <g class="run-leg-back">
+                  <path d="M57 63 43 77" fill="none" stroke="#273247" stroke-width="9" stroke-linecap="round"/>
+                  <path d="M43 77 30 79" fill="none" stroke="#273247" stroke-width="7" stroke-linecap="round"/>
+                </g>
+                <g class="run-arm-back">
+                  <path d="M54 45 38 54" fill="none" stroke="#ffd6a4" stroke-width="9" stroke-linecap="round"/>
+                  <path d="M38 54 28 49" fill="none" stroke="#ffd6a4" stroke-width="7" stroke-linecap="round"/>
+                </g>
+                <path d="M47 40c8-11 29-10 36 1 6 10 1 29-12 33-13 4-31-4-30-18 0-7 3-12 6-16Z" fill="url(#runnerSuitGrad)" stroke="#fff" stroke-width="5" stroke-linejoin="round"/>
+                <path d="M52 40 64 72 80 40" fill="rgba(255,255,255,.62)" stroke="#fff" stroke-width="4" stroke-linejoin="round"/>
+                <circle cx="66" cy="51" r="5" fill="#fff" opacity=".78"/>
+                <path d="M66 8c15 0 25 9 25 22 0 9-7 17-18 20-12 2-27-5-30-16-4-15 7-26 23-26Z" fill="#ffd6a4" stroke="#fff" stroke-width="5" stroke-linejoin="round"/>
+                <path d="M84 27c11 1 18 5 18 9 0 5-8 6-18 2" fill="#ffd6a4" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M46 20c8-17 35-18 47-1-14-2-23 1-34 7-8 5-15 2-13-6Z" fill="#273247" stroke="#fff" stroke-width="4" stroke-linejoin="round"/>
+                <path d="M53 18c-4 10-1 18 6 23" fill="none" stroke="#273247" stroke-width="7" stroke-linecap="round"/>
+                <path d="M40 40c8-2 15 0 22 5" fill="none" stroke="url(#runnerSuitGrad)" stroke-width="7" stroke-linecap="round"/>
+                <circle cx="76" cy="29" r="3.2" fill="#273247"/>
+                <path d="M89 39c1.4 .6 2.8 .4 4-.5" fill="none" stroke="#8a5a33" stroke-width="2.4" stroke-linecap="round"/>
+                <circle cx="83" cy="40" r="3.8" fill="#ff8da8" opacity=".8"/>
+                <path class="runner-streak" d="M24 52c7-8 18-11 29-7" fill="none" stroke="#dcfbf5" stroke-width="5" stroke-linecap="round" opacity=".8"/>
+                <g class="run-arm-front">
+                  <path d="M73 45 92 49" fill="none" stroke="#ffd6a4" stroke-width="9" stroke-linecap="round"/>
+                  <path d="M92 49 102 41" fill="none" stroke="#ffd6a4" stroke-width="7" stroke-linecap="round"/>
+                </g>
+                <g class="run-leg-front">
+                  <path d="M70 64 84 79" fill="none" stroke="#273247" stroke-width="9" stroke-linecap="round"/>
+                  <path d="M84 79 99 79" fill="none" stroke="#273247" stroke-width="7" stroke-linecap="round"/>
+                </g>
+                <path d="M46 75h17M82 83h18" stroke="#111827" stroke-width="5" stroke-linecap="round"/>
+              </svg>
+            </span>
+          </span>
+        `;
+
+        flowMap.innerHTML = links + nodeMarkup + runner;
+        flowMap.dataset.ready = "true";
+
+        flowMap.querySelectorAll("button").forEach(button => {
+          button.addEventListener("click", () => {
+            activeStage = Number(button.dataset.stage);
+            activeStep = Number(button.dataset.step);
+            render();
+          });
+        });
+      }
+
+      updateFlowMapState(nodes);
+    }
+
+    function updateFlowMapState(nodes) {
+      flowMap.querySelectorAll(".flow-node").forEach(button => {
+        const stageIndex = Number(button.dataset.stage);
+        const stepIndex = Number(button.dataset.step);
+        button.classList.toggle("active", stageIndex === activeStage && stepIndex === activeStep);
+        button.classList.toggle("done", Boolean(saved[key(stageIndex, stepIndex)]));
+      });
+
+      const runnerIndex = Math.max(0, currentFlatIndex());
+      const runnerPos = mazePosition(runnerIndex);
+      const runnerStage = nodes[runnerIndex].stage;
+      const facingRight = runnerFacesRight(runnerIndex, nodes);
+      const coords = runnerCoordinates(runnerPos);
+      const runner = flowMap.querySelector(".maze-runner");
+      const sprite = flowMap.querySelector(".person-sprite");
+      runner.style.setProperty("--runner-left", coords.left);
+      runner.style.setProperty("--runner-top", coords.top);
+      runner.style.setProperty("--runner-color", runnerStage.color);
+      sprite.classList.toggle("facing-left", !facingRight);
+      flowMap.querySelector(".runner-soft-stop").setAttribute("stop-color", runnerStage.soft);
+      flowMap.querySelector(".runner-color-stop").setAttribute("stop-color", runnerStage.color);
+      flowMap.querySelector(".runner-trail").setAttribute("stroke", runnerStage.soft);
+      flowMap.querySelector(".runner-streak").setAttribute("stroke", runnerStage.soft);
+    }
+
+    function matchesStep(step) {
+      const source = `${step.title} ${step.desc} ${step.tags.join(" ")} ${step.checklist.join(" ")}`;
+      return source.toLowerCase().includes(query.toLowerCase());
+    }
+
+    function renderSteps() {
+      const stage = stages[activeStage];
+      const visible = stage.steps
+        .map((step, index) => ({ step, index }))
+        .filter(({ step }) => !query || matchesStep(step));
+
+      stepsEl.innerHTML = visible.map(({ step, index }) => {
+        const isDone = saved[key(activeStage, index)];
+        return `
+          <article class="step-card ${isDone ? "done" : ""} ${index === activeStep ? "selected" : ""}" data-step="${index}" style="--stage-color:${stage.color}">
+            <button class="step-number" type="button" aria-label="查看 ${step.title}">${isDone ? iconCheck() : index + 1}</button>
+            <div class="step-main">
+              <h4>${step.title}</h4>
+              <p>${step.desc}</p>
+              <div class="step-tags">${step.tags.map(tag => `<span class="tag">${tag}</span>`).join("")}</div>
+            </div>
+            <button class="check-btn" type="button" aria-label="${isDone ? "取消完成" : "标记完成"} ${step.title}" data-check="${index}">
+              ${iconCheck()}
+            </button>
+          </article>
+        `;
+      }).join("");
+
+      emptyState.style.display = visible.length ? "none" : "block";
+
+      stepsEl.querySelectorAll(".step-card").forEach(card => {
+        card.addEventListener("click", event => {
+          const check = event.target.closest("[data-check]");
+          if (check) return;
+          activeStep = Number(card.dataset.step);
+          renderDetail();
+          renderSteps();
+        });
+      });
+
+      stepsEl.querySelectorAll("[data-check]").forEach(button => {
+        button.addEventListener("click", event => {
+          event.stopPropagation();
+          const stepIndex = Number(button.dataset.check);
+          const id = key(activeStage, stepIndex);
+          saved[id] = !saved[id];
+          if (!saved[id]) delete saved[id];
+          localStorage.setItem("douyin-guide-done", JSON.stringify(saved));
+          activeStep = stepIndex;
+          render();
+        });
+      });
+    }
+
+    function renderDetail() {
+      const stage = stages[activeStage];
+      const step = stage.steps[activeStep] || stage.steps[0];
+      detailAccent.style.background = stage.color;
+      detailKicker.textContent = `${stage.short} · 步骤 ${activeStep + 1}`;
+      detailTitle.textContent = step.title;
+      detailDescription.textContent = step.desc;
+      detailList.innerHTML = step.checklist.map(item => `
+        <li>
+          ${iconCheck()}
+          <span>${item}</span>
+        </li>
+      `).join("");
+    }
+
+    function renderProgress() {
+      const done = totalDone();
+      progressText.textContent = `${done} / ${totalSteps}`;
+      progressBar.style.width = `${Math.round(done / totalSteps * 100)}%`;
+      if (currentStageMetric) currentStageMetric.textContent = stages[activeStage].short;
+    }
+
+    function renderStageHead() {
+      const stage = stages[activeStage];
+      const done = doneCountForStage(activeStage);
+      stagePanelEl.style.setProperty("--active-soft", stage.soft);
+      detailPanelEl.style.setProperty("--detail-soft", stage.soft);
+      stageTitle.textContent = stage.title;
+      stageSummary.textContent = stage.summary;
+      stagePill.style.background = stage.soft;
+      stagePill.style.color = stage.color;
+      stagePill.querySelector("span").textContent = `${done} / ${stage.steps.length}`;
+    }
+
+    function render() {
+      renderStageHead();
+      renderNav();
+      renderFlowMap();
+      renderSteps();
+      renderDetail();
+      renderProgress();
+    }
+
+    function moveStep(delta) {
+      setActiveByFlatIndex(currentFlatIndex() + delta);
+    }
+
+    document.getElementById("prevBtn").addEventListener("click", () => moveStep(-1));
+    document.getElementById("nextBtn").addEventListener("click", () => moveStep(1));
+
+    document.getElementById("playBtn").addEventListener("click", () => {
+      playing = !playing;
+      if (playing) {
+        playIcon.innerHTML = '<path d="M8 5h4v14H8z"/><path d="M16 5h4v14h-4z"/>';
+        timer = setInterval(() => moveStep(1), 1600);
+      } else {
+        playIcon.innerHTML = '<path d="M8 5v14l11-7Z"/>';
+        clearInterval(timer);
+      }
+    });
+
+    if (searchInput) {
+      searchInput.addEventListener("input", event => {
+        query = event.target.value.trim();
+        renderSteps();
+      });
+    }
+
+    render();
+  </script>
+</body>
+</html>

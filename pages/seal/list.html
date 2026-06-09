@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>公章使用申请 - 列表</title>
+  <link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+<div class="page-container">
+
+  <!-- Toast 轻提示容器 -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script>
+    if (window.parent) {
+      window.parent.postMessage({type:'breadcrumb', text:'公章使用申请 <span>/</span> 列表'}, '*');
+    }
+  </script>
+
+  <div class="page-title">公章使用申请列表</div>
+
+  <div class="search-area">
+    <div class="search-row">
+      <div class="search-item">
+        <label>需求地：</label>
+        <select id="sRegion">
+          <option value="">全部</option>
+          <option value="北京">北京</option>
+          <option value="上海">上海</option>
+          <option value="广州">广州</option>
+          <option value="深圳">深圳</option>
+        </select>
+      </div>
+      <div class="search-item">
+        <label>是否属于子公司：</label>
+        <select id="sIsSubsidiary">
+          <option value="">全部</option>
+          <option value="是">是</option>
+          <option value="否">否</option>
+        </select>
+      </div>
+      <div class="search-item">
+        <label>所属子公司名称：</label>
+        <input type="text" id="sSubName" placeholder="请输入子公司名称">
+      </div>
+      <div class="search-item">
+        <label>状态：</label>
+        <select id="sStatus">
+          <option value="">全部</option>
+          <option value="初始">初始</option>
+          <option value="已提交">已提交</option>
+          <option value="审核中">审核中</option>
+          <option value="已审核">已审核</option>
+          <option value="已取消">已取消</option>
+        </select>
+      </div>
+    </div>
+    <div class="search-actions">
+      <button class="btn btn-primary" onclick="doSearch()">查询</button>
+      <button class="btn" onclick="resetSearch()">重置</button>
+    </div>
+    <div class="search-active-tags" id="searchTags" style="display:none;"></div>
+  </div>
+
+  <div class="table-area">
+    <div class="table-toolbar">
+      <button class="btn btn-primary" onclick="goAdd()">+ 新增申请</button>
+      <button class="btn" onclick="doImport()">导入</button>
+      <button class="btn btn-success" onclick="doBatchSubmit()">批量提交</button>
+      <button class="btn btn-warning" onclick="doSyncBPM()">同步BPM</button>
+    </div>
+
+    <div class="table-scroll">
+      <table class="data-table" id="dataTable">
+        <thead>
+          <tr>
+            <th style="width:40px;"><input type="checkbox" id="checkAll" onclick="toggleAll(this)"></th>
+            <th>序号</th>
+            <th>申请编号</th>
+            <th>流程编号</th>
+            <th>需求地</th>
+            <th>是否子公司</th>
+            <th>所属子公司名称</th>
+            <th>申请事项</th>
+            <th>印章属性</th>
+            <th>法人姓名</th>
+            <th>使用用途</th>
+            <th>授权书上传</th>
+            <th>状态</th>
+            <th>创建人</th>
+            <th>创建时间</th>
+            <th>修改人</th>
+            <th>修改时间</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <span class="page-info">共 <strong id="totalCount">0</strong> 条</span>
+      <span class="page-btn disabled">&laquo;</span>
+      <span class="page-btn active">1</span>
+      <span class="page-btn">&raquo;</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+var mockData = JSON.parse(localStorage.getItem('seal_mockData') || 'null') || [
+  { id:1, appNo:'SQ-GZ-20260510001', procNo:'LC-GZ-20260510001', region:'北京', isSubsidiary:'否', subName:'-', item:'合同盖章', sealAttr:'公章', legalName:'张三', purpose:'签署战略合作协议', authFile:'授权书_20260510.pdf', status:'已审核', creator:'李四', createTime:'2026-05-10 09:00:00', modifier:'李四', modifyTime:'2026-05-18 11:00:00' },
+  { id:2, appNo:'SQ-GZ-20260522002', procNo:'LC-GZ-20260522002', region:'上海', isSubsidiary:'是', subName:'上海智能网络子公司', item:'财务文件盖章', sealAttr:'财务章', legalName:'王五', purpose:'银行开户文件', authFile:'', status:'审核中', creator:'赵六', createTime:'2026-05-22 14:30:00', modifier:'', modifyTime:'' },
+  { id:3, appNo:'SQ-GZ-20260528003', procNo:'', region:'广州', isSubsidiary:'否', subName:'-', item:'行政文件盖章', sealAttr:'公章', legalName:'孙七', purpose:'政府审批文件', authFile:'授权书_20260528.pdf', status:'已提交', creator:'周八', createTime:'2026-05-28 16:00:00', modifier:'', modifyTime:'' },
+  { id:4, appNo:'SQ-GZ-20260601004', procNo:'', region:'深圳', isSubsidiary:'是', subName:'深圳数据服务子公司', item:'法务文件盖章', sealAttr:'合同章', legalName:'吴九', purpose:'诉讼材料', authFile:'授权书_20260601.pdf', status:'初始', creator:'郑十', createTime:'2026-06-01 08:30:00', modifier:'', modifyTime:'' }
+];
+
+function renderTable(data) {
+  var tbody = document.getElementById('tableBody');
+  var html = '';
+  if (data.length === 0) {
+    html = '<tr><td colspan="18" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无数据</div><div class="empty-hint">点击「+ 新增申请」创建记录</div></td></tr>';
+  } else {
+    data.forEach(function(row, index) {
+      html += '<tr class="' + (row._checked ? 'row-selected' : '') + '">';
+      html += '<td><input type="checkbox" class="row-check" value="' + row.id + '" ' + (row._checked ? 'checked' : '') + ' onclick="toggleRow(this,' + row.id + ')"></td>';
+      html += '<td>' + (index+1) + '</td>';
+      html += '<td>' + esc(row.appNo) + '</td>';
+      html += '<td>' + esc(row.procNo) + '</td>';
+      html += '<td>' + esc(row.region) + '</td>';
+      html += '<td>' + esc(row.isSubsidiary) + '</td>';
+      html += '<td>' + esc(row.subName) + '</td>';
+      html += '<td>' + esc(row.item) + '</td>';
+      html += '<td>' + esc(row.sealAttr) + '</td>';
+      html += '<td>' + esc(row.legalName) + '</td>';
+      html += '<td>' + esc(row.purpose) + '</td>';
+      html += '<td>' + (row.authFile ? '<a class="link-action" href="javascript:void(0)">'+esc(row.authFile)+'</a>' : '-') + '</td>';
+      html += '<td>' + st(row.status) + '</td>';
+      html += '<td>' + esc(row.creator) + '</td>';
+      html += '<td>' + esc(row.createTime) + '</td>';
+      html += '<td>' + esc(row.modifier||'-') + '</td>';
+      html += '<td>' + esc(row.modifyTime||'-') + '</td>';
+      html += '<td class="col-actions">';
+      html += '<a class="link-action" href="detail.html?id='+row.id+'&mode=edit">编辑</a>';
+      html += '<a class="link-action" href="detail.html?id='+row.id+'&mode=view">查看</a>';
+      html += '<a class="link-action danger" href="javascript:void(0)" onclick="doDel('+row.id+')">删除</a>';
+      html += '</td></tr>';
+    });
+  }
+  tbody.innerHTML = html;
+  document.getElementById('totalCount').textContent = data.length;
+  document.getElementById('checkAll').checked = false;
+}
+function toggleAll(el) {
+  var checks = document.querySelectorAll('.row-check');
+  checks.forEach(function(c) { 
+    c.checked = el.checked; 
+    var tr = c.closest('tr');
+    if (tr) tr.classList.toggle('row-selected', el.checked);
+  });
+}
+function toggleRow(el, id) {
+  var tr = el.closest('tr');
+  if (tr) tr.classList.toggle('row-selected', el.checked);
+  updateCheckAll();
+}
+function updateCheckAll() {
+  var all = document.querySelectorAll('.row-check');
+  var checked = document.querySelectorAll('.row-check:checked');
+  document.getElementById('checkAll').checked = all.length > 0 && all.length === checked.length;
+}
+function getCheckedIds() {
+  var ids = [];
+  document.querySelectorAll('.row-check:checked').forEach(function(c) { ids.push(c.value); });
+  return ids;
+}
+function st(s) { var m={'初始':'initial','已提交':'submitted','审核中':'reviewing','已审核':'approved','已取消':'cancelled'}; return '<span class="status-tag '+(m[s]||'')+'">'+s+'</span>'; }
+function esc(s) { if(!s) return ''; var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function doSearch() {
+  var r=document.getElementById('sRegion').value, i=document.getElementById('sIsSubsidiary').value, n=document.getElementById('sSubName').value.trim(), s=document.getElementById('sStatus').value;
+  var f=mockData.filter(function(x){
+    if(r&&x.region!==r) return false;
+    if(i&&x.isSubsidiary!==i) return false;
+    if(n&&x.subName.indexOf(n)<0) return false;
+    if(s&&x.status!==s) return false;
+    return true;
+  });
+  renderTable(f);
+  showSearchTags();
+}
+function resetSearch() {
+  document.getElementById('sRegion').value=''; document.getElementById('sIsSubsidiary').value=''; document.getElementById('sSubName').value=''; document.getElementById('sStatus').value='';
+  renderTable(mockData);
+  showSearchTags();
+}
+
+// 搜索条件标签
+function showSearchTags() {
+  var map = { sRegion:'需求地', sIsSubsidiary:'是否属于子公司', sSubName:'所属子公司名称', sStatus:'状态' };
+  var tags = [];
+  Object.keys(map).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el && el.value) {
+      tags.push({ name: map[id], value: el.value, id: id });
+    }
+  });
+  var container = document.getElementById('searchTags');
+  if (!container) return;
+  if (tags.length === 0) { container.style.display = 'none'; container.innerHTML = ''; return; }
+  var html = '';
+  tags.forEach(function(t) {
+    html += '<span class="search-active-tag">' + t.name + '：' + t.value + '<span class="tag-remove" onclick="clearSearchTag(\'' + t.id + '\')">&times;</span></span>';
+  });
+  container.style.display = '';
+  container.innerHTML = html;
+}
+function clearSearchTag(id) {
+  document.getElementById(id).value = '';
+  doSearch();
+}
+function goAdd() { location.href='detail.html?mode=add'; }
+function doImport() { showToast('请选择 Excel 文件上传', 'info'); }
+function doBatchSubmit() {
+  var ids = getCheckedIds();
+  if (ids.length === 0) { showToast('请先勾选需要提交的记录', 'error'); return; }
+  if (confirm('确认批量提交选中的 ' + ids.length + ' 条记录？')) {
+    mockData.forEach(function(r) {
+      if (ids.indexOf(String(r.id)) >= 0 && (r.status === '初始' || r.status === '已取消')) {
+        r.status = '已提交';
+      }
+    });
+    localStorage.setItem('seal_mockData', JSON.stringify(mockData));
+    resetSearch();
+    showToast('批量提交成功', 'success');
+  }
+}
+function doSyncBPM() { showToast('正在同步审批流程数据...', 'info'); }
+function doDel(id) {
+  if(confirm('确认删除？')) {
+    mockData=mockData.filter(function(r){return r.id!==id;});
+    localStorage.setItem('seal_mockData',JSON.stringify(mockData));
+    renderTable(mockData);
+    showToast('删除成功', 'success');
+  }
+}
+
+// Toast 轻提示
+function showToast(message, type) {
+  type = type || 'info';
+  var container = document.getElementById('toastContainer');
+  if (!container) return;
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(function() {
+    if (toast.parentNode) {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s';
+      setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+    }
+  }, 2500);
+}
+renderTable(mockData);
+</script>
+</body>
+</html>

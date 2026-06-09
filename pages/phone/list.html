@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>电话号码申请 - 列表</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://unpkg.com/mammoth@1.6.0/mammoth.browser.min.js"></script>
+  <style>
+  /* 授权书生成弹窗 */
+  .auth-modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,.45); z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+    animation: modalFadeIn .25s ease;
+  }
+  @keyframes modalFadeIn { from { opacity:0; } to { opacity:1; } }
+  .auth-modal {
+    background: #fff; border-radius: 12px; width: 520px; max-width: 90vw;
+    max-height: 90vh;
+    box-shadow: 0 24px 60px rgba(0,0,0,.2);
+    animation: modalSlideIn .3s ease;
+    display: flex; flex-direction: column;
+  }
+  @keyframes modalSlideIn { from { transform:translateY(20px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+  .auth-modal-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px 24px 16px; border-bottom: 1px solid #e4e9f1;
+  }
+  .auth-modal-head h3 { margin:0; font-size:17px; font-weight:700; color:#111827; }
+  .auth-modal-close {
+    width:28px; height:28px; border:none; background:transparent;
+    border-radius:6px; cursor:pointer; display:grid; place-items:center;
+    color:#647084; font-size:18px; transition:background .15s;
+  }
+  .auth-modal-close:hover { background:#f0f2f5; }
+  .auth-modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; min-height: 0; }
+  .template-list { display:flex; flex-direction:column; gap:10px; }
+  .template-item {
+    display:flex; align-items:center; gap:14px;
+    padding:14px 16px; border:2px solid #e4e9f1; border-radius:10px;
+    cursor:pointer; transition:all .18s ease; background:#fff;
+  }
+  .template-item:hover { border-color:#4f6ef7; background:#f8faff; }
+  .template-item.selected { border-color:#4f6ef7; background:#eef3ff; }
+  .template-icon {
+    width:42px; height:42px; border-radius:8px; display:grid; place-items:center;
+    background:linear-gradient(135deg,#eef3ff,#f0f4ff); font-size:20px; flex-shrink:0;
+  }
+  .template-info { flex:1; min-width:0; }
+  .template-name { font-size:14px; font-weight:650; color:#111827; margin-bottom:3px; }
+  .template-desc { font-size:12px; color:#647084; line-height:1.4; }
+  .auth-modal-foot {
+    display:flex; justify-content:flex-end; gap:10px;
+    padding:16px 24px 20px; border-top:1px solid #e4e9f1;
+  }
+  .auth-modal-foot .btn { min-width:80px; }
+
+  /* 导入按钮 */
+  .btn-import {
+    color: #4f6ef7;
+    border-color: #c5d2f8;
+    background: linear-gradient(180deg, #f0f4ff, #e8eeff);
+  }
+  .btn-import:hover {
+    color: #fff !important;
+    background: linear-gradient(135deg, #5b7cff, #4f6ef7) !important;
+    border-color: #4f6ef7 !important;
+    box-shadow: 0 4px 14px rgba(79,110,247,.32) !important;
+  }
+
+  /* 授权书生成按钮 */
+  .btn-auth {
+    color: #8b5cf6;
+    border-color: #d4c2f8;
+    background: linear-gradient(180deg, #f5f0ff, #efe8ff);
+  }
+  .btn-auth:hover {
+    color: #fff !important;
+    background: linear-gradient(135deg, #9b6dff, #8b5cf6) !important;
+    border-color: #8b5cf6 !important;
+    box-shadow: 0 4px 14px rgba(139,92,246,.32) !important;
+  }
+
+  /* 公司名称列不换行 */
+  .data-table tbody td:nth-child(5) {
+    white-space: nowrap;
+    min-width: 160px;
+  }
+  .data-table thead th:nth-child(5) {
+    white-space: nowrap;
+  }
+
+  /* 表格单元格居中 */
+  .data-table thead th,
+  .data-table tbody td {
+    text-align: center;
+  }
+  .data-table .col-actions {
+    text-align: center;
+  }
+  </style>
+</head>
+<body>
+<div class="page-container">
+
+  <!-- Toast 轻提示容器 -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- 面包屑通知 -->
+  <script>
+    if (window.parent) {
+      window.parent.postMessage({type:'breadcrumb', text:'电话号码申请 <span>/</span> 列表'}, '*');
+    }
+  </script>
+
+  <div class="page-title">电话号码申请列表</div>
+
+  <!-- 搜索区域 -->
+  <div class="search-area">
+    <div class="search-row">
+      <div class="search-item">
+        <label>公司名称：</label>
+        <select id="searchCompany">
+          <option value="">全部</option>
+          <option value="北京星辰科技有限公司">北京星辰科技有限公司</option>
+          <option value="上海云途贸易有限公司">上海云途贸易有限公司</option>
+          <option value="广州鼎盛电子商务有限公司">广州鼎盛电子商务有限公司</option>
+          <option value="深圳前海数码科技有限公司">深圳前海数码科技有限公司</option>
+          <option value="杭州西湖信息技术有限公司">杭州西湖信息技术有限公司</option>
+        </select>
+      </div>
+      <div class="search-item">
+        <label>使用属地：</label>
+        <select id="searchRegion">
+          <option value="">全部</option>
+          <option value="北京">北京</option>
+          <option value="上海">上海</option>
+          <option value="广州">广州</option>
+          <option value="深圳">深圳</option>
+          <option value="杭州">杭州</option>
+        </select>
+      </div>
+      <div class="search-item">
+        <label>申请电话类型：</label>
+        <select id="searchPhoneType">
+          <option value="">全部</option>
+          <option value="固定电话">固定电话</option>
+          <option value="移动电话">移动电话</option>
+          <option value="400热线">400热线</option>
+        </select>
+      </div>
+      <div class="search-item">
+        <label>申请事件类型：</label>
+        <select id="searchEventType">
+          <option value="">全部</option>
+          <option value="新装">新装</option>
+          <option value="移机">移机</option>
+          <option value="过户">过户</option>
+          <option value="注销">注销</option>
+        </select>
+      </div>
+      <div class="search-item">
+        <label>状态：</label>
+        <select id="searchStatus">
+          <option value="">全部</option>
+          <option value="初始">初始</option>
+          <option value="已提交">已提交</option>
+          <option value="审核中">审核中</option>
+          <option value="已审核">已审核</option>
+          <option value="已取消">已取消</option>
+        </select>
+      </div>
+    </div>
+    <div class="search-actions">
+      <button class="btn btn-primary" onclick="doSearch()">查询</button>
+      <button class="btn" onclick="resetSearch()">重置</button>
+    </div>
+    <div class="search-active-tags" id="searchTags" style="display:none;"></div>
+  </div>
+
+  <!-- 表格区域 -->
+  <div class="table-area">
+    <div class="table-toolbar">
+      <button class="btn btn-primary" onclick="goAdd()">+ 新增申请</button>
+      <button class="btn btn-import" onclick="doImport()">导入</button>
+      <button class="btn btn-auth" onclick="openAuthModal()">生成授权书</button>
+      <button class="btn btn-success" onclick="doBatchSubmit()">批量提交</button>
+      <button class="btn btn-warning" onclick="doSyncBPM()">同步BPM</button>
+    </div>
+
+    <div class="table-scroll">
+      <table class="data-table" id="dataTable">
+        <thead>
+          <tr>
+            <th style="width:40px;"><input type="checkbox" id="checkAll" onclick="toggleAll(this)"></th>
+            <th>序号</th>
+            <th>申请编号</th>
+            <th>流程编号</th>
+            <th>公司名称</th>
+            <th>使用属地</th>
+            <th>申请电话类型</th>
+            <th>申请事件类型</th>
+            <th>申请理由</th>
+            <th>运营商</th>
+            <th>号码实名人</th>
+            <th>实名人身份证号</th>
+            <th>实名人手机号</th>
+            <th>使用人</th>
+            <th>状态</th>
+            <th>创建人</th>
+            <th>创建时间</th>
+            <th>修改人</th>
+            <th>修改时间</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- 分页 -->
+    <div class="pagination" id="pagination">
+      <span class="page-info">共 <strong id="totalCount">0</strong> 条</span>
+      <span class="page-btn disabled">&laquo;</span>
+      <span class="page-btn active">1</span>
+      <span class="page-btn">2</span>
+      <span class="page-btn">&raquo;</span>
+    </div>
+  </div>
+
+  <!-- 授权书生成弹窗 -->
+  <div id="authModal" class="auth-modal-overlay" style="display:none;" onclick="if(event.target===this)closeAuthModal()">
+    <div class="auth-modal">
+      <div class="auth-modal-head">
+        <h3>📝 授权书生成</h3>
+        <button class="auth-modal-close" onclick="closeAuthModal()" title="关闭">&times;</button>
+      </div>
+      <div class="auth-modal-body">
+        <div id="selectedRowsTip" style="display:none; margin-bottom:14px; padding:10px 14px; background:#eef3ff; border-radius:8px; font-size:13px; color:#4f6ef7; line-height:1.5;"></div>
+        <p style="margin:0 0 14px; font-size:13px; color:#647084;">请选择授权书模板并上传对应的文件：</p>
+        <div class="template-list" id="templateList">
+          <div class="template-item" data-template="brand" onclick="selectTemplate(this)">
+            <div class="template-icon">📄</div>
+            <div class="template-info">
+              <div class="template-name">政企客户委托书模板</div>
+              <div class="template-desc">用于公司办理电信业务的委托书场景</div>
+            </div>
+          </div>
+          <div class="template-item" data-template="platform" onclick="selectTemplate(this)">
+            <div class="template-icon">📝</div>
+            <div class="template-info">
+              <div class="template-name">平台入驻授权书模板</div>
+              <div class="template-desc">适用于抖音等电商平台开店入驻的授权场景</div>
+            </div>
+          </div>
+          <div class="template-item" data-template="general" onclick="selectTemplate(this)">
+            <div class="template-icon">📃</div>
+            <div class="template-info">
+              <div class="template-name">通用授权书模板</div>
+              <div class="template-desc">适用于一般业务授权场景，可自定义内容</div>
+            </div>
+          </div>
+        </div>
+        <div id="uploadArea" style="display:none; margin-top:16px;">
+          <label style="display:flex; align-items:center; justify-content:center; gap:8px; padding:24px; border:2px dashed #cfd8e6; border-radius:10px; cursor:pointer; transition:border-color .18s; background:#fafbfd;" onmouseover="this.style.borderColor='#4f6ef7'" onmouseout="this.style.borderColor='#cfd8e6'">
+            <input type="file" id="authFileInput" accept=".doc,.docx,.pdf,.jpg,.png" style="display:none;" onchange="handleFileSelect(this)">
+            <span style="font-size:14px; color:#647084;" id="uploadLabel">📎 点击选择或拖拽上传授权书模板文件</span>
+          </label>
+          <div id="fileInfo" style="display:none; margin-top:10px; padding:10px 14px; background:#f0fdf4; border-radius:8px; font-size:13px; color:#168260;"></div>
+        </div>
+        <div id="genResultArea" style="display:none; margin-top:16px; padding:14px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <div style="font-size:14px; font-weight:700; color:#168260;">📋 生成结果</div>
+            <button id="downloadAllBtn" class="btn" style="background:#168260; color:#fff; border:none; padding:6px 16px; border-radius:6px; font-size:13px; font-weight:650; cursor:pointer;" onclick="downloadAllAuthDocs()">📦 全部下载</button>
+          </div>
+          <div id="genResultList" style="display:flex; flex-direction:column; gap:8px;"></div>
+        </div>
+      </div>
+      <div class="auth-modal-foot">
+        <button class="btn" onclick="closeAuthModal()">取消</button>
+        <button class="btn btn-primary" id="authSubmitBtn" onclick="submitAuthTemplate()" disabled style="opacity:.5;">确认上传</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// 模拟数据
+var mockData = [
+  { id:1, appNo:'SQ-DH-20260510001', procNo:'LC-DH-20260510001', companyName:'北京星辰科技有限公司', region:'北京', phoneType:'固定电话', eventType:'新装', reason:'新办公室业务需要', operator:'中国电信', realName:'张三', realIdCard:'110101199001011234', realPhone:'13800138001', user:'张三', status:'已审核', creator:'李四', createTime:'2026-05-10 10:30:00', modifier:'李四', modifyTime:'2026-05-20 14:00:00' },
+  { id:2, appNo:'SQ-DH-20260522002', procNo:'LC-DH-20260522002', companyName:'上海云途贸易有限公司', region:'上海', phoneType:'移动电话', eventType:'移机', reason:'办公地址搬迁', operator:'中国移动', realName:'王五', realIdCard:'310101198505052345', realPhone:'13900139002', user:'赵六', status:'审核中', creator:'李四', createTime:'2026-05-22 09:15:00', modifier:'', modifyTime:'' },
+  { id:3, appNo:'SQ-DH-20260528003', procNo:'', companyName:'广州鼎盛电子商务有限公司', region:'广州', phoneType:'400热线', eventType:'新装', reason:'客户服务热线需求', operator:'中国联通', realName:'孙七', realIdCard:'440101199203034567', realPhone:'13700137003', user:'孙七', status:'已提交', creator:'周八', createTime:'2026-05-28 16:45:00', modifier:'', modifyTime:'' },
+  { id:4, appNo:'SQ-DH-20260601004', procNo:'', companyName:'深圳前海数码科技有限公司', region:'深圳', phoneType:'固定电话', eventType:'过户', reason:'人员离职交接', operator:'中国电信', realName:'吴九', realIdCard:'440301198807076789', realPhone:'13600136004', user:'郑十', status:'初始', creator:'李四', createTime:'2026-06-01 08:00:00', modifier:'', modifyTime:'' },
+  { id:5, appNo:'SQ-DH-20260415005', procNo:'', companyName:'杭州西湖信息技术有限公司', region:'杭州', phoneType:'移动电话', eventType:'注销', reason:'业务已停止', operator:'中国移动', realName:'钱二', realIdCard:'330101199511118901', realPhone:'13500135005', user:'钱二', status:'已取消', creator:'周八', createTime:'2026-04-15 11:20:00', modifier:'李四', modifyTime:'2026-05-01 10:00:00' }
+];
+
+// 渲染表格
+function renderTable(data) {
+  var tbody = document.getElementById('tableBody');
+  var html = '';
+  if (data.length === 0) {
+    html = '<tr><td colspan="20" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无数据</div><div class="empty-hint">点击「+ 新增申请」创建记录</div></td></tr>';
+  } else {
+    data.forEach(function(row, index) {
+      html += '<tr class="' + (row._checked ? 'row-selected' : '') + '">';
+      html += '<td><input type="checkbox" class="row-check" value="' + row.id + '" ' + (row._checked ? 'checked' : '') + ' onclick="toggleRow(this,' + row.id + ')"></td>';
+      html += '<td>' + (index + 1) + '</td>';
+      html += '<td>' + escapeHtml(row.appNo) + '</td>';
+      html += '<td>' + escapeHtml(row.procNo) + '</td>';
+      html += '<td>' + escapeHtml(row.companyName) + '</td>';
+      html += '<td>' + escapeHtml(row.region) + '</td>';
+      html += '<td>' + escapeHtml(row.phoneType) + '</td>';
+      html += '<td>' + escapeHtml(row.eventType) + '</td>';
+      html += '<td>' + escapeHtml(row.reason) + '</td>';
+      html += '<td>' + escapeHtml(row.operator) + '</td>';
+      html += '<td>' + escapeHtml(row.realName) + '</td>';
+      html += '<td>' + escapeHtml(row.realIdCard) + '</td>';
+      html += '<td>' + escapeHtml(row.realPhone) + '</td>';
+      html += '<td>' + escapeHtml(row.user) + '</td>';
+      html += '<td>' + getStatusTag(row.status) + '</td>';
+      html += '<td>' + escapeHtml(row.creator) + '</td>';
+      html += '<td>' + escapeHtml(row.createTime) + '</td>';
+      html += '<td>' + escapeHtml(row.modifier || '-') + '</td>';
+      html += '<td>' + escapeHtml(row.modifyTime || '-') + '</td>';
+      html += '<td class="col-actions">';
+      html += '<a class="link-action" href="detail.html?id=' + row.id + '&mode=edit">编辑</a>';
+      html += '<a class="link-action" href="detail.html?id=' + row.id + '&mode=view">查看</a>';
+      html += '<a class="link-action danger" href="javascript:void(0)" onclick="doDelete(' + row.id + ')">删除</a>';
+      html += '</td>';
+      html += '</tr>';
+    });
+  }
+  tbody.innerHTML = html;
+  document.getElementById('totalCount').textContent = data.length;
+  document.getElementById('checkAll').checked = false;
+}
+
+// 全选/取消全选
+function toggleAll(el) {
+  var checks = document.querySelectorAll('.row-check');
+  checks.forEach(function(c) { 
+    c.checked = el.checked; 
+    var tr = c.closest('tr');
+    if (tr) tr.classList.toggle('row-selected', el.checked);
+  });
+}
+function toggleRow(el, id) {
+  var tr = el.closest('tr');
+  if (tr) tr.classList.toggle('row-selected', el.checked);
+  updateCheckAll();
+}
+function updateCheckAll() {
+  var all = document.querySelectorAll('.row-check');
+  var checked = document.querySelectorAll('.row-check:checked');
+  document.getElementById('checkAll').checked = all.length > 0 && all.length === checked.length;
+}
+function getCheckedIds() {
+  var ids = [];
+  document.querySelectorAll('.row-check:checked').forEach(function(c) { ids.push(c.value); });
+  return ids;
+}
+
+// 状态标签
+function getStatusTag(status) {
+  var cls = '';
+  switch(status) {
+    case '初始': cls = 'initial'; break;
+    case '已提交': cls = 'submitted'; break;
+    case '审核中': cls = 'reviewing'; break;
+    case '已审核': cls = 'approved'; break;
+    case '已取消': cls = 'cancelled'; break;
+    default: cls = 'initial';
+  }
+  return '<span class="status-tag ' + cls + '">' + status + '</span>';
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function doSearch() {
+  var region = document.getElementById('searchRegion').value;
+  var companyName = document.getElementById('searchCompany').value;
+  var phoneType = document.getElementById('searchPhoneType').value;
+  var eventType = document.getElementById('searchEventType').value;
+  var status = document.getElementById('searchStatus').value;
+  var filtered = mockData.filter(function(row) {
+    if (region && row.region !== region) return false;
+    if (companyName && row.companyName !== companyName) return false;
+    if (phoneType && row.phoneType !== phoneType) return false;
+    if (eventType && row.eventType !== eventType) return false;
+    if (status && row.status !== status) return false;
+    return true;
+  });
+  renderTable(filtered);
+  // 显示搜索条件标签
+  showSearchTags();
+}
+
+function resetSearch() {
+  document.getElementById('searchRegion').value = '';
+  document.getElementById('searchCompany').value = '';
+  document.getElementById('searchPhoneType').value = '';
+  document.getElementById('searchEventType').value = '';
+  document.getElementById('searchStatus').value = '';
+  renderTable(mockData);
+  showSearchTags();
+}
+
+// 搜索条件标签
+function showSearchTags() {
+  var map = { searchRegion:'使用属地', searchCompany:'公司名称', searchPhoneType:'申请电话类型', searchEventType:'申请事件类型', searchStatus:'状态' };
+  var tags = [];
+  Object.keys(map).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el && el.value) {
+      tags.push({ name: map[id], value: el.value, id: id });
+    }
+  });
+  var container = document.getElementById('searchTags');
+  if (!container) return;
+  if (tags.length === 0) { container.style.display = 'none'; container.innerHTML = ''; return; }
+  var html = '';
+  tags.forEach(function(t) {
+    html += '<span class="search-active-tag">' + t.name + '：' + t.value + '<span class="tag-remove" onclick="clearSearchTag(\'' + t.id + '\')">&times;</span></span>';
+  });
+  container.style.display = '';
+  container.innerHTML = html;
+}
+
+function clearSearchTag(id) {
+  document.getElementById(id).value = '';
+  doSearch();
+}
+
+// 操作
+function goAdd() {
+  window.location.href = 'detail.html?mode=add';
+}
+
+function doImport() {
+  showToast('请选择 Excel 文件上传', 'info');
+}
+
+// 授权书生成弹窗
+var selectedTemplate = null;
+var selectedFile = null;
+var selectedRows = [];
+var templateContent = ''; // 文本模板内容
+var templateBinary = null; // 二进制模板内容（ArrayBuffer）
+var templateIsBinary = false; // 是否为二进制 .doc
+var docxRawXml = ''; // .docx document.xml 原始内容
+var templateZip = null; // .docx JSZip 对象
+var templateIsDocx = false; // 是否为 .docx 格式
+
+function openAuthModal() {
+  // 检查是否选中行
+  selectedRows = [];
+  var checkedIds = getCheckedIds();
+  if (checkedIds.length === 0) {
+    showToast('请先勾选需要生成委托书的记录', 'error');
+    return;
+  }
+  checkedIds.forEach(function(id) {
+    var row = mockData.find(function(r) { return String(r.id) === String(id); });
+    if (row) selectedRows.push(row);
+  });
+
+  selectedTemplate = null;
+  selectedFile = null;
+  templateContent = '';
+  templateBinary = null;
+  templateIsBinary = false;
+  docxRawXml = '';
+  templateZip = null;
+  templateIsDocx = false;
+  document.querySelectorAll('.template-item').forEach(function(el) { el.classList.remove('selected'); });
+  document.getElementById('uploadArea').style.display = 'none';
+  document.getElementById('fileInfo').style.display = 'none';
+  document.getElementById('uploadLabel').textContent = '📎 点击选择或拖拽上传授权书模板文件';
+  var fileInput = document.getElementById('authFileInput');
+  if (fileInput) fileInput.value = '';
+  var btn = document.getElementById('authSubmitBtn');
+  btn.disabled = true; btn.style.opacity = '.5'; btn.textContent = '确认生成';
+
+  // 隐藏结果区域
+  var resultArea = document.getElementById('genResultArea');
+  if (resultArea) resultArea.style.display = 'none';
+
+  // 显示已选数量提示
+  var tip = document.getElementById('selectedRowsTip');
+  if (tip) {
+    tip.style.display = 'block';
+    tip.innerHTML = '已选择 <strong>' + selectedRows.length + '</strong> 条记录，将为每条记录生成委托书';
+  }
+
+  document.getElementById('authModal').style.display = 'flex';
+}
+
+function closeAuthModal() {
+  document.getElementById('authModal').style.display = 'none';
+}
+
+function selectTemplate(el) {
+  document.querySelectorAll('.template-item').forEach(function(item) { item.classList.remove('selected'); });
+  el.classList.add('selected');
+  selectedTemplate = el.getAttribute('data-template');
+  document.getElementById('uploadArea').style.display = 'block';
+  updateSubmitBtn();
+}
+
+function handleFileSelect(input) {
+  if (input.files && input.files[0]) {
+    selectedFile = input.files[0];
+    var info = document.getElementById('fileInfo');
+    info.style.display = 'block';
+    info.innerHTML = '⏳ 正在读取模板... ' + selectedFile.name + ' (' + formatFileSize(selectedFile.size) + ')';
+
+    // 先以二进制读取，检测文件类型
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var buffer = e.target.result;
+      var bytes = new Uint8Array(buffer);
+
+      // 检测是否为二进制 .doc（OLE2 格式，前4字节为 D0 CF 11 E0）
+      var isOLE2 = bytes.length > 4 && bytes[0] === 0xD0 && bytes[1] === 0xCF && bytes[2] === 0x11 && bytes[3] === 0xE0;
+      // 检测是否为 ZIP 格式（.docx，前4字节为 50 4B 03 04）
+      var isZIP = bytes.length > 4 && bytes[0] === 0x50 && bytes[1] === 0x4B && bytes[2] === 0x03 && bytes[3] === 0x04;
+
+      if (isOLE2) {
+        // 二进制 .doc：尝试用 mammoth 提取（mammoth 主要支持 .docx，但也尝试处理）
+        if (typeof mammoth !== 'undefined') {
+          mammoth.extractRawText({ arrayBuffer: buffer }).then(function(result) {
+            var text = result.value || '';
+            if (text && hasChinese(text)) {
+              templateContent = text;
+              templateIsBinary = false;
+              templateBinary = null;
+              info.innerHTML = '✅ ' + selectedFile.name + ' (文本提取成功)';
+              updateSubmitBtn();
+            } else {
+              // mammoth 提取失败，使用二进制文本提取
+              extractTextFromBinaryDoc(buffer, info);
+            }
+          }).catch(function() {
+            extractTextFromBinaryDoc(buffer, info);
+          });
+        } else {
+          extractTextFromBinaryDoc(buffer, info);
+        }
+      } else if (isZIP) {
+        // .docx 格式：直接提取 document.xml 并存储 ZIP 对象
+        if (typeof JSZip !== 'undefined') {
+          JSZip.loadAsync(buffer).then(function(zip) {
+            templateZip = zip;
+            templateIsDocx = true;
+            return zip.file('word/document.xml').async('string');
+          }).then(function(xml) {
+            docxRawXml = xml;
+            // 同时提取纯文本作为回退
+            templateContent = xml.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+            templateIsBinary = false;
+            templateBinary = null;
+            info.innerHTML = '✅ ' + selectedFile.name + ' (docx模板读取成功)';
+            console.log('[模板DEBUG] XML长度:', xml.length, '文本长度:', templateContent.length);
+            console.log('[模板DEBUG] 提取文本前500字:', templateContent.substring(0, 500));
+            updateSubmitBtn();
+          }).catch(function(err) {
+            // JSZip 失败，回退到 mammoth
+            console.error('[模板DEBUG] JSZip提取失败:', err);
+            if (typeof mammoth !== 'undefined') {
+              mammoth.extractRawText({ arrayBuffer: buffer }).then(function(result) {
+                templateContent = result.value || '';
+                templateIsBinary = false;
+                templateBinary = null;
+                info.innerHTML = '✅ ' + selectedFile.name + ' (mammoth提取)';
+                updateSubmitBtn();
+              }).catch(function() {
+                templateBinary = buffer; templateIsBinary = true; templateContent = '';
+                info.innerHTML = '⚠️ docx读取失败';
+                updateSubmitBtn();
+              });
+            } else {
+              templateBinary = buffer; templateIsBinary = true; templateContent = '';
+              info.innerHTML = '⚠️ docx读取失败';
+              updateSubmitBtn();
+            }
+          });
+        } else if (typeof mammoth !== 'undefined') {
+          mammoth.extractRawText({ arrayBuffer: buffer }).then(function(result) {
+            templateContent = result.value || '';
+            templateIsBinary = false;
+            templateBinary = null;
+            info.innerHTML = '✅ ' + selectedFile.name + ' (docx文本提取成功)';
+            updateSubmitBtn();
+          }).catch(function() {
+            templateBinary = buffer; templateIsBinary = true; templateContent = '';
+            info.innerHTML = '⚠️ docx读取失败';
+            updateSubmitBtn();
+          });
+        }
+      } else {
+        // 文本格式：尝试多种编码读取
+        templateIsBinary = false;
+        templateBinary = null;
+        readTextFileWithEncoding(selectedFile, function(text) {
+          templateContent = text || '';
+          info.innerHTML = templateContent ? '✅ ' + selectedFile.name + ' (' + formatFileSize(selectedFile.size) + ') 模板读取成功' : '❌ 模板读取失败';
+          updateSubmitBtn();
+        });
+      }
+    };
+    reader.onerror = function() {
+      info.innerHTML = '❌ 文件读取失败';
+    };
+    reader.readAsArrayBuffer(selectedFile);
+  }
+}
+
+function readTextFileWithEncoding(file, callback) {
+  // 尝试 UTF-8
+  var r1 = new FileReader();
+  r1.onload = function(e) {
+    var text = e.target.result || '';
+    if (text && !text.includes('\uFFFD') && hasChinese(text)) {
+      callback(text);
+    } else {
+      // 尝试 GBK
+      var r2 = new FileReader();
+      r2.onload = function(e2) {
+        var text2 = e2.target.result || '';
+        if (text2 && hasChinese(text2)) {
+          callback(text2);
+        } else {
+          // 尝试 GB18030
+          var r3 = new FileReader();
+          r3.onload = function(e3) { callback(e3.target.result || ''); };
+          r3.onerror = function() { callback(''); };
+          r3.readAsText(file, 'GB18030');
+        }
+      };
+      r2.onerror = function() { callback(''); };
+      r2.readAsText(file, 'GBK');
+    }
+  };
+  r1.onerror = function() { callback(''); };
+  r1.readAsText(file, 'UTF-8');
+}
+
+function hasChinese(text) {
+  return text && /[\u4e00-\u9fff]/.test(text);
+}
+
+// 从二进制 .doc (OLE2) 中提取文本
+function extractTextFromBinaryDoc(buffer, info) {
+  var bytes = new Uint8Array(buffer);
+
+  // 方法1: 尝试 UTF-16LE 解码（Word 内部存储编码）
+  var text16 = '';
+  try {
+    text16 = new TextDecoder('utf-16le').decode(bytes);
+  } catch(e) {}
+
+  // 方法2: 尝试 GBK 解码
+  var textGBK = '';
+  try {
+    textGBK = new TextDecoder('gbk').decode(bytes);
+  } catch(e) {}
+
+  // 方法3: 尝试 GB18030 解码
+  var textGB = '';
+  try {
+    textGB = new TextDecoder('gb18030').decode(bytes);
+  } catch(e) {}
+
+  // 提取可读的中文文本片段
+  function extractReadable(text) {
+    if (!text) return '';
+    // 提取包含中文字符的连续文本段
+    var segments = [];
+    var current = '';
+    for (var i = 0; i < text.length; i++) {
+      var code = text.charCodeAt(i);
+      // 可打印字符：中文、英文、数字、标点、空格、换行
+      if ((code >= 0x4e00 && code <= 0x9fff) || // CJK
+          (code >= 0x3000 && code <= 0x303f) || // CJK标点
+          (code >= 0xff00 && code <= 0xffef) || // 全角字符
+          (code >= 0x20 && code <= 0x7e) ||      // ASCII可打印
+          code === 0x0a || code === 0x0d ||       // 换行
+          code === 0x5f || code === 0x2014 || code === 0x2500 || // 下划线/em dash
+          code === 0x2026 || code === 0x3001 || code === 0x3002 || // … 、。
+          code === 0xff0c || code === 0xff1a || code === 0xff1b || // ，：；
+          code === 0xff08 || code === 0xff09) { // （）
+        current += text[i];
+      } else {
+        if (current.length > 5 && hasChinese(current)) {
+          segments.push(current);
+        }
+        current = '';
+      }
+    }
+    if (current.length > 5 && hasChinese(current)) segments.push(current);
+    return segments.join('\n');
+  }
+
+  var candidates = [
+    extractReadable(text16),
+    extractReadable(textGBK),
+    extractReadable(textGB)
+  ];
+
+  // 选择包含最多中文字符的结果
+  var best = '';
+  var bestCount = 0;
+  candidates.forEach(function(t) {
+    var count = (t.match(/[\u4e00-\u9fff]/g) || []).length;
+    if (count > bestCount) { best = t; bestCount = count; }
+  });
+
+  if (best && bestCount > 10) {
+    // 清理文本：去除多余空格和换行
+    best = best.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '');
+    best = best.replace(/ {3,}/g, '        '); // 保留连续空格作为占位符
+    templateContent = best;
+    templateIsBinary = false;
+    templateBinary = null;
+    info.innerHTML = '✅ 模板文本提取成功（' + bestCount + '个中文字符）';
+  } else {
+    templateBinary = buffer;
+    templateIsBinary = true;
+    templateContent = '';
+    info.innerHTML = '⚠️ 无法提取模板文本，请尝试将文件另存为 .docx 格式后重新上传';
+  }
+  updateSubmitBtn();
+}
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / 1048576).toFixed(1) + ' MB';
+}
+
+function updateSubmitBtn() {
+  var btn = document.getElementById('authSubmitBtn');
+  var ready = selectedTemplate && selectedFile;
+  btn.disabled = !ready;
+  btn.style.opacity = ready ? '1' : '.5';
+}
+
+function submitAuthTemplate() {
+  if (!selectedTemplate || !selectedFile) return;
+  generateAuthDocuments();
+}
+
+// ===== .docx XML 级别操作函数 =====
+
+// 合并段落内相邻相同格式的 run，避免文字被拆分到多个 run
+function mergeDocxRuns(xml) {
+  return xml.replace(/<w:p\b[^>]*>[\s\S]*?<\/w:p>/g, function(para) {
+    // 匹配 <w:r> 和 <w:r 带属性> 两种形式
+    var re = /<w:r\b[^>]*>([\s\S]*?)<\/w:r>/g;
+    var m, lastIndex = 0;
+    var parts = [];
+    while ((m = re.exec(para)) !== null) {
+      parts.push({ type: 'text', content: para.substring(lastIndex, m.index) });
+      var runContent = m[1];
+      var rPrMatch = runContent.match(/<w:rPr>([\s\S]*?)<\/w:rPr>/);
+      var rPr = rPrMatch ? rPrMatch[1].trim() : '';
+      // 收集 run 内所有 <w:t> 标签的文本（Word 经常拆分文本到多个 w:t）
+      var text = '';
+      var tRe = /<w:t[^>]*>([\s\S]*?)<\/w:t>/g;
+      var tm;
+      while ((tm = tRe.exec(runContent)) !== null) {
+        text += tm[1];
+      }
+      parts.push({ type: 'run', rPr: rPr, text: text });
+      lastIndex = m.index + m[0].length;
+    }
+    parts.push({ type: 'text', content: para.substring(lastIndex) });
+
+    // 合并相邻相同格式的 run
+    var merged = [];
+    for (var i = 0; i < parts.length; i++) {
+      if (parts[i].type === 'run' && merged.length > 0) {
+        var last = merged[merged.length - 1];
+        if (last.type === 'run' && last.rPr === parts[i].rPr) {
+          last.text += parts[i].text;
+          continue;
+        }
+      }
+      merged.push({ type: parts[i].type, rPr: parts[i].rPr || '', text: parts[i].text || '', content: parts[i].content || '' });
+    }
+
+    // 重建段落
+    var result = '';
+    for (var j = 0; j < merged.length; j++) {
+      if (merged[j].type === 'text') {
+        result += merged[j].content;
+      } else {
+        var rPrXml = merged[j].rPr ? '<w:rPr>' + merged[j].rPr + '</w:rPr>' : '';
+        var spaceAttr = /[\s<>]/.test(merged[j].text) ? ' xml:space="preserve"' : '';
+        result += '<w:r>' + rPrXml + '<w:t' + spaceAttr + '>' + merged[j].text + '</w:t></w:r>';
+      }
+    }
+    return result;
+  });
+}
+
+// 从 XML 中提取所有 <w:t> 的纯文本（用于调试）
+function extractXmlText(xml) {
+  var text = '';
+  var re = /<w:t[^>]*>([\s\S]*?)<\/w:t>/g;
+  var m;
+  while ((m = re.exec(xml)) !== null) {
+    text += m[1];
+  }
+  return text;
+}
+
+// 在 XML 中查找 <w:t> 标签内的文本
+function findInWt(xml, searchStr) {
+  var re = /<w:t[^>]*>([\s\S]*?)<\/w:t>/g;
+  var m;
+  while ((m = re.exec(xml)) !== null) {
+    var idx = m[1].indexOf(searchStr);
+    if (idx >= 0) {
+      return { match: m[0], fullMatch: m[1], index: idx, matchStart: m.index };
+    }
+  }
+  return null;
+}
+
+// 在 XML 的 <w:t> 标签内直接替换字段名（全局替换）
+function replaceFieldNameInXml(xml, fieldName, value) {
+  if (!value || !fieldName) return xml;
+  var safeVal = String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  var count = 0;
+  xml = xml.replace(/<w:t([^>]*)>([\s\S]*?)<\/w:t>/g, function(match, attrs, text) {
+    if (text.indexOf(fieldName) >= 0) {
+      count++;
+      var newText = text.split(fieldName).join(safeVal);
+      return '<w:t xml:space="preserve">' + newText + '</w:t>';
+    }
+    return match;
+  });
+  if (count === 0) {
+    // 诊断：检查字段名是否存在于原始 XML 中
+    var inRaw = xml.indexOf(fieldName) >= 0;
+    console.log('[XML替换] "' + fieldName + '" → "' + value + '" (匹配0处) [原始XML中' + (inRaw ? '存在' : '不存在') + ']');
+    if (inRaw) {
+      // 找出字段名所在的 XML 上下文
+      var rawIdx = xml.indexOf(fieldName);
+      console.log('[XML替换诊断] 周围XML:', xml.substring(Math.max(0, rawIdx - 60), rawIdx + fieldName.length + 60));
+    }
+  } else {
+    console.log('[XML替换] "' + fieldName + '" → "' + value + '" (匹配' + count + '处)');
+  }
+  return xml;
+}
+
+// 在纯文本中直接替换字段名
+function replaceFieldNameInText(text, fieldName, value) {
+  if (!value || !fieldName) return text;
+  var count = text.split(fieldName).length - 1;
+  console.log('[文本替换] "' + fieldName + '" → "' + value + '" (匹配' + count + '处)');
+  return text.split(fieldName).join(value);
+}
+
+// 在 XML 中替换字段名（日期字段也通过此函数替换，下划线由 addUnderlineToDateRuns 统一处理）
+function replaceFieldWithUnderlineInXml(xml, fieldName, value) {
+  return replaceFieldNameInXml(xml, fieldName, value);
+}
+
+// 为包含日期值的 run 添加下划线格式
+// 跨 run 处理：数字和年/月/日在不同 run 中时，给数字 run 加下划线
+function addUnderlineToDateRuns(xml) {
+  return xml.replace(/<w:p\b[^>]*>[\s\S]*?<\/w:p>/g, function(para) {
+    var runRe = /<w:r\b[^>]*>([\s\S]*?)<\/w:r>/g;
+    var runs = [], m;
+    while ((m = runRe.exec(para)) !== null) {
+      var inner = m[1];
+      var tMatch = inner.match(/<w:t[^>]*>([\s\S]*?)<\/w:t>/);
+      var rPrMatch = inner.match(/<w:rPr>([\s\S]*?)<\/w:rPr>/);
+      runs.push({ full: m[0], index: m.index, text: tMatch ? tMatch[1] : '', rPr: rPrMatch ? rPrMatch[1] : '' });
+    }
+    if (runs.length === 0) return para;
+
+    var fullText = '';
+    var charRunMap = [];
+    for (var ri = 0; ri < runs.length; ri++) {
+      for (var ci = 0; ci < runs[ri].text.length; ci++) {
+        charRunMap.push(ri);
+        fullText += runs[ri].text.charAt(ci);
+      }
+    }
+
+    // 匹配日期模式：数字+年/月/日，只标记数字 run
+    var underlineRuns = {};
+    var dateRe = /(\d+)([年月日])/g;
+    var dm;
+    while ((dm = dateRe.exec(fullText)) !== null) {
+      // 排除非日期：年后面不是日期组件（月/日/数字），如“2025年版”“1年）”
+      if (dm[2] === '年') {
+        var next1 = fullText.charAt(dm.index + dm[0].length);
+        var next2 = fullText.charAt(dm.index + dm[0].length + 1);
+        if (!/[\d月]/.test(next1) && !/[\d月]/.test(next2)) continue;
+      }
+      // 只标记数字 run
+      var digitStart = dm.index;
+      var digitEnd = digitStart + dm[1].length;
+      for (var k = charRunMap[digitStart]; k <= charRunMap[digitEnd - 1]; k++) { underlineRuns[k] = true; }
+    }
+
+    var hasUnderline = false;
+    for (var key in underlineRuns) { hasUnderline = true; break; }
+    if (!hasUnderline) return para;
+
+    // 重建段落，必要时拆分 run
+    var result = '';
+    var lastEnd = 0;
+    for (var ri2 = 0; ri2 < runs.length; ri2++) {
+      var run = runs[ri2];
+      result += para.substring(lastEnd, run.index);
+
+      if (underlineRuns[ri2]) {
+        // 标记的数字 run：加下划线
+        var modified = run.full;
+        // 先移除已有的 <w:u>
+        modified = modified.replace(/<w:u\b[^\/]*\/>/g, '').replace(/<w:u\b[^>]*>[\s\S]*?<\/w:u>/g, '');
+        // 在 </w:rPr> 之前插入 <w:u>（放在末尾确保优先级最高）
+        var uTag = '<w:u w:val="single" w:color="000000"/>';
+        if (/<w:rPr>/.test(modified)) {
+          modified = modified.replace(/<\/w:rPr>/, uTag + '</w:rPr>');
+        } else {
+          modified = modified.replace(/<w:r\b[^>]*>/, function(tag) { return tag + '<w:rPr>' + uTag + '</w:rPr>'; });
+        }
+        // 拆分：只给数字部分加下划线，年月日字符不加
+        var dateEndMatch = run.text.match(/^(\d+)([年月日][\s\S]*)$/);
+        if (dateEndMatch) {
+          var digitPart = dateEndMatch[1];
+          var restPart = dateEndMatch[2];
+          var digitRun = modified.replace(/<w:t[^>]*>[\s\S]*?<\/w:t>/, '<w:t xml:space="preserve">' + digitPart + '</w:t>');
+          var restRun = run.full.replace(/<w:t[^>]*>[\s\S]*?<\/w:t>/, '<w:t xml:space="preserve">' + restPart + '</w:t>');
+          result += digitRun + restRun;
+          console.log('[日期下划线] "' + digitPart + '" 加下划线 (拆分剩余"' + restPart + '")');
+        } else {
+          result += modified;
+          console.log('[日期下划线] "' + run.text + '" 加下划线');
+        }
+      } else {
+        // 未标记的 run：不加下划线，保持原样
+        result += run.full;
+      }
+      lastEnd = run.index + run.full.length;
+    }
+    result += para.substring(lastEnd);
+    return result;
+  });
+}
+
+// 在纯文本中替换字段名并为值添加下划线（用HTML <u>标签）
+function replaceFieldWithUnderlineInText(text, fieldName, value) {
+  if (!value || !fieldName) return text;
+  return text.split(fieldName).join('<u>' + value + '</u>');
+}
+
+// 在 XML 中进行字段替换（查找上下文标签后的下划线/空格并替换）
+function replaceInXml(xml, ctx, value) {
+  if (!value || !ctx) return xml;
+  var safeVal = String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  // 找到上下文标签所在的 <w:t>
+  var ctxInfo = findInWt(xml, ctx);
+  if (!ctxInfo) {
+    console.log('[replaceInXml] 未找到上下文: "' + ctx + '"');
+    return xml;
+  }
+
+  var fullText = ctxInfo.fullMatch;
+  var ctxIdx = fullText.indexOf(ctx);
+  var afterCtx = fullText.substring(ctxIdx + ctx.length);
+
+  // 情况1：上下文和空白在同一个 <w:t> 中（最常见）
+  var blankMatch = afterCtx.match(/[_\uFF3F]{2,}/);
+  if (blankMatch) {
+    var newText = fullText.substring(0, ctxIdx + ctx.length) + safeVal + fullText.substring(ctxIdx + ctx.length + blankMatch[0].length);
+    var preserve = ' xml:space="preserve"';
+    var newTag = '<w:t' + preserve + '>' + newText + '</w:t>';
+    console.log('[replaceInXml] 情况1替换: "' + ctx + '" → "' + value + '" (同一w:t内)');
+    return xml.substring(0, ctxInfo.matchStart) + newTag + xml.substring(ctxInfo.matchStart + ctxInfo.match.length);
+  }
+
+  // 情况2：同一个 <w:t> 中上下文后是带下划线格式的空格
+  if (afterCtx.length > 0 && afterCtx.trim() === '') {
+    // 检查当前 run 是否有 <w:u> 下划线格式
+    var runStart = xml.lastIndexOf('<w:r>', ctxInfo.matchStart);
+    var runArea = xml.substring(runStart, ctxInfo.matchStart);
+    if (/<w:u\b/.test(runArea)) {
+      var newText2 = fullText.substring(0, ctxIdx + ctx.length) + safeVal;
+      var newTag2 = '<w:t xml:space="preserve">' + newText2 + '</w:t>';
+      console.log('[replaceInXml] 情况2替换: "' + ctx + '" → "' + value + '" (下划线空格)');
+      return xml.substring(0, ctxInfo.matchStart) + newTag2 + xml.substring(ctxInfo.matchStart + ctxInfo.match.length);
+    }
+  }
+
+  // 情况3：空白在下一个 <w:t> 标签中
+  var searchFrom = ctxInfo.matchStart + ctxInfo.match.length;
+  var afterXml = xml.substring(searchFrom);
+  var nextRe = /<w:t([^>]*)>([\s\S]*?)<\/w:t>/;
+  var nm = afterXml.match(nextRe);
+  if (nm) {
+    var nextText = nm[2];
+    // 下划线字符
+    var bm = nextText.match(/[_\uFF3F]+/);
+    if (bm) {
+      var newText3 = nextText.replace(/[_\uFF3F]+/, safeVal);
+      var newTag3 = '<w:t xml:space="preserve">' + newText3 + '</w:t>';
+      var absStart = searchFrom + nm.index;
+      console.log('[replaceInXml] 情况3替换: "' + ctx + '" → "' + value + '" (下一个w:t)');
+      return xml.substring(0, absStart) + newTag3 + xml.substring(absStart + nm[0].length);
+    }
+    // 空格 + 下划线格式
+    var rPrArea = afterXml.substring(0, nm.index);
+    if (/<w:u\b/.test(rPrArea) && nextText.trim() === '' && nextText.length > 0) {
+      var newTag4 = '<w:t xml:space="preserve">' + safeVal + '</w:t>';
+      var absStart2 = searchFrom + nm.index;
+      console.log('[replaceInXml] 情况4替换: "' + ctx + '" → "' + value + '" (下一个w:t下划线空格)');
+      return xml.substring(0, absStart2) + newTag4 + xml.substring(absStart2 + nm[0].length);
+    }
+  }
+
+  console.log('[replaceInXml] 未找到空白占位符: "' + ctx + '"');
+  return xml;
+}
+
+// 生成委托书文档内容（基于上传模板替换字段）
+function buildAuthDocHTML(row) {
+  var today = new Date();
+  // 开始日期：当前年月日
+  var startYear = today.getFullYear();
+  var startMonth = today.getMonth() + 1;
+  var startDay = today.getDate();
+  // 结束日期：当前年+1，同月，日-1
+  var endYear = startYear + 1;
+  var endMonth = startMonth;
+  var endDay = startDay - 1;
+  if (endDay < 1) { endDay = 28; endMonth = endMonth - 1; if (endMonth < 1) endMonth = 12; }
+
+  var startDateStr = startYear + '年' + startMonth + '月' + startDay + '日';
+  var endDateStr = endYear + '年' + endMonth + '月' + endDay + '日';
+
+  var companyName = row.companyName || '';
+  var realName = row.realName || '';
+  var realIdCard = row.realIdCard || '';
+  var realPhone = row.realPhone || '';
+  var eventType = row.eventType || '';
+
+  // ===== .docx 格式：XML 级别替换，保留原始格式 =====
+  if (templateIsDocx && docxRawXml && templateZip) {
+    try {
+      var xml = docxRawXml;
+      // 1. 合并相邻相同格式的 run
+      xml = mergeDocxRuns(xml);
+
+      // 调试日志
+      var mergedText = extractXmlText(xml);
+      console.log('[模板文本]', mergedText.substring(0, 500));
+
+      console.log('[替换字段] 公司名称=' + companyName + ' 姓名=' + realName + ' 身份证=' + realIdCard + ' 手机=' + realPhone + ' 事件=' + eventType);
+
+      // 2. 直接替换字段名占位符（模板用字段名作为占位符，如"公司名称"、"员工姓名"等）
+      // 注意：长的字段名先替换，避免子串冲突（如"实名人身份证号"先于"身份证号"）
+      xml = replaceFieldNameInXml(xml, '公司名称', companyName);
+      xml = replaceFieldNameInXml(xml, '员工姓名', realName);
+      xml = replaceFieldNameInXml(xml, '实名人身份证号', realIdCard);
+      xml = replaceFieldNameInXml(xml, '实名人手机号', realPhone);
+      xml = replaceFieldNameInXml(xml, '申请事件类型', eventType);
+      // 日期字段替换（模板占位符：y1/m1/d1/y2/m2/d3）
+      xml = replaceFieldNameInXml(xml, 'y1', String(startYear));
+      xml = replaceFieldNameInXml(xml, 'm1', String(startMonth));
+      xml = replaceFieldNameInXml(xml, 'd1', String(startDay));
+      xml = replaceFieldNameInXml(xml, 'y2', String(endYear));
+      xml = replaceFieldNameInXml(xml, 'm2', String(endMonth));
+      xml = replaceFieldNameInXml(xml, 'd3', String(endDay));
+
+      // 调试：查看日期替换后的 XML 结构
+      var dateDebug = findInWt(xml, startYear + '年');
+      if (dateDebug) {
+        console.log('[日期调试] 找到"' + startYear + '年" run文本="' + dateDebug.fullMatch + '"');
+        console.log('[日期调试] 周围XML:', xml.substring(Math.max(0, dateDebug.matchStart - 80), dateDebug.matchStart + dateDebug.match.length + 80));
+      } else {
+        console.log('[日期调试] 未找到"' + startYear + '年"');
+      }
+
+      // 为所有日期值的 run 添加下划线格式（跨 run 处理，一次调用即可）
+      xml = addUnderlineToDateRuns(xml);
+
+      // 公司盖章日期：在下划线处理之后替换，避免被加下划线
+      var sealInfo = findInWt(xml, '公司盖章');
+      if (sealInfo) {
+        var sealFrom = sealInfo.matchStart + sealInfo.match.length;
+        var sealAfter = xml.substring(sealFrom);
+        var sealReplaced = false;
+
+        // 情况1：“年 月 日”在同一个 run 中
+        sealAfter = sealAfter.replace(/<w:r\b[^>]*>([\s\S]*?)<\/w:r>/, function(runMatch, innerXml) {
+          var tMatch = innerXml.match(/<w:t[^>]*>([\s\S]*?)<\/w:t>/);
+          if (!tMatch) return runMatch;
+          var text = tMatch[1];
+          var cleaned = text.replace(/\s+/g, '');
+          if (cleaned.indexOf('年') >= 0 && cleaned.indexOf('月') >= 0 && cleaned.indexOf('日') >= 0) {
+            var newText = text;
+            newText = newText.replace(/年/, startYear + '年');
+            newText = newText.replace(/月/, startMonth + '月');
+            newText = newText.replace(/日/, startDay + '日');
+            var rPrMatch = innerXml.match(/<w:rPr>([\s\S]*?)<\/w:rPr>/);
+            var rPrStr = rPrMatch ? rPrMatch[0] : '';
+            // 移除下划线格式
+            rPrStr = rPrStr.replace(/<w:u\b[^\/]*\/>/g, '').replace(/<w:u\b[^>]*>[\s\S]*?<\/w:u>/g, '');
+            sealReplaced = true;
+            console.log('[公司盖章日期] 替换: "' + text + '" → "' + newText + '" (无下划线)');
+            return '<w:r>' + rPrStr + '<w:t xml:space="preserve">' + newText + '</w:t></w:r>';
+          }
+          return runMatch;
+        });
+
+        // 情况2：“年”“月”“日”在独立的 run 中
+        if (!sealReplaced) {
+          var sealDateRe = /<w:r\b[^>]*>([\s\S]*?)<\/w:r>/g;
+          var sealMatch, sealCount = 0;
+          var sealValues = [String(startYear), String(startMonth), String(startDay)];
+          var sealTargets = ['年', '月', '日'];
+          while ((sealMatch = sealDateRe.exec(sealAfter)) !== null && sealCount < 6) {
+            var sealInner = sealMatch[1];
+            var sealTm = sealInner.match(/<w:t[^>]*>([\s\S]*?)<\/w:t>/);
+            if (sealTm) {
+              var sealText = sealTm[1].replace(/\s+/g, '');
+              if (sealCount < 3 && sealText === sealTargets[sealCount]) {
+                var sealVal = sealValues[sealCount] || '';
+                var sealRPr = sealInner.match(/<w:rPr>([\s\S]*?)<\/w:rPr>/);
+                var sealRPrStr = sealRPr ? sealRPr[0] : '';
+                sealRPrStr = sealRPrStr.replace(/<w:u\b[^\/]*\/>/g, '').replace(/<w:u\b[^>]*>[\s\S]*?<\/w:u>/g, '');
+                var newSealRun = '<w:r>' + sealRPrStr + '<w:t xml:space="preserve">' + sealVal + sealTargets[sealCount] + '</w:t></w:r>';
+                sealAfter = sealAfter.substring(0, sealMatch.index) + newSealRun + sealAfter.substring(sealMatch.index + sealMatch[0].length);
+                sealDateRe.lastIndex = sealMatch.index + newSealRun.length;
+                sealCount++;
+              }
+            }
+          }
+          sealReplaced = sealCount > 0;
+        }
+
+        xml = xml.substring(0, sealFrom) + sealAfter;
+        console.log('[公司盖章日期] 替换' + (sealReplaced ? '成功' : '失败'));
+      }
+      console.log('[替换DEBUG] 替换完成');
+
+      // 重新打包 .docx（直接修改 templateZip，完成后恢复原始 XML）
+      var originalXml = docxRawXml;
+      templateZip.remove('word/document.xml');
+      templateZip.file('word/document.xml', xml, { compression: 'DEFLATE' });
+      return templateZip.generateAsync({ type: 'blob', compression: 'DEFLATE' }).then(function(blob) {
+        // 恢复原始 XML，避免影响下一次生成
+        templateZip.remove('word/document.xml');
+        templateZip.file('word/document.xml', originalXml, { compression: 'DEFLATE' });
+        return { blob: blob, isDocx: true };
+      });
+    } catch(err) {
+      console.error('[docx处理失败]', err);
+      // 回退到文本模式
+    }
+  }
+
+  // 如果有上传模板内容，基于模板替换（文本模式回退）
+  if (templateContent && templateContent.length > 20) {
+    var content = templateContent;
+
+    // 检测是否为 HTML 格式
+    var isHTML = /<html|<head|<body/i.test(content);
+
+    if (isHTML) {
+      if (content.indexOf('charset') === -1) {
+        content = content.replace(/<head>/i, '<head><meta charset="utf-8">');
+      } else {
+        content = content.replace(/charset\s*=\s*["']?[^"'\s>]*/i, 'charset="utf-8"');
+      }
+    }
+
+    // === 第一步：直接替换字段名占位符（模板用字段名作为占位符） ===
+    content = replaceFieldNameInText(content, '公司名称', companyName);
+    content = replaceFieldNameInText(content, '员工姓名', realName);
+    content = replaceFieldNameInText(content, '实名人身份证号', realIdCard);
+    content = replaceFieldNameInText(content, '实名人手机号', realPhone);
+    content = replaceFieldNameInText(content, '申请事件类型', eventType);
+    // 日期字段替换（模板占位符：y1/m1/d1/y2/m2/d3）
+    content = replaceFieldNameInText(content, 'y1', String(startYear));
+    content = replaceFieldNameInText(content, 'm1', String(startMonth));
+    content = replaceFieldNameInText(content, 'd1', String(startDay));
+    content = replaceFieldNameInText(content, 'y2', String(endYear));
+    content = replaceFieldNameInText(content, 'm2', String(endMonth));
+    content = replaceFieldNameInText(content, 'd3', String(endDay));
+
+    // 公司盖章日期：替换“公司盖章”后面的“年”“月”“日”为当前日期
+    var sealIdx = content.indexOf('公司盖章');
+    if (sealIdx >= 0) {
+      var sealArea = content.substring(sealIdx);
+      // 替换独立的“年”“月”“日”（后面不跟其他中文字符）
+      var sealYearDone = false, sealMonthDone = false, sealDayDone = false;
+      sealArea = sealArea.replace(/年/, function() {
+        if (!sealYearDone) { sealYearDone = true; return startYear + '年'; }
+        return '年';
+      });
+      sealArea = sealArea.replace(/月/, function() {
+        if (!sealMonthDone) { sealMonthDone = true; return startMonth + '月'; }
+        return '月';
+      });
+      sealArea = sealArea.replace(/日/, function() {
+        if (!sealDayDone) { sealDayDone = true; return startDay + '日'; }
+        return '日';
+      });
+      content = content.substring(0, sealIdx) + sealArea;
+    }
+
+    // 纯文本模板包裹为 HTML .doc 格式
+    if (!isHTML) {
+      var lines = content.split(/\r?\n/);
+      var bodyHTML = lines.map(function(line) {
+        var t = line.trim();
+        if (!t) return '';
+        if (t.length < 30 && /[\u4e00-\u9fff]/.test(t) && !t.includes('：') && !t.includes(':')) {
+          return '<h1>' + t + '</h1>';
+        }
+        return '<p>' + t + '</p>';
+      }).join('\n');
+      content = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">';
+      content += '<head><meta charset="utf-8"><style>';
+      content += 'body { font-family: "SimSun","宋体",serif; font-size: 14px; line-height: 2.2; padding: 40px 60px; color: #000; }';
+      content += 'h1 { text-align: center; font-size: 22px; font-weight: bold; margin-bottom: 30px; letter-spacing: 2px; }';
+      content += 'p { text-indent: 2em; margin: 6px 0; }';
+      content += '</style></head><body>';
+      content += bodyHTML;
+      content += '</body></html>';
+    }
+
+    return content;
+  }
+
+  // 回退：使用内置模板
+  var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">';
+  html += '<head><meta charset="utf-8"><style>';
+  html += 'body { font-family: "SimSun","宋体",serif; font-size: 14px; line-height: 2.2; padding: 40px 60px; color: #000; }';
+  html += 'h1 { text-align: center; font-size: 22px; font-weight: bold; margin-bottom: 30px; letter-spacing: 2px; }';
+  html += 'p { text-indent: 2em; margin: 8px 0; }';
+  html += '.blank { display: inline-block; min-width: 160px; border-bottom: 1px solid #000; text-align: center; padding: 0 6px; }';
+  html += '.sign-area { text-align: right; margin-top: 50px; }';
+  html += '</style></head><body>';
+  html += '<h1>公司办理电信业务委托书</h1>';
+  html += '<p>公司名称：<span class="blank">' + companyName + '</span></p>';
+  html += '<p>申请事件类型：<span class="blank">' + eventType + '</span></p>';
+  html += '<p>委托有效期：<span class="blank">' + startYear + '</span>年<span class="blank">' + startMonth + '</span>月<span class="blank">' + startDay + '</span>日 至 <span class="blank">' + endYear + '</span>年<span class="blank">' + endMonth + '</span>月<span class="blank">' + endDay + '</span>日</p>';
+  html += '<p>员工姓名：<span class="blank">' + realName + '</span></p>';
+  html += '<p>实名人身份证号：<span class="blank">' + realIdCard + '</span></p>';
+  html += '<p>实名人手机号：<span class="blank">' + realPhone + '</span></p>';
+  html += '<p>委托权限：经办人在上述委托事项范围内，有权代表本公司办理相关手续、签署相关文件。</p>';
+  html += '<p>本委托书经双方签字盖章后生效，委托期限届满自动失效。</p>';
+  html += '<div class="sign-area">';
+  html += '<p>委托单位（盖章）：________________</p>';
+  html += '<p>法定代表人（签字）：________________</p>';
+  html += '<p>日期：' + startDateStr + '</p>';
+  html += '</div></body></html>';
+  return html;
+}
+
+// 二进制 .doc 替换：在原始二进制数据中替换下划线字段
+function buildBinaryDoc(row) {
+  var today = new Date();
+  var startYear = today.getFullYear();
+  var startMonth = today.getMonth() + 1;
+  var startDay = today.getDate();
+  var endYear = startYear + 1;
+  var endMonth = startMonth;
+  var endDay = startDay - 1;
+  if (endDay < 1) { endDay = 28; endMonth = endMonth - 1; if (endMonth < 1) endMonth = 12; }
+
+  var fields = [
+    { context: '公司名称', value: row.companyName || '' },
+    { context: '实名人身份证号', value: row.realIdCard || '' },
+    { context: '实名人手机号', value: row.realPhone || '' },
+    { context: '员工姓名', value: row.realName || '' },
+    { context: '申请事件类型', value: row.eventType || '' },
+    { context: 'y1', value: String(startYear) },
+    { context: 'm1', value: String(startMonth) },
+    { context: 'd1', value: String(startDay) },
+    { context: 'y2', value: String(endYear) },
+    { context: 'm2', value: String(endMonth) },
+    { context: 'd3', value: String(endDay) }
+  ];
+
+  var result = new Uint8Array(templateBinary.slice(0));
+
+  // 编码字符串为 UTF-16LE 字节数组
+  function toUTF16LE(str) {
+    var bytes = [];
+    for (var i = 0; i < str.length; i++) {
+      var code = str.charCodeAt(i);
+      bytes.push(code & 0xFF);
+      bytes.push((code >> 8) & 0xFF);
+    }
+    return bytes;
+  }
+
+  // 在字节数组中查找子数组的位置
+  function findBytes(haystack, needle, from) {
+    outer:
+    for (var i = from || 0; i <= haystack.length - needle.length; i++) {
+      for (var j = 0; j < needle.length; j++) {
+        if (haystack[i + j] !== needle[j]) continue outer;
+      }
+      return i;
+    }
+    return -1;
+  }
+
+  // 替换连续下划线/空白占位符（与上下文字节对齐）
+  function replaceAfterContext(contextStr, newValue) {
+    var ctxBytes = toUTF16LE(contextStr);
+    var ctxPos = findBytes(result, ctxBytes, 0);
+    if (ctxPos < 0) return;
+
+    // 查找上下文后的第一个下划线序列（_ 或全角空格或 em space）
+    var searchFrom = ctxPos + ctxBytes.length;
+    var blankStart = -1;
+    var blankChar = 0;
+
+    // 查找 _ (0x5F 0x00 in UTF-16LE)
+    var underscoreBytes = [0x5F, 0x00];
+    var pos1 = findBytes(result, underscoreBytes, searchFrom);
+    // 查找全角空格 (0x00 0x30 in UTF-16LE)
+    var fullWidthSpace = [0x00, 0x30];
+    var pos2 = findBytes(result, fullWidthSpace, searchFrom);
+    // 查找 em space (0x03 0x20 in UTF-16LE)
+    var emSpace = [0x03, 0x20];
+    var pos3 = findBytes(result, emSpace, searchFrom);
+
+    // 取最近的一个（在 200 字节内）
+    var candidates = [];
+    if (pos1 >= 0 && pos1 - searchFrom < 200) candidates.push({ pos: pos1, ch: 0x5F });
+    if (pos2 >= 0 && pos2 - searchFrom < 200) candidates.push({ pos: pos2, ch: 0x3000 });
+    if (pos3 >= 0 && pos3 - searchFrom < 200) candidates.push({ pos: pos3, ch: 0x2003 });
+    if (candidates.length === 0) return;
+    candidates.sort(function(a, b) { return a.pos - b.pos; });
+    blankStart = candidates[0].pos;
+    blankChar = candidates[0].ch;
+
+    // 计算占位符长度（连续相同的字符）
+    var blankLen = 0;
+    var blankBytes = toUTF16LE(String.fromCharCode(blankChar));
+    for (var i = blankStart; i < result.length - 1; i += 2) {
+      if (result[i] === blankBytes[0] && result[i + 1] === blankBytes[1]) {
+        blankLen += 2;
+      } else {
+        break;
+      }
+    }
+    if (blankLen === 0) return;
+
+    // 生成替换内容（与占位符等长）
+    var newBytes = toUTF16LE(newValue);
+    var padded = [];
+    for (var k = 0; k < blankLen; k += 2) {
+      if (k + 1 < newBytes.length) {
+        padded.push(newBytes[k], newBytes[k + 1]);
+      } else {
+        // 填充空格 (0x20 0x00 in UTF-16LE)
+        padded.push(0x20, 0x00);
+      }
+    }
+    // 如果新内容比占位符长，截断
+    padded = padded.slice(0, blankLen);
+    while (padded.length < blankLen) { padded.push(0x20, 0x00); }
+
+    // 写入
+    for (var m = 0; m < blankLen; m++) {
+      result[blankStart + m] = padded[m];
+    }
+  }
+
+  // 执行替换
+  fields.forEach(function(f) { replaceAfterContext(f.context, f.value); });
+
+  return new Blob([result.buffer], { type: 'application/msword' });
+}
+
+// 批量生成委托书
+function generateAuthDocuments() {
+  if (selectedRows.length === 0) {
+    showToast('没有可用的记录数据', 'error');
+    return;
+  }
+
+  var btn = document.getElementById('authSubmitBtn');
+  btn.disabled = true;
+  btn.textContent = '生成中...';
+
+  var resultArea = document.getElementById('genResultArea');
+  var resultList = document.getElementById('genResultList');
+  resultList.innerHTML = '';
+
+  var generatedFiles = [];
+
+  selectedRows.forEach(function(row, index) {
+    setTimeout(function() {
+      var today = new Date();
+      var dateStr = today.getFullYear() + String(today.getMonth() + 1).padStart(2, '0') + String(today.getDate()).padStart(2, '0');
+
+      function addResult(fileName, docContent, isBinary, isDocx) {
+        generatedFiles.push({ name: fileName, content: docContent, row: row, isBinary: isBinary, isDocx: isDocx });
+        var item = document.createElement('div');
+        item.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:#fff; border-radius:6px; border:1px solid #d1fae5;';
+        item.innerHTML = '<div style="flex:1; min-width:0;"><div style="font-size:13px; font-weight:650; color:#111827; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📄 ' + fileName + '</div><div style="font-size:11px; color:#647084; margin-top:2px;">' + (row.companyName || '') + ' · ' + (row.realName || '') + '</div></div><button class="btn btn-sm" style="margin-left:10px; background:#168260; color:#fff; border:none; padding:4px 12px; border-radius:6px; font-size:12px; cursor:pointer; flex-shrink:0;" onclick="downloadAuthDoc(' + (generatedFiles.length - 1) + ')">下载</button>';
+        resultList.appendChild(item);
+        if (generatedFiles.length === selectedRows.length) {
+          resultArea.style.display = 'block';
+          btn.textContent = '已完成';
+          btn.style.background = '#168260';
+          btn.style.color = '#fff';
+          btn.style.borderColor = '#168260';
+          showToast('成功生成 ' + generatedFiles.length + ' 份委托书！', 'success');
+          window._generatedAuthDocs = generatedFiles;
+        }
+      }
+
+      if (templateIsBinary && templateBinary) {
+        var docContent = buildBinaryDoc(row);
+        var fileName = '政企客户委托书_' + (row.realName || '未命名') + '_' + dateStr + '.doc';
+        addResult(fileName, docContent, true, false);
+      } else {
+        var result = buildAuthDocHTML(row);
+        if (result && typeof result.then === 'function') {
+          // .docx 异步结果
+          result.then(function(docxResult) {
+            var fileName = '政企客户委托书_' + (row.realName || '未命名') + '_' + dateStr + '.docx';
+            addResult(fileName, docxResult.blob, false, true);
+          }).catch(function(err) {
+            console.error('[docx生成失败]', err);
+            var fileName = '政企客户委托书_' + (row.realName || '未命名') + '_' + dateStr + '.doc';
+            addResult(fileName, '<html><body>生成失败: ' + err.message + '</body></html>', false, false);
+          });
+        } else {
+          var fileName = '政企客户委托书_' + (row.realName || '未命名') + '_' + dateStr + '.doc';
+          addResult(fileName, result, false, false);
+        }
+      }
+    }, index * 200);
+  });
+}
+
+// 下载委托书
+function downloadAuthDoc(index) {
+  var docs = window._generatedAuthDocs;
+  if (!docs || !docs[index]) return;
+  var doc = docs[index];
+  var blob;
+  if (doc.isDocx) {
+    blob = doc.content; // .docx Blob
+  } else if (doc.isBinary) {
+    blob = doc.content; // 二进制 Blob
+  } else {
+    blob = new Blob(['\ufeff' + doc.content], { type: 'application/msword; charset=utf-8' });
+  }
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = doc.name;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// 全部下载（ZIP打包）
+function downloadAllAuthDocs() {
+  var docs = window._generatedAuthDocs;
+  if (!docs || docs.length === 0) {
+    showToast('没有可下载的文件', 'error');
+    return;
+  }
+  if (typeof JSZip === 'undefined') {
+    showToast('JSZip 库未加载，请刷新页面重试', 'error');
+    return;
+  }
+  var btn = document.getElementById('downloadAllBtn');
+  btn.disabled = true;
+  btn.textContent = '打包中...';
+
+  var zip = new JSZip();
+  var folder = zip.folder('政企客户委托书');
+
+  docs.forEach(function(doc) {
+    if (doc.isBinary || doc.isDocx) {
+      folder.file(doc.name, doc.content); // Blob 对象
+    } else {
+      folder.file(doc.name, '\ufeff' + doc.content);
+    }
+  });
+
+  var today = new Date();
+  var dateStr = today.getFullYear() + String(today.getMonth() + 1).padStart(2, '0') + String(today.getDate()).padStart(2, '0');
+  var zipName = '政企客户委托书_' + dateStr + '.zip';
+
+  zip.generateAsync({ type: 'blob' }).then(function(blob) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = zipName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    btn.disabled = false;
+    btn.textContent = '📦 全部下载';
+    showToast('已打包下载 ' + docs.length + ' 份委托书', 'success');
+  }).catch(function(err) {
+    btn.disabled = false;
+    btn.textContent = '📦 全部下载';
+    showToast('打包失败: ' + err.message, 'error');
+  });
+}
+
+function doBatchSubmit() {
+  var ids = getCheckedIds();
+  if (ids.length === 0) { showToast('请先勾选需要提交的记录', 'error'); return; }
+  if (confirm('确认批量提交选中的 ' + ids.length + ' 条记录？')) {
+    mockData.forEach(function(r) {
+      if (ids.indexOf(String(r.id)) >= 0 && (r.status === '初始' || r.status === '已取消')) {
+        r.status = '已提交';
+      }
+    });
+    doSearch();
+    showToast('批量提交成功', 'success');
+  }
+}
+
+function doSyncBPM() {
+  showToast('正在同步审批流程数据...', 'info');
+}
+
+function doDelete(id) {
+  if (confirm('确认删除该条记录吗？')) {
+    mockData = mockData.filter(function(row) { return row.id !== id; });
+    renderTable(mockData);
+    showToast('删除成功', 'success');
+  }
+}
+
+// Toast 轻提示
+function showToast(message, type) {
+  type = type || 'info';
+  var container = document.getElementById('toastContainer');
+  if (!container) return;
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(function() {
+    if (toast.parentNode) {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s';
+      setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+    }
+  }, 2500);
+}
+
+// 初始化
+renderTable(mockData);
+</script>
+</body>
+</html>

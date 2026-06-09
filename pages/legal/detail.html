@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>法人证件申请 - 详情</title>
+  <link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+<div class="page-container">
+
+  <!-- Toast 轻提示容器 -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script>
+    if (window.parent) {
+      window.parent.postMessage({type:'breadcrumb', text:'法人证件申请 <span>/</span> 详情'}, '*');
+    }
+  </script>
+
+  <div class="page-title" id="pageTitle">新增法人证件申请</div>
+
+  <div class="form-area">
+    <form id="mainForm">
+      <div class="form-group">
+        <div class="form-item">
+          <label>申请编号：</label>
+          <div class="form-control"><input type="text" id="appNo" readonly disabled placeholder="保存后自动生成"></div>
+        </div>
+        <div class="form-item">
+          <label>流程编号：</label>
+          <div class="form-control"><input type="text" id="procNo" readonly disabled placeholder="保存后自动生成"></div>
+        </div>
+        <div class="form-item">
+          <label class="required">联系电话：</label>
+          <div class="form-control"><input type="text" id="phone" placeholder="请输入联系电话"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-item">
+          <label class="required">申请地：</label>
+          <div class="form-control">
+            <select id="region">
+              <option value="">请选择</option>
+              <option value="北京">北京</option><option value="上海">上海</option><option value="广州">广州</option><option value="深圳">深圳</option><option value="杭州">杭州</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-item">
+          <label class="required">档案类型：</label>
+          <div class="form-control">
+            <select id="archType">
+              <option value="">请选择</option>
+              <option value="身份证">身份证</option><option value="护照">护照</option><option value="营业执照">营业执照</option><option value="其他证件">其他证件</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-item">
+          <label class="required">法人姓名：</label>
+          <div class="form-control"><input type="text" id="legalName" placeholder="请输入法人姓名"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-item">
+          <label class="required">法人信息选择：</label>
+          <div class="form-control">
+            <select id="legalInfo">
+              <option value="">请选择</option>
+              <option value="法人代表身份证">法人代表身份证</option><option value="法人护照信息">法人护照信息</option><option value="公司营业执照副本">公司营业执照副本</option><option value="法人授权委托书">法人授权委托书</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-item">
+          <label class="required">档案性质：</label>
+          <div class="form-control">
+            <select id="archNature">
+              <option value="">请选择</option>
+              <option value="原件">原件</option><option value="复印件">复印件</option><option value="副本">副本</option><option value="扫描件">扫描件</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-item">
+          <label class="required">借调档案名称：</label>
+          <div class="form-control"><input type="text" id="archName" placeholder="请输入借调档案名称"></div>
+        </div>
+        <div class="form-item">
+          <label class="required">借调总数：</label>
+          <div class="form-control"><input type="number" id="total" placeholder="请输入借调总数" min="1"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-item full">
+          <label class="required">借调用途：</label>
+          <div class="form-control">
+            <textarea id="purpose" rows="3" placeholder="请输入借调用途"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group" id="cf1" style="display:none;">
+        <div class="form-item"><label>创建人：</label><div class="form-control"><input type="text" id="creator" readonly disabled></div></div>
+        <div class="form-item"><label>创建时间：</label><div class="form-control"><input type="text" id="createTime" readonly disabled></div></div>
+      </div>
+      <div class="form-group" id="cf2" style="display:none;">
+        <div class="form-item"><label>修改人：</label><div class="form-control"><input type="text" id="modifier" readonly disabled></div></div>
+        <div class="form-item"><label>修改时间：</label><div class="form-control"><input type="text" id="modifyTime" readonly disabled></div></div>
+      </div>
+      <div class="form-group" id="cf3" style="display:none;">
+        <div class="form-item"><label>状态：</label><div class="form-control">
+          <select id="status" disabled>
+            <option value="初始">初始</option><option value="已提交">已提交</option><option value="审核中">审核中</option><option value="已审核">已审核</option><option value="已取消">已取消</option>
+          </select>
+        </div></div>
+      </div>
+
+      <div class="form-actions" id="formActions">
+        <button type="button" class="btn btn-primary" onclick="doSubmit()">提交</button>
+        <button type="button" class="btn btn-success" id="saveBtn" style="display:none;" onclick="doSave()">保存</button>
+        <button type="button" class="btn" onclick="goBack()">返回</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- 操作日志 -->
+  <div class="operation-log" id="opLog" style="display:none;">
+    <div class="operation-log-title">操作日志</div>
+    <div class="operation-log-list" id="logList"></div>
+  </div>
+
+</div>
+
+<script>
+var mockData = JSON.parse(localStorage.getItem('legal_mockData') || 'null') || [
+  { id:1, appNo:'SQ-FR-20260505001', procNo:'LC-FR-20260505001', phone:'13811112222', region:'北京', archType:'身份证', legalName:'张三', legalInfo:'法人代表身份证', archNature:'原件', archName:'法人身份证原件', total:2, purpose:'工商变更登记', status:'已审核', creator:'李四', createTime:'2026-05-05 08:30:00', modifier:'李四', modifyTime:'2026-05-15 16:00:00', logs:[
+    {action:'创建申请', time:'2026-05-05 08:30:00', operator:'李四', detail:'新建法人证件申请单'},
+    {action:'提交审核', time:'2026-05-05 09:00:00', operator:'李四', detail:'提交至审批流程'},
+    {action:'审核通过', time:'2026-05-15 16:00:00', operator:'李四', detail:'审批通过，流程结束'}
+  ]},
+  { id:2, appNo:'SQ-FR-20260520002', procNo:'LC-FR-20260520002', phone:'13922223333', region:'上海', archType:'护照', legalName:'王五', legalInfo:'法人护照信息', archNature:'复印件', archName:'法人护照复印件', total:3, purpose:'海外业务拓展', status:'审核中', creator:'赵六', createTime:'2026-05-20 13:00:00', modifier:'', modifyTime:'', logs:[
+    {action:'创建申请', time:'2026-05-20 13:00:00', operator:'赵六', detail:'新建法人证件申请单'},
+    {action:'提交审核', time:'2026-05-20 13:30:00', operator:'赵六', detail:'提交至审批流程'},
+    {action:'审核中', time:'2026-05-20 15:00:00', operator:'系统', detail:'等待审批人处理'}
+  ]}
+];
+
+function g(name) { var r = location.search.match(new RegExp('[?&]'+name+'=([^&]*)')); return r ? decodeURIComponent(r[1]) : ''; }
+var mode = g('mode') || 'add';
+var editId = parseInt(g('id')) || 0;
+
+function init() {
+  var rd = mode === 'view';
+  if (rd) { document.getElementById('pageTitle').textContent = '查看法人证件申请'; setRO(true); document.getElementById('formActions').innerHTML = '<button type="button" class="btn" onclick="goBack()">返回</button>'; }
+  else if (mode === 'edit') { document.getElementById('pageTitle').textContent = '编辑法人证件申请'; document.getElementById('saveBtn').style.display = ''; }
+  if ((mode === 'edit' || rd) && editId > 0) {
+    var rec = mockData.find(function(r){return r.id===editId;});
+    if (rec) {
+      document.getElementById('appNo').value = rec.appNo || '';
+      document.getElementById('procNo').value = rec.procNo || '';
+      document.getElementById('phone').value = rec.phone;
+      document.getElementById('region').value = rec.region;
+      document.getElementById('archType').value = rec.archType;
+      document.getElementById('legalName').value = rec.legalName;
+      document.getElementById('legalInfo').value = rec.legalInfo;
+      document.getElementById('archNature').value = rec.archNature;
+      document.getElementById('archName').value = rec.archName;
+      document.getElementById('total').value = rec.total;
+      document.getElementById('purpose').value = rec.purpose;
+      document.getElementById('status').value = rec.status;
+      showCF(['cf1','cf2','cf3']);
+      document.getElementById('creator').value = rec.creator;
+      document.getElementById('createTime').value = rec.createTime;
+      document.getElementById('modifier').value = rec.modifier || '';
+      document.getElementById('modifyTime').value = rec.modifyTime || '';
+      renderLog(rec.logs || []);
+    }
+  }
+}
+function showCF(ids) { ids.forEach(function(id){ document.getElementById(id).style.display = ''; }); }
+function setRO(v) {
+  document.querySelectorAll('#mainForm input:not([type="button"]), #mainForm select, #mainForm textarea').forEach(function(el){ el.disabled = v; });
+}
+function gData() {
+  return {
+    phone: document.getElementById('phone').value.trim(),
+    region: document.getElementById('region').value,
+    archType: document.getElementById('archType').value,
+    legalName: document.getElementById('legalName').value.trim(),
+    legalInfo: document.getElementById('legalInfo').value,
+    archNature: document.getElementById('archNature').value,
+    archName: document.getElementById('archName').value.trim(),
+    total: parseInt(document.getElementById('total').value) || 1,
+    purpose: document.getElementById('purpose').value.trim()
+  };
+}
+function validate() {
+  document.querySelectorAll('.has-error').forEach(function(el) { el.classList.remove('has-error'); });
+  var fs = [{id:'phone',n:'联系电话'},{id:'region',n:'申请地'},{id:'archType',n:'档案类型'},{id:'legalName',n:'法人姓名'},{id:'legalInfo',n:'法人信息选择'},{id:'archNature',n:'档案性质'},{id:'archName',n:'借调档案名称'},{id:'total',n:'借调总数'},{id:'purpose',n:'借调用途'}];
+  var fe = null;
+  for (var i=0;i<fs.length;i++) {
+    var el = document.getElementById(fs[i].id);
+    if (!el.value.toString().trim()) {
+      var p = el.closest('.form-control'); if(p) p.classList.add('has-error');
+      if(!fe) fe=el;
+    }
+  }
+  if(fe){ showToast('请完善表单中的必填项','error'); fe.focus(); return false; }
+  return true;
+}
+function doSubmit() { if(!validate()) return; var d=gData(); d.status='已提交'; saveData(d); showToast('提交成功','success'); goBack(); }
+function doSave() { if(!validate()) return; var d=gData(); d.status=document.getElementById('status').value||'初始'; saveData(d); showToast('保存成功','success'); goBack(); }
+function saveData(d) {
+  if (mode==='add') {
+    d.id=mockData.length>0?Math.max.apply(null,mockData.map(function(r){return r.id;}))+1:1;
+    d.appNo='SQ-FR-'+new Date().toISOString().slice(0,10).replace(/-/g,'')+String(d.id).padStart(3,'0');
+    d.procNo='LC-FR-'+new Date().toISOString().slice(0,10).replace(/-/g,'')+String(d.id).padStart(3,'0');
+    d.creator='当前用户'; d.createTime=now(); d.modifier=''; d.modifyTime='';
+    mockData.push(d);
+  } else {
+    var idx=mockData.findIndex(function(r){return r.id===editId;});
+    if(idx>=0){ d.id=editId; d.creator=mockData[idx].creator; d.createTime=mockData[idx].createTime; d.modifier='当前用户'; d.modifyTime=now(); mockData[idx]=d; }
+  }
+  localStorage.setItem('legal_mockData',JSON.stringify(mockData));
+}
+function now(){ return new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'); }
+function goBack(){ location.href='list.html'; }
+function renderLog(logs) {
+  if (!logs || logs.length === 0) return;
+  var c = document.getElementById('opLog');
+  var l = document.getElementById('logList');
+  c.style.display = '';
+  var h = '';
+  logs.forEach(function(log) {
+    h += '<div class="operation-log-item">';
+    h += '<div class="operation-log-header"><span class="operation-log-action">' + esc(log.action) + '</span><span class="operation-log-time">' + esc(log.time) + '</span></div>';
+    h += '<div class="operation-log-detail">' + esc(log.detail) + '</div>';
+    h += '<div class="operation-log-operator">操作人：' + esc(log.operator) + '</div>';
+    h += '</div>';
+  });
+  l.innerHTML = h;
+}
+function esc(s) { if(!s) return ''; var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+init();
+
+// Toast 轻提示
+function showToast(message, type) {
+  type = type || 'info';
+  var container = document.getElementById('toastContainer');
+  if (!container) return;
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(function() {
+    if (toast.parentNode) {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s';
+      setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+    }
+  }, 2500);
+}
+</script>
+</body>
+</html>
