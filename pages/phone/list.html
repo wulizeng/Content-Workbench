@@ -124,40 +124,39 @@
         <label>公司名称：</label>
         <select id="searchCompany">
           <option value="">全部</option>
-          <option value="北京星辰科技有限公司">北京星辰科技有限公司</option>
           <option value="上海云途贸易有限公司">上海云途贸易有限公司</option>
-          <option value="广州鼎盛电子商务有限公司">广州鼎盛电子商务有限公司</option>
-          <option value="深圳前海数码科技有限公司">深圳前海数码科技有限公司</option>
           <option value="杭州西湖信息技术有限公司">杭州西湖信息技术有限公司</option>
+          <option value="嘉兴鼎盛电子商务有限公司">嘉兴鼎盛电子商务有限公司</option>
+          <option value="温州前海数码科技有限公司">温州前海数码科技有限公司</option>
+          <option value="上海星辰科技有限公司">上海星辰科技有限公司</option>
         </select>
       </div>
       <div class="search-item">
         <label>使用属地：</label>
         <select id="searchRegion">
           <option value="">全部</option>
-          <option value="北京">北京</option>
           <option value="上海">上海</option>
-          <option value="广州">广州</option>
-          <option value="深圳">深圳</option>
           <option value="杭州">杭州</option>
+          <option value="嘉兴">嘉兴</option>
+          <option value="温州">温州</option>
         </select>
       </div>
       <div class="search-item">
         <label>申请电话类型：</label>
         <select id="searchPhoneType">
           <option value="">全部</option>
-          <option value="固定电话">固定电话</option>
-          <option value="移动电话">移动电话</option>
-          <option value="400热线">400热线</option>
+          <option value="固话">固话</option>
+          <option value="手机号码">手机号码</option>
         </select>
       </div>
       <div class="search-item">
         <label>申请事件类型：</label>
         <select id="searchEventType">
           <option value="">全部</option>
-          <option value="新装">新装</option>
-          <option value="移机">移机</option>
-          <option value="过户">过户</option>
+          <option value="新增">新增</option>
+          <option value="变更">变更</option>
+          <option value="补卡">补卡（手机卡丢失）</option>
+          <option value="开机">开机（沉默卡局方停机）</option>
           <option value="注销">注销</option>
         </select>
       </div>
@@ -167,8 +166,6 @@
           <option value="">全部</option>
           <option value="初始">初始</option>
           <option value="已提交">已提交</option>
-          <option value="审核中">审核中</option>
-          <option value="已审核">已审核</option>
           <option value="已取消">已取消</option>
         </select>
       </div>
@@ -186,8 +183,6 @@
       <button class="btn btn-primary" onclick="goAdd()">+ 新增申请</button>
       <button class="btn btn-import" onclick="doImport()">导入</button>
       <button class="btn btn-auth" onclick="openAuthModal()">生成授权书</button>
-      <button class="btn btn-success" onclick="doBatchSubmit()">批量提交</button>
-      <button class="btn btn-warning" onclick="doSyncBPM()">同步BPM</button>
     </div>
 
     <div class="table-scroll">
@@ -196,8 +191,7 @@
           <tr>
             <th style="width:40px;"><input type="checkbox" id="checkAll" onclick="toggleAll(this)"></th>
             <th>序号</th>
-            <th>申请编号</th>
-            <th>流程编号</th>
+            <th>流水编号</th>
             <th>公司名称</th>
             <th>使用属地</th>
             <th>申请电话类型</th>
@@ -290,11 +284,11 @@
 <script>
 // 模拟数据
 var mockData = [
-  { id:1, appNo:'SQ-DH-20260510001', procNo:'LC-DH-20260510001', companyName:'北京星辰科技有限公司', region:'北京', phoneType:'固定电话', eventType:'新装', reason:'新办公室业务需要', operator:'中国电信', realName:'张三', realIdCard:'110101199001011234', realPhone:'13800138001', user:'张三', status:'已审核', creator:'李四', createTime:'2026-05-10 10:30:00', modifier:'李四', modifyTime:'2026-05-20 14:00:00' },
-  { id:2, appNo:'SQ-DH-20260522002', procNo:'LC-DH-20260522002', companyName:'上海云途贸易有限公司', region:'上海', phoneType:'移动电话', eventType:'移机', reason:'办公地址搬迁', operator:'中国移动', realName:'王五', realIdCard:'310101198505052345', realPhone:'13900139002', user:'赵六', status:'审核中', creator:'李四', createTime:'2026-05-22 09:15:00', modifier:'', modifyTime:'' },
-  { id:3, appNo:'SQ-DH-20260528003', procNo:'', companyName:'广州鼎盛电子商务有限公司', region:'广州', phoneType:'400热线', eventType:'新装', reason:'客户服务热线需求', operator:'中国联通', realName:'孙七', realIdCard:'440101199203034567', realPhone:'13700137003', user:'孙七', status:'已提交', creator:'周八', createTime:'2026-05-28 16:45:00', modifier:'', modifyTime:'' },
-  { id:4, appNo:'SQ-DH-20260601004', procNo:'', companyName:'深圳前海数码科技有限公司', region:'深圳', phoneType:'固定电话', eventType:'过户', reason:'人员离职交接', operator:'中国电信', realName:'吴九', realIdCard:'440301198807076789', realPhone:'13600136004', user:'郑十', status:'初始', creator:'李四', createTime:'2026-06-01 08:00:00', modifier:'', modifyTime:'' },
-  { id:5, appNo:'SQ-DH-20260415005', procNo:'', companyName:'杭州西湖信息技术有限公司', region:'杭州', phoneType:'移动电话', eventType:'注销', reason:'业务已停止', operator:'中国移动', realName:'钱二', realIdCard:'330101199511118901', realPhone:'13500135005', user:'钱二', status:'已取消', creator:'周八', createTime:'2026-04-15 11:20:00', modifier:'李四', modifyTime:'2026-05-01 10:00:00' }
+  { id:1, appNo:'SQ-DH-20260510001', companyName:'上海云途贸易有限公司', region:'上海', phoneType:'固话', eventType:'新增', reason:'新办公室业务需要', operator:'中国电信', realName:'张三', realIdCard:'310101199001011234', realPhone:'13800138001', user:'张三', status:'已提交', creator:'李四', createTime:'2026-05-10 10:30:00', modifier:'李四', modifyTime:'2026-05-20 14:00:00' },
+  { id:2, appNo:'SQ-DH-20260522002', companyName:'杭州西湖信息技术有限公司', region:'杭州', phoneType:'手机号码', eventType:'变更', reason:'办公地址搬迁', operator:'中国移动', realName:'王五', realIdCard:'330101198505052345', realPhone:'13900139002', user:'赵六', status:'初始', creator:'李四', createTime:'2026-05-22 09:15:00', modifier:'', modifyTime:'' },
+  { id:3, appNo:'SQ-DH-20260528003', companyName:'嘉兴鼎盛电子商务有限公司', region:'嘉兴', phoneType:'固话', eventType:'补卡', reason:'手机卡丢失需要补卡', operator:'中国联通', realName:'孙七', realIdCard:'330401199203034567', realPhone:'13700137003', user:'孙七', status:'已提交', creator:'周八', createTime:'2026-05-28 16:45:00', modifier:'', modifyTime:'' },
+  { id:4, appNo:'SQ-DH-20260601004', companyName:'温州前海数码科技有限公司', region:'温州', phoneType:'手机号码', eventType:'开机', reason:'长期未使用变为沉默卡，局方停机需开机', operator:'中国电信', realName:'吴九', realIdCard:'330301198807076789', realPhone:'13600136004', user:'郑十', status:'初始', creator:'李四', createTime:'2026-06-01 08:00:00', modifier:'', modifyTime:'' },
+  { id:5, appNo:'SQ-DH-20260415005', companyName:'上海星辰科技有限公司', region:'上海', phoneType:'手机号码', eventType:'注销', reason:'业务已停止', operator:'中国移动', realName:'钱二', realIdCard:'310101199511118901', realPhone:'13500135005', user:'钱二', status:'已取消', creator:'周八', createTime:'2026-04-15 11:20:00', modifier:'李四', modifyTime:'2026-05-01 10:00:00' }
 ];
 
 // 渲染表格
@@ -302,14 +296,13 @@ function renderTable(data) {
   var tbody = document.getElementById('tableBody');
   var html = '';
   if (data.length === 0) {
-    html = '<tr><td colspan="20" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无数据</div><div class="empty-hint">点击「+ 新增申请」创建记录</div></td></tr>';
+    html = '<tr><td colspan="19" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无数据</div><div class="empty-hint">点击「+ 新增申请」创建记录</div></td></tr>';
   } else {
     data.forEach(function(row, index) {
       html += '<tr class="' + (row._checked ? 'row-selected' : '') + '">';
       html += '<td><input type="checkbox" class="row-check" value="' + row.id + '" ' + (row._checked ? 'checked' : '') + ' onclick="toggleRow(this,' + row.id + ')"></td>';
       html += '<td>' + (index + 1) + '</td>';
       html += '<td>' + escapeHtml(row.appNo) + '</td>';
-      html += '<td>' + escapeHtml(row.procNo) + '</td>';
       html += '<td>' + escapeHtml(row.companyName) + '</td>';
       html += '<td>' + escapeHtml(row.region) + '</td>';
       html += '<td>' + escapeHtml(row.phoneType) + '</td>';
@@ -369,9 +362,7 @@ function getStatusTag(status) {
   switch(status) {
     case '初始': cls = 'initial'; break;
     case '已提交': cls = 'submitted'; break;
-    case '审核中': cls = 'reviewing'; break;
-    case '已审核': cls = 'approved'; break;
-    case '已取消': cls = 'cancelled'; break;
+    case '已删除': cls = 'cancelled'; break;
     default: cls = 'initial';
   }
   return '<span class="status-tag ' + cls + '">' + status + '</span>';
@@ -1531,24 +1522,6 @@ function downloadAllAuthDocs() {
     btn.textContent = '📦 全部下载';
     showToast('打包失败: ' + err.message, 'error');
   });
-}
-
-function doBatchSubmit() {
-  var ids = getCheckedIds();
-  if (ids.length === 0) { showToast('请先勾选需要提交的记录', 'error'); return; }
-  if (confirm('确认批量提交选中的 ' + ids.length + ' 条记录？')) {
-    mockData.forEach(function(r) {
-      if (ids.indexOf(String(r.id)) >= 0 && (r.status === '初始' || r.status === '已取消')) {
-        r.status = '已提交';
-      }
-    });
-    doSearch();
-    showToast('批量提交成功', 'success');
-  }
-}
-
-function doSyncBPM() {
-  showToast('正在同步审批流程数据...', 'info');
 }
 
 function doDelete(id) {

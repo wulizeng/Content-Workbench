@@ -25,15 +25,9 @@
     <form id="phoneForm">
       <div class="form-group">
         <div class="form-item">
-          <label>申请编号：</label>
+          <label>流水编号：</label>
           <div class="form-control">
             <input type="text" id="appNo" readonly disabled placeholder="保存后自动生成">
-          </div>
-        </div>
-        <div class="form-item">
-          <label>流程编号：</label>
-          <div class="form-control">
-            <input type="text" id="procNo" readonly disabled placeholder="保存后自动生成">
           </div>
         </div>
         <div class="form-item">
@@ -41,11 +35,11 @@
           <div class="form-control">
             <select id="companyName">
               <option value="">请选择</option>
-              <option value="北京星辰科技有限公司">北京星辰科技有限公司</option>
               <option value="上海云途贸易有限公司">上海云途贸易有限公司</option>
-              <option value="广州鼎盛电子商务有限公司">广州鼎盛电子商务有限公司</option>
-              <option value="深圳前海数码科技有限公司">深圳前海数码科技有限公司</option>
               <option value="杭州西湖信息技术有限公司">杭州西湖信息技术有限公司</option>
+              <option value="嘉兴鼎盛电子商务有限公司">嘉兴鼎盛电子商务有限公司</option>
+              <option value="温州前海数码科技有限公司">温州前海数码科技有限公司</option>
+              <option value="上海星辰科技有限公司">上海星辰科技有限公司</option>
             </select>
           </div>
         </div>
@@ -56,11 +50,10 @@
           <div class="form-control">
             <select id="region">
               <option value="">请选择</option>
-              <option value="北京">北京</option>
               <option value="上海">上海</option>
-              <option value="广州">广州</option>
-              <option value="深圳">深圳</option>
               <option value="杭州">杭州</option>
+              <option value="嘉兴">嘉兴</option>
+              <option value="温州">温州</option>
             </select>
           </div>
         </div>
@@ -71,9 +64,8 @@
           <div class="form-control">
             <select id="phoneType">
               <option value="">请选择</option>
-              <option value="固定电话">固定电话</option>
-              <option value="移动电话">移动电话</option>
-              <option value="400热线">400热线</option>
+              <option value="固话">固话</option>
+              <option value="手机号码">手机号码</option>
             </select>
           </div>
         </div>
@@ -84,9 +76,10 @@
           <div class="form-control">
             <select id="eventType">
               <option value="">请选择</option>
-              <option value="新装">新装</option>
-              <option value="移机">移机</option>
-              <option value="过户">过户</option>
+              <option value="新增">新增</option>
+              <option value="变更">变更</option>
+              <option value="补卡">补卡（手机卡丢失）</option>
+              <option value="开机">开机（沉默卡局方停机）</option>
               <option value="注销">注销</option>
             </select>
           </div>
@@ -176,8 +169,6 @@
             <select id="status" disabled>
               <option value="初始">初始</option>
               <option value="已提交">已提交</option>
-              <option value="审核中">审核中</option>
-              <option value="已审核">已审核</option>
               <option value="已取消">已取消</option>
             </select>
           </div>
@@ -204,17 +195,14 @@
 <script>
 // 模拟数据存储（与列表页共享逻辑）
 var mockData = JSON.parse(localStorage.getItem('phone_mockData') || 'null') || [
-  { id:1, appNo:'SQ-DH-20260510001', procNo:'LC-DH-20260510001', companyName:'北京星辰科技有限公司', region:'北京', phoneType:'固定电话', eventType:'新装', reason:'新办公室业务需要', operator:'中国电信', realName:'张三', realIdCard:'110101199001011234', realPhone:'13800138001', user:'张三', status:'已审核', creator:'李四', createTime:'2026-05-10 10:30:00', modifier:'李四', modifyTime:'2026-05-20 14:00:00', logs:[
+  { id:1, appNo:'SQ-DH-20260510001', companyName:'上海云途贸易有限公司', region:'上海', phoneType:'固话', eventType:'新增', reason:'新办公室业务需要', operator:'中国电信', realName:'张三', realIdCard:'310101199001011234', realPhone:'13800138001', user:'张三', status:'已提交', creator:'李四', createTime:'2026-05-10 10:30:00', modifier:'李四', modifyTime:'2026-05-20 14:00:00', logs:[
     {action:'创建申请', time:'2026-05-10 10:30:00', operator:'李四', detail:'新建电话号码申请单'},
-    {action:'提交审核', time:'2026-05-10 11:00:00', operator:'李四', detail:'提交至审批流程'},
-    {action:'审核通过', time:'2026-05-20 14:00:00', operator:'李四', detail:'审批通过，流程结束'}
+    {action:'提交审核', time:'2026-05-10 11:00:00', operator:'李四', detail:'提交至审批流程'}
   ]},
-  { id:2, appNo:'SQ-DH-20260522002', procNo:'LC-DH-20260522002', companyName:'上海云途贸易有限公司', region:'上海', phoneType:'移动电话', eventType:'移机', reason:'办公地址搬迁', operator:'中国移动', realName:'王五', realIdCard:'310101198505052345', realPhone:'13900139002', user:'赵六', status:'审核中', creator:'李四', createTime:'2026-05-22 09:15:00', modifier:'', modifyTime:'', logs:[
-    {action:'创建申请', time:'2026-05-22 09:15:00', operator:'李四', detail:'新建电话号码申请单'},
-    {action:'提交审核', time:'2026-05-22 09:30:00', operator:'李四', detail:'提交至审批流程'},
-    {action:'审核中', time:'2026-05-22 14:00:00', operator:'系统', detail:'等待审批人处理'}
+  { id:2, appNo:'SQ-DH-20260522002', companyName:'杭州西湖信息技术有限公司', region:'杭州', phoneType:'手机号码', eventType:'变更', reason:'办公地址搬迁', operator:'中国移动', realName:'王五', realIdCard:'330101198505052345', realPhone:'13900139002', user:'赵六', status:'初始', creator:'李四', createTime:'2026-05-22 09:15:00', modifier:'', modifyTime:'', logs:[
+    {action:'创建申请', time:'2026-05-22 09:15:00', operator:'李四', detail:'新建电话号码申请单'}
   ]},
-  { id:3, appNo:'SQ-DH-20260528003', procNo:'LC-DH-20260528003', companyName:'广州鼎盛电子商务有限公司', region:'广州', phoneType:'400热线', eventType:'新装', reason:'客户服务热线需求', operator:'中国联通', realName:'孙七', realIdCard:'440101199203034567', realPhone:'13700137003', user:'孙七', status:'已提交', creator:'周八', createTime:'2026-05-28 16:45:00', modifier:'', modifyTime:'', logs:[
+  { id:3, appNo:'SQ-DH-20260528003', companyName:'嘉兴鼎盛电子商务有限公司', region:'嘉兴', phoneType:'固话', eventType:'补卡', reason:'手机卡丢失需要补卡', operator:'中国联通', realName:'孙七', realIdCard:'330401199203034567', realPhone:'13700137003', user:'孙七', status:'已提交', creator:'周八', createTime:'2026-05-28 16:45:00', modifier:'', modifyTime:'', logs:[
     {action:'创建申请', time:'2026-05-28 16:45:00', operator:'周八', detail:'新建电话号码申请单'},
     {action:'提交审核', time:'2026-05-28 17:00:00', operator:'周八', detail:'提交至审批流程'}
   ]}
@@ -252,7 +240,6 @@ function initPage() {
     var record = mockData.find(function(r) { return r.id === editId; });
     if (record) {
       document.getElementById('appNo').value = record.appNo || '';
-      document.getElementById('procNo').value = record.procNo || '';
       document.getElementById('companyName').value = record.companyName || '';
       document.getElementById('region').value = record.region;
       document.getElementById('phoneType').value = record.phoneType;
@@ -295,7 +282,6 @@ function doSubmit() {
   if (mode === 'add') {
     data.id = mockData.length > 0 ? Math.max.apply(null, mockData.map(function(r) { return r.id; })) + 1 : 1;
     data.appNo = 'SQ-DH-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + String(data.id).padStart(3,'0');
-    data.procNo = 'LC-DH-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + String(data.id).padStart(3,'0');
     data.creator = '当前用户';
     data.createTime = new Date().toLocaleString('zh-CN', {hour12: false}).replace(/\//g, '-');
     data.modifier = '';
