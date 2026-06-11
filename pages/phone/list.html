@@ -462,6 +462,12 @@ function openAuthModal() {
     var row = mockData.find(function(r) { return String(r.id) === String(id); });
     if (row) selectedRows.push(row);
   });
+  // 校验状态必须全部为“已提交”
+  var allSubmitted = selectedRows.every(function(r) { return r.status === '已提交'; });
+  if (!allSubmitted) {
+    showToast('选中的记录状态必须为“已提交”才允许生成授权书', 'error');
+    return;
+  }
 
   selectedTemplate = null;
   selectedFile = null;
