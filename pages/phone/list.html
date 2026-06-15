@@ -1078,13 +1078,13 @@ function buildAuthDocHTML(row) {
       xml = replaceFieldNameInXml(xml, '实名人身份证号', realIdCard);
       xml = replaceFieldNameInXml(xml, '实名人手机号', realPhone);
       xml = replaceFieldNameInXml(xml, '申请事件类型', eventType);
-      // 日期字段替换（模板占位符：y1/m1/d1/y2/m2/d3）
+      // 日期字段替换（模板占位符：y1/m1/d1/y2/m2/d2）
       xml = replaceFieldNameInXml(xml, 'y1', String(startYear));
       xml = replaceFieldNameInXml(xml, 'm1', String(startMonth));
       xml = replaceFieldNameInXml(xml, 'd1', String(startDay));
       xml = replaceFieldNameInXml(xml, 'y2', String(endYear));
       xml = replaceFieldNameInXml(xml, 'm2', String(endMonth));
-      xml = replaceFieldNameInXml(xml, 'd3', String(endDay));
+      xml = replaceFieldNameInXml(xml, 'd2', String(endDay));
 
       // 调试：查看日期替换后的 XML 结构
       var dateDebug = findInWt(xml, startYear + '年');
@@ -1195,13 +1195,13 @@ function buildAuthDocHTML(row) {
     content = replaceFieldNameInText(content, '实名人身份证号', realIdCard);
     content = replaceFieldNameInText(content, '实名人手机号', realPhone);
     content = replaceFieldNameInText(content, '申请事件类型', eventType);
-    // 日期字段替换（模板占位符：y1/m1/d1/y2/m2/d3）
+    // 日期字段替换（模板占位符：y1/m1/d1/y2/m2/d2）
     content = replaceFieldNameInText(content, 'y1', String(startYear));
     content = replaceFieldNameInText(content, 'm1', String(startMonth));
     content = replaceFieldNameInText(content, 'd1', String(startDay));
     content = replaceFieldNameInText(content, 'y2', String(endYear));
     content = replaceFieldNameInText(content, 'm2', String(endMonth));
-    content = replaceFieldNameInText(content, 'd3', String(endDay));
+    content = replaceFieldNameInText(content, 'd2', String(endDay));
 
     // 公司盖章日期：替换“公司盖章”后面的“年”“月”“日”为当前日期
     var sealIdx = content.indexOf('公司盖章');
@@ -1296,7 +1296,7 @@ function buildBinaryDoc(row) {
     { context: 'd1', value: String(startDay) },
     { context: 'y2', value: String(endYear) },
     { context: 'm2', value: String(endMonth) },
-    { context: 'd3', value: String(endDay) }
+    { context: 'd2', value: String(endDay) }
   ];
 
   var result = new Uint8Array(templateBinary.slice(0));
