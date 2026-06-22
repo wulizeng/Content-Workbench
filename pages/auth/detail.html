@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>店铺授权书 - 详情</title>
+  <title>平台店铺申请 - 详情</title>
   <link rel="stylesheet" href="../../css/style.css">
 </head>
 <body>
@@ -14,11 +14,11 @@
 
   <script>
     if (window.parent) {
-      window.parent.postMessage({type:'breadcrumb', text:'店铺授权书 <span>/</span> 详情'}, '*');
+      window.parent.postMessage({type:'breadcrumb', text:'平台店铺申请 <span>/</span> 详情'}, '*');
     }
   </script>
 
-  <div class="page-title" id="pageTitle">新增店铺授权书</div>
+  <div class="page-title" id="pageTitle">新增平台店铺申请</div>
 
   <div class="form-area">
     <form id="mainForm">
@@ -92,12 +92,12 @@
 <script>
 var mockData = JSON.parse(localStorage.getItem('auth_mockData') || 'null') || [
   { id:1, appNo:'SQ-ZQS-20260510001', procNo:'LC-ZQS-20260510001', companyName:'北京创新科技有限公司', brand:'创新科技', trademarkNo:'TM20231001', authCompany:'上海授权代理有限公司', authDate:'2026-05-10', status:'已审核', creator:'李四', createTime:'2026-05-10 09:00:00', modifier:'李四', modifyTime:'2026-05-18 11:00:00', logs:[
-    {action:'创建申请', time:'2026-05-10 09:00:00', operator:'李四', detail:'新建店铺授权书申请单'},
+    {action:'创建申请', time:'2026-05-10 09:00:00', operator:'李四', detail:'新建平台店铺申请申请单'},
     {action:'提交审核', time:'2026-05-10 09:30:00', operator:'李四', detail:'提交至审批流程'},
     {action:'审核通过', time:'2026-05-18 11:00:00', operator:'李四', detail:'审批通过，流程结束'}
   ]},
   { id:2, appNo:'SQ-ZQS-20260522002', procNo:'LC-ZQS-20260522002', companyName:'上海智能网络有限公司', brand:'智联', trademarkNo:'TM20231205', authCompany:'北京知识产权服务中心', authDate:'2026-05-22', status:'审核中', creator:'赵六', createTime:'2026-05-22 14:30:00', modifier:'', modifyTime:'', logs:[
-    {action:'创建申请', time:'2026-05-22 14:30:00', operator:'赵六', detail:'新建店铺授权书申请单'},
+    {action:'创建申请', time:'2026-05-22 14:30:00', operator:'赵六', detail:'新建平台店铺申请申请单'},
     {action:'提交审核', time:'2026-05-22 15:00:00', operator:'赵六', detail:'提交至审批流程'},
     {action:'审核中', time:'2026-05-22 16:00:00', operator:'系统', detail:'等待审批人处理'}
   ]}
@@ -109,8 +109,8 @@ var editId = parseInt(g('id')) || 0;
 
 function init() {
   var rd = mode === 'view';
-  if (rd) { document.getElementById('pageTitle').textContent = '查看店铺授权书'; setRO(true); document.getElementById('formActions').innerHTML = '<button type="button" class="btn" onclick="goBack()">返回</button>'; }
-  else if (mode === 'edit') { document.getElementById('pageTitle').textContent = '编辑店铺授权书'; document.getElementById('saveBtn').style.display = ''; }
+  if (rd) { document.getElementById('pageTitle').textContent = '查看平台店铺申请'; setRO(true); document.getElementById('formActions').innerHTML = '<button type="button" class="btn" onclick="goBack()">返回</button>'; }
+  else if (mode === 'edit') { document.getElementById('pageTitle').textContent = '编辑平台店铺申请'; document.getElementById('saveBtn').style.display = ''; }
   if ((mode === 'edit' || rd) && editId > 0) {
     var rec = mockData.find(function(r){return r.id===editId;});
     if (rec) {
