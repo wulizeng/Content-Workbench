@@ -1,0 +1,1629 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>包装优化 - 详情页属性优化</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    /* ===== 流程说明 ===== */
+    .flow-section {
+      background: linear-gradient(135deg, #eef0ff 0%, #f8f9ff 100%);
+      border: 1px solid #dce0f8;
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 12px;
+    }
+    .flow-header { display:flex; align-items:center; gap:6px; margin-bottom:10px; }
+    .flow-header svg { color:var(--primary); }
+    .flow-header h3 { margin:0; font-size:14px; font-weight:700; color:var(--ink); }
+    .flow-steps { display:flex; align-items:center; gap:0; }
+    .flow-step {
+      display:flex; align-items:center; gap:8px;
+      padding:8px 14px; background:#fff; border-radius:6px;
+      border:1px solid #e4e9f1; flex:1; transition:all .2s;
+    }
+    .flow-step:hover { border-color:var(--primary); box-shadow:0 2px 8px rgba(91,108,245,.12); }
+    .flow-step-icon {
+      width:28px; height:28px; border-radius:6px;
+      display:grid; place-items:center; font-size:14px;
+      flex-shrink:0; background:var(--primary-50); color:var(--primary);
+    }
+    .flow-step-info { flex:1; min-width:0; }
+    .flow-step-title { font-size:12px; font-weight:650; color:var(--ink); }
+    .flow-step-desc { font-size:11px; color:var(--text-tertiary); margin-top:1px; }
+    .flow-arrow { flex-shrink:0; color:#cbd5e1; padding:0 4px; display:flex; align-items:center; }
+
+    /* ===== 统计模式 ===== */
+    .stat-toggle {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 14px; border:1px solid var(--border); border-radius:8px;
+      font-size:12px; font-weight:600; cursor:pointer; transition:all .18s;
+      color:var(--text-secondary); background:#fff; user-select:none;
+    }
+    .stat-toggle:hover { border-color:var(--primary); color:var(--primary); }
+    .stat-toggle.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+
+    /* 统计表格 */
+    .stat-table { width:100%; min-width:860px; border-collapse:separate; border-spacing:0; font-size:13px; }
+    .stat-table th {
+      background:#f8fafc; border-bottom:2px solid var(--border); padding:10px 10px;
+      white-space:nowrap !important; font-size:12px; font-weight:600;
+      color:var(--text-secondary); text-align:left; position:sticky; top:0; z-index:1;
+    }
+    .stat-table td {
+      border-bottom:1px solid var(--border-light); padding:10px 10px;
+      white-space:nowrap !important; word-break:normal !important; overflow:hidden; text-overflow:ellipsis;
+      vertical-align:middle;
+    }
+    .stat-table tbody tr {
+      cursor:pointer; transition:all .15s;
+      border-left:3px solid transparent;
+    }
+    .stat-table tbody tr:hover { background:#f0f3ff; border-left-color:var(--primary); }
+    .stat-table tbody tr:hover .drill-hint { opacity:1; }
+    .drill-hint {
+      font-size:11px; color:var(--primary); opacity:0; transition:opacity .2s;
+      margin-left:6px; font-weight:500;
+    }
+
+    /* ===== 弹窗 ===== */
+    .modal-overlay {
+      position:fixed; top:0; left:0; right:0; bottom:0;
+      background:rgba(0,0,0,.45); z-index:9999;
+      display:flex; align-items:center; justify-content:center;
+      animation:modalFadeIn .25s ease;
+    }
+    @keyframes modalFadeIn { from{opacity:0} to{opacity:1} }
+    .modal {
+      background:#fff; border-radius:12px; width:580px; max-width:92vw;
+      max-height:90vh; box-shadow:0 24px 60px rgba(0,0,0,.2);
+      display:flex; flex-direction:column; animation:modalSlideIn .3s ease;
+    }
+    @keyframes modalSlideIn { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+    .modal-head {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:20px 24px 16px; border-bottom:1px solid #e4e9f1;
+    }
+    .modal-head h3 { margin:0; font-size:17px; font-weight:700; color:#0f172a; }
+    .modal-close {
+      width:28px; height:28px; border:none; background:transparent;
+      border-radius:6px; cursor:pointer; display:grid; place-items:center;
+      color:#647084; font-size:18px; transition:background .15s;
+    }
+    .modal-close:hover { background:#f0f2f5; }
+    .modal-body { padding:20px 24px; overflow-y:auto; flex:1; min-height:0; }
+    .modal-foot {
+      display:flex; justify-content:flex-end; gap:10px;
+      padding:16px 24px 20px; border-top:1px solid #e4e9f1;
+    }
+    .modal-foot .btn { min-width:80px; }
+
+    /* ===== 弹窗 - 导入核查 ===== */
+    .import-textarea {
+      width:100%; padding:12px 14px; border:1px solid var(--border);
+      border-radius:8px; font:inherit; font-size:13px; line-height:1.6;
+      resize:vertical; outline:none; transition:border-color .18s;
+      background:var(--bg-secondary,#f8fafc);
+    }
+    .import-textarea:focus { border-color:var(--primary); background:#fff; }
+        .import-shop-select {
+          width:100%; padding:10px 14px; border:1px solid var(--border);
+          border-radius:8px; font:inherit; font-size:13px; outline:none;
+          background:var(--bg-secondary,#f8fafc); cursor:pointer; transition:border-color .18s;
+          appearance:auto;
+        }
+        .import-shop-select:focus { border-color:var(--primary); background:#fff; }
+        .date-range { display:flex; align-items:center; gap:6px; }
+        .date-range input[type="date"] {
+          padding:6px 10px; border:1px solid var(--border); border-radius:6px;
+          font:inherit; font-size:12px; outline:none; background:var(--bg-secondary,#f8fafc);
+          transition:border-color .18s; width:130px;
+        }
+        .date-range input[type="date"]:focus { border-color:var(--primary); background:#fff; }
+        .date-sep { color:var(--text-tertiary); font-size:12px; }
+    .import-hint { font-size:11px; color:var(--text-tertiary); margin-top:4px; }
+    .import-tab {
+      padding:10px 20px; font-size:13px; font-weight:600; color:var(--text-tertiary);
+      cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px;
+      transition:all .15s; user-select:none;
+    }
+    .import-tab:hover { color:var(--primary); }
+    .import-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
+
+    /* ===== 弹窗 - 上传属性 ===== */
+    .upload-zone-inner {
+      display:flex; flex-direction:column; align-items:center; gap:8px;
+      padding:32px; border:2px dashed #cbd5e1; border-radius:12px;
+      cursor:pointer; transition:all .18s; background:#fafbfd;
+    }
+    .upload-zone-inner:hover { border-color:var(--primary); background:var(--primary-50); }
+    .upload-zone-inner svg { width:36px; height:36px; color:var(--primary); }
+    .upload-zone-inner .title { font-size:14px; font-weight:600; color:#475569; }
+    .upload-zone-inner .hint { font-size:12px; color:var(--text-tertiary); }
+
+    /* ===== 弹窗 - 检查结果预览 ===== */
+    .preview-table { width:100%; border-collapse:collapse; font-size:12px; margin-top:12px; }
+    .preview-table th {
+      background:#f8fafc; padding:8px 10px; text-align:left;
+      font-weight:600; color:var(--text-secondary); border-bottom:2px solid var(--border);
+    }
+    .preview-table td { padding:6px 10px; border-bottom:1px solid #f1f5f9; }
+    .preview-table .empty-val { color:#d97706; }
+    .preview-table .filled-val { color:#059669; }
+
+    /* ===== 表格列 ===== */
+    .col-batch-no { font-family:"SF Mono","Menlo",monospace; font-size:12px; font-weight:600; color:var(--primary); white-space:nowrap; }
+    .col-shop-code { font-family:"SF Mono","Menlo",monospace; font-size:12px; font-weight:600; color:var(--primary); white-space:nowrap; }
+
+    /* ===== 独立表格样式（不依赖全局 .data-table） ===== */
+    .pkg-table {
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      font-size:13px;
+    }
+    .pkg-table thead th {
+      background:linear-gradient(180deg, #f8fafc, #f1f5f9);
+      padding:10px 12px;
+      text-align:left;
+      font-weight:600;
+      font-size:12px;
+      color:var(--text-secondary);
+      border-bottom:2px solid var(--border);
+      white-space:nowrap;
+      position:sticky;
+      top:0;
+      z-index:10;
+    }
+    .pkg-table tbody td {
+      padding:10px 12px;
+      border-bottom:1px solid var(--border-light);
+      font-size:13px;
+      color:var(--text-primary);
+      white-space:nowrap !important;
+      word-break:normal !important;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .pkg-table tbody tr:hover td {
+      background:#f8fafc;
+    }
+    .pkg-table tbody tr.row-selected td {
+      background:var(--primary-50) !important;
+    }
+
+    /* ===== 视图切换 Tab ===== */
+    .view-tabs {
+      display:flex; gap:0; margin-bottom:12px; border-bottom:2px solid var(--border);
+    }
+    .view-tab {
+      padding:10px 20px; font-size:13px; font-weight:600; color:var(--text-tertiary);
+      cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px;
+      transition:all .15s; user-select:none; display:flex; align-items:center; gap:5px;
+    }
+    .view-tab:hover { color:var(--primary); }
+    .view-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
+    .view-tab svg { width:14px; height:14px; }
+    .view-panel { display:none; }
+    .view-panel.active { display:block; }
+
+    /* ===== 明细视图属性样式 ===== */
+    .attr-empty { color:#d97706; font-weight:600; }
+    .attr-filled { color:#059669; }
+  </style>
+</head>
+<body>
+<div class="page-container">
+
+  <!-- Toast 容器 -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script>
+    if (window.parent) {
+      window.parent.postMessage({type:'breadcrumb', text:'包装优化 <span>/</span> 详情页属性优化'}, '*');
+    }
+  </script>
+
+  <div class="page-title">详情页属性优化</div>
+
+  <!-- ===== 视图切换 Tab ===== -->
+  <div class="view-tabs">
+    <div class="view-tab active" onclick="switchView('list')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+        <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+      </svg>
+      列表视图
+    </div>
+    <div class="view-tab" onclick="switchView('detail')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+        <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+      </svg>
+      明细视图
+    </div>
+  </div>
+
+  <!-- ===== 列表视图 ===== -->
+  <div id="listView" class="view-panel active">
+
+  <!-- ===== 流程说明 ===== -->
+  <div class="flow-section">
+    <div class="flow-header">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+        <line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/>
+      </svg>
+      <h3>流程说明</h3>
+    </div>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="flow-step-icon">🔍</div>
+        <div class="flow-step-info">
+          <div class="flow-step-title">必填属性检查</div>
+          <div class="flow-step-desc">录入商品ID，调用平台接口检查必填属性</div>
+        </div>
+      </div>
+      <div class="flow-arrow"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="flow-step">
+        <div class="flow-step-icon">📋</div>
+        <div class="flow-step-info">
+          <div class="flow-step-title">自动输出核查结果</div>
+          <div class="flow-step-desc">系统自动生成检查结果</div>
+        </div>
+      </div>
+      <div class="flow-arrow"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="flow-step">
+        <div class="flow-step-icon">✏️</div>
+        <div class="flow-step-info">
+          <div class="flow-step-title">用户维护未填属性</div>
+          <div class="flow-step-desc">在明细视图或详情页编辑补充未填属性值</div>
+        </div>
+      </div>
+      <div class="flow-arrow"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="flow-step">
+        <div class="flow-step-icon">📤</div>
+        <div class="flow-step-info">
+          <div class="flow-step-title">上传详情页属性</div>
+          <div class="flow-step-desc">导出空属性Excel，补充后上传更新</div>
+        </div>
+      </div>
+      <div class="flow-arrow"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="flow-step">
+        <div class="flow-step-icon">📊</div>
+        <div class="flow-step-info">
+          <div class="flow-step-title">结果查询</div>
+          <div class="flow-step-desc">查看历史检查记录与属性更新结果</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 筛选区域 ===== -->
+  <div class="search-area">
+    <div class="search-row">
+      <div class="search-item">
+        <label>批次号：</label>
+        <input type="text" id="sBatchNo" placeholder="输入批次号">
+      </div>
+      <div class="search-item">
+        <label>店铺编码：</label>
+        <input type="text" id="sShopCode" placeholder="输入店铺编码">
+      </div>
+      <div class="search-item">
+        <label>店铺名称：</label>
+        <input type="text" id="sShopName" placeholder="输入店铺名称">
+      </div>
+      <div class="search-item">
+        <label>平台商品ID：</label>
+        <input type="text" id="sProductId" placeholder="输入商品ID">
+      </div>
+      <div class="search-item">
+        <label>检查状态：</label>
+        <select id="sCheckStatus">
+          <option value="">全部</option>
+          <option value="已检查">已检查</option>
+          <option value="未检查">未检查</option>
+          <option value="检查失败">检查失败</option>
+        </select>
+      </div>
+      <div class="search-item">
+        <label>创建时间：</label>
+        <div class="date-range">
+          <input type="date" id="sCreateTimeStart">
+          <span class="date-sep">~</span>
+          <input type="date" id="sCreateTimeEnd">
+        </div>
+      </div>
+    </div>
+    <div class="search-actions">
+      <button class="btn btn-primary" onclick="doSearch()">查询</button>
+      <button class="btn" onclick="resetSearch()">重置</button>
+    </div>
+    <div class="search-active-tags" id="searchTags" style="display:none;"></div>
+  </div>
+
+  <!-- ===== 列表区域 ===== -->
+  <div class="table-area">
+    <div class="table-toolbar">
+      <button class="btn btn-primary" onclick="openImportModal()">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        导入核查商品
+      </button>
+      <button class="btn" onclick="doExport()" id="btnExport" disabled>
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        导出
+      </button>
+      <div style="flex:1;"></div>
+      <div class="stat-toggle" id="statToggle" onclick="toggleStatMode()">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/>
+        </svg>
+        统计模式
+      </div>
+    </div>
+
+    <div class="table-scroll">
+      <table class="pkg-table" id="dataTable">
+        <thead>
+          <tr>
+            <th style="width:40px;"><input type="checkbox" id="checkAll" onclick="toggleAll(this)"></th>
+            <th style="width:40px;">序号</th>
+            <th style="width:130px;">批次号</th>
+            <th style="width:100px;">店铺编码</th>
+            <th style="width:130px;">店铺名称</th>
+            <th style="width:110px;">平台商品ID</th>
+            <th style="width:100px;">类目编码</th>
+            <th style="width:100px;">类目名称</th>
+            <th style="width:80px;">检查状态</th>
+            <th style="width:120px;">失败原因</th>
+            <th style="width:130px;">检查时间</th>
+            <th style="width:130px;">创建时间</th>
+            <th style="width:70px;">创建人</th>
+            <th style="width:130px;">更新时间</th>
+            <th style="width:70px;">更新人</th>
+            <th style="width:80px;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- 统计模式视图 -->
+    <div id="statView" style="display:none;">
+      <div style="overflow-x:auto;">
+        <div id="statContent"></div>
+      </div>
+    </div>
+
+    <div class="pagination">
+      <span class="page-info">共 <strong id="totalCount">0</strong> 条</span>
+      <span class="page-btn disabled">&laquo;</span>
+      <span class="page-btn active">1</span>
+      <span class="page-btn">&raquo;</span>
+    </div>
+  </div>
+
+  </div><!-- /listView -->
+
+  <!-- ===== 明细视图 ===== -->
+  <div id="detailView" class="view-panel">
+    <!-- 筛选区域 -->
+    <div class="search-area">
+      <div class="search-row">
+        <div class="search-item">
+          <label>批次号：</label>
+          <input type="text" id="dBatchNo" placeholder="输入批次号">
+        </div>
+        <div class="search-item">
+          <label>店铺编码：</label>
+          <input type="text" id="dShopCode" placeholder="输入店铺编码">
+        </div>
+        <div class="search-item">
+          <label>店铺名称：</label>
+          <input type="text" id="dShopName" placeholder="输入店铺名称">
+        </div>
+        <div class="search-item">
+          <label>平台商品ID：</label>
+          <input type="text" id="dProductId" placeholder="输入商品ID">
+        </div>
+        <div class="search-item">
+          <label>属性值：</label>
+          <input type="text" id="dAttrValue" placeholder="输入属性值">
+        </div>
+        <div class="search-item">
+          <label>上传状态：</label>
+          <select id="dAttrStatus">
+            <option value="">全部</option>
+            <option value="未上传">未上传</option>
+            <option value="已上传">已上传</option>
+            <option value="上传失败">上传失败</option>
+          </select>
+        </div>
+        <div class="search-item">
+          <label>失败原因：</label>
+          <input type="text" id="dFailReason" placeholder="输入失败原因">
+        </div>
+        <div class="search-item">
+          <label>创建时间：</label>
+          <div class="date-range">
+            <input type="date" id="dCreateTimeStart">
+            <span class="date-sep">~</span>
+            <input type="date" id="dCreateTimeEnd">
+          </div>
+        </div>
+      </div>
+      <div class="search-actions">
+        <button class="btn btn-primary" onclick="doDetailSearch()">查询</button>
+        <button class="btn" onclick="resetDetailSearch()">重置</button>
+      </div>
+    </div>
+
+    <!-- 列表区域 -->
+    <div class="table-area">
+      <div class="table-toolbar">
+        <button class="btn btn-success" onclick="openUploadModal()" id="btnUploadDetail">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;">
+            <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          上传属性
+        </button>
+        <button class="btn" onclick="doDetailExport()">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          导出明细
+        </button>
+        <span style="font-size:13px;font-weight:600;color:var(--ink);margin-left:8px;">属性明细列表</span>
+        <span style="font-size:12px;color:var(--text-tertiary);margin-left:6px;" id="detailTotalBadge">共 0 条</span>
+      </div>
+
+      <div class="table-scroll">
+        <table class="pkg-table" id="detailTable">
+          <thead>
+            <tr>
+              <th style="width:40px;"><input type="checkbox" id="detailCheckAll" onclick="toggleDetailAll(this)"></th>
+              <th style="width:40px;">序号</th>
+              <th>批次号</th>
+              <th>店铺编码</th>
+              <th>店铺名称</th>
+              <th>平台商品ID</th>
+              <th>类目编码</th>
+              <th>类目名称</th>
+              <th>未填属性</th>
+              <th>属性值</th>
+              <th>属性状态</th>
+              <th>失败原因</th>
+              <th>创建时间</th>
+              <th>创建人</th>
+              <th>更新时间</th>
+              <th>更新人</th>
+              <th style="width:80px;">操作</th>
+            </tr>
+          </thead>
+          <tbody id="detailTableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <span class="page-info">共 <strong id="detailTotalCount">0</strong> 条</span>
+        <span class="page-btn disabled">&laquo;</span>
+        <span class="page-btn active">1</span>
+        <span class="page-btn">&raquo;</span>
+      </div>
+    </div>
+  </div><!-- /detailView -->
+
+</div>
+
+<!-- ===== 编辑属性值 - 弹窗 ===== -->
+<div id="editAttrModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeEditAttrModal()">
+  <div class="modal" style="width:460px;">
+    <div class="modal-head">
+      <h3>✏️ 编辑属性值</h3>
+      <button class="modal-close" onclick="closeEditAttrModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px;">属性名称：</label>
+        <div id="editAttrName" style="font-size:14px;color:var(--ink);font-weight:600;padding:8px 12px;background:#f8fafc;border-radius:6px;border:1px solid var(--border);"></div>
+      </div>
+      <div>
+        <label style="font-size:13px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px;">属性值：</label>
+        <textarea id="editAttrValue" class="import-textarea" rows="3" placeholder="请输入属性值"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeEditAttrModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveEditAttr()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 导入核查商品 - 弹窗 ===== -->
+<div id="importModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeImportModal()">
+  <div class="modal" style="width:620px;">
+    <div class="modal-head">
+      <h3>📥 导入核查商品</h3>
+      <button class="modal-close" onclick="closeImportModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <!-- 切换标签 -->
+      <div style="display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid var(--border);">
+        <div id="importTabText" class="import-tab active" onclick="switchImportTab('text')">⌨️ 文本录入</div>
+        <div id="importTabExcel" class="import-tab" onclick="switchImportTab('excel')">📊 Excel导入</div>
+      </div>
+
+      <!-- 文本录入区 -->
+      <div id="importTextPanel">
+        <label style="font-size:13px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">选择店铺：</label>
+        <select id="importShopSelect" class="import-shop-select">
+          <option value="">请选择店铺</option>
+        </select>
+        <label style="font-size:13px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;margin-top:14px;">录入平台商品ID：</label>
+        <textarea id="importProductIds" class="import-textarea" rows="5" placeholder="每行一个，或英文逗号隔开&#10;例如：P001,P002,P003&#10;或&#10;P001&#10;P002&#10;P003"></textarea>
+        <div class="import-hint">支持批量录入，多个ID用英文逗号或换行分隔</div>
+      </div>
+
+      <!-- Excel 导入区 -->
+      <div id="importExcelPanel" style="display:none;">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+          <a href="javascript:void(0)" onclick="downloadImportTemplate()" style="font-size:13px;color:var(--primary);font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            下载导入模板
+          </a>
+        </div>
+        <div class="upload-zone-inner" onclick="document.getElementById('importExcelInput').click()" style="cursor:pointer;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+            <polyline points="10 9 9 9 8 9"/>
+          </svg>
+          <div class="title">点击选择 Excel 文件</div>
+          <div class="hint">支持 .xlsx / .xls，表头需包含"平台商品ID"或"商品ID"列</div>
+          <input type="file" id="importExcelInput" style="display:none" accept=".xlsx,.xls" onchange="handleImportExcel(this.files)">
+        </div>
+        <div id="importExcelFileInfo" style="display:none;margin-top:10px;padding:10px 14px;background:#ecfdf5;border-radius:10px;font-size:13px;color:#059669;"></div>
+      </div>
+
+      <!-- 检查结果预览 -->
+      <div id="importPreviewArea" style="display:none;margin-top:16px;">
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--ink);">检查结果预览</div>
+        <div id="importPreviewContent"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeImportModal()">取消</button>
+      <button class="btn btn-primary" onclick="doImportCheck()">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;">
+          <polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        </svg>
+        开始检查
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 上传属性 - 弹窗 ===== -->
+<div id="uploadModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeUploadModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>📤 上传详情页属性</h3>
+      <button class="modal-close" onclick="closeUploadModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="uploadZoneInner" class="upload-zone-inner" onclick="document.getElementById('uploadFileInput').click()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+          <polyline points="10 9 9 9 8 9"/>
+        </svg>
+        <div class="title">点击或拖拽 Excel 文件到此处</div>
+        <div class="hint">支持 .xlsx / .xls 格式</div>
+        <input type="file" id="uploadFileInput" style="display:none" accept=".xlsx,.xls" onchange="handleUploadFile(this.files)">
+      </div>
+      <div id="uploadPreviewArea" style="display:none;margin-top:16px;">
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--ink);">数据预览</div>
+        <div id="uploadPreviewContent"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeUploadModal()">取消</button>
+      <button class="btn btn-success" id="modalUploadBtn" onclick="doUploadSubmit()" disabled>确认上传</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== 模拟商品数据 =====
+var mockProducts = [
+  { id:'P001', name:'经典坚果礼盒', shopCode:'SH001', shopName:'云途食品旗舰店', platformId:'DY-20260701-001', categoryCode:'CAT001', categoryName:'坚果炒货' },
+  { id:'P002', name:'有机红枣', shopCode:'SH002', shopName:'西湖生鲜专营店', platformId:'DY-20260701-002', categoryCode:'CAT002', categoryName:'滋补养生' },
+  { id:'P003', name:'精选茶叶套装', shopCode:'SH003', shopName:'鼎盛茗茶旗舰店', platformId:'DY-20260701-003', categoryCode:'CAT003', categoryName:'茶叶' },
+  { id:'P004', name:'手工糕点礼盒', shopCode:'SH004', shopName:'前海食品专营店', platformId:'DY-20260701-004', categoryCode:'CAT004', categoryName:'糕点饼干' },
+  { id:'P005', name:'精品咖啡豆', shopCode:'SH001', shopName:'云途食品旗舰店', platformId:'DY-20260701-005', categoryCode:'CAT005', categoryName:'咖啡' },
+  { id:'P006', name:'养生花茶礼盒', shopCode:'SH003', shopName:'鼎盛茗茶旗舰店', platformId:'DY-20260701-006', categoryCode:'CAT003', categoryName:'茶叶' },
+  { id:'P007', name:'进口巧克力', shopCode:'SH002', shopName:'西湖生鲜专营店', platformId:'DY-20260701-007', categoryCode:'CAT006', categoryName:'糖果巧克力' },
+  { id:'P008', name:'高山绿茶', shopCode:'SH003', shopName:'鼎盛茗茶旗舰店', platformId:'DY-20260701-008', categoryCode:'CAT003', categoryName:'茶叶' },
+];
+
+// ===== 模拟必填属性规则 =====
+var mockRequiredAttrs = {
+  'P001': [
+    { name:'产地', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }, { name:'保质期', value:'12个月', uploadStatus:'已上传', updateTime:'2026-07-05 14:00:00', updater:'张三' }, { name:'净含量', value:'', uploadStatus:'未上传', updateTime:'', updater:'' },
+    { name:'配料表', value:'', uploadStatus:'上传失败', failReason:'格式不正确', updateTime:'', updater:'' }, { name:'储存条件', value:'阴凉干燥处', uploadStatus:'已上传', updateTime:'2026-07-05 14:00:00', updater:'张三' }, { name:'生产许可证编号', value:'', uploadStatus:'未上传', updateTime:'', updater:'' },
+    { name:'食用方法', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }
+  ],
+  'P002': [
+    { name:'产地', value:'新疆', uploadStatus:'已上传', updateTime:'2026-07-05 14:00:00', updater:'张三' }, { name:'保质期', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }, { name:'净含量', value:'500g', uploadStatus:'已上传', updateTime:'2026-07-05 14:00:00', updater:'张三' },
+    { name:'等级', value:'', uploadStatus:'上传失败', failReason:'值不在枚举范围内', updateTime:'', updater:'' }, { name:'储存条件', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }
+  ],
+  'P003': [
+    { name:'产地', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }, { name:'保质期', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }, { name:'净含量', value:'', uploadStatus:'未上传', updateTime:'', updater:'' },
+    { name:'茶叶等级', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }, { name:'冲泡方法', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }, { name:'储存条件', value:'密封避光', uploadStatus:'已上传', updateTime:'2026-07-04 16:00:00', updater:'王五' }
+  ],
+  'P004': [
+    { name:'产地', value:'广州', uploadStatus:'已上传', updateTime:'2026-07-04 16:00:00', updater:'王五' }, { name:'保质期', value:'30天', uploadStatus:'已上传', updateTime:'2026-07-04 16:00:00', updater:'王五' }, { name:'净含量', value:'', uploadStatus:'未上传', updateTime:'', updater:'' },
+    { name:'配料表', value:'', uploadStatus:'上传失败', failReason:'必填项为空', updateTime:'', updater:'' }, { name:'过敏原信息', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }
+  ],
+  'P005': [
+    { name:'产地', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }, { name:'保质期', value:'18个月', uploadStatus:'已上传', updateTime:'2026-07-03 17:30:00', updater:'李四' }, { name:'净含量', value:'250g', uploadStatus:'已上传', updateTime:'2026-07-03 17:30:00', updater:'李四' },
+    { name:'烘焙程度', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }, { name:'储存条件', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }
+  ],
+  'P006': [
+    { name:'产地', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }, { name:'保质期', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }, { name:'净含量', value:'', uploadStatus:'未上传', updateTime:'', updater:'' },
+    { name:'配料表', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }
+  ],
+  'P007': [
+    { name:'产地', value:'比利时', uploadStatus:'已上传', updateTime:'2026-07-02 14:30:00', updater:'张三' }, { name:'保质期', value:'24个月', uploadStatus:'已上传', updateTime:'2026-07-02 14:30:00', updater:'张三' }, { name:'净含量', value:'', uploadStatus:'未上传', updateTime:'', updater:'' },
+    { name:'可可含量', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }, { name:'储存条件', value:'阴凉干燥处', uploadStatus:'已上传', updateTime:'2026-07-02 14:30:00', updater:'张三' }
+  ],
+  'P008': [
+    { name:'产地', value:'浙江杭州', uploadStatus:'已上传', updateTime:'2026-07-02 14:30:00', updater:'张三' }, { name:'保质期', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }, { name:'净含量', value:'', uploadStatus:'未上传', updateTime:'', updater:'' },
+    { name:'等级', value:'', uploadStatus:'上传失败', failReason:'平台接口超时', updateTime:'', updater:'' }, { name:'采摘年份', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }
+  ]
+};
+
+// ===== 列表数据 =====
+var mockData = JSON.parse(localStorage.getItem('package_optimizeList') || 'null') || [
+  { id:1, shopCode:'SH001', shopName:'云途食品旗舰店', productId:'P001', productName:'经典坚果礼盒', categoryCode:'CAT001', categoryName:'坚果炒货', batchNo:'PC202607010001', checkStatus:'已检查', checkTime:'2026-07-05 10:00:00', createTime:'2026-07-01 08:00:00', creator:'李四', failReason:'', emptyAttrs:[], uploadStatus:'未上传', uploadTime:'', updateTime:'2026-07-05 10:00:00', updater:'李四' },
+  { id:2, shopCode:'SH002', shopName:'西湖生鲜专营店', productId:'P002', productName:'有机红枣', categoryCode:'CAT002', categoryName:'滋补养生', batchNo:'PC202607020001', checkStatus:'已检查', checkTime:'2026-07-05 10:30:00', createTime:'2026-07-02 09:00:00', creator:'张三', failReason:'', emptyAttrs:[], uploadStatus:'已上传', uploadTime:'2026-07-05 14:00:00', updateTime:'2026-07-05 14:00:00', updater:'张三' },
+  { id:3, shopCode:'SH003', shopName:'鼎盛茗茶旗舰店', productId:'P003', productName:'精选茶叶套装', categoryCode:'CAT003', categoryName:'茶叶', batchNo:'PC202607030001', checkStatus:'已检查', checkTime:'2026-07-04 09:00:00', createTime:'2026-07-03 08:30:00', creator:'王五', failReason:'', emptyAttrs:[], uploadStatus:'已完成', uploadTime:'2026-07-04 16:00:00', updateTime:'2026-07-04 16:00:00', updater:'王五' },
+  { id:4, shopCode:'SH004', shopName:'前海食品专营店', productId:'P004', productName:'手工糕点礼盒', categoryCode:'CAT004', categoryName:'糕点饼干', batchNo:'PC202607040001', checkStatus:'未检查', checkTime:'', createTime:'2026-07-04 10:00:00', creator:'赵六', failReason:'', emptyAttrs:[], uploadStatus:'未上传', uploadTime:'', updateTime:'2026-07-04 10:00:00', updater:'赵六' },
+  { id:5, shopCode:'SH001', shopName:'云途食品旗舰店', productId:'P005', productName:'精品咖啡豆', categoryCode:'CAT005', categoryName:'咖啡', batchNo:'PC202607010002', checkStatus:'已检查', checkTime:'2026-07-03 15:00:00', createTime:'2026-07-01 14:00:00', creator:'李四', failReason:'', emptyAttrs:[], uploadStatus:'已上传', uploadTime:'2026-07-03 17:30:00', updateTime:'2026-07-03 17:30:00', updater:'李四' },
+  { id:6, shopCode:'SH003', shopName:'鼎盛茗茶旗舰店', productId:'P006', productName:'养生花茶礼盒', categoryCode:'CAT003', categoryName:'茶叶', batchNo:'PC202607050001', checkStatus:'检查失败', checkTime:'', createTime:'2026-07-05 11:00:00', creator:'王五', failReason:'平台接口超时', emptyAttrs:[], uploadStatus:'未上传', uploadTime:'', updateTime:'2026-07-05 11:00:00', updater:'王五' },
+  { id:7, shopCode:'SH002', shopName:'西湖生鲜专营店', productId:'P007', productName:'进口巧克力', categoryCode:'CAT006', categoryName:'糖果巧克力', batchNo:'PC202607010003', checkStatus:'已检查', checkTime:'2026-07-02 11:00:00', createTime:'2026-07-01 09:30:00', creator:'张三', failReason:'', emptyAttrs:[], uploadStatus:'已完成', uploadTime:'2026-07-02 14:30:00', updateTime:'2026-07-02 14:30:00', updater:'张三' },
+  { id:8, shopCode:'SH003', shopName:'鼎盛茗茶旗舰店', productId:'P008', productName:'高山绿茶', categoryCode:'CAT003', categoryName:'茶叶', batchNo:'PC202606300001', checkStatus:'检查失败', checkTime:'', createTime:'2026-06-30 16:00:00', creator:'王五', failReason:'商品不存在', emptyAttrs:[], uploadStatus:'未上传', uploadTime:'', updateTime:'2026-06-30 16:00:00', updater:'王五' }
+];
+
+var uploadExcelData = null;
+var nextId = 100;
+var batchSeq = 2; // 批次序号计数器
+
+// ===== 生成批次号 =====
+function generateBatchNo() {
+  var d = new Date();
+  var dateStr = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+  var seq = String(batchSeq++).padStart(4, '0');
+  return 'PC' + dateStr + seq;
+}
+
+// ===== 统计模式 =====
+var statMode = false;
+
+function toggleStatMode() {
+  statMode = !statMode;
+  var btn = document.getElementById('statToggle');
+  var tableScroll = document.querySelector('#listView .table-scroll');
+  var statView = document.getElementById('statView');
+
+  if (statMode) {
+    btn.classList.add('active');
+    tableScroll.style.display = 'none';
+    statView.style.display = '';
+    renderStatTable();
+  } else {
+    btn.classList.remove('active');
+    tableScroll.style.display = '';
+    statView.style.display = 'none';
+    doSearch();
+  }
+}
+
+function renderStatTable() {
+  // 按批次号分组统计
+  var groups = {};
+
+  mockData.forEach(function(row) {
+    var key = row.batchNo || '未知';
+    if (!groups[key]) {
+      groups[key] = { batchNo:key, shops:{}, products:{}, checked:0, unchecked:0, checkFail:0, attrOk:0, attrFail:0, attrEmpty:0, createTime:'', createBy:'', updateTime:'', updateBy:'' };
+    }
+    var g = groups[key];
+    g.shops[row.shopName] = true;
+    g.products[row.productId] = true;
+    if (row.checkStatus === '已检查') g.checked++;
+    else if (row.checkStatus === '未检查') g.unchecked++;
+    else if (row.checkStatus === '检查失败') g.checkFail++;
+
+    if (row.checkStatus === '已检查') {
+      var attrs = mockRequiredAttrs[row.productId] || [];
+      attrs.forEach(function(a) {
+        if (a.uploadStatus === '已上传') g.attrOk++;
+        else if (a.uploadStatus === '上传失败') g.attrFail++;
+        else g.attrEmpty++;
+      });
+    }
+
+    // 取最早的创建时间/创建人，最新的更新时间/更新人
+    if (!g.createTime || (row.createTime && row.createTime < g.createTime)) {
+      g.createTime = row.createTime || '';
+      g.createBy = row.creator || '';
+    }
+    if (!g.updateTime || (row.updateTime && row.updateTime > g.updateTime)) {
+      g.updateTime = row.updateTime || '';
+      g.updateBy = row.updater || '';
+    }
+  });
+
+  var keys = Object.keys(groups);
+
+  // 辅助：渲染数值单元格
+  function renderStatCell(count, total, color) {
+    if (count === 0) {
+      return '<span style="font-weight:700;color:#cbd5e1;">0</span>';
+    }
+    return '<span style="font-weight:700;color:' + color + ';">' + count + '</span>';
+  }
+
+  var html = '<table class="stat-table" id="statTable"><thead><tr>';
+
+  // 表头
+  html += '<th style="width:40px;">序号</th>';
+  html += '<th style="width:140px;">批次号</th>';
+  html += '<th style="width:70px;text-align:center;">店铺数</th>';
+  html += '<th style="width:70px;text-align:center;">商品数</th>';
+  html += '<th style="min-width:150px;">已检查</th>';
+  html += '<th style="min-width:150px;">未检查</th>';
+  html += '<th style="min-width:150px;">检查失败</th>';
+  html += '<th style="min-width:150px;">属性已上传</th>';
+  html += '<th style="min-width:150px;">属性未上传</th>';
+  html += '<th style="min-width:150px;">上传失败</th>';
+  html += '<th style="min-width:130px;">创建时间</th>';
+  html += '<th style="min-width:60px;">创建人</th>';
+  html += '<th style="min-width:130px;">更新时间</th>';
+  html += '<th style="min-width:60px;">更新人</th>';
+  html += '</tr></thead><tbody>';
+
+  // 数据行
+  if (keys.length === 0) {
+    html += '<tr><td colspan="14" style="padding:40px;text-align:center;color:#94a3b8;"><span style="font-size:24px;">&#128269;</span><div style="margin-top:8px;">暂无数据</div></td></tr>';
+  } else {
+    keys.sort().forEach(function(key, i) {
+      var g = groups[key];
+      var shopCount = Object.keys(g.shops).length;
+      var productCount = Object.keys(g.products).length;
+      var checkTotal = g.checked + g.unchecked + g.checkFail;
+      var attrTotal = g.attrOk + g.attrFail + g.attrEmpty;
+
+      html += '<tr onclick="drillDownStat(\'batchNo\',\'' + esc(key) + '\')">';
+      html += '<td style="width:40px;color:var(--text-tertiary);font-size:12px;">' + (i + 1) + '</td>';
+      html += '<td style="width:140px;font-weight:600;color:var(--ink);font-family:monospace;font-size:12px;letter-spacing:-.3px;">' + esc(key) + '<span class="drill-hint">→ 下钻</span></td>';
+      html += '<td style="width:70px;text-align:center;font-weight:700;color:#0ea5e9;">' + shopCount + '</td>';
+      html += '<td style="width:70px;text-align:center;font-weight:700;color:#8b5cf6;">' + productCount + '</td>';
+      html += '<td>' + renderStatCell(g.checked, checkTotal, '#059669') + '</td>';
+      html += '<td>' + renderStatCell(g.unchecked, checkTotal, '#64748b') + '</td>';
+      html += '<td>' + renderStatCell(g.checkFail, checkTotal, '#ef4444') + '</td>';
+      html += '<td>' + renderStatCell(g.attrOk, attrTotal, '#059669') + '</td>';
+      html += '<td>' + renderStatCell(g.attrEmpty, attrTotal, '#d97706') + '</td>';
+      html += '<td>' + renderStatCell(g.attrFail, attrTotal, '#ef4444') + '</td>';
+      html += '<td style="font-size:12px;color:var(--text-secondary);">' + esc(g.createTime || '—') + '</td>';
+      html += '<td style="font-size:12px;color:var(--text-secondary);">' + esc(g.createBy || '—') + '</td>';
+      html += '<td style="font-size:12px;color:var(--text-secondary);">' + esc(g.updateTime || '—') + '</td>';
+      html += '<td style="font-size:12px;color:var(--text-secondary);">' + esc(g.updateBy || '—') + '</td>';
+      html += '</tr>';
+    });
+  }
+  html += '</tbody></table>';
+
+  document.getElementById('statContent').innerHTML = html;
+  document.getElementById('totalCount').textContent = keys.length;
+  document.getElementById('checkAll').checked = false;
+  updateActionButtons();
+}
+
+function drillDownStat(dim, filterVal) {
+  // 重置明细筛选
+  document.getElementById('dBatchNo').value = '';
+  document.getElementById('dShopCode').value = '';
+  document.getElementById('dShopName').value = '';
+  document.getElementById('dProductId').value = '';
+  document.getElementById('dAttrValue').value = '';
+  document.getElementById('dAttrStatus').value = '';
+  document.getElementById('dFailReason').value = '';
+  document.getElementById('dCreateTimeStart').value = '';
+  document.getElementById('dCreateTimeEnd').value = '';
+
+  // 根据维度设置明细筛选
+  if (dim === 'shopName') {
+    document.getElementById('dShopName').value = filterVal;
+  } else if (dim === 'categoryName') {
+    // 明细视图没有类目筛选，通过商品ID间接过滤
+    // 先收集该类目下所有商品ID
+    var productIds = [];
+    mockData.forEach(function(row) {
+      if (row.categoryName === filterVal && productIds.indexOf(row.productId) < 0) {
+        productIds.push(row.productId);
+      }
+    });
+    // 无法用单字段筛选多商品，跳转全量明细
+  } else if (dim === 'batchNo') {
+    document.getElementById('dBatchNo').value = filterVal;
+  } else if (dim === 'checkStatus') {
+    // 检查状态在列表视图筛选更合适
+    document.getElementById('sCheckStatus').value = filterVal;
+    doSearch();
+    showToast('已筛选：检查状态 = ' + filterVal, 'info');
+    return;
+  }
+
+  switchView('detail');
+  renderDetailView();
+  showToast('已跳转明细视图（' + filterVal + '）', 'info');
+}
+
+// ===== 渲染列表 =====
+function renderTable(data) {
+  if (statMode) { renderStatTable(); return; }
+  var tbody = document.getElementById('tableBody');
+  var html = '';
+  if (data.length === 0) {
+    html = '<tr><td colspan="17" class="empty-state"><span class="empty-icon">&#128269;</span><div class="empty-text">暂无数据</div><div class="empty-hint">点击「导入核查商品」开始检查</div></td></tr>';
+  } else {
+    data.forEach(function(row, i) {
+      html += '<tr class="' + (row._checked ? 'row-selected' : '') + '">';
+      html += '<td><input type="checkbox" class="row-check" value="' + row.id + '" ' + (row._checked ? 'checked' : '') + ' onclick="toggleRow(this,' + row.id + ')"></td>';
+      html += '<td>' + (i + 1) + '</td>';
+      html += '<td class="col-batch-no">' + esc(row.batchNo) + '</td>';
+      html += '<td class="col-shop-code">' + esc(row.shopCode) + '</td>';
+      html += '<td>' + esc(row.shopName) + '</td>';
+      html += '<td class="col-shop-code">' + esc(row.productId) + '</td>';
+      html += '<td class="col-shop-code">' + esc(row.categoryCode || '') + '</td>';
+      html += '<td>' + esc(row.categoryName || '') + '</td>';
+      html += '<td>' + stCheck(row.checkStatus) + '</td>';
+      html += '<td style="color:#ef4444;font-size:12px;">' + (row.failReason ? esc(row.failReason) : '') + '</td>';
+      html += '<td style="font-size:12px;">' + esc(row.checkTime) + '</td>';
+      html += '<td style="font-size:12px;">' + esc(row.createTime) + '</td>';
+      html += '<td>' + esc(row.creator) + '</td>';
+      html += '<td style="font-size:12px;">' + (row.updateTime ? esc(row.updateTime) : '') + '</td>';
+      html += '<td>' + (row.updater ? esc(row.updater) : '') + '</td>';
+      html += '<td class="col-actions">';
+      html += '<a class="link-action" href="javascript:void(0)" onclick="doView(' + row.id + ')">查看</a>';
+      html += '<a class="link-action danger" href="javascript:void(0)" onclick="doDel(' + row.id + ')">删除</a>';
+      html += '</td></tr>';
+    });
+  }
+  tbody.innerHTML = html;
+  document.getElementById('totalCount').textContent = data.length;
+  document.getElementById('checkAll').checked = false;
+  updateActionButtons();
+}
+
+function stCheck(s) {
+  if (s === '已检查') return '<span class="status-tag submitted">✓ 已检查</span>';
+  if (s === '检查失败') return '<span class="status-tag rejected">✗ 检查失败</span>';
+  return '<span class="status-tag initial">○ 未检查</span>';
+}
+
+function stUpload(s) {
+  if (s === '已上传') return '<span class="status-tag submitted">✓ 已上传</span>';
+  if (s === '上传失败') return '<span class="status-tag rejected">✗ 上传失败</span>';
+  return '<span class="status-tag initial">○ 未上传</span>';
+}
+
+// ===== 全选/行选 =====
+function toggleAll(el) {
+  document.querySelectorAll('.row-check').forEach(function(c) {
+    c.checked = el.checked;
+    var tr = c.closest('tr');
+    if (tr) tr.classList.toggle('row-selected', el.checked);
+  });
+}
+function toggleRow(el, id) {
+  var tr = el.closest('tr');
+  if (tr) tr.classList.toggle('row-selected', el.checked);
+  updateCheckAll();
+}
+function updateCheckAll() {
+  var all = document.querySelectorAll('.row-check');
+  var checked = document.querySelectorAll('.row-check:checked');
+  document.getElementById('checkAll').checked = all.length > 0 && all.length === checked.length;
+}
+function getCheckedIds() {
+  var ids = [];
+  document.querySelectorAll('.row-check:checked').forEach(function(c) { ids.push(Number(c.value)); });
+  return ids;
+}
+
+// ===== 操作按钮状态 =====
+function updateActionButtons() {
+  var hasChecked = mockData.some(function(r) { return r.checkStatus === '已检查'; });
+  document.getElementById('btnExport').disabled = !hasChecked;
+}
+
+// ===== 搜索/筛选 =====
+function doSearch() {
+  var bn = document.getElementById('sBatchNo').value.trim().toLowerCase();
+  var sc = document.getElementById('sShopCode').value.trim().toLowerCase();
+  var sn = document.getElementById('sShopName').value.trim().toLowerCase();
+  var pid = document.getElementById('sProductId').value.trim().toLowerCase();
+  var ck = document.getElementById('sCheckStatus').value;
+  var ctStart = document.getElementById('sCreateTimeStart').value;
+  var ctEnd = document.getElementById('sCreateTimeEnd').value;
+  var filtered = mockData.filter(function(row) {
+    if (bn && (row.batchNo || '').toLowerCase().indexOf(bn) < 0) return false;
+    if (sc && row.shopCode.toLowerCase().indexOf(sc) < 0) return false;
+    if (sn && row.shopName.toLowerCase().indexOf(sn) < 0) return false;
+    if (pid && row.productId.toLowerCase().indexOf(pid) < 0) return false;
+    if (ck && row.checkStatus !== ck) return false;
+    if (ctStart && row.createTime && row.createTime.substring(0,10) < ctStart) return false;
+    if (ctEnd && row.createTime && row.createTime.substring(0,10) > ctEnd) return false;
+    return true;
+  });
+  renderTable(filtered);
+  showSearchTags();
+}
+function resetSearch() {
+  document.getElementById('sBatchNo').value = '';
+  document.getElementById('sShopCode').value = '';
+  document.getElementById('sShopName').value = '';
+  document.getElementById('sProductId').value = '';
+  document.getElementById('sCheckStatus').value = '';
+  document.getElementById('sCreateTimeStart').value = '';
+  document.getElementById('sCreateTimeEnd').value = '';
+  renderTable(mockData);
+  showSearchTags();
+}
+
+// ===== 搜索标签 =====
+function showSearchTags() {
+  var map = { sBatchNo:'批次号', sShopCode:'店铺编码', sShopName:'店铺名称', sProductId:'平台商品ID', sCheckStatus:'检查状态', sCreateTimeStart:'创建时间起', sCreateTimeEnd:'创建时间止' };
+  var tags = [];
+  Object.keys(map).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el && el.value) tags.push({ name: map[id], value: el.value, id: id });
+  });
+  var container = document.getElementById('searchTags');
+  if (!container) return;
+  if (tags.length === 0) { container.style.display = 'none'; container.innerHTML = ''; return; }
+  var html = '';
+  tags.forEach(function(t) {
+    html += '<span class="search-active-tag">' + t.name + '：' + t.value + '<span class="tag-remove" onclick="clearSearchTag(\'' + t.id + '\')">&times;</span></span>';
+  });
+  container.style.display = '';
+  container.innerHTML = html;
+}
+function clearSearchTag(id) {
+  document.getElementById(id).value = '';
+  doSearch();
+}
+
+// ===== 导入核查商品 =====
+var importedExcelIds = null;
+
+// 初始化店铺选择下拉
+function initShopSelect() {
+  var shopMap = {};
+  mockProducts.forEach(function(p) { shopMap[p.shopCode] = p.shopName; });
+  var sel = document.getElementById('importShopSelect');
+  // 清空旧选项，保留第一个"请选择店铺"
+  while (sel.options.length > 1) sel.remove(1);
+  Object.keys(shopMap).forEach(function(code) {
+    var opt = document.createElement('option');
+    opt.value = code;
+    opt.textContent = shopMap[code] + '（' + code + '）';
+    sel.appendChild(opt);
+  });
+}
+
+function switchImportTab(mode) {
+  document.getElementById('importTabText').className = 'import-tab' + (mode === 'text' ? ' active' : '');
+  document.getElementById('importTabExcel').className = 'import-tab' + (mode === 'excel' ? ' active' : '');
+  document.getElementById('importTextPanel').style.display = mode === 'text' ? '' : 'none';
+  document.getElementById('importExcelPanel').style.display = mode === 'excel' ? '' : 'none';
+  document.getElementById('importPreviewArea').style.display = 'none';
+}
+
+function openImportModal() {
+  document.getElementById('importProductIds').value = '';
+  initShopSelect();
+  document.getElementById('importShopSelect').value = '';
+  document.getElementById('importPreviewArea').style.display = 'none';
+  importedExcelIds = null;
+  document.getElementById('importExcelFileInfo').style.display = 'none';
+  document.getElementById('importExcelFileInfo').innerHTML = '';
+  document.getElementById('importExcelInput').value = '';
+  switchImportTab('text');
+  document.getElementById('importModal').style.display = 'flex';
+}
+// ===== 编辑属性值弹窗 =====
+var editingProductId = null;
+var editingAttrIdx = null;
+
+function openEditAttrModal(productId, attrIdx) {
+  editingProductId = productId;
+  editingAttrIdx = attrIdx;
+  var attrs = mockRequiredAttrs[productId] || [];
+  var attr = attrs[attrIdx];
+  if (!attr) return;
+  document.getElementById('editAttrName').textContent = attr.name;
+  document.getElementById('editAttrValue').value = attr.value || '';
+  document.getElementById('editAttrModal').style.display = '';
+}
+
+function closeEditAttrModal() {
+  editingProductId = null;
+  editingAttrIdx = null;
+  document.getElementById('editAttrModal').style.display = 'none';
+}
+
+function saveEditAttr() {
+  if (!editingProductId || editingAttrIdx === null) return;
+  var attrs = mockRequiredAttrs[editingProductId] || [];
+  var attr = attrs[editingAttrIdx];
+  if (!attr) return;
+  var newVal = document.getElementById('editAttrValue').value.trim();
+  if (!newVal) {
+    showToast('属性值不能为空', 'error');
+    return;
+  }
+  attr.value = newVal;
+  attr.updateTime = now();
+  attr.updater = '当前用户';
+  closeEditAttrModal();
+  renderDetailView();
+  showToast('属性值已保存', 'success');
+}
+
+function closeImportModal() {
+  document.getElementById('importModal').style.display = 'none';
+}
+
+function downloadImportTemplate() {
+  var wsData = [
+    ['平台商品ID', '店铺编码'],
+    ['P001', 'SH001'],
+    ['P002', 'SH002']
+  ];
+  var wb = XLSX.utils.book_new();
+  var ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols'] = [{ wch: 14 }, { wch: 12 }];
+  XLSX.utils.book_append_sheet(wb, ws, '导入模板');
+  XLSX.writeFile(wb, '商品属性核查导入模板.xlsx');
+  showToast('模板已下载', 'success');
+}
+
+function handleImportExcel(files) {
+  if (!files || files.length === 0) return;
+  var file = files[0];
+  if (!file.name.match(/\.(xlsx|xls)$/i)) {
+    showToast('请上传 .xlsx 或 .xls 格式文件', 'error');
+    return;
+  }
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = new Uint8Array(e.target.result);
+      var wb = XLSX.read(data, { type:'array' });
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      var jsonData = XLSX.utils.sheet_to_json(ws, { header:1 });
+      if (jsonData.length < 2) { showToast('Excel 中无有效数据行', 'error'); return; }
+
+      var headerRow = jsonData[0].map(function(h) { return String(h).trim(); });
+      // 尝试查找商品ID列
+      var idColIdx = -1;
+      var idKeywords = ['平台商品ID', '商品ID', '商品编号', 'ID', 'product_id', 'productId'];
+      idKeywords.forEach(function(kw) {
+        if (idColIdx < 0) {
+          headerRow.forEach(function(h, i) { if (h.indexOf(kw) >= 0) idColIdx = i; });
+        }
+      });
+      if (idColIdx < 0) idColIdx = 0; // 默认取第一列
+
+      var ids = [];
+      for (var i = 1; i < jsonData.length; i++) {
+        var val = jsonData[i][idColIdx];
+        if (val !== undefined && val !== null && String(val).trim()) {
+          ids.push(String(val).trim());
+        }
+      }
+
+      if (ids.length === 0) { showToast('未从 Excel 中识别到商品ID', 'error'); return; }
+
+      importedExcelIds = ids;
+      var info = document.getElementById('importExcelFileInfo');
+      info.style.display = 'block';
+      info.innerHTML = '✅ 已识别 <strong>' + ids.length + '</strong> 个商品ID（来自列：' + (headerRow[idColIdx] || '第' + (idColIdx+1) + '列') + '）';
+      showToast('Excel 解析成功，共 ' + ids.length + ' 个商品ID', 'success');
+    } catch(err) {
+      showToast('文件解析失败：' + err.message, 'error');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function doImportCheck() {
+  var ids;
+  var isExcelMode = document.getElementById('importTabExcel').className.indexOf('active') >= 0;
+
+  if (isExcelMode) {
+    if (!importedExcelIds || importedExcelIds.length === 0) {
+      showToast('请先上传 Excel 文件', 'error');
+      return;
+    }
+    ids = importedExcelIds;
+  } else {
+    var shopCode = document.getElementById('importShopSelect').value;
+    if (!shopCode) { showToast('请先选择店铺', 'error'); return; }
+    var text = document.getElementById('importProductIds').value.trim();
+    if (!text) { showToast('请输入平台商品ID', 'error'); return; }
+    ids = text.split(/[,，\n]+/).map(function(s) { return s.trim(); }).filter(function(s) { return s; });
+    if (ids.length === 0) { showToast('未识别到有效商品ID', 'error'); return; }
+  }
+
+  showToast('正在调用平台接口批量检查…', 'info');
+
+  // 文本模式下获取用户选择的店铺信息
+  var selectedShopCode = isExcelMode ? null : document.getElementById('importShopSelect').value;
+  var selectedShopName = isExcelMode ? null : document.getElementById('importShopSelect').options[document.getElementById('importShopSelect').selectedIndex].textContent.replace(/（.*）$/, '');
+
+  setTimeout(function() {
+    var nowStr = now();
+    var currentBatchNo = generateBatchNo();
+
+    var addedCount = 0;
+    var notFoundCount = 0;
+
+    ids.forEach(function(id) {
+      var product = mockProducts.find(function(p) { return p.id === id; });
+      if (!product) {
+        notFoundCount++;
+        return;
+      }
+
+      var attrs = mockRequiredAttrs[product.id] || [];
+      var emptyAttrs = attrs.filter(function(a) { return !a.value; });
+
+      // 文本模式下使用用户选择的店铺，Excel模式使用商品自身店铺
+      var useShopCode = selectedShopCode || product.shopCode;
+      var useShopName = selectedShopName || product.shopName;
+
+      // 同一商品多次导入：生成新记录（新批次）
+      mockData.push({
+        id: nextId++,
+        shopCode: useShopCode,
+        shopName: useShopName,
+        productId: product.id,
+        productName: product.name,
+        categoryCode: product.categoryCode || '',
+        categoryName: product.categoryName || '',
+        batchNo: currentBatchNo,
+        checkStatus: '已检查',
+        checkTime: nowStr,
+        createTime: nowStr,
+        creator: '当前用户',
+        failReason: '',
+        emptyAttrs: emptyAttrs.map(function(a) { return a.name; }),
+        uploadStatus: '未上传',
+        uploadTime: '',
+        updateTime: '',
+        updater: ''
+      });
+      addedCount++;
+    });
+
+    localStorage.setItem('package_optimizeList', JSON.stringify(mockData));
+    renderTable(mockData);
+
+    // 显示预览
+    var newItems = mockData.filter(function(r) { return r.batchNo === currentBatchNo; });
+    if (newItems.length > 0) {
+      var ph = '<table class="preview-table"><thead><tr><th>批次号</th><th>店铺编码</th><th>店铺名称</th><th>商品ID</th><th>类目编码</th><th>类目名称</th><th>空属性数</th></tr></thead><tbody>';
+      newItems.forEach(function(r) {
+        ph += '<tr><td class="col-batch-no">' + esc(r.batchNo) + '</td><td>' + esc(r.shopCode) + '</td><td>' + esc(r.shopName) + '</td><td>' + esc(r.productId) + '</td><td>' + esc(r.categoryCode || '') + '</td><td>' + esc(r.categoryName || '') + '</td><td style="' + (r.emptyAttrs.length > 0 ? 'color:#d97706;font-weight:600;' : 'color:#059669;') + '">' + (r.emptyAttrs.length || '0') + '</td></tr>';
+      });
+      ph += '</tbody></table>';
+      document.getElementById('importPreviewContent').innerHTML = ph;
+      document.getElementById('importPreviewArea').style.display = 'block';
+    }
+
+    // 汇总提示
+    var msg = '导入完成：新增 ' + addedCount + ' 条（批次号：' + currentBatchNo + '）';
+    if (notFoundCount > 0) msg += '，未找到 ' + notFoundCount + ' 条';
+    showToast(msg, addedCount > 0 ? 'success' : 'info');
+  }, 800);
+}
+
+// ===== 导出结果明细 =====
+function doExport() {
+  var checkedItems = mockData.filter(function(r) { return r.checkStatus === '已检查'; });
+  if (checkedItems.length === 0) {
+    showToast('没有已检查的记录可导出', 'error');
+    return;
+  }
+
+  var wsData = [['店铺编码','店铺名称','平台商品ID','类目编码','类目名称','商品名称','检查状态','检查时间','创建时间','创建人']];
+  checkedItems.forEach(function(r) {
+    wsData.push([r.shopCode, r.shopName, r.productId, r.categoryCode || '', r.categoryName || '', r.productName, r.checkStatus, r.checkTime, r.createTime, r.creator]);
+  });
+
+  var wb = XLSX.utils.book_new();
+  var ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols'] = [ {wch:10},{wch:20},{wch:14},{wch:10},{wch:12},{wch:18},{wch:10},{wch:18},{wch:18},{wch:10} ];
+  XLSX.utils.book_append_sheet(wb, ws, '属性优化明细');
+  XLSX.writeFile(wb, '详情页属性优化明细_' + new Date().toISOString().slice(0,10) + '.xlsx');
+  showToast('已导出 ' + checkedItems.length + ' 条记录', 'success');
+}
+
+// ===== 明细视图导出结果明细 =====
+function doDetailExport() {
+  var rows = [];
+  var filterShopCode = document.getElementById('dShopCode').value.trim();
+  var filterProductId = document.getElementById('dProductId').value.trim();
+  var filterAttrValue = document.getElementById('dAttrValue').value.trim();
+  var filterAttrStatus = document.getElementById('dAttrStatus').value;
+
+  mockData.forEach(function(row) {
+    if (row.checkStatus !== '已检查') return;
+    if (filterShopCode && row.shopCode.indexOf(filterShopCode) === -1) return;
+    if (filterProductId && row.productId.indexOf(filterProductId) === -1) return;
+
+    var attrs = mockRequiredAttrs[row.productId] || [];
+    attrs.forEach(function(attr) {
+      var uploadStatus = attr.uploadStatus || '未上传';
+      var failReason = attr.failReason || '';
+      if (filterAttrValue && (attr.value || '').indexOf(filterAttrValue) === -1) return;
+      if (filterAttrStatus && uploadStatus !== filterAttrStatus) return;
+      rows.push({
+        shopCode: row.shopCode,
+        shopName: row.shopName,
+        productId: row.productId,
+        categoryCode: row.categoryCode || '',
+        categoryName: row.categoryName || '',
+        attrName: attr.name,
+        attrValue: attr.value || '',
+        uploadStatus: uploadStatus,
+        failReason: failReason,
+        createTime: row.createTime,
+        creator: row.creator
+      });
+    });
+  });
+
+  if (rows.length === 0) {
+    showToast('没有数据可导出', 'error');
+    return;
+  }
+
+  var wsData = [['店铺编码','店铺名称','平台商品ID','类目编码','类目名称','未填属性','属性值','上传状态','失败原因','创建时间','创建人']];
+  rows.forEach(function(r) {
+    wsData.push([r.shopCode, r.shopName, r.productId, r.categoryCode || '', r.categoryName || '', r.attrName, r.attrValue, r.uploadStatus, r.failReason, r.createTime, r.creator]);
+  });
+
+  var wb = XLSX.utils.book_new();
+  var ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols'] = [ {wch:10},{wch:20},{wch:14},{wch:10},{wch:12},{wch:14},{wch:18},{wch:10},{wch:18},{wch:18},{wch:10} ];
+  XLSX.utils.book_append_sheet(wb, ws, '属性明细');
+  XLSX.writeFile(wb, '属性检查结果明细_' + new Date().toISOString().slice(0,10) + '.xlsx');
+  showToast('已导出 ' + rows.length + ' 条记录', 'success');
+}
+
+// ===== 上传属性 =====
+function openUploadModal() {
+  uploadExcelData = null;
+  document.getElementById('uploadFileInput').value = '';
+  document.getElementById('uploadPreviewArea').style.display = 'none';
+  document.getElementById('modalUploadBtn').disabled = true;
+  document.getElementById('uploadModal').style.display = 'flex';
+}
+function closeUploadModal() {
+  document.getElementById('uploadModal').style.display = 'none';
+}
+
+function handleUploadFile(files) {
+  if (!files || files.length === 0) return;
+  var file = files[0];
+  if (!file.name.match(/\.(xlsx|xls)$/i)) {
+    showToast('请上传 .xlsx 或 .xls 格式文件', 'error');
+    return;
+  }
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = new Uint8Array(e.target.result);
+      var wb = XLSX.read(data, { type:'array' });
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      var jsonData = XLSX.utils.sheet_to_json(ws, { header:1 });
+      var rows = jsonData.slice(1).filter(function(row) { return row.length > 0 && row[0]; });
+
+      if (rows.length === 0) { showToast('文件中没有有效数据', 'error'); return; }
+
+      uploadExcelData = rows.map(function(row) {
+        return { shopCode: row[0]||'', shopName: row[1]||'', productId: row[2]||'', productName: row[3]||'', checkStatus: row[4]||'', checkTime: row[5]||'' };
+      });
+
+      var ph = '<table class="preview-table"><thead><tr><th>店铺编码</th><th>店铺名称</th><th>商品ID</th></tr></thead><tbody>';
+      uploadExcelData.slice(0, 20).forEach(function(r) {
+        ph += '<tr><td>' + esc(r.shopCode) + '</td><td>' + esc(r.shopName) + '</td><td>' + esc(r.productId) + '</td></tr>';
+      });
+      if (uploadExcelData.length > 20) ph += '<tr><td colspan="3" style="text-align:center;color:#94a3b8;">…共 ' + uploadExcelData.length + ' 条</td></tr>';
+      ph += '</tbody></table>';
+
+      document.getElementById('uploadPreviewContent').innerHTML = ph;
+      document.getElementById('uploadPreviewArea').style.display = 'block';
+      document.getElementById('modalUploadBtn').disabled = false;
+      showToast('文件读取成功，共 ' + uploadExcelData.length + ' 条数据', 'success');
+    } catch(err) {
+      showToast('文件解析失败：' + err.message, 'error');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function doUploadSubmit() {
+  if (!uploadExcelData || uploadExcelData.length === 0) {
+    showToast('请先上传 Excel 文件', 'error');
+    return;
+  }
+
+  showToast('正在调用平台编辑接口更新属性…', 'info');
+
+  setTimeout(function() {
+    var nowStr = now();
+    var currentBatchNo = generateBatchNo();
+    var updatedCount = 0;
+    var notFoundCount = 0;
+
+    uploadExcelData.forEach(function(row) {
+      var item = mockData.find(function(r) { return r.productId === row.productId; });
+      if (!item) {
+        notFoundCount++;
+        return;
+      }
+      // 增量合并：更新状态、批次号和时间，保留原有属性值
+      item.uploadStatus = '已完成';
+      item.uploadTime = nowStr;
+      item.checkStatus = '已检查';
+      item.batchNo = currentBatchNo;
+      item.updateTime = nowStr;
+      item.updater = '当前用户';
+      updatedCount++;
+    });
+
+    localStorage.setItem('package_optimizeList', JSON.stringify(mockData));
+    renderTable(mockData);
+    closeUploadModal();
+
+    // 汇总提示
+    var msg = '上传完成：更新 ' + updatedCount + ' 条（批次号：' + currentBatchNo + '）';
+    if (notFoundCount > 0) msg += '，未找到 ' + notFoundCount + ' 条';
+    showToast(msg, updatedCount > 0 ? 'success' : 'info');
+  }, 1000);
+}
+
+// ===== 行操作 =====
+function doView(id) {
+  var row = mockData.find(function(r) { return r.id === id; });
+  if (!row) return;
+  if (row.checkStatus !== '已检查') {
+    showToast('该商品尚未检查，无法查看详情', 'error');
+    return;
+  }
+  window.location.href = 'detail.html?id=' + id;
+}
+function doDel(id) {
+  if (confirm('确认删除该记录？')) {
+    mockData = mockData.filter(function(r) { return r.id !== id; });
+    localStorage.setItem('package_optimizeList', JSON.stringify(mockData));
+    renderTable(mockData);
+    showToast('删除成功', 'success');
+  }
+}
+
+// ===== 工具函数 =====
+function now() {
+  var d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + ':' + String(d.getSeconds()).padStart(2,'0');
+}
+function esc(s) {
+  if (!s && s !== 0) return '';
+  var d = document.createElement('div');
+  d.textContent = String(s);
+  return d.innerHTML;
+}
+
+// ===== 视图切换 =====
+function switchView(view) {
+  var tabs = document.querySelectorAll('.view-tab');
+  var listView = document.getElementById('listView');
+  var detailView = document.getElementById('detailView');
+  
+  tabs.forEach(function(tab) { tab.classList.remove('active'); });
+  
+  if (view === 'list') {
+    tabs[0].classList.add('active');
+    listView.classList.add('active');
+    detailView.classList.remove('active');
+    if (statMode) renderStatTable();
+  } else {
+    tabs[1].classList.add('active');
+    listView.classList.remove('active');
+    detailView.classList.add('active');
+    renderDetailView();
+  }
+}
+
+// ===== 明细视图渲染 =====
+function renderDetailView() {
+  var tbody = document.getElementById('detailTableBody');
+  var html = '';
+  var totalRows = 0;
+  
+  // 获取筛选条件
+  var filterBatchNo = document.getElementById('dBatchNo').value.trim();
+  var filterShopCode = document.getElementById('dShopCode').value.trim();
+  var filterShopName = document.getElementById('dShopName').value.trim();
+  var filterProductId = document.getElementById('dProductId').value.trim();
+  var filterAttrValue = document.getElementById('dAttrValue').value.trim();
+  var filterAttrStatus = document.getElementById('dAttrStatus').value;
+  var filterFailReason = document.getElementById('dFailReason').value.trim();
+  var filterCTStart = document.getElementById('dCreateTimeStart').value;
+  var filterCTEnd = document.getElementById('dCreateTimeEnd').value;
+  
+  // 遍历所有已检查的商品，展开属性
+  mockData.forEach(function(row) {
+    if (row.checkStatus !== '已检查') return;
+    if (filterBatchNo && (row.batchNo || '').indexOf(filterBatchNo) === -1) return;
+    if (filterShopCode && row.shopCode.indexOf(filterShopCode) === -1) return;
+    if (filterShopName && row.shopName.indexOf(filterShopName) === -1) return;
+    if (filterProductId && row.productId.indexOf(filterProductId) === -1) return;
+    if (filterCTStart && row.createTime && row.createTime.substring(0,10) < filterCTStart) return;
+    if (filterCTEnd && row.createTime && row.createTime.substring(0,10) > filterCTEnd) return;
+    
+    var attrs = mockRequiredAttrs[row.productId] || [];
+    attrs.forEach(function(attr, attrIdx) {
+      // 属性状态：未上传/已上传/上传失败
+      var uploadStatus = attr.uploadStatus || '未上传';
+      var failReason = attr.failReason || '';
+      
+      // 属性值筛选
+      if (filterAttrValue && (attr.value || '').indexOf(filterAttrValue) === -1) return;
+      
+      // 属性状态筛选
+      if (filterAttrStatus && uploadStatus !== filterAttrStatus) return;
+      
+      // 失败原因筛选
+      if (filterFailReason && (failReason || '').indexOf(filterFailReason) === -1) return;
+      
+      totalRows++;
+      html += '<tr>';
+      html += '<td><input type="checkbox" class="detail-row-check" onclick="toggleDetailRow(this)"></td>';
+      html += '<td>' + totalRows + '</td>';
+      html += '<td class="col-batch-no">' + esc(row.batchNo) + '</td>';
+      html += '<td class="col-shop-code">' + esc(row.shopCode) + '</td>';
+      html += '<td>' + esc(row.shopName) + '</td>';
+      html += '<td class="col-shop-code">' + esc(row.productId) + '</td>';
+      html += '<td class="col-shop-code">' + esc(row.categoryCode || '') + '</td>';
+      html += '<td>' + esc(row.categoryName || '') + '</td>';
+      html += '<td>' + esc(attr.name) + '</td>';
+      html += '<td>' + (attr.value ? esc(attr.value) : '') + '</td>';
+      html += '<td>' + stUpload(uploadStatus) + '</td>';
+      html += '<td style="color:#ef4444;font-size:12px;">' + (failReason ? esc(failReason) : '') + '</td>';
+      html += '<td style="font-size:12px;">' + esc(row.createTime) + '</td>';
+      html += '<td>' + esc(row.creator) + '</td>';
+      html += '<td style="font-size:12px;">' + (attr.updateTime ? esc(attr.updateTime) : '') + '</td>';
+      html += '<td>' + (attr.updater ? esc(attr.updater) : '') + '</td>';
+      html += '<td class="col-actions">';
+      if (uploadStatus === '未上传' || uploadStatus === '上传失败') {
+        html += '<a class="link-action" href="javascript:void(0)" onclick="openEditAttrModal(\'' + esc(row.productId) + '\',' + attrIdx + ')">编辑</a>';
+      } else {
+        html += '<a class="link-action" href="javascript:void(0)" onclick="showToast(\'属性：' + esc(attr.name) + ' = ' + esc(attr.value) + '\', \'info\')">查看</a>';
+      }
+      html += '</td></tr>';
+    });
+  });
+  
+  if (totalRows === 0) {
+    html = '<tr><td colspan="17" class="empty-state"><span class="empty-icon">&#128269;</span><div class="empty-text">暂无属性数据</div></td></tr>';
+  }
+  
+  tbody.innerHTML = html;
+  document.getElementById('detailTotalCount').textContent = totalRows;
+  document.getElementById('detailTotalBadge').textContent = '共 ' + totalRows + ' 条';
+  document.getElementById('detailCheckAll').checked = false;
+}
+
+// ===== 明细视图筛选 =====
+function doDetailSearch() {
+  renderDetailView();
+  showToast('查询完成', 'success');
+}
+function resetDetailSearch() {
+  document.getElementById('dBatchNo').value = '';
+  document.getElementById('dShopCode').value = '';
+  document.getElementById('dShopName').value = '';
+  document.getElementById('dProductId').value = '';
+  document.getElementById('dAttrValue').value = '';
+  document.getElementById('dAttrStatus').value = '';
+  document.getElementById('dFailReason').value = '';
+  document.getElementById('dCreateTimeStart').value = '';
+  document.getElementById('dCreateTimeEnd').value = '';
+  renderDetailView();
+  showToast('已重置筛选条件', 'info');
+}
+
+// ===== 明细视图全选/行选 =====
+function toggleDetailAll(el) {
+  document.querySelectorAll('.detail-row-check').forEach(function(c) {
+    c.checked = el.checked;
+    var tr = c.closest('tr');
+    if (tr) tr.classList.toggle('row-selected', el.checked);
+  });
+}
+function toggleDetailRow(el) {
+  var tr = el.closest('tr');
+  if (tr) tr.classList.toggle('row-selected', el.checked);
+  var all = document.querySelectorAll('.detail-row-check');
+  var checked = document.querySelectorAll('.detail-row-check:checked');
+  document.getElementById('detailCheckAll').checked = all.length > 0 && all.length === checked.length;
+}
+
+function showToast(message, type) {
+  type = type || 'info';
+  var container = document.getElementById('toastContainer');
+  if (!container) return;
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(function() {
+    if (toast.parentNode) {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s';
+      setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+    }
+  }, 2500);
+}
+
+// ===== 拖拽上传 =====
+document.addEventListener('DOMContentLoaded', function() {
+  var zone = document.getElementById('uploadZoneInner');
+  if (zone) {
+    zone.addEventListener('dragover', function(e) { e.preventDefault(); this.style.borderColor = 'var(--primary)'; this.style.background = 'var(--primary-50)'; });
+    zone.addEventListener('dragleave', function(e) { e.preventDefault(); this.style.borderColor = '#cbd5e1'; this.style.background = '#fafbfd'; });
+    zone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      this.style.borderColor = '#cbd5e1';
+      this.style.background = '#fafbfd';
+      handleUploadFile(e.dataTransfer.files);
+    });
+  }
+});
+
+// ===== 初始化 =====
+renderTable(mockData);
+</script>
+</body>
+</html>

@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>包装优化 - 属性检查明细</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    /* ===== 商品信息卡片 ===== */
+    .product-info-card {
+      background: linear-gradient(135deg, #eef0ff 0%, #f8f9ff 100%);
+      border: 1px solid #dce0f8;
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+    }
+    .product-info-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .product-info-header h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .product-info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .info-label {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      font-weight: 500;
+    }
+    .info-value {
+      font-size: 14px;
+      color: var(--ink);
+      font-weight: 600;
+    }
+    .info-value.mono {
+      font-family: "SF Mono", "Menlo", monospace;
+      color: var(--primary);
+    }
+
+    /* ===== 表格 ===== */
+    .col-batch-no {
+      font-family: "SF Mono", "Menlo", monospace;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary);
+      white-space: nowrap;
+    }
+    .col-shop-code {
+      font-family: "SF Mono", "Menlo", monospace;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+    .attr-empty {
+      color: #d97706;
+      font-weight: 600;
+    }
+    .attr-filled {
+      color: #059669;
+    }
+  </style>
+</head>
+<body>
+<div class="page-container">
+
+  <!-- Toast 容器 -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script>
+    if (window.parent) {
+      window.parent.postMessage({type:'breadcrumb', text:'包装优化 <span>/</span> 属性检查明细'}, '*');
+    }
+  </script>
+
+  <!-- 返回按钮 -->
+  <div style="margin-bottom:16px;">
+    <button class="btn" onclick="goBack()" style="display:inline-flex;align-items:center;gap:6px;">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      返回列表
+    </button>
+  </div>
+
+  <!-- 商品信息卡片 -->
+  <div class="product-info-card" id="productInfoCard">
+    <div class="product-info-header">
+      <h3>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+          <line x1="12" y1="22.08" x2="12" y2="12"/>
+        </svg>
+        商品信息
+      </h3>
+      <span class="status-tag submitted" id="statusTag">✓ 已检查</span>
+    </div>
+    <div class="product-info-grid">
+      <div class="info-item">
+        <span class="info-label">店铺编码</span>
+        <span class="info-value mono" id="infoShopCode">—</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">店铺名称</span>
+        <span class="info-value" id="infoShopName">—</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">平台商品ID</span>
+        <span class="info-value mono" id="infoProductId">—</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">商品名称</span>
+        <span class="info-value" id="infoProductName">—</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">批次号</span>
+        <span class="info-value mono" id="infoBatchNo">—</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">检查时间</span>
+        <span class="info-value" id="infoCheckTime">—</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">创建人</span>
+        <span class="info-value" id="infoCreator">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 属性列表 -->
+  <div class="table-area">
+    <div class="table-toolbar">
+      <span style="font-size:13px;font-weight:600;color:var(--ink);">属性检查结果</span>
+      <span style="font-size:12px;color:var(--text-tertiary);margin-left:6px;" id="totalBadge">共 0 条</span>
+    </div>
+
+    <div class="table-scroll">
+      <table class="data-table" id="dataTable">
+        <thead>
+          <tr>
+            <th style="width:40px;"><input type="checkbox" id="checkAll" onclick="toggleAll(this)"></th>
+            <th style="width:40px;">序号</th>
+            <th>批次号</th>
+            <th>店铺编码</th>
+            <th>店铺名称</th>
+            <th>平台商品ID</th>
+            <th>未填属性</th>
+            <th>属性值</th>
+            <th>属性状态</th>
+            <th>失败原因</th>
+            <th>创建时间</th>
+            <th>创建人</th>
+            <th>更新时间</th>
+            <th>更新人</th>
+            <th style="width:80px;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <span class="page-info">共 <strong id="totalCount">0</strong> 条</span>
+      <span class="page-btn disabled">&laquo;</span>
+      <span class="page-btn active">1</span>
+      <span class="page-btn">&raquo;</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== 编辑属性值 - 弹窗 ===== -->
+<div id="editAttrModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeEditAttrModal()">
+  <div class="modal" style="width:460px;">
+    <div class="modal-head">
+      <h3>✏️ 编辑属性值</h3>
+      <button class="modal-close" onclick="closeEditAttrModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px;">属性名称：</label>
+        <div id="editAttrName" style="font-size:14px;color:var(--ink);font-weight:600;padding:8px 12px;background:#f8fafc;border-radius:6px;border:1px solid var(--border);"></div>
+      </div>
+      <div>
+        <label style="font-size:13px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px;">属性值：</label>
+        <textarea id="editAttrValue" style="width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:8px;font:inherit;font-size:13px;line-height:1.6;resize:vertical;outline:none;transition:border-color .18s;background:var(--bg-secondary,#f8fafc);" rows="3" placeholder="请输入属性值"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeEditAttrModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveEditAttr()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== 模拟商品数据 =====
+var mockProducts = [
+  { id:'P001', name:'经典坚果礼盒', shopCode:'SH001', shopName:'云途食品旗舰店', platformId:'DY-20260701-001' },
+  { id:'P002', name:'有机红枣', shopCode:'SH002', shopName:'西湖生鲜专营店', platformId:'DY-20260701-002' },
+  { id:'P003', name:'精选茶叶套装', shopCode:'SH003', shopName:'鼎盛茗茶旗舰店', platformId:'DY-20260701-003' },
+  { id:'P004', name:'手工糕点礼盒', shopCode:'SH004', shopName:'前海食品专营店', platformId:'DY-20260701-004' },
+  { id:'P005', name:'精品咖啡豆', shopCode:'SH001', shopName:'云途食品旗舰店', platformId:'DY-20260701-005' },
+  { id:'P006', name:'养生花茶礼盒', shopCode:'SH003', shopName:'鼎盛茗茶旗舰店', platformId:'DY-20260701-006' },
+  { id:'P007', name:'进口巧克力', shopCode:'SH002', shopName:'西湖生鲜专营店', platformId:'DY-20260701-007' },
+  { id:'P008', name:'高山绿茶', shopCode:'SH003', shopName:'鼎盛茗茶旗舰店', platformId:'DY-20260701-008' },
+];
+
+// ===== 模拟必填属性规则 =====
+var mockRequiredAttrs = {
+  'P001': [
+    { name:'产地', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }, { name:'保质期', value:'12个月', uploadStatus:'已上传', updateTime:'2026-07-05 14:00:00', updater:'张三' }, { name:'净含量', value:'', uploadStatus:'未上传', updateTime:'', updater:'' },
+    { name:'配料表', value:'', uploadStatus:'上传失败', failReason:'格式不正确', updateTime:'', updater:'' }, { name:'储存条件', value:'阴凉干燥处', uploadStatus:'已上传', updateTime:'2026-07-05 14:00:00', updater:'张三' }, { name:'生产许可证编号', value:'', uploadStatus:'未上传', updateTime:'', updater:'' },
+    { name:'食用方法', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }
+  ],
+  'P002': [
+    { name:'产地', value:'新疆', uploadStatus:'已上传', updateTime:'2026-07-05 14:00:00', updater:'张三' }, { name:'保质期', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }, { name:'净含量', value:'500g', uploadStatus:'已上传', updateTime:'2026-07-05 14:00:00', updater:'张三' },
+    { name:'等级', value:'', uploadStatus:'上传失败', failReason:'值不在枚举范围内', updateTime:'', updater:'' }, { name:'储存条件', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }
+  ],
+  'P003': [
+    { name:'产地', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }, { name:'保质期', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }, { name:'净含量', value:'', uploadStatus:'未上传', updateTime:'', updater:'' },
+    { name:'茶叶等级', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }, { name:'冲泡方法', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }, { name:'储存条件', value:'密封避光', uploadStatus:'已上传', updateTime:'2026-07-04 16:00:00', updater:'王五' }
+  ],
+  'P004': [
+    { name:'产地', value:'广州', uploadStatus:'已上传', updateTime:'2026-07-04 16:00:00', updater:'王五' }, { name:'保质期', value:'30天', uploadStatus:'已上传', updateTime:'2026-07-04 16:00:00', updater:'王五' }, { name:'净含量', value:'', uploadStatus:'未上传', updateTime:'', updater:'' },
+    { name:'配料表', value:'', uploadStatus:'上传失败', failReason:'必填项为空', updateTime:'', updater:'' }, { name:'过敏原信息', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }
+  ],
+  'P005': [
+    { name:'产地', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }, { name:'保质期', value:'18个月', uploadStatus:'已上传', updateTime:'2026-07-03 17:30:00', updater:'李四' }, { name:'净含量', value:'250g', uploadStatus:'已上传', updateTime:'2026-07-03 17:30:00', updater:'李四' },
+    { name:'烘焙程度', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }, { name:'储存条件', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }
+  ],
+  'P006': [
+    { name:'产地', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }, { name:'保质期', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }, { name:'净含量', value:'', uploadStatus:'未上传', updateTime:'', updater:'' },
+    { name:'配料表', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }
+  ],
+  'P007': [
+    { name:'产地', value:'比利时', uploadStatus:'已上传', updateTime:'2026-07-02 14:30:00', updater:'张三' }, { name:'保质期', value:'24个月', uploadStatus:'已上传', updateTime:'2026-07-02 14:30:00', updater:'张三' }, { name:'净含量', value:'', uploadStatus:'未上传', updateTime:'', updater:'' },
+    { name:'可可含量', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }, { name:'储存条件', value:'阴凉干燥处', uploadStatus:'已上传', updateTime:'2026-07-02 14:30:00', updater:'张三' }
+  ],
+  'P008': [
+    { name:'产地', value:'浙江杭州', uploadStatus:'已上传', updateTime:'2026-07-02 14:30:00', updater:'张三' }, { name:'保质期', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }, { name:'净含量', value:'', uploadStatus:'未上传', updateTime:'', updater:'' },
+    { name:'等级', value:'', uploadStatus:'上传失败', failReason:'平台接口超时', updateTime:'', updater:'' }, { name:'采摘年份', value:'', uploadStatus:'未上传', updateTime:'', updater:'' }
+  ]
+};
+
+// ===== 列表数据 =====
+var mockData = JSON.parse(localStorage.getItem('package_optimizeList') || 'null') || [
+  { id:1, shopCode:'SH001', shopName:'云途食品旗舰店', productId:'P001', productName:'经典坚果礼盒', batchNo:'PC202607010001', checkStatus:'已检查', checkTime:'2026-07-05 10:00:00', createTime:'2026-07-01 08:00:00', creator:'李四', emptyAttrs:[], uploadStatus:'未上传', uploadTime:'' },
+  { id:2, shopCode:'SH002', shopName:'西湖生鲜专营店', productId:'P002', productName:'有机红枣', batchNo:'PC202607010002', checkStatus:'已检查', checkTime:'2026-07-05 10:30:00', createTime:'2026-07-02 09:00:00', creator:'张三', emptyAttrs:[], uploadStatus:'已上传', uploadTime:'2026-07-05 14:00:00' },
+  { id:3, shopCode:'SH003', shopName:'鼎盛茗茶旗舰店', productId:'P003', productName:'精选茶叶套装', batchNo:'PC202607010003', checkStatus:'已检查', checkTime:'2026-07-04 09:00:00', createTime:'2026-07-03 08:30:00', creator:'王五', emptyAttrs:[], uploadStatus:'已完成', uploadTime:'2026-07-04 16:00:00' },
+  { id:4, shopCode:'SH004', shopName:'前海食品专营店', productId:'P004', productName:'手工糕点礼盒', batchNo:'PC202607010004', checkStatus:'未检查', checkTime:'', createTime:'2026-07-04 10:00:00', creator:'赵六', emptyAttrs:[], uploadStatus:'未上传', uploadTime:'' },
+  { id:5, shopCode:'SH001', shopName:'云途食品旗舰店', productId:'P005', productName:'精品咖啡豆', batchNo:'PC202607010005', checkStatus:'已检查', checkTime:'2026-07-03 15:00:00', createTime:'2026-07-01 14:00:00', creator:'李四', emptyAttrs:[], uploadStatus:'已上传', uploadTime:'2026-07-03 17:30:00' },
+  { id:6, shopCode:'SH003', shopName:'鼎盛茗茶旗舰店', productId:'P006', productName:'养生花茶礼盒', batchNo:'PC202607010006', checkStatus:'未检查', checkTime:'', createTime:'2026-07-05 11:00:00', creator:'王五', emptyAttrs:[], uploadStatus:'未上传', uploadTime:'' },
+  { id:7, shopCode:'SH002', shopName:'西湖生鲜专营店', productId:'P007', productName:'进口巧克力', batchNo:'PC202607010007', checkStatus:'已检查', checkTime:'2026-07-02 11:00:00', createTime:'2026-07-01 09:30:00', creator:'张三', emptyAttrs:[], uploadStatus:'已完成', uploadTime:'2026-07-02 14:30:00' },
+  { id:8, shopCode:'SH003', shopName:'鼎盛茗茶旗舰店', productId:'P008', productName:'高山绿茶', batchNo:'PC202607010008', checkStatus:'已检查', checkTime:'2026-07-01 09:30:00', createTime:'2026-06-30 16:00:00', creator:'王五', emptyAttrs:[], uploadStatus:'未上传', uploadTime:'' },
+];
+
+// ===== 获取URL参数 =====
+function getUrlParam(name) {
+  var reg = new RegExp('(^|&)' + name + '=([^&]*)(&|$)', 'i');
+  var r = window.location.search.substr(1).match(reg);
+  if (r != null) return decodeURIComponent(r[2]);
+  return null;
+}
+
+// ===== 初始化 =====
+var productId = getUrlParam('id');
+var rowData = null;
+
+if (productId) {
+  rowData = mockData.find(function(r) { return r.id === Number(productId); });
+}
+
+if (!rowData) {
+  showToast('未找到对应的商品记录', 'error');
+  setTimeout(function() { goBack(); }, 1500);
+} else {
+  // 填充商品信息
+  document.getElementById('infoShopCode').textContent = rowData.shopCode;
+  document.getElementById('infoShopName').textContent = rowData.shopName;
+  document.getElementById('infoProductId').textContent = rowData.productId;
+  document.getElementById('infoProductName').textContent = rowData.productName;
+  document.getElementById('infoBatchNo').textContent = rowData.batchNo || '—';
+  document.getElementById('infoCheckTime').textContent = rowData.checkTime || '—';
+  document.getElementById('infoCreator').textContent = rowData.creator;
+
+  // 渲染属性表格
+  renderAttrTable(rowData);
+}
+
+// ===== 渲染属性表格 =====
+function renderAttrTable(row) {
+  var attrs = mockRequiredAttrs[row.productId] || [];
+  var tbody = document.getElementById('tableBody');
+  var html = '';
+
+  if (attrs.length === 0) {
+    html = '<tr><td colspan="15" class="empty-state"><span class="empty-icon">&#128269;</span><div class="empty-text">暂无属性数据</div></td></tr>';
+  } else {
+    attrs.forEach(function(attr, i) {
+      var uploadStatus = attr.uploadStatus || '未上传';
+      var failReason = attr.failReason || '';
+      var updateTime = attr.updateTime || '';
+      var updater = attr.updater || '';
+      html += '<tr>';
+      html += '<td><input type="checkbox" class="row-check" value="' + i + '" onclick="toggleRow(this)"></td>';
+      html += '<td>' + (i + 1) + '</td>';
+      html += '<td class="col-batch-no">' + esc(row.batchNo) + '</td>';
+      html += '<td class="col-shop-code">' + esc(row.shopCode) + '</td>';
+      html += '<td>' + esc(row.shopName) + '</td>';
+      html += '<td class="col-shop-code">' + esc(row.productId) + '</td>';
+      html += '<td>' + esc(attr.name) + '</td>';
+      html += '<td>' + (attr.value ? esc(attr.value) : '') + '</td>';
+      html += '<td>' + stUpload(uploadStatus) + '</td>';
+      html += '<td style="color:#ef4444;font-size:12px;">' + (failReason ? esc(failReason) : '') + '</td>';
+      html += '<td style="font-size:12px;">' + esc(row.createTime) + '</td>';
+      html += '<td>' + esc(row.creator) + '</td>';
+      html += '<td style="font-size:12px;">' + (updateTime ? esc(updateTime) : '') + '</td>';
+      html += '<td>' + (updater ? esc(updater) : '') + '</td>';
+      html += '<td class="col-actions">';
+      if (uploadStatus === '未上传' || uploadStatus === '上传失败') {
+        html += '<a class="link-action" href="javascript:void(0)" onclick="openEditAttrModal(' + i + ')">编辑</a>';
+      } else {
+        html += '<a class="link-action" href="javascript:void(0)" onclick="doViewAttr(' + i + ')">查看</a>';
+      }
+      html += '</td></tr>';
+    });
+  }
+
+  tbody.innerHTML = html;
+  document.getElementById('totalCount').textContent = attrs.length;
+  document.getElementById('totalBadge').textContent = '共 ' + attrs.length + ' 条';
+  document.getElementById('checkAll').checked = false;
+}
+
+function stUpload(s) {
+  if (s === '已上传') return '<span class="status-tag submitted">✓ 已上传</span>';
+  if (s === '上传失败') return '<span class="status-tag rejected">✗ 上传失败</span>';
+  return '<span class="status-tag initial">○ 未上传</span>';
+}
+
+// ===== 全选/行选 =====
+function toggleAll(el) {
+  document.querySelectorAll('.row-check').forEach(function(c) {
+    c.checked = el.checked;
+    var tr = c.closest('tr');
+    if (tr) tr.classList.toggle('row-selected', el.checked);
+  });
+}
+function toggleRow(el) {
+  var tr = el.closest('tr');
+  if (tr) tr.classList.toggle('row-selected', el.checked);
+  updateCheckAll();
+}
+function updateCheckAll() {
+  var all = document.querySelectorAll('.row-check');
+  var checked = document.querySelectorAll('.row-check:checked');
+  document.getElementById('checkAll').checked = all.length > 0 && all.length === checked.length;
+}
+
+// ===== 编辑属性值弹窗 =====
+var editingAttrIdx = null;
+
+function openEditAttrModal(attrIdx) {
+  editingAttrIdx = attrIdx;
+  var attrs = mockRequiredAttrs[rowData.productId] || [];
+  var attr = attrs[attrIdx];
+  if (!attr) return;
+  document.getElementById('editAttrName').textContent = attr.name;
+  document.getElementById('editAttrValue').value = attr.value || '';
+  document.getElementById('editAttrModal').style.display = '';
+}
+
+function closeEditAttrModal() {
+  editingAttrIdx = null;
+  document.getElementById('editAttrModal').style.display = 'none';
+}
+
+function saveEditAttr() {
+  if (editingAttrIdx === null) return;
+  var attrs = mockRequiredAttrs[rowData.productId] || [];
+  var attr = attrs[editingAttrIdx];
+  if (!attr) return;
+  var newVal = document.getElementById('editAttrValue').value.trim();
+  if (!newVal) {
+    showToast('属性值不能为空', 'error');
+    return;
+  }
+  attr.value = newVal;
+  attr.updateTime = new Date().getFullYear() + '-' + String(new Date().getMonth()+1).padStart(2,'0') + '-' + String(new Date().getDate()).padStart(2,'0') + ' ' + String(new Date().getHours()).padStart(2,'0') + ':' + String(new Date().getMinutes()).padStart(2,'0') + ':' + String(new Date().getSeconds()).padStart(2,'0');
+  attr.updater = '当前用户';
+  closeEditAttrModal();
+  renderAttrTable(rowData);
+  showToast('属性值已保存', 'success');
+}
+
+function doViewAttr(index) {
+  var attrs = mockRequiredAttrs[rowData.productId] || [];
+  var attr = attrs[index];
+  if (!attr) return;
+  showToast('属性：' + attr.name + ' = ' + (attr.value || '未填写'), 'info');
+}
+function goBack() {
+  window.location.href = 'list.html';
+}
+
+// ===== 工具函数 =====
+function esc(s) {
+  if (!s && s !== 0) return '';
+  var d = document.createElement('div');
+  d.textContent = String(s);
+  return d.innerHTML;
+}
+function showToast(message, type) {
+  type = type || 'info';
+  var container = document.getElementById('toastContainer');
+  if (!container) return;
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(function() {
+    if (toast.parentNode) {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s';
+      setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+    }
+  }, 2500);
+}
+</script>
+</body>
+</html>
