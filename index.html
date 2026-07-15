@@ -151,6 +151,14 @@
       if (e.data && e.data.type === 'breadcrumb') {
         document.getElementById('breadcrumb').innerHTML = e.data.text;
       }
+      // 智能体中心卡片点击跳转到具体智能体页面
+      if (e.data && e.data.type === 'navigate') {
+        var frame = document.getElementById('contentFrame');
+        frame.classList.remove('fade-in');
+        void frame.offsetWidth;
+        frame.src = e.data.page + '?v=' + Date.now();
+        frame.classList.add('fade-in');
+      }
     });
   </script>
 </body>

@@ -575,6 +575,61 @@
       color: #6366f1;
       background: #eef2ff;
     }
+
+    /* ===== 欢迎区操作卡片 ===== */
+    .chat-welcome-actions {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 24px;
+    }
+    .chat-welcome-action-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 130px;
+      height: 100px;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      background: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .chat-welcome-action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .chat-welcome-action-btn .action-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .chat-welcome-action-btn .action-label {
+      color: #374151;
+    }
+    .chat-welcome-action-btn.btn-add .action-icon {
+      background: #ecfdf5;
+      color: #10b981;
+    }
+    .chat-welcome-action-btn.btn-add:hover {
+      border-color: #10b981;
+    }
+    .chat-welcome-action-btn.btn-delete .action-icon {
+      background: #fef2f2;
+      color: #ef4444;
+    }
+    .chat-welcome-action-btn.btn-delete:hover {
+      border-color: #ef4444;
+    }
   </style>
 </head>
 <body>
@@ -653,10 +708,8 @@
           <h2>设置尺码参数智能体</h2>
           <p>通过对话或上传 Excel 文件，批量配置平台商品详情页尺码表中的重要参数</p>
           <div class="chat-quick-prompts">
-            <div class="chat-quick-prompt" onclick="fillPrompt('查看商品尺码参数')">📋 查看尺码参数</div>
-            <div class="chat-quick-prompt" onclick="fillPrompt('上传Excel批量配置')">📁 Excel批量配置</div>
-            <div class="chat-quick-prompt" onclick="fillPrompt('新增尺码 XL XXL')">➕ 新增尺码</div>
-            <div class="chat-quick-prompt" onclick="fillPrompt('导出尺码参数表')">📤 导出参数表</div>
+            <div class="chat-quick-prompt" onclick="fillPrompt('设置重要参数')">📌 重要参数</div>
+            <div class="chat-quick-prompt" onclick="fillPrompt('设置其他参数')">📋 其他参数</div>
           </div>
         </div>
       </div>
@@ -706,6 +759,10 @@
           { label: '返回执行结果', desc: '智能体返回执行结果，含成功数、失败数等明细' }
         ],
         welcome: '批量设置商品详情页商品推荐组件及推荐关联商品并发布',
+        welcomeButtons: [
+          { label: '增加组件', icon: '➕', action: '增加推荐组件', style: 'btn-add' },
+          { label: '删除组件', icon: '➖', action: '删除推荐组件', style: 'btn-delete' }
+        ],
         placeholder: '输入店铺和平台商品ID，或上传Excel文件...'
       },
       'text-component': {
@@ -720,6 +777,10 @@
           { label: '返回执行结果', desc: '智能体返回执行结果，含成功数、失败数等明细' }
         ],
         welcome: '批量设置商品详情页文本组件并自动发布',
+        welcomeButtons: [
+          { label: '增加组件', icon: '➕', action: '增加文本组件', style: 'btn-add' },
+          { label: '删除组件', icon: '➖', action: '删除文本组件', style: 'btn-delete' }
+        ],
         placeholder: '输入店铺、平台商品ID和操作类型，或上传Excel文件...'
       }
     };
@@ -821,6 +882,20 @@
         + '</svg></div>'
         + '<h2>' + escapeHtml(data.name) + '</h2>'
         + '<p>' + escapeHtml(data.welcome) + '</p>';
+
+      // 渲染欢迎区操作按钮
+      if (data.welcomeButtons && data.welcomeButtons.length > 0) {
+        var btnsHtml = '<div class="chat-welcome-actions">';
+        data.welcomeButtons.forEach(function(btn) {
+          btnsHtml += '<button class="chat-welcome-action-btn ' + btn.style + '" onclick="fillPrompt(\'' + btn.action + '\')">'
+            + '<span class="action-icon">' + btn.icon + '</span>'
+            + '<span class="action-label">' + escapeHtml(btn.label) + '</span>'
+            + '</button>';
+        });
+        btnsHtml += '</div>';
+        welcome.innerHTML += btnsHtml;
+      }
+
       messages.appendChild(welcome);
     }
 
@@ -1025,11 +1100,23 @@
     }
 
     // ===== 初始化渲染 =====
+    // 支持 URL 参数 agent 自动选中指定智能体
+    var urlParams = new URLSearchParams(window.location.search);
+    var urlAgent = urlParams.get('agent');
+    if (urlAgent && agentData[urlAgent]) {
+      currentAgent = urlAgent;
+      // 更新左侧卡片激活状态
+      document.querySelectorAll('.agent-card').forEach(function(c) {
+        c.classList.toggle('active', c.getAttribute('data-agent') === urlAgent);
+      });
+    }
     renderAgentInfo(agentData[currentAgent]);
+    document.getElementById('chatHeaderTitle').textContent = agentData[currentAgent].name;
+    document.getElementById('chatInput').placeholder = agentData[currentAgent].placeholder;
 
     // ===== 通知父页面更新面包屑 =====
     if (window.parent !== window) {
-      window.parent.postMessage({ type: 'breadcrumb', text: '包装优化 / 智能体中心' }, '*');
+      window.parent.postMessage({ type: 'breadcrumb', text: '包装优化 / ' + agentData[currentAgent].name }, '*');
     }
   </script>
 </body>

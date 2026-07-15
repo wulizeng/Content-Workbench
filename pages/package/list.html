@@ -35,38 +35,6 @@
     .flow-step-desc { font-size:11px; color:var(--text-tertiary); margin-top:1px; }
     .flow-arrow { flex-shrink:0; color:#cbd5e1; padding:0 4px; display:flex; align-items:center; }
 
-    /* ===== 统计模式 ===== */
-    .stat-toggle {
-      display:inline-flex; align-items:center; gap:6px;
-      padding:6px 14px; border:1px solid var(--border); border-radius:8px;
-      font-size:12px; font-weight:600; cursor:pointer; transition:all .18s;
-      color:var(--text-secondary); background:#fff; user-select:none;
-    }
-    .stat-toggle:hover { border-color:var(--primary); color:var(--primary); }
-    .stat-toggle.active { background:var(--primary); color:#fff; border-color:var(--primary); }
-
-    /* 统计表格 */
-    .stat-table { width:100%; min-width:860px; border-collapse:separate; border-spacing:0; font-size:13px; }
-    .stat-table th {
-      background:#f8fafc; border-bottom:2px solid var(--border); padding:10px 10px;
-      white-space:nowrap !important; font-size:12px; font-weight:600;
-      color:var(--text-secondary); text-align:left; position:sticky; top:0; z-index:1;
-    }
-    .stat-table td {
-      border-bottom:1px solid var(--border-light); padding:10px 10px;
-      white-space:nowrap !important; word-break:normal !important; overflow:hidden; text-overflow:ellipsis;
-      vertical-align:middle;
-    }
-    .stat-table tbody tr {
-      cursor:pointer; transition:all .15s;
-      border-left:3px solid transparent;
-    }
-    .stat-table tbody tr:hover { background:#f0f3ff; border-left-color:var(--primary); }
-    .stat-table tbody tr:hover .drill-hint { opacity:1; }
-    .drill-hint {
-      font-size:11px; color:var(--primary); opacity:0; transition:opacity .2s;
-      margin-left:6px; font-weight:500;
-    }
 
     /* ===== 弹窗 ===== */
     .modal-overlay {
@@ -237,17 +205,20 @@
       </svg>
       列表视图
     </div>
-    <div class="view-tab" onclick="switchView('detail')">
+    <div class="view-tab" onclick="switchView('attr')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-        <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
       </svg>
-      明细视图
+      属性视图
     </div>
   </div>
 
   <!-- ===== 列表视图 ===== -->
   <div id="listView" class="view-panel active">
+
+  <!-- 主列表区域 -->
+  <div id="listMain">
 
   <!-- ===== 流程说明 ===== -->
   <div class="flow-section">
@@ -324,8 +295,9 @@
         <label>检查状态：</label>
         <select id="sCheckStatus">
           <option value="">全部</option>
-          <option value="已检查">已检查</option>
           <option value="未检查">未检查</option>
+          <option value="无异常">无异常</option>
+          <option value="异常">异常</option>
           <option value="检查失败">检查失败</option>
         </select>
       </div>
@@ -360,13 +332,13 @@
         </svg>
         导出
       </button>
-      <div style="flex:1;"></div>
-      <div class="stat-toggle" id="statToggle" onclick="toggleStatMode()">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/>
+      <button class="btn" onclick="doRecheck()" id="btnRecheck" style="margin-left:8px;">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;">
+          <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
         </svg>
-        统计模式
-      </div>
+        重新核查
+      </button>
+      <div style="flex:1;"></div>
     </div>
 
     <div class="table-scroll">
@@ -375,32 +347,25 @@
           <tr>
             <th style="width:40px;"><input type="checkbox" id="checkAll" onclick="toggleAll(this)"></th>
             <th style="width:40px;">序号</th>
-            <th style="width:130px;">批次号</th>
-            <th style="width:100px;">店铺编码</th>
-            <th style="width:130px;">店铺名称</th>
-            <th style="width:110px;">平台商品ID</th>
-            <th style="width:100px;">类目编码</th>
-            <th style="width:100px;">类目名称</th>
-            <th style="width:80px;">检查状态</th>
-            <th style="width:120px;">失败原因</th>
-            <th style="width:130px;">检查时间</th>
-            <th style="width:130px;">创建时间</th>
-            <th style="width:70px;">创建人</th>
-            <th style="width:130px;">更新时间</th>
-            <th style="width:70px;">更新人</th>
-            <th style="width:80px;">操作</th>
+            <th style="width:160px;">批次号</th>
+            <th style="width:60px;text-align:center;">店铺数</th>
+            <th style="width:60px;text-align:center;">商品数</th>
+            <th style="width:60px;text-align:center;">未检查</th>
+            <th style="width:60px;text-align:center;">无异常</th>
+            <th style="width:60px;text-align:center;">异常</th>
+            <th style="width:60px;text-align:center;">检查失败</th>
+            <th style="width:70px;text-align:center;">属性已上传</th>
+            <th style="width:70px;text-align:center;">属性未上传</th>
+            <th style="width:60px;text-align:center;">上传失败</th>
+            <th style="width:80px;">创建人</th>
+            <th style="width:140px;">创建时间</th>
+            <th style="width:120px;">操作</th>
           </tr>
         </thead>
         <tbody id="tableBody"></tbody>
       </table>
     </div>
 
-    <!-- 统计模式视图 -->
-    <div id="statView" style="display:none;">
-      <div style="overflow-x:auto;">
-        <div id="statContent"></div>
-      </div>
-    </div>
 
     <div class="pagination">
       <span class="page-info">共 <strong id="totalCount">0</strong> 条</span>
@@ -410,36 +375,111 @@
     </div>
   </div>
 
-  </div><!-- /listView -->
+  </div><!-- /listMain -->
 
-  <!-- ===== 明细视图 ===== -->
-  <div id="detailView" class="view-panel">
-    <!-- 筛选区域 -->
+  <!-- ===== 明细子页面（商品维度） ===== -->
+  <div id="listDetail" style="display:none;">
+    <div style="margin-bottom:12px;display:flex;align-items:center;gap:12px;">
+      <button class="btn" onclick="doBackToList()" style="display:flex;align-items:center;gap:4px;">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        返回列表
+      </button>
+      <span style="font-size:14px;font-weight:600;color:var(--ink);" id="detailPageTitle">批次明细</span>
+    </div>
     <div class="search-area">
       <div class="search-row">
         <div class="search-item">
-          <label>批次号：</label>
-          <input type="text" id="dBatchNo" placeholder="输入批次号">
-        </div>
-        <div class="search-item">
           <label>店铺编码：</label>
           <input type="text" id="dShopCode" placeholder="输入店铺编码">
-        </div>
-        <div class="search-item">
-          <label>店铺名称：</label>
-          <input type="text" id="dShopName" placeholder="输入店铺名称">
         </div>
         <div class="search-item">
           <label>平台商品ID：</label>
           <input type="text" id="dProductId" placeholder="输入商品ID">
         </div>
         <div class="search-item">
+          <label>检查状态：</label>
+          <select id="dCheckStatus">
+            <option value="">全部</option>
+            <option value="未检查">未检查</option>
+            <option value="无异常">无异常</option>
+            <option value="异常">异常</option>
+            <option value="检查失败">检查失败</option>
+          </select>
+        </div>
+      </div>
+      <div class="search-actions">
+        <button class="btn btn-primary" onclick="doDetailSearch()">查询</button>
+        <button class="btn" onclick="resetDetailSearch()">重置</button>
+      </div>
+    </div>
+    <div class="table-area">
+      <div class="table-toolbar">
+        <button class="btn" onclick="doExport()">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          导出
+        </button>
+        <span style="font-size:13px;font-weight:600;color:var(--ink);margin-left:8px;">商品明细列表</span>
+        <span style="font-size:12px;color:var(--text-tertiary);margin-left:6px;" id="detailTotalBadge">共 0 条</span>
+      </div>
+      <div class="table-scroll">
+        <table class="pkg-table" id="detailTable">
+          <thead>
+            <tr>
+              <th style="width:40px;"><input type="checkbox" id="detailCheckAll" onclick="toggleDetailAll(this)"></th>
+              <th style="width:40px;">序号</th>
+              <th>店铺编码</th>
+              <th>店铺名称</th>
+              <th>平台商品ID</th>
+              <th>商品名称</th>
+              <th>类目名称</th>
+              <th>检查状态</th>
+              <th>上传状态</th>
+              <th>失败原因</th>
+              <th>创建时间</th>
+              <th>创建人</th>
+              <th style="width:100px;">操作</th>
+            </tr>
+          </thead>
+          <tbody id="detailTableBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <span class="page-info">共 <strong id="detailTotalCount">0</strong> 条</span>
+        <span class="page-btn disabled">&laquo;</span>
+        <span class="page-btn active">1</span>
+        <span class="page-btn">&raquo;</span>
+      </div>
+    </div>
+  </div><!-- /listDetail -->
+
+  </div><!-- /listView -->
+
+  <!-- ===== 属性视图（属性维度） ===== -->
+  <div id="attrView" class="view-panel">
+    <!-- 筛选区域 -->
+    <div class="search-area">
+      <div class="search-row">
+        <div class="search-item">
+          <label>批次号：</label>
+          <input type="text" id="aBatchNo" placeholder="输入批次号">
+        </div>
+        <div class="search-item">
+          <label>店铺编码：</label>
+          <input type="text" id="aShopCode" placeholder="输入店铺编码">
+        </div>
+        <div class="search-item">
+          <label>平台商品ID：</label>
+          <input type="text" id="aProductId" placeholder="输入商品ID">
+        </div>
+        <div class="search-item">
           <label>属性值：</label>
-          <input type="text" id="dAttrValue" placeholder="输入属性值">
+          <input type="text" id="aAttrValue" placeholder="输入属性值">
         </div>
         <div class="search-item">
           <label>上传状态：</label>
-          <select id="dAttrStatus">
+          <select id="aAttrStatus">
             <option value="">全部</option>
             <option value="未上传">未上传</option>
             <option value="已上传">已上传</option>
@@ -448,100 +488,85 @@
         </div>
         <div class="search-item">
           <label>失败原因：</label>
-          <input type="text" id="dFailReason" placeholder="输入失败原因">
-        </div>
-        <div class="search-item">
-          <label>创建时间：</label>
-          <div class="date-range">
-            <input type="date" id="dCreateTimeStart">
-            <span class="date-sep">~</span>
-            <input type="date" id="dCreateTimeEnd">
-          </div>
+          <input type="text" id="aFailReason" placeholder="输入失败原因">
         </div>
       </div>
       <div class="search-actions">
-        <button class="btn btn-primary" onclick="doDetailSearch()">查询</button>
-        <button class="btn" onclick="resetDetailSearch()">重置</button>
+        <button class="btn btn-primary" onclick="doAttrSearch()">查询</button>
+        <button class="btn" onclick="resetAttrSearch()">重置</button>
       </div>
     </div>
 
     <!-- 列表区域 -->
     <div class="table-area">
       <div class="table-toolbar">
-        <button class="btn btn-success" onclick="openUploadModal()" id="btnUploadDetail">
+        <button class="btn btn-success" onclick="openUploadModal()">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;">
             <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
           </svg>
           上传属性
         </button>
-        <button class="btn" onclick="doDetailExport()">
+        <button class="btn" onclick="doAttrExport()">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
           </svg>
           导出明细
         </button>
         <span style="font-size:13px;font-weight:600;color:var(--ink);margin-left:8px;">属性明细列表</span>
-        <span style="font-size:12px;color:var(--text-tertiary);margin-left:6px;" id="detailTotalBadge">共 0 条</span>
+        <span style="font-size:12px;color:var(--text-tertiary);margin-left:6px;" id="attrTotalBadge">共 0 条</span>
       </div>
 
       <div class="table-scroll">
-        <table class="pkg-table" id="detailTable">
+        <table class="pkg-table" id="attrTable">
           <thead>
             <tr>
-              <th style="width:40px;"><input type="checkbox" id="detailCheckAll" onclick="toggleDetailAll(this)"></th>
+              <th style="width:40px;"><input type="checkbox" id="attrCheckAll" onclick="toggleAttrAll(this)"></th>
               <th style="width:40px;">序号</th>
               <th>批次号</th>
               <th>店铺编码</th>
-              <th>店铺名称</th>
               <th>平台商品ID</th>
-              <th>类目编码</th>
-              <th>类目名称</th>
-              <th>未填属性</th>
+              <th>商品名称</th>
+              <th>属性名</th>
               <th>属性值</th>
-              <th>属性状态</th>
+              <th>上传状态</th>
               <th>失败原因</th>
-              <th>创建时间</th>
-              <th>创建人</th>
               <th>更新时间</th>
               <th>更新人</th>
               <th style="width:80px;">操作</th>
             </tr>
           </thead>
-          <tbody id="detailTableBody"></tbody>
+          <tbody id="attrTableBody"></tbody>
         </table>
       </div>
 
       <div class="pagination">
-        <span class="page-info">共 <strong id="detailTotalCount">0</strong> 条</span>
+        <span class="page-info">共 <strong id="attrTotalCount">0</strong> 条</span>
         <span class="page-btn disabled">&laquo;</span>
         <span class="page-btn active">1</span>
         <span class="page-btn">&raquo;</span>
       </div>
     </div>
-  </div><!-- /detailView -->
+  </div><!-- /attrView -->
 
 </div>
 
 <!-- ===== 编辑属性值 - 弹窗 ===== -->
 <div id="editAttrModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeEditAttrModal()">
-  <div class="modal" style="width:460px;">
+  <div class="modal" style="width:560px;">
     <div class="modal-head">
-      <h3>✏️ 编辑属性值</h3>
+      <h3>✏️ 编辑未填属性</h3>
       <button class="modal-close" onclick="closeEditAttrModal()">&times;</button>
     </div>
     <div class="modal-body">
-      <div style="margin-bottom:14px;">
-        <label style="font-size:13px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px;">属性名称：</label>
-        <div id="editAttrName" style="font-size:14px;color:var(--ink);font-weight:600;padding:8px 12px;background:#f8fafc;border-radius:6px;border:1px solid var(--border);"></div>
+      <div style="margin-bottom:12px;padding:10px 14px;background:#f0f9ff;border-radius:8px;border:1px solid #bae6fd;">
+        <div style="font-size:13px;color:#0369a1;">商品：<span id="editProductInfo" style="font-weight:600;"></span></div>
+        <div style="font-size:12px;color:#64748b;margin-top:4px;">共 <span id="editAttrCount" style="font-weight:600;color:#0ea5e9;">0</span> 个未填写属性，请补充完整</div>
       </div>
-      <div>
-        <label style="font-size:13px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px;">属性值：</label>
-        <textarea id="editAttrValue" class="import-textarea" rows="3" placeholder="请输入属性值"></textarea>
-      </div>
+      <div id="editAttrList" style="max-height:360px;overflow-y:auto;"></div>
     </div>
     <div class="modal-foot">
       <button class="btn" onclick="closeEditAttrModal()">取消</button>
-      <button class="btn btn-primary" onclick="saveEditAttr()">保存</button>
+      <button class="btn btn-primary" onclick="saveEditAttr()">全部保存</button>
     </div>
   </div>
 </div>
@@ -696,13 +721,13 @@ var mockRequiredAttrs = {
 
 // ===== 列表数据 =====
 var mockData = JSON.parse(localStorage.getItem('package_optimizeList') || 'null') || [
-  { id:1, shopCode:'SH001', shopName:'云途食品旗舰店', productId:'P001', productName:'经典坚果礼盒', categoryCode:'CAT001', categoryName:'坚果炒货', batchNo:'PC202607010001', checkStatus:'已检查', checkTime:'2026-07-05 10:00:00', createTime:'2026-07-01 08:00:00', creator:'李四', failReason:'', emptyAttrs:[], uploadStatus:'未上传', uploadTime:'', updateTime:'2026-07-05 10:00:00', updater:'李四' },
-  { id:2, shopCode:'SH002', shopName:'西湖生鲜专营店', productId:'P002', productName:'有机红枣', categoryCode:'CAT002', categoryName:'滋补养生', batchNo:'PC202607020001', checkStatus:'已检查', checkTime:'2026-07-05 10:30:00', createTime:'2026-07-02 09:00:00', creator:'张三', failReason:'', emptyAttrs:[], uploadStatus:'已上传', uploadTime:'2026-07-05 14:00:00', updateTime:'2026-07-05 14:00:00', updater:'张三' },
-  { id:3, shopCode:'SH003', shopName:'鼎盛茗茶旗舰店', productId:'P003', productName:'精选茶叶套装', categoryCode:'CAT003', categoryName:'茶叶', batchNo:'PC202607030001', checkStatus:'已检查', checkTime:'2026-07-04 09:00:00', createTime:'2026-07-03 08:30:00', creator:'王五', failReason:'', emptyAttrs:[], uploadStatus:'已完成', uploadTime:'2026-07-04 16:00:00', updateTime:'2026-07-04 16:00:00', updater:'王五' },
+  { id:1, shopCode:'SH001', shopName:'云途食品旗舰店', productId:'P001', productName:'经典坚果礼盒', categoryCode:'CAT001', categoryName:'坚果炒货', batchNo:'PC202607010001', checkStatus:'异常', checkTime:'2026-07-05 10:00:00', createTime:'2026-07-01 08:00:00', creator:'李四', failReason:'', emptyAttrs:['产地','净含量','配料表','生产许可证编号','食用方法'], uploadStatus:'未上传', uploadTime:'', updateTime:'2026-07-05 10:00:00', updater:'李四' },
+  { id:2, shopCode:'SH002', shopName:'西湖生鲜专营店', productId:'P002', productName:'有机红枣', categoryCode:'CAT002', categoryName:'滋补养生', batchNo:'PC202607020001', checkStatus:'异常', checkTime:'2026-07-05 10:30:00', createTime:'2026-07-02 09:00:00', creator:'张三', failReason:'', emptyAttrs:['保质期','等级','储存条件'], uploadStatus:'已上传', uploadTime:'2026-07-05 14:00:00', updateTime:'2026-07-05 14:00:00', updater:'张三' },
+  { id:3, shopCode:'SH003', shopName:'鼎盛茗茶旗舰店', productId:'P003', productName:'精选茶叶套装', categoryCode:'CAT003', categoryName:'茶叶', batchNo:'PC202607030001', checkStatus:'异常', checkTime:'2026-07-04 09:00:00', createTime:'2026-07-03 08:30:00', creator:'王五', failReason:'', emptyAttrs:['产地','保质期','净含量','茶叶等级','冲泡方法'], uploadStatus:'已完成', uploadTime:'2026-07-04 16:00:00', updateTime:'2026-07-04 16:00:00', updater:'王五' },
   { id:4, shopCode:'SH004', shopName:'前海食品专营店', productId:'P004', productName:'手工糕点礼盒', categoryCode:'CAT004', categoryName:'糕点饼干', batchNo:'PC202607040001', checkStatus:'未检查', checkTime:'', createTime:'2026-07-04 10:00:00', creator:'赵六', failReason:'', emptyAttrs:[], uploadStatus:'未上传', uploadTime:'', updateTime:'2026-07-04 10:00:00', updater:'赵六' },
-  { id:5, shopCode:'SH001', shopName:'云途食品旗舰店', productId:'P005', productName:'精品咖啡豆', categoryCode:'CAT005', categoryName:'咖啡', batchNo:'PC202607010002', checkStatus:'已检查', checkTime:'2026-07-03 15:00:00', createTime:'2026-07-01 14:00:00', creator:'李四', failReason:'', emptyAttrs:[], uploadStatus:'已上传', uploadTime:'2026-07-03 17:30:00', updateTime:'2026-07-03 17:30:00', updater:'李四' },
+  { id:5, shopCode:'SH001', shopName:'云途食品旗舰店', productId:'P005', productName:'精品咖啡豆', categoryCode:'CAT005', categoryName:'咖啡', batchNo:'PC202607010002', checkStatus:'异常', checkTime:'2026-07-03 15:00:00', createTime:'2026-07-01 14:00:00', creator:'李四', failReason:'', emptyAttrs:['产地','烘焙程度','储存条件'], uploadStatus:'已上传', uploadTime:'2026-07-03 17:30:00', updateTime:'2026-07-03 17:30:00', updater:'李四' },
   { id:6, shopCode:'SH003', shopName:'鼎盛茗茶旗舰店', productId:'P006', productName:'养生花茶礼盒', categoryCode:'CAT003', categoryName:'茶叶', batchNo:'PC202607050001', checkStatus:'检查失败', checkTime:'', createTime:'2026-07-05 11:00:00', creator:'王五', failReason:'平台接口超时', emptyAttrs:[], uploadStatus:'未上传', uploadTime:'', updateTime:'2026-07-05 11:00:00', updater:'王五' },
-  { id:7, shopCode:'SH002', shopName:'西湖生鲜专营店', productId:'P007', productName:'进口巧克力', categoryCode:'CAT006', categoryName:'糖果巧克力', batchNo:'PC202607010003', checkStatus:'已检查', checkTime:'2026-07-02 11:00:00', createTime:'2026-07-01 09:30:00', creator:'张三', failReason:'', emptyAttrs:[], uploadStatus:'已完成', uploadTime:'2026-07-02 14:30:00', updateTime:'2026-07-02 14:30:00', updater:'张三' },
+  { id:7, shopCode:'SH002', shopName:'西湖生鲜专营店', productId:'P007', productName:'进口巧克力', categoryCode:'CAT006', categoryName:'糖果巧克力', batchNo:'PC202607010003', checkStatus:'无异常', checkTime:'2026-07-02 11:00:00', createTime:'2026-07-01 09:30:00', creator:'张三', failReason:'', emptyAttrs:[], uploadStatus:'已完成', uploadTime:'2026-07-02 14:30:00', updateTime:'2026-07-02 14:30:00', updater:'张三' },
   { id:8, shopCode:'SH003', shopName:'鼎盛茗茶旗舰店', productId:'P008', productName:'高山绿茶', categoryCode:'CAT003', categoryName:'茶叶', batchNo:'PC202606300001', checkStatus:'检查失败', checkTime:'', createTime:'2026-06-30 16:00:00', creator:'王五', failReason:'商品不存在', emptyAttrs:[], uploadStatus:'未上传', uploadTime:'', updateTime:'2026-06-30 16:00:00', updater:'王五' }
 ];
 
@@ -718,217 +743,102 @@ function generateBatchNo() {
   return 'PC' + dateStr + seq;
 }
 
-// ===== 统计模式 =====
-var statMode = false;
 
-function toggleStatMode() {
-  statMode = !statMode;
-  var btn = document.getElementById('statToggle');
-  var tableScroll = document.querySelector('#listView .table-scroll');
-  var statView = document.getElementById('statView');
-
-  if (statMode) {
-    btn.classList.add('active');
-    tableScroll.style.display = 'none';
-    statView.style.display = '';
-    renderStatTable();
-  } else {
-    btn.classList.remove('active');
-    tableScroll.style.display = '';
-    statView.style.display = 'none';
-    doSearch();
-  }
-}
-
-function renderStatTable() {
-  // 按批次号分组统计
-  var groups = {};
-
-  mockData.forEach(function(row) {
-    var key = row.batchNo || '未知';
-    if (!groups[key]) {
-      groups[key] = { batchNo:key, shops:{}, products:{}, checked:0, unchecked:0, checkFail:0, attrOk:0, attrFail:0, attrEmpty:0, createTime:'', createBy:'', updateTime:'', updateBy:'' };
-    }
-    var g = groups[key];
-    g.shops[row.shopName] = true;
-    g.products[row.productId] = true;
-    if (row.checkStatus === '已检查') g.checked++;
-    else if (row.checkStatus === '未检查') g.unchecked++;
-    else if (row.checkStatus === '检查失败') g.checkFail++;
-
-    if (row.checkStatus === '已检查') {
-      var attrs = mockRequiredAttrs[row.productId] || [];
-      attrs.forEach(function(a) {
-        if (a.uploadStatus === '已上传') g.attrOk++;
-        else if (a.uploadStatus === '上传失败') g.attrFail++;
-        else g.attrEmpty++;
-      });
-    }
-
-    // 取最早的创建时间/创建人，最新的更新时间/更新人
-    if (!g.createTime || (row.createTime && row.createTime < g.createTime)) {
-      g.createTime = row.createTime || '';
-      g.createBy = row.creator || '';
-    }
-    if (!g.updateTime || (row.updateTime && row.updateTime > g.updateTime)) {
-      g.updateTime = row.updateTime || '';
-      g.updateBy = row.updater || '';
-    }
-  });
-
-  var keys = Object.keys(groups);
-
-  // 辅助：渲染数值单元格
-  function renderStatCell(count, total, color) {
-    if (count === 0) {
-      return '<span style="font-weight:700;color:#cbd5e1;">0</span>';
-    }
-    return '<span style="font-weight:700;color:' + color + ';">' + count + '</span>';
-  }
-
-  var html = '<table class="stat-table" id="statTable"><thead><tr>';
-
-  // 表头
-  html += '<th style="width:40px;">序号</th>';
-  html += '<th style="width:140px;">批次号</th>';
-  html += '<th style="width:70px;text-align:center;">店铺数</th>';
-  html += '<th style="width:70px;text-align:center;">商品数</th>';
-  html += '<th style="min-width:150px;">已检查</th>';
-  html += '<th style="min-width:150px;">未检查</th>';
-  html += '<th style="min-width:150px;">检查失败</th>';
-  html += '<th style="min-width:150px;">属性已上传</th>';
-  html += '<th style="min-width:150px;">属性未上传</th>';
-  html += '<th style="min-width:150px;">上传失败</th>';
-  html += '<th style="min-width:130px;">创建时间</th>';
-  html += '<th style="min-width:60px;">创建人</th>';
-  html += '<th style="min-width:130px;">更新时间</th>';
-  html += '<th style="min-width:60px;">更新人</th>';
-  html += '</tr></thead><tbody>';
-
-  // 数据行
-  if (keys.length === 0) {
-    html += '<tr><td colspan="14" style="padding:40px;text-align:center;color:#94a3b8;"><span style="font-size:24px;">&#128269;</span><div style="margin-top:8px;">暂无数据</div></td></tr>';
-  } else {
-    keys.sort().forEach(function(key, i) {
-      var g = groups[key];
-      var shopCount = Object.keys(g.shops).length;
-      var productCount = Object.keys(g.products).length;
-      var checkTotal = g.checked + g.unchecked + g.checkFail;
-      var attrTotal = g.attrOk + g.attrFail + g.attrEmpty;
-
-      html += '<tr onclick="drillDownStat(\'batchNo\',\'' + esc(key) + '\')">';
-      html += '<td style="width:40px;color:var(--text-tertiary);font-size:12px;">' + (i + 1) + '</td>';
-      html += '<td style="width:140px;font-weight:600;color:var(--ink);font-family:monospace;font-size:12px;letter-spacing:-.3px;">' + esc(key) + '<span class="drill-hint">→ 下钻</span></td>';
-      html += '<td style="width:70px;text-align:center;font-weight:700;color:#0ea5e9;">' + shopCount + '</td>';
-      html += '<td style="width:70px;text-align:center;font-weight:700;color:#8b5cf6;">' + productCount + '</td>';
-      html += '<td>' + renderStatCell(g.checked, checkTotal, '#059669') + '</td>';
-      html += '<td>' + renderStatCell(g.unchecked, checkTotal, '#64748b') + '</td>';
-      html += '<td>' + renderStatCell(g.checkFail, checkTotal, '#ef4444') + '</td>';
-      html += '<td>' + renderStatCell(g.attrOk, attrTotal, '#059669') + '</td>';
-      html += '<td>' + renderStatCell(g.attrEmpty, attrTotal, '#d97706') + '</td>';
-      html += '<td>' + renderStatCell(g.attrFail, attrTotal, '#ef4444') + '</td>';
-      html += '<td style="font-size:12px;color:var(--text-secondary);">' + esc(g.createTime || '—') + '</td>';
-      html += '<td style="font-size:12px;color:var(--text-secondary);">' + esc(g.createBy || '—') + '</td>';
-      html += '<td style="font-size:12px;color:var(--text-secondary);">' + esc(g.updateTime || '—') + '</td>';
-      html += '<td style="font-size:12px;color:var(--text-secondary);">' + esc(g.updateBy || '—') + '</td>';
-      html += '</tr>';
-    });
-  }
-  html += '</tbody></table>';
-
-  document.getElementById('statContent').innerHTML = html;
-  document.getElementById('totalCount').textContent = keys.length;
-  document.getElementById('checkAll').checked = false;
-  updateActionButtons();
-}
-
-function drillDownStat(dim, filterVal) {
-  // 重置明细筛选
-  document.getElementById('dBatchNo').value = '';
-  document.getElementById('dShopCode').value = '';
-  document.getElementById('dShopName').value = '';
-  document.getElementById('dProductId').value = '';
-  document.getElementById('dAttrValue').value = '';
-  document.getElementById('dAttrStatus').value = '';
-  document.getElementById('dFailReason').value = '';
-  document.getElementById('dCreateTimeStart').value = '';
-  document.getElementById('dCreateTimeEnd').value = '';
-
-  // 根据维度设置明细筛选
-  if (dim === 'shopName') {
-    document.getElementById('dShopName').value = filterVal;
-  } else if (dim === 'categoryName') {
-    // 明细视图没有类目筛选，通过商品ID间接过滤
-    // 先收集该类目下所有商品ID
-    var productIds = [];
-    mockData.forEach(function(row) {
-      if (row.categoryName === filterVal && productIds.indexOf(row.productId) < 0) {
-        productIds.push(row.productId);
-      }
-    });
-    // 无法用单字段筛选多商品，跳转全量明细
-  } else if (dim === 'batchNo') {
-    document.getElementById('dBatchNo').value = filterVal;
-  } else if (dim === 'checkStatus') {
-    // 检查状态在列表视图筛选更合适
-    document.getElementById('sCheckStatus').value = filterVal;
-    doSearch();
-    showToast('已筛选：检查状态 = ' + filterVal, 'info');
-    return;
-  }
-
-  switchView('detail');
-  renderDetailView();
-  showToast('已跳转明细视图（' + filterVal + '）', 'info');
-}
-
-// ===== 渲染列表 =====
+// ===== 渲染列表（按批次聚合） =====
 function renderTable(data) {
-  if (statMode) { renderStatTable(); return; }
   var tbody = document.getElementById('tableBody');
   var html = '';
-  if (data.length === 0) {
-    html = '<tr><td colspan="17" class="empty-state"><span class="empty-icon">&#128269;</span><div class="empty-text">暂无数据</div><div class="empty-hint">点击「导入核查商品」开始检查</div></td></tr>';
+
+  // 按批次号分组
+  var groups = {};
+  var groupOrder = [];
+  data.forEach(function(row) {
+    var key = row.batchNo || '未知';
+    if (!groups[key]) {
+      groups[key] = [];
+      groupOrder.push(key);
+    }
+    groups[key].push(row);
+  });
+
+  if (groupOrder.length === 0) {
+    html = '<tr><td colspan="14" class="empty-state"><span class="empty-icon">&#128269;</span><div class="empty-text">暂无数据</div><div class="empty-hint">点击「导入核查商品」开始检查</div></td></tr>';
   } else {
-    data.forEach(function(row, i) {
-      html += '<tr class="' + (row._checked ? 'row-selected' : '') + '">';
-      html += '<td><input type="checkbox" class="row-check" value="' + row.id + '" ' + (row._checked ? 'checked' : '') + ' onclick="toggleRow(this,' + row.id + ')"></td>';
+    groupOrder.forEach(function(key, i) {
+      var rows = groups[key];
+      var total = rows.length;
+
+      // 店铺去重统计
+      var shopSet = {};
+      rows.forEach(function(r) { shopSet[r.shopCode] = true; });
+      var shopCount = Object.keys(shopSet).length;
+
+      // 检查状态计数
+      var uncheckedCount = rows.filter(function(r) { return r.checkStatus === '未检查'; }).length;
+      var normalCount = rows.filter(function(r) { return r.checkStatus === '无异常'; }).length;
+      var abnormalCount = rows.filter(function(r) { return r.checkStatus === '异常'; }).length;
+      var checkFailCount = rows.filter(function(r) { return r.checkStatus === '检查失败'; }).length;
+
+      // 属性级上传状态计数（遍历每个商品的属性）
+      var attrUploaded = 0, attrNotUploaded = 0, attrUploadFail = 0;
+      rows.forEach(function(r) {
+        var attrs = mockRequiredAttrs[r.productId] || [];
+        attrs.forEach(function(attr) {
+          var us = attr.uploadStatus || '未上传';
+          if (us === '已上传') attrUploaded++;
+          else if (us === '上传失败') attrUploadFail++;
+          else attrNotUploaded++;
+        });
+      });
+
+      // 创建时间/创建人：取批次内最早
+      var createTime = '';
+      var creator = '';
+      rows.forEach(function(r) {
+        if (!createTime || (r.createTime && r.createTime < createTime)) {
+          createTime = r.createTime || '';
+          creator = r.creator || '';
+        }
+      });
+
+      html += '<tr class="batch-row">';
+      html += '<td><input type="checkbox" class="row-check" value="' + esc(key) + '" onclick="toggleRow(this,\'' + esc(key) + '\')"></td>';
       html += '<td>' + (i + 1) + '</td>';
-      html += '<td class="col-batch-no">' + esc(row.batchNo) + '</td>';
-      html += '<td class="col-shop-code">' + esc(row.shopCode) + '</td>';
-      html += '<td>' + esc(row.shopName) + '</td>';
-      html += '<td class="col-shop-code">' + esc(row.productId) + '</td>';
-      html += '<td class="col-shop-code">' + esc(row.categoryCode || '') + '</td>';
-      html += '<td>' + esc(row.categoryName || '') + '</td>';
-      html += '<td>' + stCheck(row.checkStatus) + '</td>';
-      html += '<td style="color:#ef4444;font-size:12px;">' + (row.failReason ? esc(row.failReason) : '') + '</td>';
-      html += '<td style="font-size:12px;">' + esc(row.checkTime) + '</td>';
-      html += '<td style="font-size:12px;">' + esc(row.createTime) + '</td>';
-      html += '<td>' + esc(row.creator) + '</td>';
-      html += '<td style="font-size:12px;">' + (row.updateTime ? esc(row.updateTime) : '') + '</td>';
-      html += '<td>' + (row.updater ? esc(row.updater) : '') + '</td>';
+      html += '<td class="col-batch-no">' + esc(key) + '</td>';
+      html += '<td style="text-align:center;font-weight:700;color:#0ea5e9;">' + shopCount + '</td>';
+      html += '<td style="text-align:center;font-weight:700;color:#8b5cf6;">' + total + '</td>';
+      html += '<td style="text-align:center;color:#94a3b8;">' + uncheckedCount + '</td>';
+      html += '<td style="text-align:center;color:#10b981;font-weight:600;">' + normalCount + '</td>';
+      html += '<td style="text-align:center;color:#ef4444;font-weight:600;">' + abnormalCount + '</td>';
+      html += '<td style="text-align:center;color:#f59e0b;">' + checkFailCount + '</td>';
+      html += '<td style="text-align:center;color:#10b981;">' + attrUploaded + '</td>';
+      html += '<td style="text-align:center;color:#94a3b8;">' + attrNotUploaded + '</td>';
+      html += '<td style="text-align:center;color:#ef4444;">' + attrUploadFail + '</td>';
+      html += '<td>' + esc(creator || '—') + '</td>';
+      html += '<td style="font-size:12px;">' + esc(createTime || '—') + '</td>';
       html += '<td class="col-actions">';
-      html += '<a class="link-action" href="javascript:void(0)" onclick="doView(' + row.id + ')">查看</a>';
-      html += '<a class="link-action danger" href="javascript:void(0)" onclick="doDel(' + row.id + ')">删除</a>';
+      html += '<a class="link-action" href="javascript:void(0)" onclick="doViewBatch(\'' + esc(key) + '\')">查看明细</a>';
+      html += '<a class="link-action danger" href="javascript:void(0)" onclick="doDelBatch(\'' + esc(key) + '\')">删除</a>';
       html += '</td></tr>';
     });
   }
   tbody.innerHTML = html;
-  document.getElementById('totalCount').textContent = data.length;
+  document.getElementById('totalCount').textContent = groupOrder.length;
   document.getElementById('checkAll').checked = false;
   updateActionButtons();
 }
 
 function stCheck(s) {
-  if (s === '已检查') return '<span class="status-tag submitted">✓ 已检查</span>';
-  if (s === '检查失败') return '<span class="status-tag rejected">✗ 检查失败</span>';
-  return '<span class="status-tag initial">○ 未检查</span>';
+  if (s === '无异常') return '<span class="status-tag submitted">无异常</span>';
+  if (s === '异常') return '<span class="status-tag rejected">异常</span>';
+  if (s === '检查失败') return '<span class="status-tag rejected">检查失败</span>';
+  return '<span class="status-tag initial">未检查</span>';
 }
 
 function stUpload(s) {
-  if (s === '已上传') return '<span class="status-tag submitted">✓ 已上传</span>';
-  if (s === '上传失败') return '<span class="status-tag rejected">✗ 上传失败</span>';
-  return '<span class="status-tag initial">○ 未上传</span>';
+  if (s === '已上传') return '<span class="status-tag submitted">已上传</span>';
+  if (s === '上传失败') return '<span class="status-tag rejected">上传失败</span>';
+  return '<span class="status-tag initial">未上传</span>';
 }
 
 // ===== 全选/行选 =====
@@ -939,7 +849,7 @@ function toggleAll(el) {
     if (tr) tr.classList.toggle('row-selected', el.checked);
   });
 }
-function toggleRow(el, id) {
+function toggleRow(el, batchKey) {
   var tr = el.closest('tr');
   if (tr) tr.classList.toggle('row-selected', el.checked);
   updateCheckAll();
@@ -949,15 +859,15 @@ function updateCheckAll() {
   var checked = document.querySelectorAll('.row-check:checked');
   document.getElementById('checkAll').checked = all.length > 0 && all.length === checked.length;
 }
-function getCheckedIds() {
-  var ids = [];
-  document.querySelectorAll('.row-check:checked').forEach(function(c) { ids.push(Number(c.value)); });
-  return ids;
+function getCheckedBatchKeys() {
+  var keys = [];
+  document.querySelectorAll('.row-check:checked').forEach(function(c) { keys.push(c.value); });
+  return keys;
 }
 
 // ===== 操作按钮状态 =====
 function updateActionButtons() {
-  var hasChecked = mockData.some(function(r) { return r.checkStatus === '已检查'; });
+  var hasChecked = mockData.some(function(r) { return r.checkStatus === '无异常' || r.checkStatus === '异常'; });
   document.getElementById('btnExport').disabled = !hasChecked;
 }
 
@@ -1058,41 +968,75 @@ function openImportModal() {
 }
 // ===== 编辑属性值弹窗 =====
 var editingProductId = null;
-var editingAttrIdx = null;
 
 function openEditAttrModal(productId, attrIdx) {
   editingProductId = productId;
-  editingAttrIdx = attrIdx;
   var attrs = mockRequiredAttrs[productId] || [];
-  var attr = attrs[attrIdx];
-  if (!attr) return;
-  document.getElementById('editAttrName').textContent = attr.name;
-  document.getElementById('editAttrValue').value = attr.value || '';
+  // 获取未填写的属性
+  var emptyAttrs = attrs.filter(function(a) { return !a.value || a.value.trim() === ''; });
+  if (emptyAttrs.length === 0) {
+    showToast('该商品所有属性已填写', 'info');
+    return;
+  }
+  // 获取商品信息
+  var productInfo = '';
+  mockData.forEach(function(row) {
+    if (row.productId === productId && !productInfo) {
+      productInfo = row.productId + ' - ' + row.productName;
+    }
+  });
+  document.getElementById('editProductInfo').textContent = productInfo;
+  document.getElementById('editAttrCount').textContent = emptyAttrs.length;
+  // 渲染未填写属性列表
+  var html = '';
+  emptyAttrs.forEach(function(attr, idx) {
+    html += '<div style="margin-bottom:12px;padding:10px 14px;background:#fff;border:1px solid var(--border);border-radius:8px;">';
+    html += '<label style="font-size:13px;font-weight:600;color:var(--ink);display:block;margin-bottom:6px;">' + esc(attr.name) + '</label>';
+    html += '<input type="text" class="edit-attr-input" data-attr-name="' + esc(attr.name) + '" placeholder="请输入属性值" style="width:100%;padding:8px 12px;font-size:13px;border:1px solid var(--border);border-radius:6px;outline:none;box-sizing:border-box;">';
+    html += '</div>';
+  });
+  document.getElementById('editAttrList').innerHTML = html;
   document.getElementById('editAttrModal').style.display = '';
 }
 
 function closeEditAttrModal() {
   editingProductId = null;
-  editingAttrIdx = null;
   document.getElementById('editAttrModal').style.display = 'none';
 }
 
 function saveEditAttr() {
-  if (!editingProductId || editingAttrIdx === null) return;
+  if (!editingProductId) return;
   var attrs = mockRequiredAttrs[editingProductId] || [];
-  var attr = attrs[editingAttrIdx];
-  if (!attr) return;
-  var newVal = document.getElementById('editAttrValue').value.trim();
-  if (!newVal) {
-    showToast('属性值不能为空', 'error');
+  var inputs = document.querySelectorAll('#editAttrList .edit-attr-input');
+  var savedCount = 0;
+  var hasEmpty = false;
+  inputs.forEach(function(input) {
+    var attrName = input.getAttribute('data-attr-name');
+    var newVal = input.value.trim();
+    if (!newVal) {
+      hasEmpty = true;
+      input.style.borderColor = '#ef4444';
+      return;
+    }
+    input.style.borderColor = '';
+    // 找到对应的属性并更新
+    attrs.forEach(function(attr) {
+      if (attr.name === attrName) {
+        attr.value = newVal;
+        attr.updateTime = now();
+        attr.updater = '当前用户';
+        attr.uploadStatus = '未上传';
+        savedCount++;
+      }
+    });
+  });
+  if (hasEmpty) {
+    showToast('请填写所有属性值', 'error');
     return;
   }
-  attr.value = newVal;
-  attr.updateTime = now();
-  attr.updater = '当前用户';
   closeEditAttrModal();
-  renderDetailView();
-  showToast('属性值已保存', 'success');
+  renderAttrView();
+  showToast('已保存 ' + savedCount + ' 个属性', 'success');
 }
 
 function closeImportModal() {
@@ -1219,8 +1163,8 @@ function doImportCheck() {
         categoryCode: product.categoryCode || '',
         categoryName: product.categoryName || '',
         batchNo: currentBatchNo,
-        checkStatus: '已检查',
-        checkTime: nowStr,
+        checkStatus: '未检查',
+        checkTime: '',
         createTime: nowStr,
         creator: '当前用户',
         failReason: '',
@@ -1257,7 +1201,7 @@ function doImportCheck() {
 
 // ===== 导出结果明细 =====
 function doExport() {
-  var checkedItems = mockData.filter(function(r) { return r.checkStatus === '已检查'; });
+  var checkedItems = mockData.filter(function(r) { return r.checkStatus === '无异常' || r.checkStatus === '异常'; });
   if (checkedItems.length === 0) {
     showToast('没有已检查的记录可导出', 'error');
     return;
@@ -1276,57 +1220,47 @@ function doExport() {
   showToast('已导出 ' + checkedItems.length + ' 条记录', 'success');
 }
 
-// ===== 明细视图导出结果明细 =====
-function doDetailExport() {
-  var rows = [];
-  var filterShopCode = document.getElementById('dShopCode').value.trim();
-  var filterProductId = document.getElementById('dProductId').value.trim();
-  var filterAttrValue = document.getElementById('dAttrValue').value.trim();
-  var filterAttrStatus = document.getElementById('dAttrStatus').value;
-
-  mockData.forEach(function(row) {
-    if (row.checkStatus !== '已检查') return;
-    if (filterShopCode && row.shopCode.indexOf(filterShopCode) === -1) return;
-    if (filterProductId && row.productId.indexOf(filterProductId) === -1) return;
-
-    var attrs = mockRequiredAttrs[row.productId] || [];
-    attrs.forEach(function(attr) {
-      var uploadStatus = attr.uploadStatus || '未上传';
-      var failReason = attr.failReason || '';
-      if (filterAttrValue && (attr.value || '').indexOf(filterAttrValue) === -1) return;
-      if (filterAttrStatus && uploadStatus !== filterAttrStatus) return;
-      rows.push({
-        shopCode: row.shopCode,
-        shopName: row.shopName,
-        productId: row.productId,
-        categoryCode: row.categoryCode || '',
-        categoryName: row.categoryName || '',
-        attrName: attr.name,
-        attrValue: attr.value || '',
-        uploadStatus: uploadStatus,
-        failReason: failReason,
-        createTime: row.createTime,
-        creator: row.creator
-      });
-    });
-  });
-
-  if (rows.length === 0) {
-    showToast('没有数据可导出', 'error');
+// ===== 重新核查（模拟异步回调） =====
+function doRecheck() {
+  var uncheckedItems = mockData.filter(function(r) { return r.checkStatus === '未检查'; });
+  if (uncheckedItems.length === 0) {
+    showToast('没有待核查的记录', 'info');
     return;
   }
 
-  var wsData = [['店铺编码','店铺名称','平台商品ID','类目编码','类目名称','未填属性','属性值','上传状态','失败原因','创建时间','创建人']];
-  rows.forEach(function(r) {
-    wsData.push([r.shopCode, r.shopName, r.productId, r.categoryCode || '', r.categoryName || '', r.attrName, r.attrValue, r.uploadStatus, r.failReason, r.createTime, r.creator]);
+  var nowStr = new Date().toLocaleString('zh-CN', {hour12:false}).replace(/\//g,'-');
+  var updatedCount = 0;
+  var failedCount = 0;
+
+  uncheckedItems.forEach(function(item) {
+    // 模拟异步核查：根据 emptyAttrs 判定状态
+    var attrs = mockRequiredAttrs[item.productId] || [];
+    var emptyAttrs = attrs.filter(function(a) { return !a.value || a.value.trim() === ''; });
+
+    // 模拟小概率检查失败
+    if (Math.random() < 0.1) {
+      item.checkStatus = '检查失败';
+      item.failReason = '平台接口超时';
+      item.checkTime = '';
+      failedCount++;
+    } else {
+      item.checkStatus = emptyAttrs.length === 0 ? '无异常' : '异常';
+      item.emptyAttrs = emptyAttrs.map(function(a) { return a.name; });
+      item.checkTime = nowStr;
+      item.failReason = '';
+      updatedCount++;
+    }
+    item.updateTime = nowStr;
+    item.updater = '系统';
   });
 
-  var wb = XLSX.utils.book_new();
-  var ws = XLSX.utils.aoa_to_sheet(wsData);
-  ws['!cols'] = [ {wch:10},{wch:20},{wch:14},{wch:10},{wch:12},{wch:14},{wch:18},{wch:10},{wch:18},{wch:18},{wch:10} ];
-  XLSX.utils.book_append_sheet(wb, ws, '属性明细');
-  XLSX.writeFile(wb, '属性检查结果明细_' + new Date().toISOString().slice(0,10) + '.xlsx');
-  showToast('已导出 ' + rows.length + ' 条记录', 'success');
+  localStorage.setItem('package_optimizeList', JSON.stringify(mockData));
+  renderTable(mockData);
+  updateActionButtons();
+
+  var msg = '核查完成：' + updatedCount + ' 条已出结果';
+  if (failedCount > 0) msg += '，' + failedCount + ' 条检查失败';
+  showToast(msg, 'success');
 }
 
 // ===== 上传属性 =====
@@ -1405,7 +1339,7 @@ function doUploadSubmit() {
       // 增量合并：更新状态、批次号和时间，保留原有属性值
       item.uploadStatus = '已完成';
       item.uploadTime = nowStr;
-      item.checkStatus = '已检查';
+      item.checkStatus = item.emptyAttrs && item.emptyAttrs.length > 0 ? '异常' : '无异常';
       item.batchNo = currentBatchNo;
       item.updateTime = nowStr;
       item.updater = '当前用户';
@@ -1423,19 +1357,26 @@ function doUploadSubmit() {
   }, 1000);
 }
 
-// ===== 行操作 =====
-function doView(id) {
-  var row = mockData.find(function(r) { return r.id === id; });
-  if (!row) return;
-  if (row.checkStatus !== '已检查') {
-    showToast('该商品尚未检查，无法查看详情', 'error');
-    return;
-  }
-  window.location.href = 'detail.html?id=' + id;
+// ===== 行操作（批次级别） =====
+var currentDetailBatchNo = '';
+function doViewBatch(batchNo) {
+  currentDetailBatchNo = batchNo;
+  document.getElementById('dShopCode').value = '';
+  document.getElementById('dProductId').value = '';
+  document.getElementById('dCheckStatus').value = '';
+  document.getElementById('detailPageTitle').textContent = '批次明细：' + batchNo;
+  document.getElementById('listMain').style.display = 'none';
+  document.getElementById('listDetail').style.display = '';
+  renderDetailView();
 }
-function doDel(id) {
-  if (confirm('确认删除该记录？')) {
-    mockData = mockData.filter(function(r) { return r.id !== id; });
+function doBackToList() {
+  document.getElementById('listMain').style.display = '';
+  document.getElementById('listDetail').style.display = 'none';
+  currentDetailBatchNo = '';
+}
+function doDelBatch(batchNo) {
+  if (confirm('确认删除批次「' + batchNo + '」下的所有记录？')) {
+    mockData = mockData.filter(function(r) { return r.batchNo !== batchNo; });
     localStorage.setItem('package_optimizeList', JSON.stringify(mockData));
     renderTable(mockData);
     showToast('删除成功', 'success');
@@ -1458,118 +1399,70 @@ function esc(s) {
 function switchView(view) {
   var tabs = document.querySelectorAll('.view-tab');
   var listView = document.getElementById('listView');
-  var detailView = document.getElementById('detailView');
-  
+  var attrView = document.getElementById('attrView');
   tabs.forEach(function(tab) { tab.classList.remove('active'); });
-  
+  listView.classList.remove('active');
+  attrView.classList.remove('active');
+
   if (view === 'list') {
     tabs[0].classList.add('active');
     listView.classList.add('active');
-    detailView.classList.remove('active');
-    if (statMode) renderStatTable();
+    // 确保回到主列表
+    document.getElementById('listMain').style.display = '';
+    document.getElementById('listDetail').style.display = 'none';
   } else {
     tabs[1].classList.add('active');
-    listView.classList.remove('active');
-    detailView.classList.add('active');
-    renderDetailView();
+    attrView.classList.add('active');
+    renderAttrView();
   }
 }
 
-// ===== 明细视图渲染 =====
+// ===== 明细子页面渲染（商品维度） =====
 function renderDetailView() {
   var tbody = document.getElementById('detailTableBody');
   var html = '';
   var totalRows = 0;
-  
-  // 获取筛选条件
-  var filterBatchNo = document.getElementById('dBatchNo').value.trim();
   var filterShopCode = document.getElementById('dShopCode').value.trim();
-  var filterShopName = document.getElementById('dShopName').value.trim();
   var filterProductId = document.getElementById('dProductId').value.trim();
-  var filterAttrValue = document.getElementById('dAttrValue').value.trim();
-  var filterAttrStatus = document.getElementById('dAttrStatus').value;
-  var filterFailReason = document.getElementById('dFailReason').value.trim();
-  var filterCTStart = document.getElementById('dCreateTimeStart').value;
-  var filterCTEnd = document.getElementById('dCreateTimeEnd').value;
-  
-  // 遍历所有已检查的商品，展开属性
+  var filterCheckStatus = document.getElementById('dCheckStatus').value;
+
   mockData.forEach(function(row) {
-    if (row.checkStatus !== '已检查') return;
-    if (filterBatchNo && (row.batchNo || '').indexOf(filterBatchNo) === -1) return;
+    if (row.batchNo !== currentDetailBatchNo) return;
     if (filterShopCode && row.shopCode.indexOf(filterShopCode) === -1) return;
-    if (filterShopName && row.shopName.indexOf(filterShopName) === -1) return;
     if (filterProductId && row.productId.indexOf(filterProductId) === -1) return;
-    if (filterCTStart && row.createTime && row.createTime.substring(0,10) < filterCTStart) return;
-    if (filterCTEnd && row.createTime && row.createTime.substring(0,10) > filterCTEnd) return;
-    
-    var attrs = mockRequiredAttrs[row.productId] || [];
-    attrs.forEach(function(attr, attrIdx) {
-      // 属性状态：未上传/已上传/上传失败
-      var uploadStatus = attr.uploadStatus || '未上传';
-      var failReason = attr.failReason || '';
-      
-      // 属性值筛选
-      if (filterAttrValue && (attr.value || '').indexOf(filterAttrValue) === -1) return;
-      
-      // 属性状态筛选
-      if (filterAttrStatus && uploadStatus !== filterAttrStatus) return;
-      
-      // 失败原因筛选
-      if (filterFailReason && (failReason || '').indexOf(filterFailReason) === -1) return;
-      
-      totalRows++;
-      html += '<tr>';
-      html += '<td><input type="checkbox" class="detail-row-check" onclick="toggleDetailRow(this)"></td>';
-      html += '<td>' + totalRows + '</td>';
-      html += '<td class="col-batch-no">' + esc(row.batchNo) + '</td>';
-      html += '<td class="col-shop-code">' + esc(row.shopCode) + '</td>';
-      html += '<td>' + esc(row.shopName) + '</td>';
-      html += '<td class="col-shop-code">' + esc(row.productId) + '</td>';
-      html += '<td class="col-shop-code">' + esc(row.categoryCode || '') + '</td>';
-      html += '<td>' + esc(row.categoryName || '') + '</td>';
-      html += '<td>' + esc(attr.name) + '</td>';
-      html += '<td>' + (attr.value ? esc(attr.value) : '') + '</td>';
-      html += '<td>' + stUpload(uploadStatus) + '</td>';
-      html += '<td style="color:#ef4444;font-size:12px;">' + (failReason ? esc(failReason) : '') + '</td>';
-      html += '<td style="font-size:12px;">' + esc(row.createTime) + '</td>';
-      html += '<td>' + esc(row.creator) + '</td>';
-      html += '<td style="font-size:12px;">' + (attr.updateTime ? esc(attr.updateTime) : '') + '</td>';
-      html += '<td>' + (attr.updater ? esc(attr.updater) : '') + '</td>';
-      html += '<td class="col-actions">';
-      if (uploadStatus === '未上传' || uploadStatus === '上传失败') {
-        html += '<a class="link-action" href="javascript:void(0)" onclick="openEditAttrModal(\'' + esc(row.productId) + '\',' + attrIdx + ')">编辑</a>';
-      } else {
-        html += '<a class="link-action" href="javascript:void(0)" onclick="showToast(\'属性：' + esc(attr.name) + ' = ' + esc(attr.value) + '\', \'info\')">查看</a>';
-      }
-      html += '</td></tr>';
-    });
+    if (filterCheckStatus && row.checkStatus !== filterCheckStatus) return;
+    totalRows++;
+    html += '<tr>';
+    html += '<td><input type="checkbox" class="detail-row-check" onclick="toggleDetailRow(this)"></td>';
+    html += '<td>' + totalRows + '</td>';
+    html += '<td class="col-shop-code">' + esc(row.shopCode) + '</td>';
+    html += '<td>' + esc(row.shopName) + '</td>';
+    html += '<td class="col-shop-code">' + esc(row.productId) + '</td>';
+    html += '<td>' + esc(row.productName) + '</td>';
+    html += '<td>' + esc(row.categoryName || '') + '</td>';
+    html += '<td>' + stCheck(row.checkStatus) + '</td>';
+    html += '<td>' + stUpload(row.uploadStatus || '未上传') + '</td>';
+    html += '<td style="color:#ef4444;font-size:12px;">' + (row.failReason ? esc(row.failReason) : '') + '</td>';
+    html += '<td style="font-size:12px;">' + esc(row.createTime) + '</td>';
+    html += '<td>' + esc(row.creator) + '</td>';
+    html += '<td class="col-actions">';
+    html += '<a class="link-action" href="javascript:void(0)" onclick="doViewAttrs(\'' + esc(row.batchNo) + '\',\'' + esc(row.productId) + '\')">查看属性</a>';
+    html += '</td></tr>';
   });
-  
   if (totalRows === 0) {
-    html = '<tr><td colspan="17" class="empty-state"><span class="empty-icon">&#128269;</span><div class="empty-text">暂无属性数据</div></td></tr>';
+    html = '<tr><td colspan="13" class="empty-state"><span class="empty-icon">&#128269;</span><div class="empty-text">暂无数据</div></td></tr>';
   }
-  
   tbody.innerHTML = html;
   document.getElementById('detailTotalCount').textContent = totalRows;
   document.getElementById('detailTotalBadge').textContent = '共 ' + totalRows + ' 条';
   document.getElementById('detailCheckAll').checked = false;
 }
 
-// ===== 明细视图筛选 =====
-function doDetailSearch() {
-  renderDetailView();
-  showToast('查询完成', 'success');
-}
+function doDetailSearch() { renderDetailView(); showToast('查询完成', 'success'); }
 function resetDetailSearch() {
-  document.getElementById('dBatchNo').value = '';
   document.getElementById('dShopCode').value = '';
-  document.getElementById('dShopName').value = '';
   document.getElementById('dProductId').value = '';
-  document.getElementById('dAttrValue').value = '';
-  document.getElementById('dAttrStatus').value = '';
-  document.getElementById('dFailReason').value = '';
-  document.getElementById('dCreateTimeStart').value = '';
-  document.getElementById('dCreateTimeEnd').value = '';
+  document.getElementById('dCheckStatus').value = '';
   renderDetailView();
   showToast('已重置筛选条件', 'info');
 }
@@ -1588,6 +1481,126 @@ function toggleDetailRow(el) {
   var all = document.querySelectorAll('.detail-row-check');
   var checked = document.querySelectorAll('.detail-row-check:checked');
   document.getElementById('detailCheckAll').checked = all.length > 0 && all.length === checked.length;
+}
+
+// ===== L3：属性视图渲染（属性维度） =====
+function renderAttrView() {
+  var tbody = document.getElementById('attrTableBody');
+  var html = '';
+  var totalRows = 0;
+  var filterBatchNo = document.getElementById('aBatchNo').value.trim();
+  var filterShopCode = document.getElementById('aShopCode').value.trim();
+  var filterProductId = document.getElementById('aProductId').value.trim();
+  var filterAttrValue = document.getElementById('aAttrValue').value.trim();
+  var filterAttrStatus = document.getElementById('aAttrStatus').value;
+  var filterFailReason = document.getElementById('aFailReason').value.trim();
+
+  mockData.forEach(function(row) {
+    if (filterBatchNo && (row.batchNo || '').indexOf(filterBatchNo) === -1) return;
+    if (filterShopCode && row.shopCode.indexOf(filterShopCode) === -1) return;
+    if (filterProductId && row.productId.indexOf(filterProductId) === -1) return;
+    var attrs = mockRequiredAttrs[row.productId] || [];
+    attrs.forEach(function(attr, attrIdx) {
+      var uploadStatus = attr.uploadStatus || '未上传';
+      var failReason = attr.failReason || '';
+      if (filterAttrValue && (attr.value || '').indexOf(filterAttrValue) === -1) return;
+      if (filterAttrStatus && uploadStatus !== filterAttrStatus) return;
+      if (filterFailReason && (failReason || '').indexOf(filterFailReason) === -1) return;
+      totalRows++;
+      html += '<tr>';
+      html += '<td><input type="checkbox" class="attr-row-check" onclick="toggleAttrRow(this)"></td>';
+      html += '<td>' + totalRows + '</td>';
+      html += '<td class="col-batch-no">' + esc(row.batchNo) + '</td>';
+      html += '<td class="col-shop-code">' + esc(row.shopCode) + '</td>';
+      html += '<td class="col-shop-code">' + esc(row.productId) + '</td>';
+      html += '<td>' + esc(row.productName) + '</td>';
+      html += '<td>' + esc(attr.name) + '</td>';
+      html += '<td>' + (attr.value ? esc(attr.value) : '<span style="color:#d97706;">未填写</span>') + '</td>';
+      html += '<td>' + stUpload(uploadStatus) + '</td>';
+      html += '<td style="color:#ef4444;font-size:12px;">' + (failReason ? esc(failReason) : '') + '</td>';
+      html += '<td style="font-size:12px;">' + (attr.updateTime ? esc(attr.updateTime) : '') + '</td>';
+      html += '<td>' + (attr.updater ? esc(attr.updater) : '') + '</td>';
+      html += '<td class="col-actions">';
+      if (uploadStatus === '未上传' || uploadStatus === '上传失败') {
+        html += '<a class="link-action" href="javascript:void(0)" onclick="openEditAttrModal(\'' + esc(row.productId) + '\',' + attrIdx + ')">补充属性</a>';
+      } else {
+        html += '<a class="link-action" href="javascript:void(0)" onclick="showToast(\'属性：' + esc(attr.name) + ' = ' + esc(attr.value) + '\', \'info\')">查看</a>';
+      }
+      html += '</td></tr>';
+    });
+  });
+  if (totalRows === 0) {
+    html = '<tr><td colspan="13" class="empty-state"><span class="empty-icon">&#128269;</span><div class="empty-text">暂无属性数据</div></td></tr>';
+  }
+  tbody.innerHTML = html;
+  document.getElementById('attrTotalCount').textContent = totalRows;
+  document.getElementById('attrTotalBadge').textContent = '共 ' + totalRows + ' 条';
+  document.getElementById('attrCheckAll').checked = false;
+}
+
+function doAttrSearch() { renderAttrView(); showToast('查询完成', 'success'); }
+function resetAttrSearch() {
+  document.getElementById('aBatchNo').value = '';
+  document.getElementById('aShopCode').value = '';
+  document.getElementById('aProductId').value = '';
+  document.getElementById('aAttrValue').value = '';
+  document.getElementById('aAttrStatus').value = '';
+  document.getElementById('aFailReason').value = '';
+  renderAttrView();
+  showToast('已重置筛选条件', 'info');
+}
+
+// ===== 下钻跳转 =====
+function doViewAttrs(batchNo, productId) {
+  // 切换到属性视图，按批次+商品筛选
+  document.getElementById('aBatchNo').value = batchNo;
+  document.getElementById('aShopCode').value = '';
+  document.getElementById('aProductId').value = productId;
+  document.getElementById('aAttrValue').value = '';
+  document.getElementById('aAttrStatus').value = '';
+  document.getElementById('aFailReason').value = '';
+  switchView('attr');
+}
+
+// ===== 属性视图全选/行选 =====
+function toggleAttrAll(el) {
+  document.querySelectorAll('.attr-row-check').forEach(function(c) {
+    c.checked = el.checked;
+    var tr = c.closest('tr');
+    if (tr) tr.classList.toggle('row-selected', el.checked);
+  });
+}
+function toggleAttrRow(el) {
+  var tr = el.closest('tr');
+  if (tr) tr.classList.toggle('row-selected', el.checked);
+  var all = document.querySelectorAll('.attr-row-check');
+  var checked = document.querySelectorAll('.attr-row-check:checked');
+  document.getElementById('attrCheckAll').checked = all.length > 0 && all.length === checked.length;
+}
+
+// ===== 属性视图导出 =====
+function doAttrExport() {
+  var rows = [];
+  var filterBatchNo = document.getElementById('aBatchNo').value.trim();
+  var filterShopCode = document.getElementById('aShopCode').value.trim();
+  var filterProductId = document.getElementById('aProductId').value.trim();
+  mockData.forEach(function(row) {
+    if (filterBatchNo && (row.batchNo || '').indexOf(filterBatchNo) === -1) return;
+    if (filterShopCode && row.shopCode.indexOf(filterShopCode) === -1) return;
+    if (filterProductId && row.productId.indexOf(filterProductId) === -1) return;
+    var attrs = mockRequiredAttrs[row.productId] || [];
+    attrs.forEach(function(attr) {
+      rows.push([row.batchNo, row.shopCode, row.productId, row.productName, attr.name, attr.value || '', attr.uploadStatus || '未上传', attr.failReason || '', attr.updateTime || '', attr.updater || '']);
+    });
+  });
+  if (rows.length === 0) { showToast('没有数据可导出', 'error'); return; }
+  var wsData = [['批次号','店铺编码','平台商品ID','商品名称','属性名','属性值','上传状态','失败原因','更新时间','更新人']].concat(rows);
+  var wb = XLSX.utils.book_new();
+  var ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols'] = [{wch:16},{wch:10},{wch:14},{wch:16},{wch:12},{wch:18},{wch:10},{wch:18},{wch:18},{wch:10}];
+  XLSX.utils.book_append_sheet(wb, ws, '属性明细');
+  XLSX.writeFile(wb, '属性明细_' + new Date().toISOString().slice(0,10) + '.xlsx');
+  showToast('已导出 ' + rows.length + ' 条属性记录', 'success');
 }
 
 function showToast(message, type) {
