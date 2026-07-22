@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新增任务 - 详情页智能体</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    /* ===== 表单区域 ===== */
+    .form-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+    .form-card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--ink);
+      margin: 0 0 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .form-card-title svg { color: var(--primary); }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px 24px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+    .form-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+    .form-label .required {
+      color: #ef4444;
+      margin-left: 2px;
+    }
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font: inherit;
+      font-size: 13px;
+      outline: none;
+      background: var(--bg-secondary, #f8fafc);
+      transition: border-color .18s;
+      box-sizing: border-box;
+    }
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      border-color: var(--primary);
+      background: #fff;
+    }
+    .form-textarea {
+      resize: vertical;
+      line-height: 1.6;
+    }
+    .form-hint {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 4px;
+    }
+
+    /* ===== 上传区域 ===== */
+    .upload-zone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 28px;
+      border: 2px dashed #cbd5e1;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all .18s;
+      background: #fafbfd;
+    }
+    .upload-zone:hover {
+      border-color: var(--primary);
+      background: var(--primary-50);
+    }
+    .upload-zone svg { width: 32px; height: 32px; color: var(--primary); }
+    .upload-zone .title { font-size: 13px; font-weight: 600; color: #475569; }
+    .upload-zone .hint { font-size: 12px; color: var(--text-tertiary); }
+
+    .file-info-bar {
+      display: none;
+      margin-top: 10px;
+      padding: 10px 14px;
+      background: #ecfdf5;
+      border-radius: 10px;
+      font-size: 13px;
+      color: #059669;
+      align-items: center;
+      gap: 8px;
+    }
+    .file-info-bar.show { display: flex; }
+    .file-info-bar .file-remove {
+      margin-left: auto;
+      background: none;
+      border: none;
+      color: #dc2626;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .file-info-bar .file-remove:hover { text-decoration: underline; }
+
+    /* ===== 底部操作栏 ===== */
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 16px 0;
+    }
+
+    /* ===== 导入方式切换 ===== */
+    .input-mode-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 12px;
+      border-bottom: 2px solid var(--border);
+    }
+    .input-mode-tab {
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: all .15s;
+      user-select: none;
+    }
+    .input-mode-tab:hover { color: var(--primary); }
+    .input-mode-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .input-mode-panel { display: none; }
+    .input-mode-panel.active { display: block; }
+  </style>
+</head>
+<body>
+<div class="page-container">
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script>
+    if (window.parent) {
+      window.parent.postMessage({type:'breadcrumb', text:'包装优化 <span>/</span> 详情页智能体 <span>/</span> 新增任务'}, '*');
+    }
+  </script>
+
+  <!-- 顶部导航 -->
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+    <button class="btn" onclick="goBack()" style="display:flex;align-items:center;gap:4px;">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      返回
+    </button>
+    <div class="page-title" style="margin-bottom:0;">新增任务</div>
+  </div>
+
+  <!-- ===== 基本信息 ===== -->
+  <div class="form-card">
+    <h3 class="form-card-title">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+      </svg>
+      基本信息
+    </h3>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">任务类型 <span class="required">*</span></label>
+        <select class="form-select" id="taskType" onchange="onTypeChange()">
+          <option value="size">尺码参数</option>
+          <option value="recommend">商品推荐</option>
+          <option value="text">文本组件</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">店铺编码 <span class="required">*</span></label>
+        <input type="text" class="form-input" id="shopCode" placeholder="输入店铺编码">
+      </div>
+      <div class="form-group">
+        <label class="form-label">操作类型 <span class="required">*</span></label>
+        <select class="form-select" id="opType">
+          <option value="设置重要参数">设置重要参数</option>
+          <option value="设置其他参数">设置其他参数</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 商品信息录入 ===== -->
+  <div class="form-card">
+    <h3 class="form-card-title">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+      </svg>
+      商品信息
+    </h3>
+
+    <!-- 录入方式切换 -->
+    <div class="input-mode-tabs">
+      <div class="input-mode-tab active" data-mode="text" onclick="switchInputMode('text')">手动录入</div>
+      <div class="input-mode-tab" data-mode="excel" onclick="switchInputMode('excel')">Excel导入</div>
+    </div>
+
+    <!-- 手动录入 -->
+    <div class="input-mode-panel active" id="panelText">
+      <div class="form-group">
+        <label class="form-label">平台商品ID <span class="required">*</span></label>
+        <textarea class="form-textarea" id="productIds" rows="6" placeholder="每行一个，或英文逗号隔开&#10;例如：P001,P002,P003&#10;或&#10;P001&#10;P002&#10;P003"></textarea>
+        <div class="form-hint">支持批量录入，多个ID用英文逗号或换行分隔</div>
+      </div>
+    </div>
+
+    <!-- Excel导入 -->
+    <div class="input-mode-panel" id="panelExcel">
+      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('excelInput').click()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+          <polyline points="10 9 9 9 8 9"/>
+        </svg>
+        <div class="title">点击选择 Excel 文件</div>
+        <div class="hint">支持 .xlsx / .xls，表头需包含"平台商品ID"或"商品ID"列</div>
+        <input type="file" id="excelInput" style="display:none" accept=".xlsx,.xls" onchange="handleExcelSelect(this.files)">
+      </div>
+      <div class="file-info-bar" id="fileInfoBar">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        <span id="fileInfoText"></span>
+        <button class="file-remove" onclick="removeExcelFile()">移除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 底部操作 ===== -->
+  <div class="form-actions">
+    <button class="btn" onclick="goBack()">取消</button>
+    <button class="btn btn-primary" onclick="submitTask()">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;">
+        <polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+      </svg>
+      提交任务
+    </button>
+  </div>
+
+</div>
+
+<script>
+// ===== 操作类型选项映射 =====
+var opTypeOptions = {
+  size: [
+    { value: '更新', label: '更新' }
+  ],
+  recommend: [
+    { value: '新增', label: '新增' },
+    { value: '删除', label: '删除' }
+  ],
+  text: [
+    { value: '新增', label: '新增' },
+    { value: '删除', label: '删除' }
+  ]
+};
+
+// ===== 当前 Excel 文件信息 =====
+var currentExcelInfo = null;
+
+// ===== 初始化：从 URL 参数读取类型 =====
+function init() {
+  var params = new URLSearchParams(window.location.search);
+  var type = params.get('type') || 'size';
+  document.getElementById('taskType').value = type;
+  onTypeChange();
+}
+
+// ===== 任务类型变更 → 更新操作类型选项 =====
+function onTypeChange() {
+  var type = document.getElementById('taskType').value;
+  var select = document.getElementById('opType');
+  var options = opTypeOptions[type] || [];
+  select.innerHTML = '';
+  options.forEach(function(opt) {
+    var o = document.createElement('option');
+    o.value = opt.value;
+    o.textContent = opt.label;
+    select.appendChild(o);
+  });
+}
+
+// ===== 录入方式切换 =====
+function switchInputMode(mode) {
+  document.querySelectorAll('.input-mode-tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelector('.input-mode-tab[data-mode="' + mode + '"]').classList.add('active');
+  document.querySelectorAll('.input-mode-panel').forEach(function(p) { p.classList.remove('active'); });
+  document.getElementById('panel' + capitalize(mode)).classList.add('active');
+}
+
+function capitalize(s) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+// ===== Excel 文件选择 =====
+function handleExcelSelect(files) {
+  if (!files || files.length === 0) return;
+  var file = files[0];
+  var ext = file.name.split('.').pop().toLowerCase();
+  if (ext !== 'xlsx' && ext !== 'xls') {
+    showToast('请选择 .xlsx 或 .xls 格式文件');
+    return;
+  }
+
+  // 解析 Excel 获取商品ID数量
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = new Uint8Array(e.target.result);
+      var workbook = XLSX.read(data, { type: 'array' });
+      var sheet = workbook.Sheets[workbook.SheetNames[0]];
+      var json = XLSX.utils.sheet_to_json(sheet);
+
+      // 尝试识别商品ID列
+      var idCol = null;
+      var candidates = ['平台商品ID', '商品ID', '商品编号', 'product_id', 'productId'];
+      if (json.length > 0) {
+        var keys = Object.keys(json[0]);
+        for (var i = 0; i < candidates.length; i++) {
+          if (keys.indexOf(candidates[i]) !== -1) { idCol = candidates[i]; break; }
+        }
+        if (!idCol) idCol = keys[0]; // 默认取第一列
+      }
+
+      var count = 0;
+      if (idCol) {
+        json.forEach(function(row) {
+          if (row[idCol]) count++;
+        });
+      }
+
+      currentExcelInfo = { name: file.name, size: (file.size / 1024).toFixed(1) + ' KB', count: count };
+      document.getElementById('fileInfoText').textContent = file.name + '（' + currentExcelInfo.size + '，解析到 ' + count + ' 条商品ID）';
+      document.getElementById('fileInfoBar').classList.add('show');
+    } catch(err) {
+      showToast('文件解析失败，请检查格式');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ===== 移除 Excel 文件 =====
+function removeExcelFile() {
+  currentExcelInfo = null;
+  document.getElementById('excelInput').value = '';
+  document.getElementById('fileInfoBar').classList.remove('show');
+}
+
+// ===== 提交任务 =====
+function submitTask() {
+  var type = document.getElementById('taskType').value;
+  var shopCode = document.getElementById('shopCode').value.trim();
+  var opType = document.getElementById('opType').value;
+
+  // 校验
+  if (!shopCode) {
+    showToast('请输入店铺编码');
+    return;
+  }
+
+  // 获取商品ID
+  var productIds = [];
+  var activeMode = document.querySelector('.input-mode-tab.active').getAttribute('data-mode');
+
+  if (activeMode === 'text') {
+    var raw = document.getElementById('productIds').value.trim();
+    if (!raw) {
+      showToast('请输入平台商品ID');
+      return;
+    }
+    // 按逗号或换行分隔
+    productIds = raw.split(/[,\n\r]+/).map(function(s) { return s.trim(); }).filter(Boolean);
+  } else {
+    if (!currentExcelInfo) {
+      showToast('请选择 Excel 文件');
+      return;
+    }
+    // Excel 模式下 mock 商品数
+    productIds = new Array(currentExcelInfo.count).fill('EXCEL_ID');
+  }
+
+  if (productIds.length === 0) {
+    showToast('未解析到商品ID');
+    return;
+  }
+
+  // 生成批次号
+  var prefix = type === 'size' ? 'SP' : (type === 'recommend' ? 'RC' : 'TC');
+  var now = new Date();
+  var dateStr = now.getFullYear() +
+    String(now.getMonth() + 1).padStart(2, '0') +
+    String(now.getDate()).padStart(2, '0');
+  var seq = String(Math.floor(Math.random() * 900) + 100);
+  var batchId = prefix + '-' + dateStr + '-' + seq;
+
+  var timeStr = now.getFullYear() + '-' +
+    String(now.getMonth() + 1).padStart(2, '0') + '-' +
+    String(now.getDate()).padStart(2, '0') + ' ' +
+    String(now.getHours()).padStart(2, '0') + ':' +
+    String(now.getMinutes()).padStart(2, '0') + ':00';
+
+  // 构造任务记录
+  var task = {
+    id: batchId,
+    type: type,
+    shopCode: shopCode,
+    productCount: productIds.length,
+    opType: opType,
+    status: '待执行',
+    successCount: 0,
+    failCount: 0,
+    creator: '管理员',
+    createTime: timeStr
+  };
+
+  // 写入 localStorage
+  var stored = localStorage.getItem('size_params_tasks');
+  var tasks = [];
+  if (stored) {
+    try { tasks = JSON.parse(stored); } catch(e) {}
+  }
+  tasks.unshift(task);
+  localStorage.setItem('size_params_tasks', JSON.stringify(tasks));
+
+  showToast('任务 ' + batchId + ' 创建成功');
+
+  // 返回列表页
+  setTimeout(function() {
+    goBack();
+  }, 800);
+}
+
+// ===== 返回列表页 =====
+function goBack() {
+  window.location.href = 'size-params.html';
+}
+
+// ===== Toast =====
+function showToast(msg) {
+  var container = document.getElementById('toastContainer');
+  var el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  container.appendChild(el);
+  setTimeout(function() { el.classList.add('show'); }, 10);
+  setTimeout(function() {
+    el.classList.remove('show');
+    setTimeout(function() { container.removeChild(el); }, 300);
+  }, 2500);
+}
+
+// ===== 启动 =====
+init();
+</script>
+</body>
+</html>

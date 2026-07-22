@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>批次明细</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    /* ===== 页面容器 ===== */
+    .detail-wrap { width:100%; margin:0 auto; padding:16px 20px 24px; box-sizing:border-box; }
+    .detail-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .detail-header .page-title { margin-bottom:0; font-size:16px; }
+    .batch-no-chip {
+      font-family:"SF Mono","Menlo",monospace; font-size:12px; font-weight:600;
+      color:var(--primary); background:var(--primary-50); border:1px solid #dce0f8;
+      padding:2px 10px; border-radius:6px;
+    }
+
+    /* ===== 区块卡片 ===== */
+    .section {
+      background:var(--bg-white); border-radius:10px;
+      box-shadow:0 1px 3px rgba(15,23,42,0.06); border:1px solid var(--border);
+      margin-bottom:12px; overflow:hidden;
+    }
+    .section:last-child { margin-bottom:0; }
+    .section-head {
+      display:flex; align-items:center; gap:8px;
+      padding:10px 16px; border-bottom:1px solid var(--border);
+      background:#f8fafc;
+    }
+    .section-head h3 { margin:0; font-size:13px; font-weight:700; color:var(--ink); display:flex; align-items:center; gap:7px; }
+    .section-head .sec-badge { font-size:12px; color:var(--text-tertiary); font-weight:400; }
+    .section-body { padding:12px 16px; }
+
+    /* ===== 基本信息（一行4列布局） ===== */
+    .info-grid { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:8px 24px; }
+    .info-item { display:inline-flex; align-items:center; gap:0; min-width:0; }
+    .info-label { font-size:13px; color:var(--text-tertiary); white-space:nowrap; }
+    .info-value { font-size:13px; font-weight:600; color:var(--ink); word-break:break-all; }
+    .info-value.num-good { color:#059669; }
+    .info-value.num-bad { color:#dc2626; }
+
+    /* ===== 表格（复用主页风格） ===== */
+    .pkg-table { width:100%; border-collapse:separate; border-spacing:0; font-size:13px; }
+    .pkg-table thead th {
+      background:#f8fafc; padding:8px 12px; text-align:left;
+      font-weight:600; font-size:12px; color:var(--text-secondary);
+      border-bottom:1px solid var(--border); white-space:nowrap;
+    }
+    .pkg-table tbody td {
+      padding:8px 12px; border-bottom:1px solid var(--border-light); font-size:13px;
+      color:var(--text-primary); white-space:nowrap;
+    }
+    .pkg-table tbody tr:last-child td { border-bottom:none; }
+    .pkg-table tbody tr:hover td { background:#f8fafc; }
+    .col-batch-no { font-family:"SF Mono","Menlo",monospace; font-size:12px; font-weight:600; color:var(--primary); }
+    .col-shop-code { font-family:"SF Mono","Menlo",monospace; font-size:12px; font-weight:600; color:var(--primary); }
+
+    /* ===== 状态标签 ===== */
+    .status-tag { display:inline-flex; align-items:center; gap:4px; padding:2px 9px; border-radius:10px; font-size:12px; font-weight:500; }
+    .status-tag.pending { background:#fef3c7; color:#d97706; }
+    .status-tag.running { background:#dbeafe; color:#2563eb; }
+    .status-tag.done { background:#d1fae5; color:#059669; }
+    .status-tag.partial { background:#ffedd5; color:#ea580c; }
+    .status-tag.fail { background:#fee2e2; color:#dc2626; }
+
+    /* ===== 操作日志时间轴 ===== */
+    .timeline { position:relative; padding-left:24px; }
+    .timeline::before { content:''; position:absolute; left:7px; top:4px; bottom:4px; width:2px; background:var(--border); }
+    .tl-item { position:relative; padding-bottom:14px; }
+    .tl-item:last-child { padding-bottom:0; }
+    .tl-dot {
+      position:absolute; left:-24px; top:2px; width:16px; height:16px; border-radius:50%;
+      background:#fff; border:3px solid var(--primary); box-sizing:border-box;
+    }
+    .tl-dot.create { border-color:#5b6cf5; }
+    .tl-dot.queue { border-color:#94a3b8; }
+    .tl-dot.start { border-color:#2563eb; }
+    .tl-dot.success { border-color:#059669; }
+    .tl-dot.fail { border-color:#dc2626; }
+    .tl-dot.running { border-color:#d97706; }
+    .tl-head { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .tl-action { font-size:13px; font-weight:700; color:var(--ink); }
+    .tl-user {
+      font-size:11px; font-weight:500; color:var(--text-secondary);
+      background:#f1f5f9; border-radius:4px; padding:1px 8px;
+    }
+    .tl-time { font-size:11px; color:var(--text-tertiary); font-family:"SF Mono","Menlo",monospace; }
+    .tl-detail { font-size:12px; color:var(--text-secondary); margin-top:2px; }
+
+    /* ===== 空状态 ===== */
+    .empty-box { text-align:center; padding:60px 0; color:var(--text-tertiary); font-size:13px; }
+  </style>
+</head>
+<body>
+  <div class="detail-wrap">
+
+    <!-- 页头 -->
+    <div class="detail-header">
+      <div class="page-title">批次明细 <span class="batch-no-chip" id="batchNoChip"></span></div>
+      <button class="btn" onclick="goBack()">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;">
+          <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+        </svg>
+        关闭
+      </button>
+    </div>
+
+    <div id="contentArea">
+      <!-- ===== 基本信息 ===== -->
+      <div class="section">
+        <div class="section-head"><h3>📋 基本信息</h3><span class="sec-badge">批次主表信息</span></div>
+        <div class="section-body">
+          <div class="info-grid" id="infoGrid"></div>
+        </div>
+      </div>
+
+      <!-- ===== 商品明细 ===== -->
+      <div class="section">
+        <div class="section-head"><h3>📦 商品明细</h3><span class="sec-badge" id="itemCountBadge"></span></div>
+        <div class="section-body" style="padding:0;">
+          <div style="overflow-x:auto;">
+            <table class="pkg-table">
+              <thead>
+                <tr>
+                  <th style="width:50px;">序号</th>
+                  <th style="width:120px;">店铺编码</th>
+                  <th style="width:200px;">平台商品ID</th>
+                  <th style="width:110px;">执行状态</th>
+                  <th>失败原因</th>
+                  <th style="width:140px;">更新时间</th>
+                  <th style="width:80px;">更新人</th>
+                  <th style="width:80px;">操作</th>
+                </tr>
+              </thead>
+              <tbody id="itemBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 操作日志 ===== -->
+      <div class="section">
+        <div class="section-head"><h3>🕐 操作日志</h3><span class="sec-badge">流水式操作记录</span></div>
+        <div class="section-body">
+          <div class="timeline" id="logTimeline"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 空状态 -->
+    <div id="emptyArea" class="empty-box" style="display:none;">未找到该批次数据</div>
+  </div>
+
+  <script>
+    // ===== 读取批次号 =====
+    function getBatchNo() {
+      var params = new URLSearchParams(window.location.search);
+      return params.get('batchNo') || '';
+    }
+
+    // ===== 加载批次数据 =====
+    function loadBatches() {
+      var stored = localStorage.getItem('size_params_batches');
+      if (stored) {
+        try { return JSON.parse(stored); } catch(e) { return []; }
+      }
+      return [];
+    }
+
+    // ===== 批次聚合统计 =====
+    function aggregateBatch(batch) {
+      var items = batch.items || [];
+      var shopSet = {};
+      var successCount = 0, failCount = 0;
+      var hasRunning = false, hasFail = false, allDone = true;
+      items.forEach(function(it) {
+        shopSet[it.shopCode] = true;
+        if (it.status === '已完成') successCount++;
+        if (it.status === '失败') failCount++;
+        if (it.status === '执行中') hasRunning = true;
+        if (it.status === '失败') hasFail = true;
+        if (it.status !== '已完成') allDone = false;
+      });
+      var status;
+      if (hasRunning) status = '执行中';
+      else if (items.length > 0 && failCount === items.length) status = '全部失败';
+      else if (hasFail) status = '部分成功';
+      else if (items.length > 0 && allDone) status = '全部成功';
+      else status = '待执行';
+      return {
+        shopCount: Object.keys(shopSet).length,
+        productCount: items.length,
+        successCount: successCount,
+        failCount: failCount,
+        status: status
+      };
+    }
+
+    // ===== 状态渲染（兼容批次级与商品行级状态） =====
+    function renderStatus(status) {
+      var cls = 'pending';
+      if (status === '已完成' || status === '全部成功') cls = 'done';
+      else if (status === '执行中') cls = 'running';
+      else if (status === '部分成功') cls = 'partial';
+      else if (status === '失败' || status === '全部失败') cls = 'fail';
+      return '<span class="status-tag ' + cls + '">' + esc(status) + '</span>';
+    }
+
+    // ===== 任务类型名称 =====
+    function typeName(type) {
+      return type === 'size' ? '尺码参数' : (type === 'recommend' ? '商品推荐' : '文本组件');
+    }
+
+    // ===== 渲染基本信息 =====
+    function renderInfo(batch, agg) {
+      var fields = [
+        { label: '批次号', value: esc(batch.batchNo), mono: true },
+        { label: '任务类型', value: typeName(batch.type) },
+        { label: '操作类型', value: esc(batch.opType) },
+        { label: '执行状态', html: renderStatus(agg.status) },
+        { label: '店铺数', value: agg.shopCount },
+        { label: '商品数', value: agg.productCount },
+        { label: '成功数', value: agg.successCount, cls: 'num-good' },
+        { label: '失败数', value: agg.failCount, cls: 'num-bad' },
+        { label: '创建人', value: esc(batch.creator) },
+        { label: '创建时间', value: esc(batch.createTime) }
+      ];
+      var html = '';
+      fields.forEach(function(f) {
+        html += '<div class="info-item">';
+        html += '<span class="info-label">' + f.label + '：</span>';
+        if (f.html) {
+          html += '<span class="info-value">' + f.html + '</span>';
+        } else {
+          html += '<span class="info-value ' + (f.cls || '') + '"' + (f.mono ? ' style="font-family:SF Mono,Menlo,monospace;"' : '') + '>' + f.value + '</span>';
+        }
+        html += '</div>';
+      });
+      document.getElementById('infoGrid').innerHTML = html;
+    }
+
+    // ===== 渲染商品明细 =====
+    function renderItems(batch) {
+      var items = batch.items || [];
+      document.getElementById('itemCountBadge').textContent = '共 ' + items.length + ' 条商品';
+      var html = '';
+      if (items.length === 0) {
+        html = '<tr><td colspan="8" style="text-align:center;padding:40px 0;color:var(--text-tertiary);">暂无商品明细</td></tr>';
+      } else {
+        items.forEach(function(it, idx) {
+          var canDelete = (it.status === '待执行' || it.status === '失败');
+          html += '<tr>';
+          html += '<td>' + (idx + 1) + '</td>';
+          html += '<td class="col-shop-code">' + esc(it.shopCode) + '</td>';
+          html += '<td class="col-batch-no">' + esc(it.productId) + '</td>';
+          html += '<td>' + renderStatus(it.status) + '</td>';
+          html += '<td style="color:' + (it.failReason ? '#dc2626' : 'var(--text-tertiary)') + ';">' + (it.failReason ? esc(it.failReason) : '-') + '</td>';
+          html += '<td style="font-size:12px;">' + (it.updateTime ? esc(it.updateTime) : '-') + '</td>';
+          html += '<td>' + (it.updater ? esc(it.updater) : '-') + '</td>';
+          html += '<td>';
+          if (canDelete) {
+            html += '<a href="javascript:void(0)" onclick="deleteItem(' + idx + ')" style="color:#dc2626;font-size:12px;text-decoration:none;cursor:pointer;">删除</a>';
+          } else {
+            html += '<span style="color:var(--text-tertiary);font-size:12px;">-</span>';
+          }
+          html += '</td>';
+          html += '</tr>';
+        });
+      }
+      document.getElementById('itemBody').innerHTML = html;
+    }
+
+    // ===== 删除商品明细 =====
+    function deleteItem(idx) {
+      if (!confirm('确定删除该商品明细吗？')) return;
+      var batchNo = getBatchNo();
+      var batches = loadBatches();
+      for (var i = 0; i < batches.length; i++) {
+        if (batches[i].batchNo === batchNo) {
+          batches[i].items.splice(idx, 1);
+          break;
+        }
+      }
+      localStorage.setItem('size_params_batches', JSON.stringify(batches));
+      // 重新渲染页面
+      var batch = batches[i];
+      var agg = aggregateBatch(batch);
+      renderInfo(batch, agg);
+      renderItems(batch);
+      renderLogs(batch, agg);
+    }
+
+    // ===== 构建操作日志（流水式） =====
+    function buildLogs(batch, agg) {
+      var logs = [];
+      logs.push({ type:'create', time: batch.createTime, user: batch.creator, action: '创建批次',
+        detail: '创建批次 ' + batch.batchNo + '（' + typeName(batch.type) + ' / ' + batch.opType + '），共 ' + agg.productCount + ' 个商品、' + agg.shopCount + ' 个店铺' });
+
+      if (agg.status === '待执行') {
+        logs.push({ type:'queue', time: addMin(batch.createTime, 1), user: '系统', action: '加入执行队列',
+          detail: '批次已加入执行队列，等待调度执行' });
+      } else {
+        logs.push({ type:'start', time: addMin(batch.createTime, 1), user: '系统', action: '开始执行',
+          detail: '开始执行「' + batch.opType + '」操作' });
+        var offset = 2;
+        (batch.items || []).forEach(function(it) {
+          if (it.status === '已完成') {
+            logs.push({ type:'success', time: addMin(batch.createTime, offset), user: '系统', action: '执行成功',
+              detail: it.shopCode + ' / ' + it.productId + '「' + batch.opType + '」成功' });
+            offset += 1;
+          } else if (it.status === '失败') {
+            logs.push({ type:'fail', time: addMin(batch.createTime, offset), user: '系统', action: '执行失败',
+              detail: it.shopCode + ' / ' + it.productId + '：' + (it.failReason || '未知原因') });
+            offset += 1;
+          }
+        });
+        if (agg.status === '执行中') {
+          logs.push({ type:'running', time: addMin(batch.createTime, offset), user: '系统', action: '执行中',
+            detail: '已处理 ' + (agg.successCount + agg.failCount) + ' / ' + agg.productCount + ' 个商品，任务执行中' });
+        } else {
+          logs.push({ type: agg.failCount > 0 ? 'fail' : 'success', time: addMin(batch.createTime, offset), user: '系统',
+            action: agg.failCount > 0 ? '执行完成（部分成功）' : '执行完成（全部成功）',
+            detail: '批次执行完成：成功 ' + agg.successCount + ' 个，失败 ' + agg.failCount + ' 个' });
+        }
+      }
+      return logs;
+    }
+
+    // ===== 渲染操作日志 =====
+    function renderLogs(batch, agg) {
+      var logs = buildLogs(batch, agg);
+      var html = '';
+      logs.forEach(function(log) {
+        html += '<div class="tl-item">';
+        html += '<div class="tl-dot ' + log.type + '"></div>';
+        html += '<div class="tl-head">';
+        html += '<span class="tl-action">' + esc(log.action) + '</span>';
+        html += '<span class="tl-user">' + esc(log.user) + '</span>';
+        html += '<span class="tl-time">' + esc(log.time) + '</span>';
+        html += '</div>';
+        html += '<div class="tl-detail">' + esc(log.detail) + '</div>';
+        html += '</div>';
+      });
+      document.getElementById('logTimeline').innerHTML = html;
+    }
+
+    // ===== 时间加分钟 =====
+    function addMin(timeStr, minutes) {
+      var d = new Date(String(timeStr).replace(/-/g, '/'));
+      if (isNaN(d.getTime())) return timeStr;
+      d.setMinutes(d.getMinutes() + minutes);
+      var p = function(n) { return String(n).padStart(2, '0'); };
+      return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' +
+        p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+    }
+
+    // ===== 关闭（在系统页签内时通知父页面关闭本页签） =====
+    function goBack() {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'closeTab' }, '*');
+      } else {
+        window.close();
+      }
+    }
+
+    // ===== 转义 =====
+    function esc(str) {
+      if (str === null || str === undefined) return '';
+      var div = document.createElement('div');
+      div.textContent = String(str);
+      return div.innerHTML;
+    }
+
+    // ===== 初始化 =====
+    (function() {
+      var batchNo = getBatchNo();
+      document.getElementById('batchNoChip').textContent = batchNo || '（无批次号）';
+      document.title = '批次明细 ' + batchNo;
+
+      var batches = loadBatches();
+      var batch = null;
+      for (var i = 0; i < batches.length; i++) {
+        if (batches[i].batchNo === batchNo) { batch = batches[i]; break; }
+      }
+      if (!batch) {
+        document.getElementById('contentArea').style.display = 'none';
+        document.getElementById('emptyArea').style.display = 'block';
+        return;
+      }
+      var agg = aggregateBatch(batch);
+      renderInfo(batch, agg);
+      renderItems(batch);
+      renderLogs(batch, agg);
+    })();
+  </script>
+</body>
+</html>

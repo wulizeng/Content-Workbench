@@ -3,1121 +3,1016 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>智能体中心</title>
+  <title>批量配置任务</title>
   <link rel="stylesheet" href="../../css/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
-    /* ===== 智能体中心三栏布局 ===== */
-    .agent-hub {
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
-      background: #f0f2f5;
-    }
-
-    /* ===== 左侧：智能体卡片列表 ===== */
-    .agent-sidebar {
-      width: 250px;
-      flex-shrink: 0;
-      background: #fff;
-      border-right: 1px solid #e5e7eb;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-    .agent-sidebar-header {
-      padding: 20px 18px 16px;
-      border-bottom: 1px solid #f3f4f6;
-    }
-    .agent-sidebar-header h3 {
-      font-size: 15px;
-      font-weight: 700;
-      color: #1f2937;
-      margin: 0;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .agent-sidebar-header h3 svg { color: #6366f1; }
-    .agent-sidebar-header p {
-      font-size: 12px;
-      color: #9ca3af;
-      margin: 6px 0 0;
-    }
-    .agent-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .agent-list::-webkit-scrollbar { width: 0; }
-
-    .agent-card {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      padding: 14px;
+    /* ===== 流程说明 ===== */
+    .flow-section {
+      background: linear-gradient(135deg, #eef0ff 0%, #f8f9ff 100%);
+      border: 1px solid #dce0f8;
       border-radius: 10px;
-      border: 1px solid #f3f4f6;
-      background: #f9fafb;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      position: relative;
-    }
-    .agent-card:hover {
-      background: #f3f4f6;
-      border-color: #e5e7eb;
-    }
-    .agent-card.active {
-      background: #eef2ff;
-      border-color: #c7d2fe;
-    }
-    .agent-card.active::after {
-      content: '';
-      position: absolute;
-      right: -1px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 3px;
-      height: 20px;
-      background: #6366f1;
-      border-radius: 3px 0 0 3px;
-    }
-    .agent-card-icon {
-      width: 38px;
-      height: 38px;
-      border-radius: 9px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      color: #fff;
-    }
-    .agent-card-icon.c1 { background: #6366f1; }
-    .agent-card-icon.c5 { background: #0ea5e9; }
-    .agent-card-icon.c6 { background: #f59e0b; }
-    .agent-card-body { flex: 1; min-width: 0; }
-    .agent-card-name {
-      font-size: 13px;
-      font-weight: 600;
-      color: #1f2937;
-      margin-bottom: 4px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .agent-card-desc {
-      font-size: 11px;
-      color: #9ca3af;
-      line-height: 1.5;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-    .agent-card-badge {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      font-size: 10px;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-weight: 500;
-    }
-    .agent-card-badge.hot {
-      background: #fef3c7;
-      color: #d97706;
-    }
-    .agent-card-badge.new {
-      background: #eef2ff;
-      color: #6366f1;
-    }
-
-    /* ===== 中间：智能体描述与流程说明 ===== */
-    .agent-info {
-      width: 340px;
-      flex-shrink: 0;
-      background: #fff;
-      border-right: 1px solid #e5e7eb;
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-      padding: 24px 20px;
-    }
-    .agent-info::-webkit-scrollbar { width: 0; }
-
-    .agent-info-hero {
-      text-align: center;
-      padding-bottom: 20px;
-      border-bottom: 1px solid #f3f4f6;
-      margin-bottom: 20px;
-    }
-    .agent-info-icon {
-      width: 56px;
-      height: 56px;
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 14px;
-      color: #fff;
-    }
-    @keyframes iconFloat {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-4px); }
-    }
-    .agent-info-hero h2 {
-      font-size: 17px;
-      font-weight: 700;
-      color: #1f2937;
-      margin: 0 0 8px;
-    }
-    .agent-info-hero p {
-      font-size: 13px;
-      color: #6b7280;
-      line-height: 1.7;
-      margin: 0;
-    }
-
-    .agent-info-section {
-      margin-bottom: 20px;
-    }
-    .agent-info-section-title {
-      font-size: 11px;
-      font-weight: 600;
-      color: #9ca3af;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      padding: 14px 18px;
       margin-bottom: 12px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
     }
-    .agent-info-section-title::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: #f3f4f6;
+    .flow-header { display:flex; align-items:center; gap:6px; margin-bottom:10px; }
+    .flow-header svg { color:var(--primary); }
+    .flow-header h3 { margin:0; font-size:14px; font-weight:700; color:var(--ink); }
+    .flow-steps { display:flex; align-items:center; gap:0; }
+    .flow-step {
+      display:flex; align-items:center; gap:8px;
+      padding:8px 14px; background:#fff; border-radius:6px;
+      border:1px solid #e4e9f1; flex:1; transition:all .2s;
     }
+    .flow-step:hover { border-color:var(--primary); box-shadow:0 2px 8px rgba(91,108,245,.12); }
+    .flow-step-icon {
+      width:28px; height:28px; border-radius:6px;
+      display:grid; place-items:center; font-size:14px;
+      flex-shrink:0; background:var(--primary-50); color:var(--primary);
+    }
+    .flow-step-info { flex:1; min-width:0; }
+    .flow-step-title { font-size:12px; font-weight:650; color:var(--ink); }
+    .flow-step-desc { font-size:11px; color:var(--text-tertiary); margin-top:1px; }
+    .flow-arrow { flex-shrink:0; color:#cbd5e1; padding:0 4px; display:flex; align-items:center; }
 
-    /* 能力标签 */
-    .agent-capabilities {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
+    /* ===== 查询区日期范围 ===== */
+    .date-range { display:flex; align-items:center; gap:6px; }
+    .date-range input[type="date"] {
+      padding:6px 10px; border:1px solid var(--border); border-radius:6px;
+      font:inherit; font-size:12px; outline:none; background:var(--bg-secondary,#f8fafc);
+      transition:border-color .18s; width:130px;
     }
-    .agent-cap-tag {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      padding: 5px 10px;
-      border-radius: 5px;
-      font-size: 12px;
-      font-weight: 500;
-      background: #f9fafb;
-      color: #4b5563;
-      border: 1px solid #e5e7eb;
-    }
-    .agent-cap-tag svg { flex-shrink: 0; }
+    .date-range input[type="date"]:focus { border-color:var(--primary); background:#fff; }
+    .date-sep { color:var(--text-tertiary); font-size:12px; }
 
-    /* 流程步骤 */
-    .agent-flow-steps {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
+    /* ===== 视图切换 Tab（胶囊卡片式） ===== */
+    .view-tabs {
+      display:inline-flex; gap:6px; margin-bottom:14px;
+      background:#eef1f8; border:1px solid var(--border);
+      border-radius:12px; padding:5px;
     }
-    .agent-flow-step {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      position: relative;
-      padding-bottom: 18px;
+    .view-tab {
+      padding:9px 24px; font-size:14px; font-weight:600; color:var(--text-secondary);
+      cursor:pointer; border-radius:9px; border:none; background:transparent;
+      transition:all .18s; user-select:none; display:flex; align-items:center; gap:7px;
     }
-    .agent-flow-step:last-child { padding-bottom: 0; }
-    .agent-flow-step::before {
-      content: '';
-      position: absolute;
-      left: 14px;
-      top: 30px;
-      bottom: 0;
-      width: 1px;
-      background: #e5e7eb;
+    .view-tab:hover { color:var(--primary); background:rgba(255,255,255,.75); }
+    .view-tab.active {
+      color:#fff; background:linear-gradient(135deg, var(--primary), #8b5cf6);
+      box-shadow:0 3px 10px rgba(91,108,245,.35);
     }
-    .agent-flow-step:last-child::before { display: none; }
-    .agent-flow-step-num {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: 700;
-      color: #fff;
-      flex-shrink: 0;
-      position: relative;
-      z-index: 1;
-    }
-    .agent-flow-step:nth-child(1) .agent-flow-step-num { background: #6366f1; }
-    .agent-flow-step:nth-child(2) .agent-flow-step-num { background: #8b5cf6; }
-    .agent-flow-step:nth-child(3) .agent-flow-step-num { background: #10b981; }
-    .agent-flow-step-body { flex: 1; padding-top: 3px; }
-    .agent-flow-step-label {
-      font-size: 13px;
-      font-weight: 600;
-      color: #1f2937;
-      margin-bottom: 3px;
-    }
-    .agent-flow-step-desc {
-      font-size: 12px;
-      color: #9ca3af;
-      line-height: 1.6;
-    }
+    .view-tab svg { width:15px; height:15px; }
+    .view-panel { display:none; }
+    .view-panel.active { display:block; }
 
-    /* 开始对话按钮 */
-    .agent-start-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      width: 100%;
-      padding: 11px;
-      border: none;
-      border-radius: 8px;
-      background: #6366f1;
-      color: #fff;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      margin-top: 8px;
+    /* ===== 表格 ===== */
+    .pkg-table {
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      font-size:13px;
     }
-    .agent-start-btn:hover {
-      background: #4f46e5;
+    .pkg-table thead th {
+      background:linear-gradient(180deg, #f8fafc, #f1f5f9);
+      padding:10px 12px;
+      text-align:left;
+      font-weight:600;
+      font-size:12px;
+      color:var(--text-secondary);
+      border-bottom:2px solid var(--border);
+      white-space:nowrap;
+      position:sticky;
+      top:0;
+      z-index:10;
     }
+    .pkg-table tbody td {
+      padding:10px 12px;
+      border-bottom:1px solid var(--border-light);
+      font-size:13px;
+      color:var(--text-primary);
+      white-space:nowrap !important;
+      word-break:normal !important;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .pkg-table tbody tr:hover td { background:#f8fafc; }
+    .col-batch-no { font-family:"SF Mono","Menlo",monospace; font-size:12px; font-weight:600; color:var(--primary); white-space:nowrap; }
+    .col-shop-code { font-family:"SF Mono","Menlo",monospace; font-size:12px; font-weight:600; color:var(--primary); white-space:nowrap; }
 
-    /* ===== 右侧：对话区 ===== */
-    .agent-chat {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-      background: #f9fafb;
+    /* ===== 状态标签 ===== */
+    .status-tag {
+      display:inline-flex; align-items:center; gap:4px;
+      padding:3px 10px; border-radius:12px; font-size:12px; font-weight:500;
     }
-    .agent-chat-header {
-      padding: 14px 20px;
-      border-bottom: 1px solid #e5e7eb;
-      background: #fff;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .agent-chat-header-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #10b981;
-    }
-    .agent-chat-header-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: #1f2937;
-    }
-    .agent-chat-header-sub {
-      font-size: 12px;
-      color: #9ca3af;
-      margin-left: auto;
-    }
+    .status-tag.pending { background:#fef3c7; color:#d97706; }
+    .status-tag.running { background:#dbeafe; color:#2563eb; }
+    .status-tag.done { background:#d1fae5; color:#059669; }
+    .status-tag.partial { background:#ffedd5; color:#ea580c; }
+    .status-tag.fail { background:#fee2e2; color:#dc2626; }
 
-    /* ===== 对话记录区 ===== */
-    .chat-messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 24px 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
+    /* ===== 操作按钮 ===== */
+    .op-btn {
+      padding:4px 10px; border-radius:5px; font-size:12px; font-weight:500;
+      border:1px solid var(--border); background:#fff; color:var(--primary);
+      cursor:pointer; transition:all .15s;
     }
-    .chat-messages::-webkit-scrollbar { width: 0; }
+    .op-btn:hover { background:var(--primary-50); border-color:var(--primary); }
+    .op-btn.danger { color:#dc2626; }
+    .op-btn.danger:hover { background:#fef2f2; border-color:#dc2626; }
 
-    /* ===== 消息气泡 ===== */
-    .msg-row { display: flex; gap: 10px; max-width: 80%; animation: msgIn 0.3s ease; }
-    .msg-row.user { align-self: flex-end; flex-direction: row-reverse; }
-    .msg-row.assistant { align-self: flex-start; }
-    @keyframes msgIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
+    /* ===== 弹窗 ===== */
+    .modal-overlay {
+      position:fixed; top:0; left:0; right:0; bottom:0;
+      background:rgba(0,0,0,.45); z-index:9999;
+      display:flex; align-items:center; justify-content:center;
+      animation:modalFadeIn .25s ease;
     }
-    .msg-avatar {
-      width: 32px; height: 32px; border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 12px; font-weight: 600; flex-shrink: 0;
+    @keyframes modalFadeIn { from{opacity:0} to{opacity:1} }
+    .modal {
+      background:#fff; border-radius:12px; width:560px; max-width:92vw;
+      max-height:90vh; box-shadow:0 24px 60px rgba(0,0,0,.2);
+      display:flex; flex-direction:column; animation:modalSlideIn .3s ease;
     }
-    .msg-row.user .msg-avatar {
-      background: #6366f1;
-      color: #fff;
+    @keyframes modalSlideIn { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+    .modal-head {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:20px 24px 16px; border-bottom:1px solid #e4e9f1;
     }
-    .msg-row.assistant .msg-avatar {
-      background: #10b981;
-      color: #fff;
+    .modal-head h3 { margin:0; font-size:17px; font-weight:700; color:#0f172a; }
+    .modal-close {
+      width:28px; height:28px; border:none; background:transparent;
+      border-radius:6px; cursor:pointer; display:grid; place-items:center;
+      color:#647084; font-size:18px; transition:background .15s;
     }
-    .msg-content { display: flex; flex-direction: column; }
-    .msg-row.user .msg-content { align-items: flex-end; }
-    .msg-row.assistant .msg-content { align-items: flex-start; }
-    .msg-time {
-      font-size: 11px; color: #9ca3af;
-      margin-top: 4px; padding: 0 4px;
+    .modal-close:hover { background:#f0f2f5; }
+    .modal-body { padding:20px 24px; overflow-y:auto; flex:1; min-height:0; }
+    .modal-foot {
+      display:flex; justify-content:flex-end; gap:10px;
+      padding:16px 24px 20px; border-top:1px solid #e4e9f1;
     }
-    .msg-bubble {
-      padding: 11px 15px;
-      border-radius: 10px;
-      font-size: 14px;
-      line-height: 1.65;
-      word-break: break-word;
-    }
-    .msg-row.user .msg-bubble {
-      background: #6366f1;
-      color: #fff;
-      border-bottom-right-radius: 3px;
-    }
-    .msg-row.assistant .msg-bubble {
-      background: #fff;
-      color: #1f2937;
-      border: 1px solid #e5e7eb;
-      border-bottom-left-radius: 3px;
-    }
+    .modal-foot .btn { min-width:80px; }
 
-    /* ===== 执行结果卡片 ===== */
-    .result-card {
-      margin-top: 10px;
-      background: #ecfdf5;
-      border: 1px solid #a7f3d0;
-      border-radius: 8px;
-      padding: 12px 14px;
-      font-size: 13px;
-      color: #065f46;
+    /* ===== 表单 ===== */
+    .form-row { display:flex; gap:16px; margin-bottom:16px; }
+    .form-group { flex:1; display:flex; flex-direction:column; }
+    .form-label { font-size:13px; font-weight:600; color:var(--text-secondary); margin-bottom:6px; }
+    .form-label .required { color:#ef4444; margin-left:2px; }
+    .form-input, .form-select, .form-textarea {
+      width:100%; padding:10px 14px; border:1px solid var(--border);
+      border-radius:8px; font:inherit; font-size:13px; outline:none;
+      background:var(--bg-secondary,#f8fafc); transition:border-color .18s;
+      box-sizing:border-box;
     }
-    .result-card .result-title {
-      font-weight: 600;
-      margin-bottom: 6px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color:var(--primary); background:#fff;
     }
-    .result-card .result-title svg { flex-shrink: 0; }
-    .result-card pre {
-      margin: 0;
-      white-space: pre-wrap;
-      font-family: 'Menlo', 'Consolas', monospace;
-      font-size: 12px;
-      line-height: 1.6;
-      color: #065f46;
-    }
+    .form-textarea { resize:vertical; line-height:1.6; }
+    .form-hint { font-size:11px; color:var(--text-tertiary); margin-top:4px; }
 
-    /* ===== 加载动画 ===== */
-    .typing-indicator { display: flex; gap: 5px; padding: 8px 0; }
-    .typing-indicator span {
-      width: 7px; height: 7px; border-radius: 50%;
-      animation: typing 1.2s infinite ease-in-out;
+    /* ===== 上传区域 ===== */
+    .upload-zone {
+      display:flex; flex-direction:column; align-items:center; gap:8px;
+      padding:28px; border:2px dashed #cbd5e1; border-radius:12px;
+      cursor:pointer; transition:all .18s; background:#fafbfd;
     }
-    .typing-indicator span:nth-child(1) { background: #6366f1; animation-delay: 0s; }
-    .typing-indicator span:nth-child(2) { background: #8b5cf6; animation-delay: 0.2s; }
-    .typing-indicator span:nth-child(3) { background: #10b981; animation-delay: 0.4s; }
-    @keyframes typing {
-      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-      40% { transform: scale(1); opacity: 1; }
+    .upload-zone:hover { border-color:var(--primary); background:var(--primary-50); }
+    .upload-zone svg { width:32px; height:32px; color:var(--primary); }
+    .upload-zone .title { font-size:13px; font-weight:600; color:#475569; }
+    .upload-zone .hint { font-size:12px; color:var(--text-tertiary); }
+    .file-info-bar {
+      display:none; margin-top:10px; padding:10px 14px;
+      background:#ecfdf5; border-radius:10px; font-size:13px; color:#059669;
+      align-items:center; gap:8px;
     }
-
-    /* ===== 输入区域 ===== */
-    .chat-input-area {
-      padding: 14px 20px 20px;
-      border-top: 1px solid #e5e7eb;
-      background: #fff;
+    .file-info-bar.show { display:flex; }
+    .file-info-bar .file-remove {
+      margin-left:auto; background:none; border:none; color:#dc2626;
+      cursor:pointer; font-size:12px; font-weight:500;
     }
-    .chat-input-wrapper {
-      display: flex;
-      align-items: flex-end;
-      gap: 10px;
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
-      border-radius: 10px;
-      padding: 10px 14px;
-      transition: all 0.2s ease;
-    }
-    .chat-input-wrapper:focus-within {
-      border-color: #6366f1;
-      background: #fff;
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.08);
-    }
-    .chat-input-wrapper textarea {
-      flex: 1;
-      border: none;
-      outline: none;
-      resize: none;
-      font-size: 14px;
-      line-height: 1.5;
-      font-family: inherit;
-      color: #1f2937;
-      background: transparent;
-      min-height: 22px;
-      max-height: 120px;
-    }
-    .chat-input-wrapper textarea::placeholder { color: #9ca3af; }
-    .chat-send-btn {
-      width: 34px; height: 34px;
-      border: none; border-radius: 8px;
-      background: #6366f1;
-      color: #fff;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-      transition: all 0.2s ease;
-    }
-    .chat-send-btn:hover {
-      background: #4f46e5;
-    }
-    .chat-send-btn:disabled { background: #d1d5db; cursor: not-allowed; transform: none; }
-    .chat-attach-btn {
-      width: 34px; height: 34px;
-      border: none; border-radius: 8px;
-      background: #f3f4f6;
-      color: #6b7280;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-      transition: all 0.2s ease;
-    }
-    .chat-attach-btn:hover {
-      background: #e5e7eb;
-      color: #6366f1;
-    }
-
-    /* ===== 文件预览 ===== */
-    .file-preview-bar { display: none; flex-wrap: wrap; gap: 8px; padding: 0 0 10px; }
-    .file-preview-bar.has-files { display: flex; }
-    .file-tag {
-      display: flex; align-items: center; gap: 6px;
-      padding: 5px 10px;
-      background: #eef2ff;
-      border: 1px solid #c7d2fe;
-      border-radius: 6px;
-      font-size: 12px;
-      color: #4b5563;
-      max-width: 200px;
-    }
-    .file-tag svg { flex-shrink: 0; color: #6366f1; }
-    .file-tag-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .file-tag-size { color: #9ca3af; flex-shrink: 0; }
-    .file-tag-remove {
-      width: 16px; height: 16px;
-      border: none; background: transparent;
-      color: #9ca3af; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      border-radius: 50%; flex-shrink: 0;
-      transition: all 0.15s;
-    }
-    .file-tag-remove:hover { background: #fef2f2; color: #ef4444; }
-
-    /* ===== 消息中的文件 ===== */
-    .msg-files { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
-    .msg-file-tag {
-      display: flex; align-items: center; gap: 5px;
-      padding: 5px 10px;
-      border-radius: 6px;
-      font-size: 12px;
-    }
-    .msg-row.user .msg-file-tag { background: rgba(255,255,255,0.2); color: #fff; }
-    .msg-row.assistant .msg-file-tag { background: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; }
-    .msg-file-tag svg { flex-shrink: 0; }
-
-    /* ===== 欢迎区（对话内） ===== */
-    .chat-welcome {
-      text-align: center;
-      padding: 60px 20px 40px;
-    }
-    .chat-welcome-icon {
-      width: 60px; height: 60px;
-      border-radius: 16px;
-      display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 20px;
-      color: #fff;
-      animation: iconFloat 3s ease-in-out infinite;
-    }
-    .chat-welcome-icon svg { stroke: #fff; }
-    .chat-welcome h2 {
-      font-size: 20px; font-weight: 700;
-      color: #1f2937; margin-bottom: 8px;
-    }
-    .chat-welcome p {
-      font-size: 13px; color: #6b7280;
-      max-width: 400px; margin: 0 auto; line-height: 1.7;
-    }
-    .chat-quick-prompts {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 8px;
-      margin-top: 24px;
-    }
-    .chat-quick-prompt {
-      padding: 7px 14px;
-      border-radius: 18px;
-      border: 1px solid #e5e7eb;
-      background: #fff;
-      font-size: 12px;
-      color: #4b5563;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    .chat-quick-prompt:hover {
-      border-color: #6366f1;
-      color: #6366f1;
-      background: #eef2ff;
-    }
-
-    /* ===== 欢迎区操作卡片 ===== */
-    .chat-welcome-actions {
-      display: flex;
-      justify-content: center;
-      gap: 16px;
-      margin-top: 24px;
-    }
-    .chat-welcome-action-btn {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      width: 130px;
-      height: 100px;
-      border-radius: 12px;
-      border: 1px solid #e5e7eb;
-      background: #fff;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-    }
-    .chat-welcome-action-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    .chat-welcome-action-btn .action-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-    }
-    .chat-welcome-action-btn .action-label {
-      color: #374151;
-    }
-    .chat-welcome-action-btn.btn-add .action-icon {
-      background: #ecfdf5;
-      color: #10b981;
-    }
-    .chat-welcome-action-btn.btn-add:hover {
-      border-color: #10b981;
-    }
-    .chat-welcome-action-btn.btn-delete .action-icon {
-      background: #fef2f2;
-      color: #ef4444;
-    }
-    .chat-welcome-action-btn.btn-delete:hover {
-      border-color: #ef4444;
-    }
+    .file-info-bar .file-remove:hover { text-decoration:underline; }
   </style>
 </head>
 <body>
-  <div class="agent-hub">
+<div class="page-container">
 
-    <!-- ===== 左侧：智能体卡片列表 ===== -->
-    <div class="agent-sidebar">
-      <div class="agent-sidebar-header">
-        <h3>
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 1 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 1-1.82-.33 1.65 1.65 0 0 1-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 1 9 19.4a1.65 1.65 0 0 1-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 1 4.68 15a1.65 1.65 0 0 1-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 1 4.6 9a1.65 1.65 0 0 1-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 1 9 4.68 1.65 1.65 0 0 1 10 3.17V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 1 1 1.51 1.65 1.65 0 0 1 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 1 19.4 9a1.65 1.65 0 0 1 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 1-1.51 1z"/></svg>
-          智能体中心
-        </h3>
-        <p>选择一个智能体开始使用</p>
-      </div>
-      <div class="agent-list" id="agentList">
-        <!-- 卡片1：设置尺码参数智能体 -->
-        <div class="agent-card active" data-agent="detail-opt" onclick="selectAgent(this)">
-          <div class="agent-card-icon c1">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-          </div>
-          <div class="agent-card-body">
-            <div class="agent-card-name">设置尺码参数智能体</div>
-            <div class="agent-card-desc">批量配置商品详情页尺码参数，支持对话和Excel导入</div>
-          </div>
-          <span class="agent-card-badge hot">热门</span>
-        </div>
+  <div id="toastContainer" class="toast-container"></div>
 
-        <!-- 卡片2：商品推荐智能体 -->
-        <div class="agent-card" data-agent="product-recommend" onclick="selectAgent(this)">
-          <div class="agent-card-icon c5">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-          </div>
-          <div class="agent-card-body">
-            <div class="agent-card-name">商品推荐智能体</div>
-            <div class="agent-card-desc">批量设置商品推荐组件及推荐关联商品并发布</div>
-          </div>
-          <span class="agent-card-badge new">新</span>
-        </div>
+  <script>
+    if (window.parent) {
+      window.parent.postMessage({type:'breadcrumb', text:'包装优化 <span>/</span> 批量配置任务'}, '*');
+    }
+  </script>
 
-        <!-- 卡片3：文本组件智能体 -->
-        <div class="agent-card" data-agent="text-component" onclick="selectAgent(this)">
-          <div class="agent-card-icon c6">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
-          </div>
-          <div class="agent-card-body">
-            <div class="agent-card-name">文本组件智能体</div>
-            <div class="agent-card-desc">批量设置商品详情页文本组件并自动发布</div>
-          </div>
-          <span class="agent-card-badge new">新</span>
-        </div>
-      </div>
+  <!-- 页面标题 + 操作按钮 -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+    <div class="page-title" style="margin-bottom:0;">批量配置任务</div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-primary" onclick="openAddModal()">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        新增
+      </button>
+      <button class="btn" onclick="triggerImport()">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        导入
+      </button>
     </div>
+  </div>
 
-    <!-- ===== 中间：智能体描述与流程说明 ===== -->
-    <div class="agent-info" id="agentInfo">
-      <!-- 由 JS 动态渲染 -->
+  <!-- ===== 流程说明 ===== -->
+  <div class="flow-section">
+    <div class="flow-header">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+        <line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/>
+      </svg>
+      <h3>流程说明</h3>
     </div>
-
-    <!-- ===== 右侧：对话区 ===== -->
-    <div class="agent-chat">
-      <div class="agent-chat-header">
-        <div class="agent-chat-header-dot"></div>
-        <div class="agent-chat-header-title" id="chatHeaderTitle">设置尺码参数智能体</div>
-        <div class="agent-chat-header-sub" id="chatHeaderSub">在线 · 对话即操作</div>
-      </div>
-
-      <div class="chat-messages" id="chatMessages">
-        <!-- 欢迎区 -->
-        <div class="chat-welcome" id="chatWelcome">
-          <div class="chat-welcome-icon">
-            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2">
-              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
-              <line x1="7" y1="7" x2="7.01" y2="7"/>
-            </svg>
-          </div>
-          <h2>设置尺码参数智能体</h2>
-          <p>通过对话或上传 Excel 文件，批量配置平台商品详情页尺码表中的重要参数</p>
-          <div class="chat-quick-prompts">
-            <div class="chat-quick-prompt" onclick="fillPrompt('设置重要参数')">📌 重要参数</div>
-            <div class="chat-quick-prompt" onclick="fillPrompt('设置其他参数')">📋 其他参数</div>
-          </div>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="flow-step-icon">📝</div>
+        <div class="flow-step-info">
+          <div class="flow-step-title">输入商品信息</div>
+          <div class="flow-step-desc">填写店铺编码、商品ID及操作类型</div>
         </div>
       </div>
-
-      <div class="chat-input-area">
-        <div class="file-preview-bar" id="filePreviewBar"></div>
-        <div class="chat-input-wrapper">
-          <input type="file" id="fileInput" multiple accept=".xlsx,.xls,.csv,.txt,.pdf,.png,.jpg,.jpeg" style="display:none" onchange="handleFileSelect(event)">
-          <button class="chat-attach-btn" title="添加文件" onclick="document.getElementById('fileInput').click()">
-            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-          </button>
-          <textarea id="chatInput" rows="1" placeholder="输入指令，智能体自动执行..." onkeydown="handleKeyDown(event)" oninput="autoResize(this)"></textarea>
-          <button class="chat-send-btn" id="sendBtn" onclick="sendMessage()">
-            <svg viewBox="0 0 24 24" width="16" height="16"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-          </button>
+      <div class="flow-arrow"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="flow-step">
+        <div class="flow-step-icon">⚙️</div>
+        <div class="flow-step-info">
+          <div class="flow-step-title">系统自动执行</div>
+          <div class="flow-step-desc">工作台自动执行批量配置参数</div>
+        </div>
+      </div>
+      <div class="flow-arrow"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="flow-step">
+        <div class="flow-step-icon">📊</div>
+        <div class="flow-step-info">
+          <div class="flow-step-title">查看执行结果</div>
+          <div class="flow-step-desc">查看成功数、失败数等明细</div>
         </div>
       </div>
     </div>
   </div>
 
-  <script>
-    // ===== 智能体配置数据 =====
-    var agentData = {
-      'detail-opt': {
-        name: '设置尺码参数智能体',
-        icon: 'c1',
-        color: '#6366f1',
-        desc: '批量配置商品详情页尺码表中的重要参数和其他参数的勾选，支持通过对话方式输入店铺及商品ID，或通过添加 Excel 方式进行批量操作。',
-        capabilities: ['对话输入', 'Excel导入', '批量配置', '网页自动化', '结果导出'],
-        flow: [
-          { label: '输入店铺商品信息', desc: '通过对话或上传 Excel 文件输入店铺及商品ID参数' },
-          { label: '智能体解析自动执行', desc: '智能体自动解析参数并调用平台接口执行配置' },
-          { label: '执行结果返回', desc: '返回店铺编码、商品数、成功数、失败数等结果' }
-        ],
-        welcome: '通过对话或上传 Excel 文件，批量配置平台商品详情页尺码表中的重要参数',
-        placeholder: '输入店铺 商品ID参数 智能体自动执行指令'
-      },
-      'product-recommend': {
-        name: '商品推荐智能体',
-        icon: 'c5',
-        color: '#0ea5e9',
-        desc: '批量设置商品详情页中商品详情高级编辑下商品推荐组件及推荐关联商品并发布商品，支持通过对话输入或 Excel 导入方式批量操作。',
-        capabilities: ['推荐组件设置', '关联商品配置', '批量发布', 'Excel导入', '结果导出'],
-        flow: [
-          { label: '输入店铺和平台商品ID', desc: '选择智能体，在对话框输入店铺和平台商品ID，或者添加 Excel，并说明操作类型（增加或删除推荐商品）' },
-          { label: '智能体自动执行', desc: '智能体自动设置商品推荐组件及推荐关联商品并发布' },
-          { label: '返回执行结果', desc: '智能体返回执行结果，含成功数、失败数等明细' }
-        ],
-        welcome: '批量设置商品详情页商品推荐组件及推荐关联商品并发布',
-        welcomeButtons: [
-          { label: '增加组件', icon: '➕', action: '增加推荐组件', style: 'btn-add' },
-          { label: '删除组件', icon: '➖', action: '删除推荐组件', style: 'btn-delete' }
-        ],
-        placeholder: '输入店铺和平台商品ID，或上传Excel文件...'
-      },
-      'text-component': {
-        name: '文本组件智能体',
-        icon: 'c6',
-        color: '#f59e0b',
-        desc: '批量设置商品详情页中商品详情高级编辑下文本组件的编辑并自动发布，支持通过对话输入或 Excel 导入方式批量操作。',
-        capabilities: ['文本组件编辑', '批量发布', 'Excel导入', '操作类型选择', '结果导出'],
-        flow: [
-          { label: '输入店铺和平台商品ID', desc: '选择智能体，在对话框输入店铺、平台商品ID和操作类型，或者添加 Excel' },
-          { label: '智能体自动执行', desc: '智能体自动编辑文本组件并发布商品' },
-          { label: '返回执行结果', desc: '智能体返回执行结果，含成功数、失败数等明细' }
-        ],
-        welcome: '批量设置商品详情页文本组件并自动发布',
-        welcomeButtons: [
-          { label: '增加组件', icon: '➕', action: '增加文本组件', style: 'btn-add' },
-          { label: '删除组件', icon: '➖', action: '删除文本组件', style: 'btn-delete' }
-        ],
-        placeholder: '输入店铺、平台商品ID和操作类型，或上传Excel文件...'
+  <!-- ===== 查询区域 ===== -->
+  <div class="search-area">
+    <div class="search-row">
+      <div class="search-item">
+        <label>批次号：</label>
+        <input type="text" id="qBatchNo" placeholder="输入批次号">
+      </div>
+      <div class="search-item">
+        <label>店铺编码：</label>
+        <input type="text" id="qShopCode" placeholder="输入店铺编码">
+      </div>
+      <div class="search-item">
+        <label>操作类型：</label>
+        <select id="qOpType">
+          <option value="">全部</option>
+          <option value="更新">更新</option>
+          <option value="新增">新增</option>
+          <option value="删除">删除</option>
+        </select>
+      </div>
+      <div class="search-item">
+        <label>执行状态：</label>
+        <select id="qStatus">
+          <option value="">全部</option>
+          <option value="待执行">待执行</option>
+          <option value="执行中">执行中</option>
+          <option value="部分成功">部分成功</option>
+          <option value="全部成功">全部成功</option>
+          <option value="全部失败">全部失败</option>
+        </select>
+      </div>
+      <div class="search-item">
+        <label>创建人：</label>
+        <input type="text" id="qCreator" placeholder="输入创建人">
+      </div>
+      <div class="search-item">
+        <label>创建时间：</label>
+        <div class="date-range">
+          <input type="date" id="qCreateTimeStart">
+          <span class="date-sep">~</span>
+          <input type="date" id="qCreateTimeEnd">
+        </div>
+      </div>
+    </div>
+    <div class="search-actions">
+      <button class="btn btn-primary" onclick="doSearch()">查询</button>
+      <button class="btn" onclick="resetSearch()">重置</button>
+    </div>
+  </div>
+
+  <!-- ===== Tab 切换 ===== -->
+  <div class="view-tabs" id="agentTabs">
+    <div class="view-tab active" data-tab="size" onclick="switchAgentTab('size')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>
+      </svg>
+      尺码参数
+    </div>
+    <div class="view-tab" data-tab="recommend" onclick="switchAgentTab('recommend')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+      </svg>
+      商品推荐
+    </div>
+    <div class="view-tab" data-tab="text" onclick="switchAgentTab('text')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/>
+      </svg>
+      文本组件
+    </div>
+  </div>
+
+  <!-- ===== 尺码参数列表 ===== -->
+  <div id="panelSize" class="view-panel active">
+    <div class="table-area">
+      <div class="table-toolbar">
+        <span style="font-size:13px;font-weight:600;color:var(--ink);">尺码参数任务列表</span>
+        <span style="font-size:12px;color:var(--text-tertiary);margin-left:6px;" id="sizeTotalBadge">共 0 条</span>
+      </div>
+      <div class="table-scroll">
+        <table class="pkg-table">
+          <thead>
+            <tr>
+              <th style="width:40px;">序号</th>
+              <th style="width:160px;">批次号</th>
+              <th style="width:60px;text-align:center;">店铺数</th>
+              <th style="width:60px;text-align:center;">商品数</th>
+              <th style="width:120px;">操作类型</th>
+              <th style="width:90px;">执行状态</th>
+              <th style="width:60px;text-align:center;">成功数</th>
+              <th style="width:60px;text-align:center;">失败数</th>
+              <th style="width:80px;">创建人</th>
+              <th style="width:140px;">创建时间</th>
+              <th style="width:140px;">操作</th>
+            </tr>
+          </thead>
+          <tbody id="sizeTableBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <span class="page-info">共 <strong id="sizeTotalCount">0</strong> 条</span>
+        <span class="page-btn disabled">&laquo;</span>
+        <span class="page-btn active">1</span>
+        <span class="page-btn">&raquo;</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 商品推荐列表 ===== -->
+  <div id="panelRecommend" class="view-panel">
+    <div class="table-area">
+      <div class="table-toolbar">
+        <span style="font-size:13px;font-weight:600;color:var(--ink);">商品推荐任务列表</span>
+        <span style="font-size:12px;color:var(--text-tertiary);margin-left:6px;" id="recommendTotalBadge">共 0 条</span>
+      </div>
+      <div class="table-scroll">
+        <table class="pkg-table">
+          <thead>
+            <tr>
+              <th style="width:40px;">序号</th>
+              <th style="width:160px;">批次号</th>
+              <th style="width:60px;text-align:center;">店铺数</th>
+              <th style="width:60px;text-align:center;">商品数</th>
+              <th style="width:120px;">操作类型</th>
+              <th style="width:90px;">执行状态</th>
+              <th style="width:60px;text-align:center;">成功数</th>
+              <th style="width:60px;text-align:center;">失败数</th>
+              <th style="width:80px;">创建人</th>
+              <th style="width:140px;">创建时间</th>
+              <th style="width:140px;">操作</th>
+            </tr>
+          </thead>
+          <tbody id="recommendTableBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <span class="page-info">共 <strong id="recommendTotalCount">0</strong> 条</span>
+        <span class="page-btn disabled">&laquo;</span>
+        <span class="page-btn active">1</span>
+        <span class="page-btn">&raquo;</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 文本组件列表 ===== -->
+  <div id="panelText" class="view-panel">
+    <div class="table-area">
+      <div class="table-toolbar">
+        <span style="font-size:13px;font-weight:600;color:var(--ink);">文本组件任务列表</span>
+        <span style="font-size:12px;color:var(--text-tertiary);margin-left:6px;" id="textTotalBadge">共 0 条</span>
+      </div>
+      <div class="table-scroll">
+        <table class="pkg-table">
+          <thead>
+            <tr>
+              <th style="width:40px;">序号</th>
+              <th style="width:160px;">批次号</th>
+              <th style="width:60px;text-align:center;">店铺数</th>
+              <th style="width:60px;text-align:center;">商品数</th>
+              <th style="width:120px;">操作类型</th>
+              <th style="width:90px;">执行状态</th>
+              <th style="width:60px;text-align:center;">成功数</th>
+              <th style="width:60px;text-align:center;">失败数</th>
+              <th style="width:80px;">创建人</th>
+              <th style="width:140px;">创建时间</th>
+              <th style="width:140px;">操作</th>
+            </tr>
+          </thead>
+          <tbody id="textTableBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <span class="page-info">共 <strong id="textTotalCount">0</strong> 条</span>
+        <span class="page-btn disabled">&laquo;</span>
+        <span class="page-btn active">1</span>
+        <span class="page-btn">&raquo;</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== 新增任务 - 弹窗 ===== -->
+<div id="addModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeAddModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>新增任务</h3>
+      <button class="modal-close" onclick="closeAddModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">任务类型 <span class="required">*</span></label>
+          <select class="form-select" id="addTaskType" onchange="onAddTypeChange()">
+            <option value="size">尺码参数</option>
+            <option value="recommend">商品推荐</option>
+            <option value="text">文本组件</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">店铺编码 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="addShopCode" placeholder="输入店铺编码">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">操作类型 <span class="required">*</span></label>
+          <select class="form-select" id="addOpType">
+            <option value="更新">更新</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">平台商品ID <span class="required">*</span></label>
+          <textarea class="form-textarea" id="addProductIds" rows="5" placeholder="每行一个，或英文逗号隔开&#10;例如：P001,P002,P003"></textarea>
+          <div class="form-hint">支持批量录入，多个ID用英文逗号或换行分隔</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeAddModal()">取消</button>
+      <button class="btn btn-primary" onclick="submitAddTask()">提交</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 导入任务 - 弹窗 ===== -->
+<div id="importModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeImportModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>导入任务</h3>
+      <button class="modal-close" onclick="closeImportModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="upload-zone" onclick="document.getElementById('importExcelFile').click()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+          <polyline points="10 9 9 9 8 9"/>
+        </svg>
+        <div class="title">点击选择 Excel 文件</div>
+        <div class="hint">支持 .xlsx / .xls，表头需包含“店铺编码”“平台商品ID”“任务类型”“操作类型”列</div>
+        <input type="file" id="importExcelFile" style="display:none" accept=".xlsx,.xls" onchange="handleImportExcelSelect(this.files)">
+      </div>
+      <div class="file-info-bar" id="importFileInfoBar">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        <span id="importFileInfoText"></span>
+        <button class="file-remove" onclick="removeImportFile()">移除</button>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeImportModal()">取消</button>
+      <button class="btn btn-primary" onclick="submitImportTask()">导入</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== 当前Tab =====
+var currentTab = 'size';
+
+// ===== Mock 数据（批次 + 商品明细） =====
+var mockBatches = [
+  // 尺码参数
+  { batchNo:'SP202607200001', type:'size', opType:'更新', creator:'张三', createTime:'2026-07-20 09:30:00', items:[
+    { shopCode:'SH001', productId:'DY-20260701-001', status:'已完成', failReason:'', updateTime:'2026-07-20 09:32:00', updater:'张三' },
+    { shopCode:'SH001', productId:'DY-20260701-002', status:'已完成', failReason:'', updateTime:'2026-07-20 09:33:00', updater:'张三' },
+    { shopCode:'SH001', productId:'DY-20260701-003', status:'失败', failReason:'尺码参数格式错误', updateTime:'2026-07-20 09:34:00', updater:'张三' },
+    { shopCode:'SH002', productId:'DY-20260701-004', status:'已完成', failReason:'', updateTime:'2026-07-20 09:35:00', updater:'张三' },
+    { shopCode:'SH002', productId:'DY-20260701-005', status:'已完成', failReason:'', updateTime:'2026-07-20 09:36:00', updater:'张三' }
+  ]},
+  { batchNo:'SP202607200002', type:'size', opType:'更新', creator:'李四', createTime:'2026-07-20 10:15:00', items:[
+    { shopCode:'SH003', productId:'DY-20260701-006', status:'执行中', failReason:'', updateTime:'2026-07-20 10:17:00', updater:'李四' },
+    { shopCode:'SH003', productId:'DY-20260701-007', status:'执行中', failReason:'', updateTime:'2026-07-20 10:18:00', updater:'李四' },
+    { shopCode:'SH003', productId:'DY-20260701-008', status:'待执行', failReason:'', updateTime:'', updater:'' },
+    { shopCode:'SH003', productId:'DY-20260701-009', status:'待执行', failReason:'', updateTime:'', updater:'' }
+  ]},
+  { batchNo:'SP202607190001', type:'size', opType:'更新', creator:'王五', createTime:'2026-07-19 16:45:00', items:[
+    { shopCode:'SH001', productId:'DY-20260701-010', status:'待执行', failReason:'', updateTime:'', updater:'' },
+    { shopCode:'SH002', productId:'DY-20260701-011', status:'待执行', failReason:'', updateTime:'', updater:'' },
+    { shopCode:'SH003', productId:'DY-20260701-012', status:'待执行', failReason:'', updateTime:'', updater:'' }
+  ]},
+  // 商品推荐
+  { batchNo:'RC202607200001', type:'recommend', opType:'新增', creator:'李四', createTime:'2026-07-20 11:00:00', items:[
+    { shopCode:'SH001', productId:'DY-20260701-013', status:'已完成', failReason:'', updateTime:'2026-07-20 11:02:00', updater:'李四' },
+    { shopCode:'SH001', productId:'DY-20260701-014', status:'已完成', failReason:'', updateTime:'2026-07-20 11:03:00', updater:'李四' },
+    { shopCode:'SH002', productId:'DY-20260701-015', status:'已完成', failReason:'', updateTime:'2026-07-20 11:04:00', updater:'李四' },
+    { shopCode:'SH002', productId:'DY-20260701-016', status:'失败', failReason:'推荐商品不存在', updateTime:'2026-07-20 11:05:00', updater:'李四' }
+  ]},
+  { batchNo:'RC202607200002', type:'recommend', opType:'删除', creator:'张三', createTime:'2026-07-20 13:30:00', items:[
+    { shopCode:'SH003', productId:'DY-20260701-017', status:'待执行', failReason:'', updateTime:'', updater:'' },
+    { shopCode:'SH003', productId:'DY-20260701-018', status:'待执行', failReason:'', updateTime:'', updater:'' }
+  ]},
+  // 文本组件
+  { batchNo:'TC202607200001', type:'text', opType:'新增', creator:'王五', createTime:'2026-07-20 08:45:00', items:[
+    { shopCode:'SH002', productId:'DY-20260701-019', status:'已完成', failReason:'', updateTime:'2026-07-20 08:47:00', updater:'王五' },
+    { shopCode:'SH003', productId:'DY-20260701-020', status:'已完成', failReason:'', updateTime:'2026-07-20 08:48:00', updater:'王五' },
+    { shopCode:'SH003', productId:'DY-20260701-021', status:'已完成', failReason:'', updateTime:'2026-07-20 08:49:00', updater:'王五' }
+  ]},
+  { batchNo:'TC202607200002', type:'text', opType:'删除', creator:'张三', createTime:'2026-07-20 14:00:00', items:[
+    { shopCode:'SH001', productId:'DY-20260701-022', status:'失败', failReason:'文本组件不存在', updateTime:'2026-07-20 14:02:00', updater:'张三' },
+    { shopCode:'SH001', productId:'DY-20260701-023', status:'失败', failReason:'文本组件不存在', updateTime:'2026-07-20 14:03:00', updater:'张三' },
+    { shopCode:'SH001', productId:'DY-20260701-024', status:'已完成', failReason:'', updateTime:'2026-07-20 14:04:00', updater:'张三' }
+  ]}
+];
+
+// ===== 初始化 =====
+function init() {
+  // 从 localStorage 加载（如果有），否则持久化默认 Mock 数据（供明细页读取）
+  var stored = localStorage.getItem('size_params_batches');
+  if (stored) {
+    try { mockBatches = JSON.parse(stored); } catch(e) {}
+  } else {
+    saveBatches();
+  }
+  renderAll();
+}
+
+// ===== 持久化 =====
+function saveBatches() {
+  localStorage.setItem('size_params_batches', JSON.stringify(mockBatches));
+}
+
+// ===== Tab 切换 =====
+function switchAgentTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.view-tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelector('.view-tab[data-tab="' + tab + '"]').classList.add('active');
+  document.querySelectorAll('.view-panel').forEach(function(p) { p.classList.remove('active'); });
+  document.getElementById('panel' + capitalize(tab)).classList.add('active');
+}
+
+function capitalize(s) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+// ===== 渲染所有列表 =====
+function renderAll() {
+  renderTable('size');
+  renderTable('recommend');
+  renderTable('text');
+}
+
+// ===== 渲染单个表格（按批次聚合） =====
+function renderTable(type) {
+  var batches = mockBatches.filter(function(b) { return b.type === type; });
+  // 应用查询区域筛选条件
+  batches = batches.filter(matchSearch);
+  var tbody = document.getElementById(type + 'TableBody');
+  var html = '';
+
+  if (batches.length === 0) {
+    html = '<tr><td colspan="11" style="text-align:center;padding:40px 0;color:var(--text-tertiary);font-size:13px;">暂无数据</td></tr>';
+  } else {
+    batches.forEach(function(batch, idx) {
+      var agg = aggregateBatch(batch);
+      html += '<tr>';
+      html += '<td>' + (idx + 1) + '</td>';
+      html += '<td class="col-batch-no">' + esc(batch.batchNo) + '</td>';
+      html += '<td style="text-align:center;">' + agg.shopCount + '</td>';
+      html += '<td style="text-align:center;">' + agg.productCount + '</td>';
+      html += '<td>' + esc(batch.opType) + '</td>';
+      html += '<td>' + renderStatus(agg.status) + '</td>';
+      html += '<td style="text-align:center;color:#059669;font-weight:600;">' + agg.successCount + '</td>';
+      html += '<td style="text-align:center;color:#dc2626;font-weight:600;">' + agg.failCount + '</td>';
+      html += '<td>' + esc(batch.creator) + '</td>';
+      html += '<td>' + esc(batch.createTime) + '</td>';
+      html += '<td>';
+      html += '<button class="op-btn" onclick="viewBatchDetail(\'' + esc(batch.batchNo) + '\')">查看明细</button>';
+      if (agg.status === '待执行' || agg.status === '全部失败') {
+        html += ' <button class="op-btn danger" onclick="voidBatch(\'' + esc(batch.batchNo) + '\')">作废</button>';
       }
-    };
+      html += '</td>';
+      html += '</tr>';
+    });
+  }
 
-    // ===== 当前选中智能体 =====
-    var currentAgent = 'detail-opt';
+  tbody.innerHTML = html;
 
-    // ===== 切换智能体 =====
-    function selectAgent(el) {
-      // 更新卡片激活状态
-      document.querySelectorAll('.agent-card').forEach(function(c) { c.classList.remove('active'); });
-      el.classList.add('active');
+  // 更新计数
+  document.getElementById(type + 'TotalCount').textContent = batches.length;
+  document.getElementById(type + 'TotalBadge').textContent = '共 ' + batches.length + ' 个批次';
+}
 
-      var agentId = el.getAttribute('data-agent');
-      currentAgent = agentId;
-      var data = agentData[agentId];
+// ===== 批次聚合统计 =====
+function aggregateBatch(batch) {
+  var items = batch.items || [];
+  var shopSet = {};
+  var successCount = 0, failCount = 0;
+  var hasRunning = false, hasFail = false, allDone = true;
 
-      // 更新中间信息面板
-      renderAgentInfo(data);
+  items.forEach(function(it) {
+    shopSet[it.shopCode] = true;
+    if (it.status === '已完成') successCount++;
+    if (it.status === '失败') failCount++;
+    if (it.status === '执行中') hasRunning = true;
+    if (it.status === '失败') hasFail = true;
+    if (it.status !== '已完成') allDone = false;
+  });
 
-      // 更新右侧对话区
-      document.getElementById('chatHeaderTitle').textContent = data.name;
-      document.getElementById('chatInput').placeholder = data.placeholder;
+  var status;
+  if (hasRunning) status = '执行中';
+  else if (items.length > 0 && failCount === items.length) status = '全部失败';
+  else if (hasFail) status = '部分成功';
+  else if (items.length > 0 && allDone) status = '全部成功';
+  else status = '待执行';
 
-      // 重置对话区
-      resetChat(data);
-    }
+  return {
+    shopCount: Object.keys(shopSet).length,
+    productCount: items.length,
+    successCount: successCount,
+    failCount: failCount,
+    status: status
+  };
+}
 
-    // ===== 渲染中间信息面板 =====
-    function renderAgentInfo(data) {
-      var info = document.getElementById('agentInfo');
-      var html = '';
+// ===== 查询筛选匹配 =====
+function matchSearch(batch) {
+  var batchNo = document.getElementById('qBatchNo').value.trim();
+  var shopCode = document.getElementById('qShopCode').value.trim();
+  var opType = document.getElementById('qOpType').value;
+  var status = document.getElementById('qStatus').value;
+  var creator = document.getElementById('qCreator').value.trim();
+  var dateStart = document.getElementById('qCreateTimeStart').value;
+  var dateEnd = document.getElementById('qCreateTimeEnd').value;
 
-      // 顶部英雄区
-      html += '<div class="agent-info-hero">';
-      html += '  <div class="agent-info-icon" style="background:' + data.color + '">';
-      html += '    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2">';
-      html += '      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>';
-      html += '      <line x1="7" y1="7" x2="7.01" y2="7"/>';
-      html += '    </svg>';
-      html += '  </div>';
-      html += '  <h2>' + escapeHtml(data.name) + '</h2>';
-      html += '  <p>' + escapeHtml(data.desc) + '</p>';
-      html += '</div>';
+  // 批次号模糊匹配
+  if (batchNo && batch.batchNo.indexOf(batchNo) === -1) return false;
+  // 店铺编码：批次内任一商品明细匹配即命中
+  if (shopCode) {
+    var hasShop = (batch.items || []).some(function(it) {
+      return it.shopCode && it.shopCode.indexOf(shopCode) !== -1;
+    });
+    if (!hasShop) return false;
+  }
+  // 操作类型精确匹配
+  if (opType && batch.opType !== opType) return false;
+  // 执行状态（聚合后状态）精确匹配
+  if (status && aggregateBatch(batch).status !== status) return false;
+  // 创建人模糊匹配
+  if (creator && batch.creator.indexOf(creator) === -1) return false;
+  // 创建时间范围（yyyy-MM-dd）
+  if (dateStart || dateEnd) {
+    var d = (batch.createTime || '').substring(0, 10);
+    if (dateStart && d < dateStart) return false;
+    if (dateEnd && d > dateEnd) return false;
+  }
+  return true;
+}
 
-      // 能力标签
-      html += '<div class="agent-info-section">';
-      html += '  <div class="agent-info-section-title">核心能力</div>';
-      html += '  <div class="agent-capabilities">';
-      data.capabilities.forEach(function(cap) {
-        html += '    <div class="agent-cap-tag">';
-        html += '      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>';
-        html += '      ' + escapeHtml(cap);
-        html += '    </div>';
-      });
-      html += '  </div>';
-      html += '</div>';
+// ===== 查询 =====
+function doSearch() {
+  renderAll();
+}
 
-      // 流程步骤
-      html += '<div class="agent-info-section">';
-      html += '  <div class="agent-info-section-title">执行流程</div>';
-      html += '  <div class="agent-flow-steps">';
-      data.flow.forEach(function(step, i) {
-        html += '  <div class="agent-flow-step">';
-        html += '    <div class="agent-flow-step-num">' + (i + 1) + '</div>';
-        html += '    <div class="agent-flow-step-body">';
-        html += '      <div class="agent-flow-step-label">' + escapeHtml(step.label) + '</div>';
-        html += '      <div class="agent-flow-step-desc">' + escapeHtml(step.desc) + '</div>';
-        html += '    </div>';
-        html += '  </div>';
-      });
-      html += '  </div>';
-      html += '</div>';
+// ===== 重置 =====
+function resetSearch() {
+  document.getElementById('qBatchNo').value = '';
+  document.getElementById('qShopCode').value = '';
+  document.getElementById('qOpType').value = '';
+  document.getElementById('qStatus').value = '';
+  document.getElementById('qCreator').value = '';
+  document.getElementById('qCreateTimeStart').value = '';
+  document.getElementById('qCreateTimeEnd').value = '';
+  renderAll();
+}
 
-      // 开始按钮
-      html += '<button class="agent-start-btn" onclick="focusChatInput()">';
-      html += '  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
-      html += '  开始对话';
-      html += '</button>';
+// ===== 状态渲染 =====
+function renderStatus(status) {
+  var cls = 'pending';
+  if (status === '全部成功') cls = 'done';
+  else if (status === '执行中') cls = 'running';
+  else if (status === '部分成功') cls = 'partial';
+  else if (status === '全部失败') cls = 'fail';
+  return '<span class="status-tag ' + cls + '">' + esc(status) + '</span>';
+}
 
-      info.innerHTML = html;
-    }
+// ===== 操作类型选项映射 =====
+var opTypeOptions = {
+  size: [
+    { value: '更新', label: '更新' }
+  ],
+  recommend: [
+    { value: '新增', label: '新增' },
+    { value: '删除', label: '删除' }
+  ],
+  text: [
+    { value: '新增', label: '新增' },
+    { value: '删除', label: '删除' }
+  ]
+};
 
-    // ===== 重置对话区 =====
-    function resetChat(data) {
-      var messages = document.getElementById('chatMessages');
-      messages.innerHTML = '';
-      chatHistory = [];
-      pendingFiles = [];
-      renderFilePreview();
+// ===== 当前导入的 Excel 信息 =====
+var importExcelInfo = null;
 
-      var welcome = document.createElement('div');
-      welcome.className = 'chat-welcome';
-      welcome.id = 'chatWelcome';
-      welcome.innerHTML = '<div class="chat-welcome-icon" style="background:' + data.color + '">'
-        + '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2">'
-        + '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>'
-        + '<line x1="7" y1="7" x2="7.01" y2="7"/>'
-        + '</svg></div>'
-        + '<h2>' + escapeHtml(data.name) + '</h2>'
-        + '<p>' + escapeHtml(data.welcome) + '</p>';
+// ===== 新增弹窗 =====
+function openAddModal() {
+  document.getElementById('addTaskType').value = currentTab;
+  onAddTypeChange();
+  document.getElementById('addShopCode').value = '';
+  document.getElementById('addProductIds').value = '';
+  document.getElementById('addModal').style.display = 'flex';
+}
 
-      // 渲染欢迎区操作按钮
-      if (data.welcomeButtons && data.welcomeButtons.length > 0) {
-        var btnsHtml = '<div class="chat-welcome-actions">';
-        data.welcomeButtons.forEach(function(btn) {
-          btnsHtml += '<button class="chat-welcome-action-btn ' + btn.style + '" onclick="fillPrompt(\'' + btn.action + '\')">'
-            + '<span class="action-icon">' + btn.icon + '</span>'
-            + '<span class="action-label">' + escapeHtml(btn.label) + '</span>'
-            + '</button>';
-        });
-        btnsHtml += '</div>';
-        welcome.innerHTML += btnsHtml;
+function closeAddModal() {
+  document.getElementById('addModal').style.display = 'none';
+}
+
+function onAddTypeChange() {
+  var type = document.getElementById('addTaskType').value;
+  var select = document.getElementById('addOpType');
+  var options = opTypeOptions[type] || [];
+  select.innerHTML = '';
+  options.forEach(function(opt) {
+    var o = document.createElement('option');
+    o.value = opt.value;
+    o.textContent = opt.label;
+    select.appendChild(o);
+  });
+}
+
+function submitAddTask() {
+  var type = document.getElementById('addTaskType').value;
+  var shopCode = document.getElementById('addShopCode').value.trim();
+  var opType = document.getElementById('addOpType').value;
+  var raw = document.getElementById('addProductIds').value.trim();
+
+  if (!shopCode) { showToast('请输入店铺编码'); return; }
+  if (!raw) { showToast('请输入平台商品ID'); return; }
+
+  var productIds = raw.split(/[,\n\r]+/).map(function(s) { return s.trim(); }).filter(Boolean);
+  if (productIds.length === 0) { showToast('未解析到商品ID'); return; }
+
+  var items = productIds.map(function(pid) {
+    return { shopCode: shopCode, productId: pid, status: '待执行', failReason: '', updateTime: '', updater: '' };
+  });
+  createBatch(type, opType, items);
+  closeAddModal();
+}
+
+// ===== 导入 =====
+function triggerImport() {
+  removeImportFile();
+  document.getElementById('importModal').style.display = 'flex';
+}
+
+function closeImportModal() {
+  document.getElementById('importModal').style.display = 'none';
+}
+
+function handleImportExcelSelect(files) {
+  if (!files || files.length === 0) return;
+  var file = files[0];
+  var ext = file.name.split('.').pop().toLowerCase();
+  if (ext !== 'xlsx' && ext !== 'xls') {
+    showToast('请选择 .xlsx 或 .xls 格式文件');
+    return;
+  }
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = new Uint8Array(e.target.result);
+      var workbook = XLSX.read(data, { type: 'array' });
+      var sheet = workbook.Sheets[workbook.SheetNames[0]];
+      var json = XLSX.utils.sheet_to_json(sheet);
+
+      if (json.length === 0) {
+        showToast('Excel 文件为空');
+        return;
       }
 
-      messages.appendChild(welcome);
-    }
+      var keys = Object.keys(json[0]);
 
-    // ===== 聚焦输入框 =====
-    function focusChatInput() {
-      document.getElementById('chatInput').focus();
-    }
+      // 识别商品ID列
+      var idCol = findColumn(keys, ['平台商品ID', '商品ID', '商品编号', 'product_id', 'productId']);
+      if (!idCol) idCol = keys[0];
 
-    // ===== 对话记录存储 =====
-    var chatHistory = [];
-    var pendingFiles = [];
+      // 识别店铺编码列
+      var shopCol = findColumn(keys, ['店铺编码', '店铺代码', '店铺', 'shop_code', 'shopCode']);
+      // 识别任务类型列
+      var typeCol = findColumn(keys, ['任务类型', '类型', 'task_type', 'taskType']);
+      // 识别操作类型列
+      var opCol = findColumn(keys, ['操作类型', '操作', 'op_type', 'opType']);
 
-    // ===== 文件选择处理 =====
-    function handleFileSelect(e) {
-      var files = Array.from(e.target.files);
-      files.forEach(function(f) {
-        var exists = pendingFiles.some(function(pf) { return pf.name === f.name && pf.size === f.size; });
-        if (!exists) pendingFiles.push(f);
-      });
-      renderFilePreview();
-      e.target.value = '';
-    }
+      // 校验必需列
+      if (!shopCol) { showToast('未找到“店铺编码”列，请检查表头'); return; }
+      if (!typeCol) { showToast('未找到“任务类型”列，请检查表头'); return; }
+      if (!opCol) { showToast('未找到“操作类型”列，请检查表头'); return; }
 
-    // ===== 渲染文件预览条 =====
-    function renderFilePreview() {
-      var bar = document.getElementById('filePreviewBar');
-      bar.innerHTML = '';
-      if (pendingFiles.length === 0) { bar.classList.remove('has-files'); return; }
-      bar.classList.add('has-files');
-      pendingFiles.forEach(function(f, idx) {
-        var tag = document.createElement('div');
-        tag.className = 'file-tag';
-        tag.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
-          + '<span class="file-tag-name">' + escapeHtml(f.name) + '</span>'
-          + '<span class="file-tag-size">' + formatFileSize(f.size) + '</span>'
-          + '<button class="file-tag-remove" title="移除" onclick="removeFile(' + idx + ')"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
-        bar.appendChild(tag);
-      });
-    }
-
-    function removeFile(idx) { pendingFiles.splice(idx, 1); renderFilePreview(); }
-
-    function formatFileSize(bytes) {
-      if (bytes < 1024) return bytes + ' B';
-      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-    }
-
-    // ===== 发送消息 =====
-    function sendMessage() {
-      var input = document.getElementById('chatInput');
-      var text = input.value.trim();
-      var files = pendingFiles.slice();
-      if (!text && files.length === 0) return;
-
-      var welcome = document.getElementById('chatWelcome');
-      if (welcome) welcome.style.display = 'none';
-
-      var displayText = text || '（发送了文件）';
-      appendMessage('user', displayText, null, files);
-      chatHistory.push({ role: 'user', content: displayText, files: files.map(function(f) { return f.name; }) });
-
-      input.value = '';
-      pendingFiles = [];
-      autoResize(input);
-      renderFilePreview();
-
-      showTyping();
-
-      setTimeout(function() {
-        removeTyping();
-        var reply = generateReply(text, files);
-        appendMessage('assistant', reply.text, reply.result, reply.files);
-        chatHistory.push({ role: 'assistant', content: reply.text, result: reply.result || null });
-      }, 800 + Math.random() * 1200);
-    }
-
-    // ===== 追加消息 =====
-    function appendMessage(role, text, result, files) {
-      var container = document.getElementById('chatMessages');
-      var row = document.createElement('div');
-      row.className = 'msg-row ' + role;
-
-      var avatarText = role === 'user' ? '我' : 'AI';
-      var timeStr = formatTime(new Date());
-      var html = '<div class="msg-avatar">' + avatarText + '</div>';
-      html += '<div class="msg-content">';
-      html += '<div class="msg-bubble">' + escapeHtml(text);
-
-      if (files && files.length > 0) {
-        html += '<div class="msg-files">';
-        files.forEach(function(f) {
-          var name = typeof f === 'string' ? f : f.name;
-          html += '<div class="msg-file-tag"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' + escapeHtml(name) + '</div>';
-        });
-        html += '</div>';
-      }
-
-      if (result) {
-        html += '<div class="result-card">';
-        html += '<div class="result-title"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>执行结果</div>';
-        html += '<pre>' + escapeHtml(result) + '</pre>';
-        html += '</div>';
-      }
-
-      html += '</div>';
-      html += '<div class="msg-time">' + timeStr + '</div>';
-      html += '</div>';
-      row.innerHTML = html;
-      container.appendChild(row);
-      container.scrollTop = container.scrollHeight;
-    }
-
-    // ===== 加载动画 =====
-    function showTyping() {
-      var container = document.getElementById('chatMessages');
-      var row = document.createElement('div');
-      row.className = 'msg-row assistant';
-      row.id = 'typingRow';
-      row.innerHTML = '<div class="msg-avatar">AI</div><div class="msg-bubble"><div class="typing-indicator"><span></span><span></span><span></span></div></div>';
-      container.appendChild(row);
-      container.scrollTop = container.scrollHeight;
-    }
-    function removeTyping() { var el = document.getElementById('typingRow'); if (el) el.remove(); }
-
-    // ===== 模拟AI回复 =====
-    function generateReply(text, files) {
-      if (files && files.length > 0) {
-        var fileNames = files.map(function(f) { return f.name; });
-        var hasExcel = fileNames.some(function(n) { return /\.(xlsx|xls|csv)$/i.test(n); });
-        if (hasExcel) {
-          return {
-            text: '已接收到文件，正在解析数据：',
-            result: '解析文件: ' + fileNames.join(', ') + '\n\n店铺编码: SHOP-20260001\n商品数: 128\n成功数: 125\n失败数: 3\n执行时间: ' + formatTime(new Date())
-          };
+      // 逐行构建商品明细（店铺编码 + 商品ID），任务类型/操作类型取首行
+      var items = [];
+      var taskType = '', opType = '';
+      json.forEach(function(row, idx) {
+        if (idx === 0) {
+          if (row[typeCol]) taskType = String(row[typeCol]);
+          if (row[opCol]) opType = String(row[opCol]);
         }
-        return {
-          text: '已接收文件，处理结果如下：',
-          result: '文件: ' + fileNames.join(', ') + '\n\n店铺编码: SHOP-20260001\n商品数: 56\n成功数: 54\n失败数: 2\n执行时间: ' + formatTime(new Date())
-        };
-      }
-      if (text.indexOf('查看') >= 0) {
-        return {
-          text: '已查询到当前配置数据如下：',
-          result: '尺码: S  |  身高: 155-160cm  |  体重: 40-50kg\n尺码: M  |  身高: 160-165cm  |  体重: 50-60kg\n尺码: L  |  身高: 165-170cm  |  体重: 60-70kg\n尺码: XL |  身高: 170-175cm  |  体重: 70-80kg'
-        };
-      }
-      if (text.indexOf('导出') >= 0) {
-        return {
-          text: '数据报表已生成：',
-          result: '文件名: 数据报表_20260713.xlsx\n总记录: 128 条\n覆盖平台: 淘宝、京东\n文件大小: 12.3 KB\n\n执行时间: ' + formatTime(new Date())
-        };
-      }
-      if (text.indexOf('新增') >= 0 || text.indexOf('添加') >= 0) {
-        return {
-          text: '已成功新增配置：',
-          result: '+ 新增项已添加\n\n店铺编码: SHOP-20260001\n商品数: 86\n成功数: 86\n失败数: 0\n执行时间: ' + formatTime(new Date())
-        };
-      }
-      if (text.indexOf('删除') >= 0 || text.indexOf('移除') >= 0) {
-        return {
-          text: '已执行删除操作：',
-          result: '已移除指定项\n\n店铺编码: SHOP-20260001\n商品数: 15\n成功数: 14\n失败数: 1\n执行时间: ' + formatTime(new Date())
-        };
-      }
-      return {
-        text: '收到您的指令，正在处理。以下是执行结果：',
-        result: '店铺编码: SHOP-20260001\n商品数: 128\n成功数: 125\n失败数: 3\n执行时间: ' + formatTime(new Date())
-      };
-    }
-
-    function fillPrompt(text) {
-      var input = document.getElementById('chatInput');
-      input.value = text;
-      input.focus();
-      autoResize(input);
-    }
-
-    function handleKeyDown(e) {
-      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-    }
-
-    function autoResize(el) {
-      el.style.height = 'auto';
-      el.style.height = Math.min(el.scrollHeight, 120) + 'px';
-    }
-
-    function escapeHtml(str) {
-      var div = document.createElement('div');
-      div.textContent = str;
-      return div.innerHTML;
-    }
-
-    function formatTime(date) {
-      var y = date.getFullYear();
-      var mo = (date.getMonth() + 1).toString().padStart(2, '0');
-      var d = date.getDate().toString().padStart(2, '0');
-      var h = date.getHours().toString().padStart(2, '0');
-      var m = date.getMinutes().toString().padStart(2, '0');
-      var s = date.getSeconds().toString().padStart(2, '0');
-      return y + '-' + mo + '-' + d + ' ' + h + ':' + m + ':' + s;
-    }
-
-    // ===== 初始化渲染 =====
-    // 支持 URL 参数 agent 自动选中指定智能体
-    var urlParams = new URLSearchParams(window.location.search);
-    var urlAgent = urlParams.get('agent');
-    if (urlAgent && agentData[urlAgent]) {
-      currentAgent = urlAgent;
-      // 更新左侧卡片激活状态
-      document.querySelectorAll('.agent-card').forEach(function(c) {
-        c.classList.toggle('active', c.getAttribute('data-agent') === urlAgent);
+        if (row[idCol] && row[shopCol]) {
+          items.push({ shopCode: String(row[shopCol]), productId: String(row[idCol]), status: '待执行', failReason: '', updateTime: '', updater: '' });
+        }
       });
-    }
-    renderAgentInfo(agentData[currentAgent]);
-    document.getElementById('chatHeaderTitle').textContent = agentData[currentAgent].name;
-    document.getElementById('chatInput').placeholder = agentData[currentAgent].placeholder;
 
-    // ===== 通知父页面更新面包屑 =====
-    if (window.parent !== window) {
-      window.parent.postMessage({ type: 'breadcrumb', text: '包装优化 / ' + agentData[currentAgent].name }, '*');
+      // 任务类型映射
+      var typeMap = { '尺码参数': 'size', '商品推荐': 'recommend', '文本组件': 'text' };
+      var typeValue = typeMap[taskType];
+      if (!typeValue) {
+        showToast('任务类型“' + taskType + '”无法识别，请填写：尺码参数/商品推荐/文本组件');
+        return;
+      }
+
+      // 统计店铺数
+      var shopSet = {};
+      items.forEach(function(it) { shopSet[it.shopCode] = true; });
+      var shopCount = Object.keys(shopSet).length;
+
+      importExcelInfo = { name: file.name, items: items, type: typeValue, opType: opType };
+      document.getElementById('importFileInfoText').textContent = file.name + '（' + taskType + ' / ' + opType + '，' + shopCount + ' 个店铺，' + items.length + ' 条商品）';
+      document.getElementById('importFileInfoBar').classList.add('show');
+    } catch(err) {
+      showToast('文件解析失败，请检查格式');
     }
-  </script>
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ===== 查找列名 =====
+function findColumn(keys, candidates) {
+  for (var i = 0; i < candidates.length; i++) {
+    if (keys.indexOf(candidates[i]) !== -1) return candidates[i];
+  }
+  return null;
+}
+
+function removeImportFile() {
+  importExcelInfo = null;
+  document.getElementById('importExcelFile').value = '';
+  document.getElementById('importFileInfoBar').classList.remove('show');
+}
+
+function submitImportTask() {
+  if (!importExcelInfo) { showToast('请选择 Excel 文件'); return; }
+  if (!importExcelInfo.opType) { showToast('未解析到操作类型'); return; }
+  if (!importExcelInfo.items || importExcelInfo.items.length === 0) { showToast('未解析到商品明细'); return; }
+
+  createBatch(importExcelInfo.type, importExcelInfo.opType, importExcelInfo.items);
+  closeImportModal();
+}
+
+// ===== 生成4位流水号（同日同前缀下递增） =====
+function nextBatchSeq(prefixDate) {
+  var maxSeq = 0;
+  mockBatches.forEach(function(b) {
+    if (b.batchNo && b.batchNo.indexOf(prefixDate) === 0) {
+      var n = parseInt(b.batchNo.substring(prefixDate.length), 10);
+      if (!isNaN(n) && n > maxSeq) maxSeq = n;
+    }
+  });
+  return String(maxSeq + 1).padStart(4, '0');
+}
+
+// ===== 创建批次（含商品明细） =====
+function createBatch(type, opType, items) {
+  var prefix = type === 'size' ? 'SP' : (type === 'recommend' ? 'RC' : 'TC');
+  var now = new Date();
+  var dateStr = now.getFullYear() +
+    String(now.getMonth() + 1).padStart(2, '0') +
+    String(now.getDate()).padStart(2, '0');
+  // 批次号规则：2位字母 + 年月日 + 4位流水，如 SP202607220001
+  var batchId = prefix + dateStr + nextBatchSeq(prefix + dateStr);
+
+  var timeStr = now.getFullYear() + '-' +
+    String(now.getMonth() + 1).padStart(2, '0') + '-' +
+    String(now.getDate()).padStart(2, '0') + ' ' +
+    String(now.getHours()).padStart(2, '0') + ':' +
+    String(now.getMinutes()).padStart(2, '0') + ':00';
+
+  var batch = {
+    batchNo: batchId,
+    type: type,
+    opType: opType,
+    creator: '管理员',
+    createTime: timeStr,
+    items: items
+  };
+
+  mockBatches.unshift(batch);
+  saveBatches();
+  renderAll();
+  showToast('批次 ' + batchId + ' 创建成功');
+}
+
+// ===== 查看批次明细（系统内新页签打开） =====
+function viewBatchDetail(batchNo) {
+  var title = '批次明细 ' + batchNo;
+  if (window.parent && window.parent !== window) {
+    // 在系统 iframe 内：通知父页面新增页签（路径相对 index.html）
+    window.parent.postMessage({
+      type: 'openTab',
+      page: 'pages/package/size-params-detail.html?batchNo=' + encodeURIComponent(batchNo),
+      title: title
+    }, '*');
+  } else {
+    // 独立打开时的降级处理
+    window.open('size-params-detail.html?batchNo=' + encodeURIComponent(batchNo), '_blank');
+  }
+}
+
+// ===== 作废批次 =====
+function voidBatch(batchNo) {
+  if (!confirm('确定作废批次 ' + batchNo + ' 吗？作废后该批次将被移除。')) return;
+  mockBatches = mockBatches.filter(function(b) { return b.batchNo !== batchNo; });
+  saveBatches();
+  renderAll();
+  showToast('批次 ' + batchNo + ' 已作废');
+}
+
+// ===== Toast =====
+function showToast(msg) {
+  var container = document.getElementById('toastContainer');
+  var el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  container.appendChild(el);
+  setTimeout(function() { el.classList.add('show'); }, 10);
+  setTimeout(function() {
+    el.classList.remove('show');
+    setTimeout(function() { container.removeChild(el); }, 300);
+  }, 2500);
+}
+
+// ===== 工具函数 =====
+function esc(str) {
+  if (!str) return '';
+  var div = document.createElement('div');
+  div.textContent = String(str);
+  return div.innerHTML;
+}
+
+// ===== 页面加载时检查是否需要刷新 =====
+window.addEventListener('pageshow', function() {
+  var stored = localStorage.getItem('size_params_batches');
+  if (stored) {
+    try { mockBatches = JSON.parse(stored); } catch(e) {}
+    renderAll();
+  }
+});
+
+// ===== 启动 =====
+init();
+</script>
 </body>
 </html>

@@ -5,6 +5,62 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>内容电商AI工作台</title>
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* ===== 系统内多页签 ===== */
+    .tab-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 28px;
+      flex-shrink: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 1px 3px rgba(15,23,42,0.05);
+      position: relative;
+      z-index: 9;
+    }
+    .tab-bar::-webkit-scrollbar { display: none; }
+    .tab-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 8px 6px 14px;
+      background: #f1f5f9;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all .15s;
+      user-select: none;
+      flex-shrink: 0;
+    }
+    .tab-item:hover { background: #e8edf6; color: var(--primary); }
+    .tab-item.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(91,108,245,.25);
+    }
+    .tab-close {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      font-size: 14px;
+      line-height: 1;
+      color: var(--text-tertiary);
+      transition: all .15s;
+    }
+    .tab-close:hover { background: #fee2e2; color: #dc2626; }
+    .tab-item.active .tab-close { color: rgba(255,255,255,0.75); }
+    .tab-item.active .tab-close:hover { background: rgba(255,255,255,0.25); color: #fff; }
+  </style>
 </head>
 <body>
   <div class="app-shell">
@@ -73,7 +129,7 @@
           </a>
           <a class="sidebar-item sidebar-child" data-page="pages/package/size-params.html" onclick="switchSidebar(this)">
             <svg viewBox="0 0 24 24" width="17" height="17"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-            <span>详情页智能体</span>
+            <span>批量配置任务</span>
           </a>
         </div>
         <div class="sidebar-parent" onclick="toggleSubmenu(this)">
@@ -102,9 +158,8 @@
         <div class="main-header">
           <div class="breadcrumb" id="breadcrumb">开店指南</div>
         </div>
-        <div class="main-content">
-          <iframe id="contentFrame" src="pages/guide/list.html?v=3"></iframe>
-        </div>
+        <div class="tab-bar" id="tabBar"></div>
+        <div class="main-content" id="mainContent"></div>
       </main>
 
     </div>
@@ -114,6 +169,86 @@
   <div class="toast-container" id="toastContainer"></div>
 
   <script>
+    // ===== 多页签管理 =====
+    var tabs = [];
+    var activeTabId = null;
+    var tabSeq = 0;
+
+    function findTab(id) {
+      for (var i = 0; i < tabs.length; i++) { if (tabs[i].id === id) return tabs[i]; }
+      return null;
+    }
+
+    function buildFrameSrc(page) {
+      return page + (page.indexOf('?') > -1 ? '&' : '?') + 'v=' + Date.now();
+    }
+
+    function createTab(opts) {
+      var id = 'tab_' + (++tabSeq);
+      var iframe = document.createElement('iframe');
+      iframe.className = 'tab-frame fade-in';
+      iframe.src = buildFrameSrc(opts.page);
+      iframe.style.display = 'none';
+      document.getElementById('mainContent').appendChild(iframe);
+      var tab = { id: id, title: opts.title, page: opts.page, iframe: iframe, closable: opts.closable !== false };
+      tabs.push(tab);
+      if (opts.activate !== false) activateTab(id); else renderTabBar();
+      return tab;
+    }
+
+    function activateTab(id) {
+      activeTabId = id;
+      tabs.forEach(function(t) { t.iframe.style.display = (t.id === id) ? 'block' : 'none'; });
+      renderTabBar();
+      var t = findTab(id);
+      if (t) document.getElementById('breadcrumb').innerHTML = t.title;
+    }
+
+    function closeTab(id) {
+      var idx = -1;
+      for (var i = 0; i < tabs.length; i++) { if (tabs[i].id === id) { idx = i; break; } }
+      if (idx === -1) return;
+      var tab = tabs[idx];
+      if (!tab.closable) return;
+      tab.iframe.parentNode.removeChild(tab.iframe);
+      tabs.splice(idx, 1);
+      if (activeTabId === id) {
+        var next = tabs[idx] || tabs[idx - 1];
+        if (next) activateTab(next.id);
+      } else {
+        renderTabBar();
+      }
+    }
+
+    function renderTabBar() {
+      var bar = document.getElementById('tabBar');
+      bar.innerHTML = '';
+      tabs.forEach(function(t) {
+        var el = document.createElement('div');
+        el.className = 'tab-item' + (t.id === activeTabId ? ' active' : '');
+        el.onclick = (function(id) { return function() { activateTab(id); }; })(t.id);
+        var titleSpan = document.createElement('span');
+        titleSpan.textContent = t.title;
+        el.appendChild(titleSpan);
+        if (t.closable) {
+          var closeBtn = document.createElement('span');
+          closeBtn.className = 'tab-close';
+          closeBtn.innerHTML = '&times;';
+          closeBtn.onclick = (function(id) { return function(e) { e.stopPropagation(); closeTab(id); }; })(t.id);
+          el.appendChild(closeBtn);
+        }
+        bar.appendChild(el);
+      });
+    }
+
+    // 打开页签（同地址页签已存在则复用并激活）
+    function openTab(page, title) {
+      for (var i = 0; i < tabs.length; i++) {
+        if (tabs[i].page === page) { activateTab(tabs[i].id); return; }
+      }
+      createTab({ title: title, page: page, closable: true, activate: true });
+    }
+
     // ===== 展开/收起侧边栏二级菜单 =====
     function toggleSubmenu(el) {
       el.classList.toggle('open');
@@ -127,39 +262,51 @@
       btn.classList.toggle('sidebar-open');
     }
 
-    // ===== 左侧菜单切换 =====
+    // ===== 左侧菜单切换（以页签方式打开） =====
     function switchSidebar(el) {
       document.querySelectorAll('.sidebar-item').forEach(function(i) { i.classList.remove('active'); });
       el.classList.add('active');
       var page = el.getAttribute('data-page');
-      loadFrame(page);
-      var text = el.querySelector('span').textContent.trim();
-      document.getElementById('breadcrumb').innerHTML = text;
+      var title = el.querySelector('span').textContent.trim();
+      openTab(page, title);
     }
 
-    // ===== 加载 iframe =====
-    function loadFrame(page) {
-      var frame = document.getElementById('contentFrame');
-      frame.classList.remove('fade-in');
-      void frame.offsetWidth;
-      frame.src = page + '?v=' + Date.now();
-      frame.classList.add('fade-in');
-    }
-
-    // ===== 监听 iframe postMessage 更新面包屑 =====
+    // ===== 监听 iframe postMessage =====
     window.addEventListener('message', function(e) {
-      if (e.data && e.data.type === 'breadcrumb') {
-        document.getElementById('breadcrumb').innerHTML = e.data.text;
+      if (!e.data || !e.data.type) return;
+
+      // 更新面包屑（仅当前激活页签的子页面）
+      if (e.data.type === 'breadcrumb') {
+        var active = findTab(activeTabId);
+        if (active && active.iframe.contentWindow === e.source) {
+          document.getElementById('breadcrumb').innerHTML = e.data.text;
+        }
+        return;
       }
-      // 智能体中心卡片点击跳转到具体智能体页面
-      if (e.data && e.data.type === 'navigate') {
-        var frame = document.getElementById('contentFrame');
-        frame.classList.remove('fade-in');
-        void frame.offsetWidth;
-        frame.src = e.data.page + '?v=' + Date.now();
-        frame.classList.add('fade-in');
+
+      // 子页面请求打开新页签
+      if (e.data.type === 'openTab') {
+        openTab(e.data.page, e.data.title || '新页签');
+        return;
+      }
+
+      // 子页面请求关闭所在页签
+      if (e.data.type === 'closeTab') {
+        for (var i = 0; i < tabs.length; i++) {
+          if (tabs[i].iframe.contentWindow === e.source) { closeTab(tabs[i].id); break; }
+        }
+        return;
+      }
+
+      // 智能体卡片跳转（兼容旧逻辑，以页签打开）
+      if (e.data.type === 'navigate') {
+        openTab(e.data.page, e.data.title || '详情');
+        return;
       }
     });
+
+    // ===== 初始化：创建首页页签 =====
+    createTab({ title: '首页', page: 'pages/guide/list.html', closable: false, activate: true });
   </script>
 </body>
 </html>
