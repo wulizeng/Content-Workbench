@@ -818,7 +818,7 @@ function renderTable(data) {
       html += '<td style="font-size:12px;">' + esc(createTime || '—') + '</td>';
       html += '<td class="col-actions">';
       html += '<a class="link-action" href="javascript:void(0)" onclick="doViewBatch(\'' + esc(key) + '\')">查看明细</a>';
-      html += '<a class="link-action danger" href="javascript:void(0)" onclick="doDelBatch(\'' + esc(key) + '\')">作废</a>';
+      html += '<a class="link-action danger" href="javascript:void(0)" onclick="doDelBatch(\'' + esc(key) + '\')">删除</a>';
       html += '</td></tr>';
     });
   }
