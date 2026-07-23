@@ -121,7 +121,7 @@
         <div class="section-body" style="padding:0;">
           <div style="overflow-x:auto;">
             <table class="pkg-table">
-              <thead>
+              <thead id="itemHead">
                 <tr>
                   <th style="width:50px;">序号</th>
                   <th style="width:120px;">店铺编码</th>
@@ -240,13 +240,39 @@
       document.getElementById('infoGrid').innerHTML = html;
     }
 
-    // ===== 渲染商品明细 =====
+    // ===== 渲染商品明细（按任务类型动态渲染列） =====
     function renderItems(batch) {
       var items = batch.items || [];
+      var isRecommend = (batch.type === 'recommend');
+      var isText = (batch.type === 'text');
       document.getElementById('itemCountBadge').textContent = '共 ' + items.length + ' 条商品';
+
+      // 动态表头：按任务类型插入专属列
+      var headHtml = '<tr>';
+      headHtml += '<th style="width:50px;">序号</th>';
+      headHtml += '<th style="width:120px;">店铺编码</th>';
+      headHtml += '<th style="width:200px;">平台商品ID</th>';
+      if (isRecommend) {
+        headHtml += '<th style="width:130px;">推荐商品组1</th>';
+        headHtml += '<th style="width:130px;">推荐商品组2</th>';
+        headHtml += '<th style="width:130px;">推荐商品组3</th>';
+      }
+      if (isText) {
+        headHtml += '<th>文本内容</th>';
+      }
+      headHtml += '<th style="width:110px;">执行状态</th>';
+      headHtml += '<th>失败原因</th>';
+      headHtml += '<th style="width:140px;">更新时间</th>';
+      headHtml += '<th style="width:80px;">更新人</th>';
+      headHtml += '<th style="width:80px;">操作</th>';
+      headHtml += '</tr>';
+      document.getElementById('itemHead').innerHTML = headHtml;
+
+      // 列数：推荐 11 / 文本 9 / 其他 8
+      var colCount = isRecommend ? 11 : (isText ? 9 : 8);
       var html = '';
       if (items.length === 0) {
-        html = '<tr><td colspan="8" style="text-align:center;padding:40px 0;color:var(--text-tertiary);">暂无商品明细</td></tr>';
+        html = '<tr><td colspan="' + colCount + '" style="text-align:center;padding:40px 0;color:var(--text-tertiary);">暂无商品明细</td></tr>';
       } else {
         items.forEach(function(it, idx) {
           var canDelete = (it.status === '待执行' || it.status === '失败');
@@ -254,6 +280,15 @@
           html += '<td>' + (idx + 1) + '</td>';
           html += '<td class="col-shop-code">' + esc(it.shopCode) + '</td>';
           html += '<td class="col-batch-no">' + esc(it.productId) + '</td>';
+          if (isRecommend) {
+            var rg = it.recGroups || [];
+            for (var g = 0; g < 3; g++) {
+              html += '<td>' + (rg[g] ? esc(rg[g]) : '-') + '</td>';
+            }
+          }
+          if (isText) {
+            html += '<td>' + (it.textContent ? esc(it.textContent) : '-') + '</td>';
+          }
           html += '<td>' + renderStatus(it.status) + '</td>';
           html += '<td style="color:' + (it.failReason ? '#dc2626' : 'var(--text-tertiary)') + ';">' + (it.failReason ? esc(it.failReason) : '-') + '</td>';
           html += '<td style="font-size:12px;">' + (it.updateTime ? esc(it.updateTime) : '-') + '</td>';
