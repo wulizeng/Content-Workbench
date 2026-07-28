@@ -242,8 +242,29 @@ function stepPrev() {
 }
 
 function stepNext() {
-  if (currentStep < TOTAL_STEPS) { currentStep++; updateStepUI(); window.scrollTo(0, 0); }
-  else { doSubmit(); }
+  if (currentStep < TOTAL_STEPS) {
+    clearErrors();
+    if (!validateStep(currentStep)) {
+      showToast('请完善表单中的必填项', 'error');
+      return;
+    }
+    currentStep++;
+    updateStepUI();
+    window.scrollTo(0, 0);
+  } else {
+    clearErrors();
+    var s1 = validateStep(1);
+    var s2 = validateStep(2);
+    var s3 = validateStep(3);
+    if (!s1 || !s2 || !s3) {
+      currentStep = !s1 ? 1 : (!s2 ? 2 : 3);
+      updateStepUI();
+      window.scrollTo(0, 0);
+      showToast('请完善表单中的必填项', 'error');
+      return;
+    }
+    doSubmit();
+  }
 }
 
 var PLATFORM_OPTIONS = ['抖音', '视频号', '快手'];
@@ -348,30 +369,38 @@ function clearErrors() {
   document.getElementById('shotError').style.display = 'none';
 }
 
+function validateStep(step) {
+  var ok = true;
+  if (step === 1) {
+    var brand = document.getElementById('brand');
+    var mainProduct = document.getElementById('mainProduct');
+    if (!brand.value.trim()) { brand.closest('.form-group').classList.add('has-error'); ok = false; }
+    if (!mainProduct.value.trim()) { mainProduct.closest('.form-group').classList.add('has-error'); ok = false; }
+  } else if (step === 2) {
+    var accounts = collectPlatformAccounts();
+    var accountsValid = accounts.length > 0 && accounts.every(function(a) { return a.account_name; });
+    if (!accountsValid) {
+      accounts.forEach(function(a) { if (!a.account_name) a._el.style.borderColor = '#ef4444'; });
+      ok = false;
+      showToast('请完善全部平台账号的运营账号', 'error');
+    }
+  } else if (step === 3) {
+    var gmv = document.getElementById('gmv');
+    if (!gmv.value.toString().trim()) { gmv.closest('.form-group').classList.add('has-error'); ok = false; }
+    if (shots.length === 0) {
+      document.getElementById('shotError').style.display = 'block';
+      ok = false;
+    }
+  }
+  return ok;
+}
+
 function validate() {
   clearErrors();
-  var ok = true;
-  var brand = document.getElementById('brand');
-  var mainProduct = document.getElementById('mainProduct');
-  var gmv = document.getElementById('gmv');
-
-  if (!brand.value.trim()) { brand.closest('.form-group').classList.add('has-error'); ok = false; }
-  if (!mainProduct.value.trim()) { mainProduct.closest('.form-group').classList.add('has-error'); ok = false; }
-  if (!gmv.value.toString().trim()) { gmv.closest('.form-group').classList.add('has-error'); ok = false; }
-
-  var accounts = collectPlatformAccounts();
-  var accountsValid = accounts.length > 0 && accounts.every(function(a) { return a.account_name; });
-  if (!accountsValid) {
-    accounts.forEach(function(a) { if (!a.account_name) a._el.style.borderColor = '#ef4444'; });
-    ok = false;
-    showToast('请完善全部平台账号的运营账号', 'error');
-  }
-
-  if (shots.length === 0) {
-    document.getElementById('shotError').style.display = 'block';
-    ok = false;
-  }
-
+  var s1 = validateStep(1);
+  var s2 = validateStep(2);
+  var s3 = validateStep(3);
+  var ok = s1 && s2 && s3;
   if (!ok) showToast('请完善表单中的必填项', 'error');
   return ok;
 }
