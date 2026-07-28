@@ -457,6 +457,7 @@ function init() {
         document.getElementById('pageTitle').textContent = '申请详情';
         document.getElementById('lockedBanner').style.display = 'block';
         document.getElementById('formActions').innerHTML = '<button type="button" class="btn" onclick="goBack()">返回</button>';
+        document.getElementById('mobileStepNav').style.display = 'none';
         setReadOnly(true);
       } else {
         document.getElementById('pageTitle').textContent = '修改重提';
@@ -537,9 +538,20 @@ function validate() {
 }
 
 function doSubmit() {
+  var apps = JSON.parse(localStorage.getItem('recruit_applications') || '[]');
+
+  // 防御性拦截：与 init() 只读分支相同条件（mode=edit 且记录状态非"已驳回"即为只读/锁定），
+  // 禁止提交，避免移动端旧入口把已审核/审核中记录状态回退为"已提交"
+  if (mode === 'edit' && editId > 0) {
+    var lockRec = apps.find(function(a) { return a.id === editId; });
+    if (lockRec && lockRec.status !== '已驳回') {
+      showToast('该申请正在审核中，暂不支持自行修改', 'error');
+      return;
+    }
+  }
+
   if (!validate()) return;
 
-  var apps = JSON.parse(localStorage.getItem('recruit_applications') || '[]');
   var accounts = collectPlatformAccounts().map(function(a) { return { platform: a.platform, account_name: a.account_name }; });
   var data = {
     phone: phone,
