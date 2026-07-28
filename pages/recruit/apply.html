@@ -618,7 +618,6 @@ document.getElementById('mainForm').addEventListener('change', updateStepUI);
 <script>
 (function() {
   if (self !== top) return;
-  function esc(s) { s = String(s); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function inject(doc) {
     if (!doc || !doc.body) return;
     var bar = doc.createElement('div');
@@ -633,12 +632,13 @@ document.getElementById('mainForm').addEventListener('change', updateStepUI);
     var btnPc = doc.getElementById('dsBtnPc');
     var btnPhone = doc.getElementById('dsBtnPhone');
     function enterPhone() {
-      var html = '<!DOCTYPE html>' + doc.documentElement.outerHTML;
+      if (doc.getElementById('devicePhone')) return;
       var wrap = doc.createElement('div');
       wrap.id = 'devicePhone';
       wrap.innerHTML = '<div class="dp-frame"><div class="dp-notch"></div><iframe id="dpFrame" title="手机效果预览"></iframe></div>' +
-        '<div class="dp-hint">📱 手机效果预览（390px 视口）· 点右上角「电脑」返回</div>';
+        '<div class="dp-hint">📱 手机效果预览（390px 视口）· 预览内操作同样生效 · 点右上角「电脑」返回</div>';
       var st2 = doc.createElement('style');
+      st2.id = 'dpStyle';
       st2.textContent = 'html.dp-phone,html.dp-phone body{height:100%;margin:0}' +
         'html.dp-phone body{background:#0f172a !important;display:flex !important;align-items:center;justify-content:center !important;overflow:hidden !important}' +
         'html.dp-phone > body > *:not(#devicePhone){display:none !important}' +
@@ -650,13 +650,15 @@ document.getElementById('mainForm').addEventListener('change', updateStepUI);
       doc.body.appendChild(st2);
       doc.body.appendChild(wrap);
       doc.documentElement.classList.add('dp-phone');
-      doc.getElementById('dpFrame').srcdoc = html;
+      doc.getElementById('dpFrame').src = location.href;
       btnPc.classList.remove('ds-active');
       btnPhone.classList.add('ds-active');
     }
     function exitPhone() {
       var w = doc.getElementById('devicePhone');
       if (w) w.parentNode.removeChild(w);
+      var s = doc.getElementById('dpStyle');
+      if (s) s.parentNode.removeChild(s);
       doc.documentElement.classList.remove('dp-phone');
       btnPc.classList.add('ds-active');
       btnPhone.classList.remove('ds-active');
