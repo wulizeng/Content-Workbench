@@ -135,13 +135,15 @@
       }
     }
     @media (min-width: 1024px) {
-      body { display: flex; justify-content: center; }
-      .apply-shell { max-width: 640px; margin: 24px 0 24px 260px; }
+      body { display: flex; justify-content: center; align-items: flex-start; gap: 32px; padding: 32px 24px; }
+      .apply-shell { max-width: 900px; width: 100%; flex: 1; margin: 0; padding: 0 0 40px; }
       .desktop-step-nav {
         display: flex; flex-direction: column; gap: 4px;
-        position: fixed; top: 24px; left: max(20px, calc(50% - 460px));
-        width: 220px; background: #fff; border: 1px solid var(--border);
+        position: sticky; top: 32px; left: auto;
+        width: 230px; flex-shrink: 0;
+        background: #fff; border: 1px solid var(--border);
         border-radius: 14px; padding: 16px;
+        box-shadow: 0 1px 3px rgba(15,23,42,.06);
       }
       .desktop-step-nav .dsn-item {
         display: flex; align-items: center; gap: 10px; padding: 10px 12px;
@@ -157,6 +159,23 @@
       .desktop-step-nav .dsn-item.current { background: var(--primary-light); color: var(--primary); font-weight: 600; }
       .desktop-step-nav .dsn-item.current .num { background: var(--primary); color: #fff; }
       .desktop-step-nav .dsn-item.disabled { cursor: not-allowed; }
+      /* PC 表单：更宽卡片，字段两列 */
+      .form-card { padding: 26px 28px; }
+      .form-card[data-step="1"],
+      .form-card[data-step="3"] {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 22px 28px;
+      }
+      .form-card[data-step="1"] .form-card-title,
+      .form-card[data-step="3"] .form-card-title {
+        grid-column: 1 / -1; margin-bottom: 2px;
+      }
+      .form-card[data-step="1"] .form-group,
+      .form-card[data-step="3"] .form-group { margin-bottom: 0; }
+      /* 平台账号：每行两张卡片；卡内"平台"与"运营账号"并排 */
+      #platformAccountList { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      .platform-account-card { display: flex; flex-wrap: wrap; gap: 0 16px; margin-bottom: 0; }
+      .platform-account-card .pa-head { flex: 0 0 100%; }
+      .platform-account-card .form-group { flex: 1 1 calc(50% - 16px); margin-bottom: 0; }
     }
     @media (max-width: 1023px) {
       .desktop-step-nav { display: none; }
