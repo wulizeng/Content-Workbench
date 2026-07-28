@@ -323,7 +323,7 @@ init();
       st2.id = 'dpStyle';
       st2.textContent = 'html.dp-phone,html.dp-phone body{height:100%;margin:0}' +
         'html.dp-phone body{background:#0f172a !important;display:flex !important;align-items:center;justify-content:center !important;overflow:hidden !important}' +
-        'html.dp-phone > body > *:not(#devicePhone){display:none !important}' +
+        'html.dp-phone > body > *:not(#devicePhone):not(#deviceSwitcher){display:none !important}' +
         '#devicePhone{display:flex;flex-direction:column;align-items:center;gap:14px}' +
         '#devicePhone .dp-frame{width:390px;height:min(800px,88vh);background:#fff;border:10px solid #1e293b;border-radius:44px;box-shadow:0 24px 60px rgba(0,0,0,.5);overflow:hidden;position:relative}' +
         '#devicePhone .dp-notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:150px;height:24px;background:#1e293b;border-radius:0 0 16px 16px;z-index:3}' +
