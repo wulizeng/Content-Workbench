@@ -63,11 +63,11 @@
       }
       .recruit-card-foot .time { font-size: 12px; color: #94a3b8; }
       .load-more-bar { display: block; text-align: center; margin: 8px 0 16px; }
-      .load-more-bar .btn { width: 100%; height: 44px; }
+      .load-more-bar .btn { width: 100%; height: 48px; }
       .filter-fab {
         display: inline-flex; align-items: center; gap: 6px;
         position: fixed; right: 16px; bottom: 24px; z-index: 50;
-        height: 44px; padding: 0 18px; border: none; border-radius: 22px;
+        height: 48px; padding: 0 18px; border: none; border-radius: 24px;
         background: var(--primary); color: #fff; font-size: 14px; font-weight: 600;
         box-shadow: 0 6px 18px rgba(91,108,245,.35); cursor: pointer;
       }
@@ -328,7 +328,7 @@ function renderCards(data) {
       if (chips) html += '<div class="chip-row">' + chips + '</div>';
       html += '</div>';
       html += '<div class="recruit-card-foot"><span class="time">' + esc(row.created_at) + '</span>';
-      html += '<a class="btn btn-primary" style="height:36px;line-height:36px;padding:0 16px;" href="detail.html?id=' + row.id + '&mode=view">查看详情</a>';
+      html += '<a class="btn btn-primary" style="height:48px;line-height:48px;padding:0 16px;" href="detail.html?id=' + row.id + '&mode=view">查看详情</a>';
       html += '</div></div>';
     });
   }
