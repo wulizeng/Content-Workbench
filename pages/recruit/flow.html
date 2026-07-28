@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>招商入驻协同流程</title>
+<style>
+  :root {
+    --bg: #f5f7fb;
+    --panel: #ffffff;
+    --ink: #0f172a;
+    --muted: #475569;
+    --line: #e2e8f0;
+    --primary: #5b6cf5;
+    --primary-soft: #eef0ff;
+    --ok: #10b981;
+    --radius: 10px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    color: var(--ink);
+    background:
+      linear-gradient(90deg, rgba(18,24,38,.04) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(37,104,217,.09), transparent 340px),
+      var(--bg);
+    background-size: 28px 28px, auto, auto;
+  }
+  button, input { font: inherit; }
+  button { cursor: pointer; }
+  h1,h2,h3,p { margin: 0; }
+  main {
+    padding: 20px 28px 40px;
+    position: relative;
+    overflow: hidden;
+    background:
+      linear-gradient(135deg, rgba(5,128,111,.1), transparent 28%),
+      linear-gradient(225deg, rgba(221,77,59,.1), transparent 30%),
+      linear-gradient(180deg, #f9fbff 0, #f4f7fb 420px, #f7f9fc 100%);
+  }
+  main::before {
+    content: "";
+    position: absolute; inset: 0; pointer-events: none;
+    background:
+      linear-gradient(90deg, rgba(37,104,217,.06) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(5,128,111,.05) 1px, transparent 1px);
+    background-size: 36px 36px;
+    mask-image: linear-gradient(180deg, #000, transparent 68%);
+  }
+  main > * { position: relative; z-index: 1; }
+
+  .top-bar { display:flex; justify-content:space-between; align-items:center; padding:8px 0 12px; gap:16px; flex-wrap:wrap; }
+  .brand-compact { display:flex; align-items:center; gap:10px; }
+  .brand-mark-compact { width:34px; height:34px; border-radius:10px; background:linear-gradient(135deg,#5b6cf5,#a78bfa); display:grid; place-items:center; box-shadow:0 4px 12px rgba(91,108,245,.3); }
+  .brand-mark-compact svg { width:16px; height:16px; fill:#fff; }
+  .brand-text-compact h1 { font-size:15px; font-weight:700; color:var(--ink); line-height:1.2; }
+  .brand-text-compact p { font-size:11px; color:var(--muted); }
+  .top-bar-right { display:flex; align-items:center; gap:16px; }
+  .progress-compact { display:flex; align-items:center; gap:10px; }
+  .progress-label { font-size:12px; color:var(--muted); white-space:nowrap; }
+  .bar-compact { width:100px; height:6px; background:var(--line); border-radius:999px; overflow:hidden; }
+  .bar-compact span { display:block; height:100%; width:0; border-radius:inherit; background:linear-gradient(90deg,#4f6ef7,#818cf8,#a5b4fc); transition:width .28s ease-out; }
+  .progress-compact .progress-number { font-size:12px; color:var(--ink); font-weight:700; font-variant-numeric:tabular-nums; min-width:56px; }
+  .controls { display:flex; gap:8px; }
+  .icon-btn { min-height:36px; width:36px; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:var(--radius); display:grid; place-items:center; transition:transform .18s ease, border-color .18s ease, background .18s ease; }
+  .icon-btn:hover { border-color:var(--primary); background:var(--primary-soft); }
+  .icon-btn svg { width:16px; height:16px; }
+
+  .hero { margin-bottom:22px; }
+  .hero > div {
+    padding: 30px 40px; min-height:190px;
+    border:1px solid var(--line); border-radius:var(--radius);
+    background:
+      linear-gradient(118deg, rgba(255,255,255,.94) 0 46%, rgba(236,246,255,.84) 46% 100%),
+      linear-gradient(135deg, rgba(5,128,111,.24), rgba(37,104,217,.22) 55%, rgba(221,77,59,.18));
+    box-shadow:0 24px 60px rgba(37,104,217,.16);
+    display:grid; align-content:end; position:relative; overflow:hidden;
+  }
+  .hero > div::after { content:""; position:absolute; inset:auto 0 0 0; height:6px; background:linear-gradient(90deg,var(--primary),#3b82f6,#d97706,#f97316); }
+  .hero h2 { font-size:clamp(24px,3.4vw,38px); line-height:1.15; }
+  .hero-kicker { width:fit-content; min-height:28px; padding:6px 10px; margin-bottom:12px; border:1px solid rgba(5,128,111,.18); border-radius:999px; color:var(--primary); background:rgba(226,245,241,.78); font-size:13px; font-weight:750; }
+  .hero p.hero-desc { margin-top:10px; color:#4e5b6d; font-size:14px; line-height:1.7; max-width:760px; }
+  .hero-chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
+  .hero-chip { min-height:30px; padding:6px 10px; border-radius:999px; color:#243247; background:rgba(255,255,255,.72); border:1px solid rgba(37,104,217,.14); box-shadow:0 8px 18px rgba(17,24,39,.06); font-size:12px; font-weight:700; }
+  .hero-source { margin-top:14px; font-size:11px; color:#8a95a6; }
+
+  .stage-nav { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:20px; }
+  .stage-tab { min-height:60px; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:var(--radius); padding:10px 14px; text-align:left; display:grid; grid-template-columns:32px 1fr auto; align-items:center; gap:10px; box-shadow:0 4px 12px rgba(17,24,39,.06); transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease; }
+  .stage-tab:hover, .stage-tab:focus-visible { border-color:color-mix(in srgb, var(--stage-color,var(--primary)) 40%, var(--line)); background:color-mix(in srgb, var(--stage-color,var(--primary)) 4%, #fff); outline:none; }
+  .stage-tab.active { border-color:var(--stage-color,var(--primary)); background:color-mix(in srgb, var(--stage-color,var(--primary)) 6%, #fff); box-shadow:0 8px 20px color-mix(in srgb, var(--stage-color,var(--primary)) 12%, transparent); transform:translateY(-2px); }
+  .stage-index { width:32px; height:32px; border-radius:999px; display:grid; place-items:center; color:#fff; font-weight:800; font-size:13px; }
+  .stage-title { font-size:14px; font-weight:700; line-height:1.25; color:var(--ink); }
+  .stage-count { color:var(--muted); font-size:12px; margin-top:2px; }
+  .stage-done { color:#94a3b8; font-size:12px; font-weight:700; font-variant-numeric:tabular-nums; }
+
+  .flow-map { position:relative; display:grid; grid-template-columns:repeat(6,minmax(28px,1fr)); grid-auto-rows:minmax(34px,auto); gap:10px 8px; margin-bottom:24px; padding:24px; border:1px solid rgba(37,104,217,.14); border-radius:var(--radius); background:linear-gradient(180deg, rgba(255,255,255,.9), rgba(248,252,255,.82)), linear-gradient(135deg, rgba(5,128,111,.12), rgba(37,104,217,.1), rgba(221,77,59,.08)); box-shadow:0 22px 48px rgba(37,104,217,.12); overflow:hidden; }
+  .flow-map::after { content:""; position:absolute; inset:44px 48px; border:2px dashed rgba(37,104,217,.18); border-radius:var(--radius); pointer-events:none; }
+  .maze-link { position:relative; z-index:1; pointer-events:none; }
+  .maze-link::before { content:""; position:absolute; background:repeating-linear-gradient(90deg, rgba(255,255,255,.48) 0 8px, transparent 8px 17px), linear-gradient(90deg, color-mix(in srgb, var(--link-color,var(--primary)) 58%, #bfe8ff), color-mix(in srgb, var(--link-color,var(--primary)) 30%, #ffe0f2)); border-radius:999px; box-shadow:0 0 0 4px rgba(255,255,255,.76), 0 8px 18px color-mix(in srgb, var(--link-color,var(--primary)) 16%, transparent); }
+  .maze-link.h::before { left:-22px; right:-22px; top:50%; height:6px; transform:translateY(-50%); }
+  .maze-link.v::before { top:-18px; bottom:-18px; left:50%; width:6px; transform:translateX(-50%); }
+
+  .flow-node {
+    position:relative; z-index:2; border:2px solid color-mix(in srgb, var(--stage-color,var(--primary)) 26%, #ffffff);
+    background:
+      radial-gradient(circle at 18% 18%, rgba(255,255,255,.96), transparent 27%),
+      linear-gradient(145deg, rgba(255,255,255,.98), color-mix(in srgb, var(--stage-soft,var(--primary-soft)) 78%, #ffffff)),
+      linear-gradient(135deg, var(--stage-soft,var(--primary-soft)), #fff);
+    border-radius:20px; min-height:92px; padding:12px; display:grid; grid-template-columns:36px 1fr; align-content:center; gap:9px;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.72), 0 7px 0 color-mix(in srgb, var(--stage-color,var(--primary)) 13%, #e3ebf5), 0 18px 32px color-mix(in srgb, var(--stage-color,var(--primary)) 13%, rgba(17,24,39,.08));
+    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease; text-align:left;
+  }
+  .flow-node.active { transform:translateY(-6px) scale(1.03); border-color:var(--stage-color,var(--primary)); box-shadow: inset 0 0 0 1px rgba(255,255,255,.78), 0 8px 0 color-mix(in srgb, var(--stage-color,var(--primary)) 24%, #e3ebf5), 0 28px 52px color-mix(in srgb, var(--stage-color,var(--primary)) 22%, transparent); }
+  .flow-node:hover, .flow-node:focus-visible { outline:none; transform:translateY(-5px) scale(1.02); border-color:var(--stage-color,var(--primary)); }
+  .flow-node.skip { border-style:dashed; opacity:.85; }
+  .flow-node-head { position:relative; z-index:3; display:flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:999px; color:#fff; background:radial-gradient(circle at 30% 24%, rgba(255,255,255,.54), transparent 31%), linear-gradient(145deg, color-mix(in srgb, var(--stage-color,var(--primary)) 72%, #ffffff), var(--stage-color,var(--primary))); box-shadow: inset 0 -3px 0 rgba(0,0,0,.12), 0 9px 16px color-mix(in srgb, var(--stage-color,var(--primary)) 20%, transparent); font-weight:850; font-size:13px; }
+  .flow-node h3 { font-size:13px; line-height:1.3; margin-bottom:3px; color:#243044; font-weight:800; }
+  .flow-node p { width:fit-content; min-height:20px; padding:2px 7px; border-radius:999px; color:color-mix(in srgb, var(--stage-color,var(--primary)) 62%, #374151); background:color-mix(in srgb, var(--stage-color,var(--primary)) 10%, #ffffff); font-size:11px; line-height:1.5; font-weight:700; }
+
+  .content-grid { display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:24px; align-items:start; margin-bottom:24px; }
+  .stage-panel, .detail-panel { border:1px solid var(--line); border-radius:var(--radius); background:rgba(255,255,255,.92); box-shadow:0 18px 42px rgba(17,24,39,.1); }
+  .panel-head { padding:20px; border-bottom:1px solid var(--line); background:linear-gradient(90deg, rgba(255,255,255,.92), rgba(248,251,255,.92)), linear-gradient(135deg, var(--active-soft,var(--primary-soft)), transparent); display:flex; justify-content:space-between; align-items:flex-start; gap:16px; }
+  .panel-head h3 { font-size:20px; line-height:1.25; }
+  .panel-head p { margin-top:8px; color:var(--muted); line-height:1.6; font-size:13px; }
+  .pill { white-space:nowrap; min-height:32px; padding:6px 12px; border-radius:999px; background:var(--primary-soft); color:var(--primary); font-size:13px; font-weight:700; display:inline-flex; align-items:center; gap:6px; }
+
+  .steps { padding:16px; display:grid; gap:12px; }
+  .step-card { position:relative; border:1px solid var(--line); border-radius:var(--radius); background:linear-gradient(180deg,#ffffff,#fbfcfe); padding:14px; display:grid; grid-template-columns:40px 1fr; gap:12px; align-items:start; box-shadow:0 6px 16px rgba(17,24,39,.04); overflow:hidden; transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease; cursor:pointer; }
+  .step-card::before { content:""; position:absolute; inset:0 auto 0 0; width:4px; background:var(--stage-color,var(--primary)); opacity:0; transition:opacity .18s ease; }
+  .step-card:hover, .step-card.selected { border-color:color-mix(in srgb, var(--stage-color,var(--primary)) 45%, var(--line)); background:#fbfefd; transform:translateY(-1px); box-shadow:0 12px 26px color-mix(in srgb, var(--stage-color,var(--primary)) 16%, transparent); }
+  .step-card.selected::before { opacity:1; }
+  .step-card.skip { background:repeating-linear-gradient(135deg,#fff,#fff 10px,#fafafa 10px,#fafafa 20px); }
+  .step-number { width:40px; height:40px; border-radius:var(--radius); display:grid; place-items:center; font-weight:800; color:var(--ink); background:color-mix(in srgb, var(--stage-color,var(--primary)) 10%, #eef3f8); font-size:13px; }
+  .step-main h4 { font-size:15px; line-height:1.35; }
+  .step-main p { margin-top:5px; color:#5f6d7f; font-size:13px; line-height:1.55; }
+  .step-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:9px; }
+  .tag { display:inline-flex; align-items:center; min-height:24px; padding:3px 8px; border-radius:999px; color:color-mix(in srgb, var(--stage-color,var(--primary)) 52%, #243247); background:color-mix(in srgb, var(--stage-color,var(--primary)) 10%, #eef3f8); font-size:11px; font-weight:650; }
+
+  .detail-panel { position:sticky; top:20px; overflow:hidden; }
+  .detail-accent { height:8px; background:var(--primary); }
+  .detail-body { padding:20px; background:linear-gradient(180deg, rgba(255,255,255,.96), rgba(249,251,255,.94)), linear-gradient(135deg, var(--detail-soft,var(--primary-soft)), transparent); }
+  .detail-kicker { color:var(--muted); font-size:12px; font-weight:700; margin-bottom:8px; }
+  .detail-body h3 { font-size:21px; line-height:1.25; margin-bottom:10px; }
+  .detail-body p { color:#536174; line-height:1.7; font-size:13px; }
+  .detail-list { display:grid; gap:9px; padding:0; margin:16px 0 0; list-style:none; }
+  .detail-list li { display:grid; grid-template-columns:20px 1fr; gap:8px; color:#405066; line-height:1.5; font-size:13px; }
+  .detail-list svg { width:17px; height:17px; margin-top:1px; stroke:var(--primary); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+
+  .compare-panel { border:1px solid var(--line); border-radius:var(--radius); background:rgba(255,255,255,.92); box-shadow:0 18px 42px rgba(17,24,39,.1); margin-bottom:20px; }
+  .compare-body { padding:20px; overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:13px; min-width:640px; }
+  thead tr { background:var(--primary); color:#fff; }
+  th { padding:10px 14px; text-align:center; }
+  th:first-child { text-align:left; border-radius:8px 0 0 0; }
+  th:last-child { border-radius:0 8px 0 0; }
+  td { padding:8px 14px; }
+  tr:nth-child(even) td { background:#f8f9fc; }
+  .compare-note { margin-top:14px; font-size:12px; color:#8a95a6; text-align:center; line-height:1.7; }
+
+  @media (max-width:1100px) {
+    .stage-nav { grid-template-columns:1fr; }
+    .content-grid { grid-template-columns:1fr; }
+    .detail-panel { position:static; }
+  }
+  @media (max-width:760px) {
+    main { padding:16px; }
+    .flow-map { grid-template-columns:1fr; grid-auto-rows:auto; padding:16px; }
+    .flow-map::after, .maze-link { display:none; }
+    .flow-node { grid-column:1 !important; grid-row:auto !important; }
+  }
+</style>
+</head>
+<body>
+
+<script>
+  if (window.parent) {
+    window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 招商入驻流程'}, '*');
+  }
+</script>
+
+<main>
+  <div class="top-bar">
+    <div class="brand-compact">
+      <div class="brand-mark-compact" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M16.3 4.2c.7 2.1 1.9 3.6 3.7 4.4v3.8a8.8 8.8 0 0 1-3.5-.9v4.9a6.2 6.2 0 1 1-6.2-6.2c.4 0 .8 0 1.2.1v3.9c-.4-.2-.8-.3-1.2-.3a2.4 2.4 0 1 0 2.4 2.4V4.2h3.6Z"/></svg>
+      </div>
+      <div class="brand-text-compact">
+        <h1>招商入驻协同流程</h1>
+        <p>分销客户招商申请 → 入驻账户信息管理 在线协同</p>
+      </div>
+    </div>
+    <div class="top-bar-right">
+      <div class="progress-compact">
+        <span class="progress-label">浏览进度</span>
+        <div class="bar-compact"><span id="progressBar"></span></div>
+        <strong class="progress-number" id="progressText">0 / 0</strong>
+      </div>
+      <div class="controls">
+        <button class="icon-btn" id="prevBtn" type="button" aria-label="上一步" title="上一步">
+          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <button class="icon-btn" id="nextBtn" type="button" aria-label="下一步" title="下一步">
+          <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <section class="hero">
+    <div>
+      <div class="hero-kicker">分销枢纽入驻 SOP · 招商申请到入驻账户信息管理在线协同</div>
+      <h2>从招商申请到入驻账户信息管理，一屏看懂三类客户的在线协同路径</h2>
+      <p class="hero-desc">DP合作伙伴、KOC内容达人、达人客户共用一套准入框架，覆盖招商申请、供应商准入、合同网签直至入驻账户信息管理的全流程线上协同，按角色区分「必走环节」与「可跳过环节」。切换下方标签查看每类客户的完整流程节点说明。</p>
+      <div class="hero-chips" aria-label="流程特性">
+        <span class="hero-chip">招商申请</span>
+        <span class="hero-chip">供应商准入</span>
+        <span class="hero-chip">合同网签</span>
+        <span class="hero-chip">入驻账户信息管理</span>
+      </div>
+    </div>
+  </section>
+
+  <nav class="stage-nav" id="stageNav" aria-label="客户类型"></nav>
+
+  <section class="flow-map" id="flowMap" aria-label="流程节点地图"></section>
+
+  <section class="content-grid">
+    <article class="stage-panel">
+      <div class="panel-head">
+        <div>
+          <h3 id="stageTitle">DP客户入驻流程</h3>
+          <p id="stageSummary"></p>
+        </div>
+        <span class="pill" id="stagePill">
+          <svg viewBox="0 0 24 24" width="15" height="15"><path d="M20 6 9 17l-5-5"/></svg>
+          <span>0 / 0</span>
+        </span>
+      </div>
+      <div class="steps" id="steps"></div>
+    </article>
+
+    <aside class="detail-panel" aria-label="流程节点说明">
+      <div class="detail-accent" id="detailAccent"></div>
+      <div class="detail-body">
+        <div class="detail-kicker" id="detailKicker">步骤 1</div>
+        <h3 id="detailTitle"></h3>
+        <p id="detailDescription"></p>
+        <ul class="detail-list" id="detailList"></ul>
+      </div>
+    </aside>
+  </section>
+
+  <section class="compare-panel">
+    <div class="panel-head">
+      <div>
+        <h3>三种客户类型流程对比</h3>
+        <p>DP：1-11 全流程必走 ｜ 达人/KOC：6-7-8 → 跳过9 → 10-11，仅免除保证金</p>
+      </div>
+    </div>
+    <div class="compare-body">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:30%;">流程步骤</th>
+            <th style="width:23%;">DP客户</th>
+            <th style="width:23%;">达人客户</th>
+            <th style="width:23%;">KOC客户</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>一、选择入驻模式与品牌</td><td style="text-align:center;">✅</td><td style="text-align:center;color:#999;">⏭️ 跳过</td><td style="text-align:center;color:#999;">⏭️ 跳过</td></tr>
+          <tr><td>二、入驻资料提交</td><td style="text-align:center;">✅</td><td style="text-align:center;color:#999;">⏭️ 跳过</td><td style="text-align:center;color:#999;">⏭️ 跳过</td></tr>
+          <tr><td>三、运营审核入驻资料</td><td style="text-align:center;">✅</td><td style="text-align:center;color:#999;">⏭️ 跳过</td><td style="text-align:center;color:#999;">⏭️ 跳过</td></tr>
+          <tr><td>四、项目规划</td><td style="text-align:center;">✅</td><td style="text-align:center;color:#999;">⏭️ 跳过</td><td style="text-align:center;color:#999;">⏭️ 跳过</td></tr>
+          <tr><td>五、运营审核项目规划</td><td style="text-align:center;">✅</td><td style="text-align:center;color:#999;">⏭️ 跳过</td><td style="text-align:center;color:#999;">⏭️ 跳过</td></tr>
+          <tr><td><strong>六、供应商申请入驻</strong></td><td style="text-align:center;">✅</td><td style="text-align:center;color:#2E7D32;">✅ 必走</td><td style="text-align:center;color:#2E7D32;">✅ 必走</td></tr>
+          <tr><td><strong>七、运营审核供应商准入</strong></td><td style="text-align:center;">✅</td><td style="text-align:center;color:#2E7D32;">✅ 必走</td><td style="text-align:center;color:#2E7D32;">✅ 必走</td></tr>
+          <tr><td><strong>八、合同网签</strong></td>
+            <td style="text-align:center;">✅<br><span style="font-size:11px;">DP类合同4种</span></td>
+            <td style="text-align:center;color:#7B1FA2;">✅ 必走<br><span style="font-size:11px;">达人类合同3种</span></td>
+            <td style="text-align:center;color:#7B1FA2;">✅ 必走<br><span style="font-size:11px;">KOC类合同3种</span></td>
+          </tr>
+          <tr><td style="color:#e74c3c;"><strong>九、提交保证金</strong></td>
+            <td style="text-align:center;">✅<br><span style="font-size:11px;">含样衣授信2W</span></td>
+            <td style="text-align:center;color:#e74c3c;font-weight:bold;">⏭️ 跳过</td>
+            <td style="text-align:center;color:#e74c3c;font-weight:bold;">⏭️ 跳过</td>
+          </tr>
+          <tr><td><strong>十、账号信息录入</strong></td><td style="text-align:center;">✅</td><td style="text-align:center;color:#2E7D32;">✅ 必走</td><td style="text-align:center;color:#2E7D32;">✅ 必走</td></tr>
+          <tr><td><strong>十一、强制阅读红线告知书</strong></td><td style="text-align:center;">✅</td><td style="text-align:center;color:#2E7D32;">✅ 必走</td><td style="text-align:center;color:#2E7D32;">✅ 必走</td></tr>
+          <tr><td><strong>准入流程完毕</strong></td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+        </tbody>
+      </table>
+      <p class="compare-note">⚠️ 达人/KOC需要合同网签，仅免除保证金</p>
+    </div>
+  </section>
+</main>
+
+<script>
+  const stages = [
+    {
+      title: "DP客户入驻流程",
+      short: "DP客户",
+      color: "#5b6cf5",
+      soft: "#eef0ff",
+      summary: "DP客户需完整走完全部十一个环节：入驻资料审核 → 项目规划 → 供应商准入 → 合同网签 → 保证金（含样衣授信2万积分）→ 账号录入 → 红线告知书。",
+      steps: [
+        { title:"一、选择入驻模式与品牌", desc:"客户在入驻页面选择入驻模式为「DP入驻」，并选择所属品牌：巴拉 / 迷你 / 森马。", tags:["客户操作","模式选择"], checklist:["确认入驻模式为DP入驻","选择所属品牌（巴拉/迷你/森马）"] },
+        { title:"二、入驻资料提交", desc:"客户在线上填写入驻资料表单，该表单为必填项，是后续运营审核的基础材料。", tags:["客户填表","必填"], checklist:["填写公司/主体基础信息","上传入驻所需证明材料","提交表单等待审核"] },
+        { title:"三、运营审核入驻资料", desc:"运营对客户提交的入驻资料进行审核，判断客户是否有合作意向。无意向则流程终止，有意向则进入项目规划环节。", tags:["运营审核","分支判断"], checklist:["无意向 → 流程终止","有意向 → 进入「四、项目规划」"] },
+        { title:"四、项目规划", desc:"客户在线上填写项目规划表单（必填），需包含公司介绍与经营项目、投入计划与经营策略、产出计划（年度GMV拆解）三部分内容。", tags:["客户填表","必填"], checklist:["① 公司介绍与经营项目","② 投入计划与经营策略","③ 产出计划（年度GMV拆解）"] },
+        { title:"五、运营审核项目规划", desc:"运营审核客户提交的项目规划，判断是否通过。不通过则退回客户修改「四、项目规划」，通过则进入供应商准入环节。", tags:["运营审核","分支判断"], checklist:["不通过 → 退回修改「四、项目规划」","审核通过 → 进入「六、供应商申请入驻」"] },
+        { title:"六、供应商申请入驻", desc:"AI工作台自动生成供应商账号，字段与BPM系统保持一致，运营可对生成字段进行修改。", tags:["系统/供应商","AI工作台"], checklist:["系统自动生成供应商账号","字段与BPM系统一致","运营可修改生成字段"] },
+        { title:"七、运营审核供应商准入", desc:"运营审核供应商准入资格。不通过则退回「六、供应商申请入驻」重新处理，审核通过后流程自动流入BPM系统，进入合同网签环节。", tags:["运营审核","分支判断"], checklist:["不通过 → 退回「六、供应商申请入驻」","审核通过 → 流入BPM，进入「八、合同网签」"] },
+        { title:"八、选择合同类型并网签", desc:"客户选择合同类型并完成网签。DP类合同包含：整店代运营、森生抖音分销、森马抖音分销、森马视频号。系统自动抓取乙方信息填入合同审核会签流程，运营手动补充其他信息。", tags:["合同网签","DP类合同4种"], checklist:["整店代运营","森生抖音分销","森马抖音分销","森马视频号","系统自动抓取乙方信息，运营补充其他信息"] },
+        { title:"九、提交保证金", desc:"DP客户提交保证金缴纳记录，系统自动生成样衣授信（2万积分），供后续样衣申领使用。", tags:["保证金","样衣授信2W"], checklist:["提交保证金缴纳记录","系统自动生成2万积分样衣授信"] },
+        { title:"十、录入账号信息", desc:"将平台账号信息录入【全品牌直播账号管理】系统，并经运营审核确认。", tags:["系统/供应商","账号管理"], checklist:["录入【全品牌直播账号管理】","运营审核账号信息"] },
+        { title:"十一、强制阅读红线告知书", desc:"客户需最少阅读30秒直播事业部红线告知书，确认知悉合规红线后，准入流程完毕，正式进入运营流程。", tags:["强制合规","最少30秒"], checklist:["强制阅读直播事业部红线告知书（≥30秒）","确认知悉后 → 准入流程完毕，开始运营流程"] }
+      ]
+    },
+    {
+      title: "KOC客户入驻流程",
+      short: "KOC客户",
+      color: "#0288D1",
+      soft: "#e1f5fe",
+      summary: "KOC客户跳过入驻资料与项目规划审核（步骤1-5），直接从供应商准入开始；合同网签需要走KOC专属合同类型；无需缴纳保证金。",
+      steps: [
+        { title:"选择入驻模式与品牌", desc:"客户选择入驻模式为「KOC入驻」，并选择所属品牌：巴拉 / 迷你 / 森马。无需进行入驻资料提交与项目规划审核，直接进入供应商准入环节。", tags:["客户操作","模式选择"], checklist:["确认入驻模式为KOC入驻","选择所属品牌（巴拉/迷你/森马）","⏭️ 无需入驻资料审核与项目规划"] },
+        { title:"六、供应商申请入驻", desc:"AI工作台自动生成供应商账号，字段与BPM系统一致，运营可修改生成字段。", tags:["系统/供应商","AI工作台"], checklist:["系统自动生成供应商账号","字段与BPM系统一致","运营可修改生成字段"] },
+        { title:"七、运营审核供应商准入", desc:"运营审核供应商准入资格。不通过则退回重新处理，审核通过后流入BPM，进入合同网签环节。", tags:["运营审核","分支判断"], checklist:["不通过 → 退回「供应商申请入驻」","审核通过 → 流入BPM，进入合同网签"] },
+        { title:"八、选择合同类型并网签（KOC类）", desc:"KOC客户选择KOC专属合同类型完成网签，包含：KOC年框合同、团长合同、单KOC合作合同。系统自动抓取乙方信息，运营手动补充其他信息。无需缴纳保证金，直接进入账号信息录入环节。", tags:["合同网签","KOC类合同3种"], checklist:["KOC年框合同","团长合同","单KOC合作合同","系统自动抓取乙方信息，运营补充其他信息","⏭️ KOC无需缴纳保证金"] },
+        { title:"十、录入账号信息", desc:"将平台账号信息录入【全品牌直播账号管理】系统，并经运营审核确认。", tags:["系统/供应商","账号管理"], checklist:["录入【全品牌直播账号管理】","运营审核账号信息"] },
+        { title:"十一、强制阅读红线告知书", desc:"客户需最少阅读30秒直播事业部红线告知书，确认知悉合规红线后，准入流程完毕，正式进入运营流程。", tags:["强制合规","最少30秒"], checklist:["强制阅读直播事业部红线告知书（≥30秒）","确认知悉后 → 准入流程完毕，开始运营流程"] }
+      ]
+    },
+    {
+      title: "达人客户入驻流程",
+      short: "达人客户",
+      color: "#D81B60",
+      soft: "#fce4ec",
+      summary: "达人客户流程与KOC一致：跳过入驻资料与项目规划审核，合同网签需要走达人专属合同类型；无需缴纳保证金。",
+      steps: [
+        { title:"选择入驻模式与品牌", desc:"客户选择入驻模式为「达人入驻」，并选择所属品牌：巴拉 / 迷你 / 森马。无需进行入驻资料提交与项目规划审核，直接进入供应商准入环节。", tags:["客户操作","模式选择"], checklist:["确认入驻模式为达人入驻","选择所属品牌（巴拉/迷你/森马）","⏭️ 无需入驻资料审核与项目规划"] },
+        { title:"六、供应商申请入驻", desc:"AI工作台自动生成供应商账号，字段与BPM系统一致，运营可修改生成字段。", tags:["系统/供应商","AI工作台"], checklist:["系统自动生成供应商账号","字段与BPM系统一致","运营可修改生成字段"] },
+        { title:"七、运营审核供应商准入", desc:"运营审核供应商准入资格。不通过则退回重新处理，审核通过后流入BPM，进入合同网签环节。", tags:["运营审核","分支判断"], checklist:["不通过 → 退回「供应商申请入驻」","审核通过 → 流入BPM，进入合同网签"] },
+        { title:"八、选择合同类型并网签（达人类）", desc:"达人客户选择达人专属合同类型完成网签，包含：通用达人合同、头部达人个性合同、多主体合同（森马/亚瑟士/彪马/巴拉）。系统自动抓取乙方信息，运营手动补充其他信息。无需缴纳保证金，直接进入账号信息录入环节。", tags:["合同网签","达人类合同3种"], checklist:["通用达人合同","头部达人个性合同","多主体合同（森马/亚瑟士/彪马/巴拉）","系统自动抓取乙方信息，运营补充其他信息","⏭️ 达人无需缴纳保证金"] },
+        { title:"十、录入账号信息", desc:"将平台账号信息录入【全品牌直播账号管理】系统，并经运营审核确认。", tags:["系统/供应商","账号管理"], checklist:["录入【全品牌直播账号管理】","运营审核账号信息"] },
+        { title:"十一、强制阅读红线告知书", desc:"客户需最少阅读30秒直播事业部红线告知书，确认知悉合规红线后，准入流程完毕，正式进入运营流程。", tags:["强制合规","最少30秒"], checklist:["强制阅读直播事业部红线告知书（≥30秒）","确认知悉后 → 准入流程完毕，开始运营流程"] }
+      ]
+    }
+  ];
+
+  const totalSteps = stages.reduce((sum, stage) => sum + stage.steps.length, 0);
+  let activeStage = 0;
+  let activeStep = 0;
+  const visited = {};
+
+  const stageNav = document.getElementById("stageNav");
+  const flowMap = document.getElementById("flowMap");
+  const stepsEl = document.getElementById("steps");
+  const stageTitle = document.getElementById("stageTitle");
+  const stageSummary = document.getElementById("stageSummary");
+  const stagePill = document.getElementById("stagePill");
+  const progressText = document.getElementById("progressText");
+  const progressBar = document.getElementById("progressBar");
+  const detailAccent = document.getElementById("detailAccent");
+  const detailKicker = document.getElementById("detailKicker");
+  const detailTitle = document.getElementById("detailTitle");
+  const detailDescription = document.getElementById("detailDescription");
+  const detailList = document.getElementById("detailList");
+  const stagePanelEl = document.querySelector(".stage-panel");
+  const detailPanelEl = document.querySelector(".detail-panel");
+
+  function key(stageIndex, stepIndex) { return stageIndex + "-" + stepIndex; }
+
+  function iconCheck() {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+  }
+
+  function flatSteps() {
+    return stages.flatMap((stage, stageIndex) => stage.steps.map((step, stepIndex) => ({ stage, stageIndex, step, stepIndex })));
+  }
+
+  function mazePosition(index) {
+    const rowBlock = Math.floor(index / 4);
+    const offset = index % 4;
+    return { row: rowBlock * 2 + 1, col: rowBlock % 2 === 0 ? offset * 2 + 1 : 7 - offset * 2 };
+  }
+
+  function currentFlatIndex() {
+    return flatSteps().findIndex(item => item.stageIndex === activeStage && item.stepIndex === activeStep);
+  }
+
+  function setActiveByFlatIndex(index) {
+    const nodes = flatSteps();
+    const normalized = (index + nodes.length) % nodes.length;
+    activeStage = nodes[normalized].stageIndex;
+    activeStep = nodes[normalized].stepIndex;
+    render();
+  }
+
+  function renderNav() {
+    stageNav.innerHTML = stages.map((stage, index) => {
+      const seen = stage.steps.filter((_, stepIndex) => visited[key(index, stepIndex)]).length;
+      return `
+        <button class="stage-tab ${index === activeStage ? "active" : ""}" type="button" data-stage="${index}" style="--stage-color:${stage.color}">
+          <span class="stage-index" style="background:${stage.color}">${index + 1}</span>
+          <span>
+            <span class="stage-title">${stage.title}</span>
+            <span class="stage-count">${stage.steps.length} 个节点</span>
+          </span>
+          <span class="stage-done">${seen}/${stage.steps.length}</span>
+        </button>
+      `;
+    }).join("");
+
+    stageNav.querySelectorAll("button").forEach(button => {
+      button.addEventListener("click", () => {
+        activeStage = Number(button.dataset.stage);
+        activeStep = 0;
+        render();
+      });
+    });
+  }
+
+  function renderFlowMap() {
+    const nodes = stages[activeStage].steps;
+    const stage = stages[activeStage];
+    flowMap.style.setProperty("--stage-color", stage.color);
+
+    const nodeMarkup = nodes.map((step, index) => {
+      const pos = mazePosition(index);
+      return `
+        <button class="flow-node ${step.skip ? "skip" : ""}" type="button" data-step="${index}" style="--stage-color:${stage.color}; --stage-soft:${stage.soft}; grid-column:${pos.col}; grid-row:${pos.row}">
+          <span class="flow-node-head">${step.skip ? "⏭" : index + 1}</span>
+          <span>
+            <h3>${step.title}</h3>
+            <p>${stage.short}</p>
+          </span>
+        </button>
+      `;
+    }).join("");
+
+    const links = nodes.slice(0, -1).map((item, index) => {
+      const current = mazePosition(index);
+      const next = mazePosition(index + 1);
+      const klass = current.row === next.row ? "h" : "v";
+      const row = current.row === next.row ? current.row : Math.min(current.row, next.row) + 1;
+      const col = current.row === next.row ? Math.min(current.col, next.col) + 1 : current.col;
+      return `<span class="maze-link ${klass}" style="--link-color:${stage.color}; grid-column:${col}; grid-row:${row}"></span>`;
+    }).join("");
+
+    flowMap.innerHTML = links + nodeMarkup;
+
+    flowMap.querySelectorAll(".flow-node").forEach(button => {
+      button.addEventListener("click", () => {
+        activeStep = Number(button.dataset.step);
+        renderDetail();
+        renderSteps();
+        updateFlowMapState();
+      });
+    });
+
+    updateFlowMapState();
+  }
+
+  function updateFlowMapState() {
+    flowMap.querySelectorAll(".flow-node").forEach(button => {
+      const stepIndex = Number(button.dataset.step);
+      button.classList.toggle("active", stepIndex === activeStep);
+    });
+  }
+
+  function renderSteps() {
+    const stage = stages[activeStage];
+    stepsEl.innerHTML = stage.steps.map((step, index) => {
+      return `
+        <article class="step-card ${step.skip ? "skip" : ""} ${index === activeStep ? "selected" : ""}" data-step="${index}" style="--stage-color:${stage.color}">
+          <button class="step-number" type="button" aria-label="查看 ${step.title}">${step.skip ? "⏭" : index + 1}</button>
+          <div class="step-main">
+            <h4>${step.title}</h4>
+            <p>${step.desc}</p>
+            <div class="step-tags">${step.tags.map(tag => `<span class="tag">${tag}</span>`).join("")}</div>
+          </div>
+        </article>
+      `;
+    }).join("");
+
+    stepsEl.querySelectorAll(".step-card").forEach(card => {
+      card.addEventListener("click", () => {
+        activeStep = Number(card.dataset.step);
+        renderDetail();
+        renderSteps();
+        updateFlowMapState();
+      });
+    });
+  }
+
+  function renderDetail() {
+    const stage = stages[activeStage];
+    const step = stage.steps[activeStep] || stage.steps[0];
+    visited[key(activeStage, activeStep)] = true;
+    detailAccent.style.background = stage.color;
+    detailKicker.textContent = stage.short + " · 节点 " + (activeStep + 1) + " / " + stage.steps.length;
+    detailTitle.textContent = step.title;
+    detailDescription.textContent = step.desc;
+    detailList.innerHTML = step.checklist.map(item => `<li>${iconCheck()}<span>${item}</span></li>`).join("");
+  }
+
+  function renderProgress() {
+    const seen = Object.keys(visited).length;
+    progressText.textContent = seen + " / " + totalSteps;
+    progressBar.style.width = Math.round(seen / totalSteps * 100) + "%";
+  }
+
+  function renderStageHead() {
+    const stage = stages[activeStage];
+    stagePanelEl.style.setProperty("--active-soft", stage.soft);
+    detailPanelEl.style.setProperty("--detail-soft", stage.soft);
+    stageTitle.textContent = stage.title;
+    stageSummary.textContent = stage.summary;
+    stagePill.style.background = stage.soft;
+    stagePill.style.color = stage.color;
+    stagePill.querySelector("span").textContent = (activeStep + 1) + " / " + stage.steps.length;
+  }
+
+  function render() {
+    renderStageHead();
+    renderNav();
+    renderFlowMap();
+    renderSteps();
+    renderDetail();
+    renderProgress();
+  }
+
+  function moveStep(delta) {
+    setActiveByFlatIndex(currentFlatIndex() + delta);
+  }
+
+  document.getElementById("prevBtn").addEventListener("click", () => moveStep(-1));
+  document.getElementById("nextBtn").addEventListener("click", () => moveStep(1));
+
+  render();
+</script>
+</body>
+</html>

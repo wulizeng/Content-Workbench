@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>招商入驻审核 - 列表</title>
+  <link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+<div class="page-container">
+
+  <!-- Toast 轻提示容器 -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script>
+    if (window.parent) {
+      window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 招商入驻审核'}, '*');
+    }
+  </script>
+
+  <div class="page-title">招商入驻审核（公共池）</div>
+
+  <div class="search-area">
+    <div class="search-row">
+      <div class="search-item">
+        <label>申请人手机号：</label>
+        <input type="text" id="sPhone" placeholder="请输入手机号">
+      </div>
+      <div class="search-item">
+        <label>平台：</label>
+        <select id="sPlatform">
+          <option value="">全部</option>
+          <option value="抖音">抖音</option>
+          <option value="视频号">视频号</option>
+          <option value="快手">快手</option>
+        </select>
+      </div>
+      <div class="search-item">
+        <label>状态：</label>
+        <select id="sStatus">
+          <option value="">全部</option>
+          <option value="已提交">已提交</option>
+          <option value="审核中">审核中</option>
+          <option value="已审核">已审核</option>
+          <option value="已驳回">已驳回</option>
+        </select>
+      </div>
+    </div>
+    <div class="search-actions">
+      <button class="btn btn-primary" onclick="doSearch()">查询</button>
+      <button class="btn" onclick="resetSearch()">重置</button>
+    </div>
+    <div class="search-active-tags" id="searchTags" style="display:none;"></div>
+  </div>
+
+  <div class="table-area">
+    <div class="table-scroll">
+      <table class="data-table" id="dataTable">
+        <thead>
+          <tr>
+            <th>序号</th>
+            <th>姓名</th>
+            <th>申请人手机号</th>
+            <th>平台账号摘要</th>
+            <th>近3个月GMV</th>
+            <th>状态</th>
+            <th>提交时间</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <span class="page-info">共 <strong id="totalCount">0</strong> 条</span>
+      <span class="page-btn disabled">&laquo;</span>
+      <span class="page-btn active">1</span>
+      <span class="page-btn">&raquo;</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+var mockData = JSON.parse(localStorage.getItem('recruit_applications') || 'null') || [
+  { id:1, phone:'138****2231', platform_accounts:[{platform:'抖音',account_name:'@潮流小美'}], gmv:128000, status:'已提交', created_at:'2026-07-20 10:12:00', brand:'品牌A', main_product:'女装连衣裙', screenshots:[], reject_logs:[] },
+  { id:2, phone:'159****8820', platform_accounts:[{platform:'抖音',account_name:'@数码老王'},{platform:'视频号',account_name:'老王数码测评'}], gmv:356000, status:'审核中', created_at:'2026-07-21 14:05:00', brand:'品牌B', main_product:'蓝牙耳机', screenshots:[], reject_logs:[] },
+  { id:3, phone:'186****0093', platform_accounts:[{platform:'快手',account_name:'家居好物研究所'}], gmv:76000, status:'已审核', created_at:'2026-07-18 09:30:00', brand:'品牌C', main_product:'收纳用品', screenshots:[], reject_logs:[] },
+  { id:4, phone:'177****5567', platform_accounts:[{platform:'抖音',account_name:'@美妆小鹿'}], gmv:42000, status:'已驳回', created_at:'2026-07-22 16:48:00', brand:'品牌A', main_product:'口红套装', screenshots:[], reject_logs:[{reason:'业绩截图模糊，无法核实GMV数据', time:'2026-07-23 09:00:00', operator:'BD-张敏'}] }
+];
+var mockTalentNames = {
+  '138****2231':'李潮', '159****8820':'王强', '186****0093':'陈静', '177****5567':'林晓鹿'
+};
+var talents = JSON.parse(localStorage.getItem('recruit_talents') || '{}');
+function talentName(phone) {
+  return (talents[phone] || {}).name || mockTalentNames[phone] || '-';
+}
+
+function renderTable(data) {
+  var tbody = document.getElementById('tableBody');
+  var html = '';
+  if (data.length === 0) {
+    html = '<tr><td colspan="7" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无数据</div><div class="empty-hint">公共池暂无符合条件的申请</div></td></tr>';
+  } else {
+    data.forEach(function(row, index) {
+      html += '<tr>';
+      html += '<td>' + (index+1) + '</td>';
+      html += '<td>' + esc(talentName(row.phone)) + '</td>';
+      html += '<td>' + esc(row.phone) + '</td>';
+      html += '<td>' + esc(platformSummary(row.platform_accounts)) + '</td>';
+      html += '<td>&#165;' + Number(row.gmv).toLocaleString('zh-CN') + '</td>';
+      html += '<td>' + st(row.status) + '</td>';
+      html += '<td>' + esc(row.created_at) + '</td>';
+      html += '<td class="col-actions">';
+      html += '<a class="link-action" href="detail.html?id='+row.id+'&mode=view">查看</a>';
+      html += '</td></tr>';
+    });
+  }
+  tbody.innerHTML = html;
+  document.getElementById('totalCount').textContent = data.length;
+}
+function platformSummary(accounts) {
+  if (!accounts || accounts.length === 0) return '-';
+  return accounts.map(function(a) { return a.platform + ' ' + a.account_name; }).join('；');
+}
+function st(s) {
+  var m = { '已提交':'submitted', '审核中':'reviewing', '已审核':'approved', '已驳回':'rejected' };
+  return '<span class="status-tag '+(m[s]||'')+'">'+s+'</span>';
+}
+function esc(s) { if(!s) return ''; var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function doSearch() {
+  var p = document.getElementById('sPhone').value.trim();
+  var pf = document.getElementById('sPlatform').value;
+  var s = document.getElementById('sStatus').value;
+  var f = mockData.filter(function(x) {
+    if (p && x.phone.indexOf(p) < 0) return false;
+    if (pf && !x.platform_accounts.some(function(a){ return a.platform === pf; })) return false;
+    if (s && x.status !== s) return false;
+    return true;
+  });
+  renderTable(f);
+  showSearchTags();
+}
+function resetSearch() {
+  document.getElementById('sPhone').value = '';
+  document.getElementById('sPlatform').value = '';
+  document.getElementById('sStatus').value = '';
+  renderTable(mockData);
+  showSearchTags();
+}
+function showSearchTags() {
+  var map = { sPhone:'申请人手机号', sPlatform:'平台', sStatus:'状态' };
+  var tags = [];
+  Object.keys(map).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el && el.value) tags.push({ name: map[id], value: el.value, id: id });
+  });
+  var container = document.getElementById('searchTags');
+  if (!container) return;
+  if (tags.length === 0) { container.style.display = 'none'; container.innerHTML = ''; return; }
+  var html = '';
+  tags.forEach(function(t) {
+    html += '<span class="search-active-tag">' + t.name + '：' + t.value + '<span class="tag-remove" onclick="clearSearchTag(\'' + t.id + '\')">&times;</span></span>';
+  });
+  container.style.display = '';
+  container.innerHTML = html;
+}
+function clearSearchTag(id) {
+  document.getElementById(id).value = '';
+  doSearch();
+}
+
+// Toast 轻提示
+function showToast(message, type) {
+  type = type || 'info';
+  var container = document.getElementById('toastContainer');
+  if (!container) return;
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(function() {
+    if (toast.parentNode) {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s';
+      setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+    }
+  }, 2500);
+}
+
+localStorage.setItem('recruit_applications', JSON.stringify(mockData));
+renderTable(mockData);
+</script>
+</body>
+</html>

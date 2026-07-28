@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>招商入驻审核 - 详情</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    .modal-overlay {
+      position:fixed; top:0; left:0; right:0; bottom:0;
+      background:rgba(0,0,0,.45); z-index:9999;
+      display:flex; align-items:center; justify-content:center;
+      animation:modalFadeIn .25s ease;
+    }
+    @keyframes modalFadeIn { from{opacity:0} to{opacity:1} }
+    .modal {
+      background:#fff; border-radius:12px; width:480px; max-width:92vw;
+      max-height:90vh; box-shadow:0 24px 60px rgba(0,0,0,.2);
+      display:flex; flex-direction:column; animation:modalSlideIn .3s ease;
+    }
+    @keyframes modalSlideIn { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+    .modal-head {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:20px 24px 16px; border-bottom:1px solid #e4e9f1;
+    }
+    .modal-head h3 { margin:0; font-size:17px; font-weight:700; color:#0f172a; }
+    .modal-close {
+      width:28px; height:28px; border:none; background:transparent;
+      border-radius:6px; cursor:pointer; display:grid; place-items:center;
+      color:#647084; font-size:18px; transition:background .15s;
+    }
+    .modal-close:hover { background:#f0f2f5; }
+    .modal-body { padding:20px 24px; overflow-y:auto; flex:1; min-height:0; }
+    .modal-foot {
+      display:flex; justify-content:flex-end; gap:10px;
+      padding:16px 24px 20px; border-top:1px solid #e4e9f1;
+    }
+    .modal-foot .btn { min-width:80px; }
+
+    .detail-card {
+      background:#fff; border:1px solid var(--border); border-radius:12px;
+      padding:24px; margin-bottom:16px;
+    }
+    .detail-card-title {
+      font-size:15px; font-weight:700; color:var(--ink,#0f172a);
+      margin:0 0 18px; padding-bottom:12px; border-bottom:1px solid var(--border-light);
+    }
+    .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px 24px; }
+    .detail-item .k { font-size:12px; color:var(--text-tertiary,#94a3b8); margin-bottom:4px; }
+    .detail-item .v { font-size:14px; color:var(--text,#0f172a); font-weight:500; }
+    .platform-account-row {
+      display:flex; align-items:center; gap:10px; padding:10px 14px;
+      background:#f8fafc; border-radius:8px; margin-bottom:8px; font-size:13px;
+    }
+    .platform-account-row .plat-tag {
+      display:inline-flex; padding:2px 10px; border-radius:12px;
+      background:var(--primary-light); color:var(--primary); font-size:12px; font-weight:600;
+    }
+    .shot-grid { display:flex; gap:10px; flex-wrap:wrap; }
+    .shot-thumb {
+      width:120px; height:90px; border-radius:8px; overflow:hidden;
+      border:1px solid var(--border); cursor:pointer; background:#f1f5f9;
+      display:flex; align-items:center; justify-content:center; color:#94a3b8; font-size:12px;
+    }
+    .reject-log-item {
+      padding:12px 14px; background:#fef2f2; border-radius:8px; margin-bottom:8px;
+    }
+    .reject-log-item .reason { font-size:13px; color:#dc2626; font-weight:500; }
+    .reject-log-item .meta { font-size:12px; color:var(--text-tertiary,#94a3b8); margin-top:4px; }
+    .form-actions { display:flex; justify-content:flex-end; gap:10px; padding:16px 0; }
+    .form-textarea {
+      width:100%; padding:10px 14px; border:1px solid var(--border); border-radius:8px;
+      font:inherit; font-size:13px; outline:none; resize:vertical; line-height:1.6; box-sizing:border-box;
+    }
+    .form-textarea:focus { border-color:var(--primary); }
+  </style>
+</head>
+<body>
+<div class="page-container">
+
+  <!-- Toast 轻提示容器 -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script>
+    if (window.parent) {
+      window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 招商入驻审核 <span>/</span> 详情'}, '*');
+    }
+  </script>
+
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+    <button class="btn" onclick="goBack()" style="display:flex;align-items:center;gap:4px;">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      返回
+    </button>
+    <div class="page-title" style="margin-bottom:0;">招商入驻审核详情</div>
+  </div>
+
+  <div class="detail-card">
+    <h3 class="detail-card-title">申请人信息</h3>
+    <div class="detail-grid">
+      <div class="detail-item"><div class="k">姓名</div><div class="v" id="dName">-</div></div>
+      <div class="detail-item"><div class="k">申请人手机号</div><div class="v" id="dPhone">-</div></div>
+      <div class="detail-item"><div class="k">当前状态</div><div class="v" id="dStatus">-</div></div>
+      <div class="detail-item"><div class="k">运营品牌</div><div class="v" id="dBrand">-</div></div>
+      <div class="detail-item"><div class="k">主推产品</div><div class="v" id="dProduct">-</div></div>
+      <div class="detail-item"><div class="k">提交时间</div><div class="v" id="dCreatedAt">-</div></div>
+      <div class="detail-item"><div class="k">近3个月GMV</div><div class="v" id="dGmv">-</div></div>
+    </div>
+  </div>
+
+  <div class="detail-card">
+    <h3 class="detail-card-title">平台账号</h3>
+    <div id="dPlatformAccounts"></div>
+  </div>
+
+  <div class="detail-card">
+    <h3 class="detail-card-title">业绩证明截图</h3>
+    <div class="shot-grid" id="dShots"></div>
+  </div>
+
+  <div class="detail-card" id="dRejectCard" style="display:none;">
+    <h3 class="detail-card-title">驳回历史</h3>
+    <div id="dRejectLogs"></div>
+  </div>
+
+  <div class="form-actions" id="dActions"></div>
+
+</div>
+
+<!-- 通过确认弹窗 -->
+<div id="approveModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this) closeApproveModal()">
+  <div class="modal" style="width:420px;">
+    <div class="modal-head">
+      <h3>确认通过审核</h3>
+      <button class="modal-close" onclick="closeApproveModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-secondary,#475569);line-height:1.7;">通过后该申请状态变为"已审核"（终态），操作不可撤销，确认要通过吗？</p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeApproveModal()">取消</button>
+      <button class="btn btn-primary" onclick="confirmApprove()">确认通过</button>
+    </div>
+  </div>
+</div>
+
+<!-- 驳回弹窗 -->
+<div id="rejectModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this) closeRejectModal()">
+  <div class="modal" style="width:480px;">
+    <div class="modal-head">
+      <h3>驳回申请</h3>
+      <button class="modal-close" onclick="closeRejectModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <label style="font-size:13px;font-weight:600;color:var(--text-secondary,#475569);display:block;margin-bottom:8px;">驳回原因 <span style="color:#ef4444;">*</span></label>
+      <textarea class="form-textarea" id="rejectReason" rows="4" placeholder="请填写驳回原因，将展示给达人"></textarea>
+      <div id="rejectError" style="display:none;color:#dc2626;font-size:12px;margin-top:6px;">驳回原因为必填项</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeRejectModal()">取消</button>
+      <button class="btn btn-danger" onclick="confirmReject()">确认驳回</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var mockData = JSON.parse(localStorage.getItem('recruit_applications') || 'null') || [];
+var mockTalentNames = {
+  '138****2231':'李潮', '159****8820':'王强', '186****0093':'陈静', '177****5567':'林晓鹿'
+};
+var talents = JSON.parse(localStorage.getItem('recruit_talents') || '{}');
+function talentName(phone) {
+  return (talents[phone] || {}).name || mockTalentNames[phone] || '-';
+}
+
+function g(name) { var r = location.search.match(new RegExp('[?&]'+name+'=([^&]*)')); return r ? decodeURIComponent(r[1]) : ''; }
+var appId = parseInt(g('id')) || 0;
+var currentRecord = null;
+
+function init() {
+  currentRecord = mockData.find(function(r) { return r.id === appId; });
+  if (!currentRecord) { showToast('未找到该申请记录', 'error'); return; }
+  document.getElementById('dName').textContent = talentName(currentRecord.phone);
+  document.getElementById('dPhone').textContent = currentRecord.phone;
+  document.getElementById('dStatus').innerHTML = st(currentRecord.status);
+  document.getElementById('dBrand').textContent = currentRecord.brand || '-';
+  document.getElementById('dProduct').textContent = currentRecord.main_product || '-';
+  document.getElementById('dCreatedAt').textContent = currentRecord.created_at;
+  document.getElementById('dGmv').textContent = '¥' + Number(currentRecord.gmv || 0).toLocaleString('zh-CN');
+
+  var paHtml = '';
+  (currentRecord.platform_accounts || []).forEach(function(a) {
+    paHtml += '<div class="platform-account-row"><span class="plat-tag">' + esc(a.platform) + '</span><span>' + esc(a.account_name) + '</span></div>';
+  });
+  document.getElementById('dPlatformAccounts').innerHTML = paHtml || '<div style="color:#94a3b8;font-size:13px;">暂无平台账号</div>';
+
+  var shots = currentRecord.screenshots || [];
+  if (shots.length === 0) {
+    document.getElementById('dShots').innerHTML = '<div class="shot-thumb">示例截图</div><div class="shot-thumb">示例截图</div>';
+  } else {
+    document.getElementById('dShots').innerHTML = shots.map(function(s) {
+      return '<div class="shot-thumb" onclick="window.open(\'' + s + '\',\'_blank\')">' + esc(s) + '</div>';
+    }).join('');
+  }
+
+  var logs = currentRecord.reject_logs || [];
+  if (logs.length > 0) {
+    document.getElementById('dRejectCard').style.display = '';
+    document.getElementById('dRejectLogs').innerHTML = logs.map(function(l) {
+      return '<div class="reject-log-item"><div class="reason">' + esc(l.reason) + '</div><div class="meta">' + esc(l.operator) + ' &middot; ' + esc(l.time) + '</div></div>';
+    }).join('');
+  }
+
+  renderActions();
+}
+
+function renderActions() {
+  var actions = document.getElementById('dActions');
+  if (currentRecord.status === '已提交' || currentRecord.status === '审核中') {
+    actions.innerHTML = '<button class="btn btn-danger" onclick="openRejectModal()">驳回</button><button class="btn btn-primary" onclick="openApproveModal()">通过</button>';
+  } else {
+    actions.innerHTML = '';
+  }
+}
+
+function openApproveModal() { document.getElementById('approveModal').style.display = 'flex'; }
+function closeApproveModal() { document.getElementById('approveModal').style.display = 'none'; }
+function confirmApprove() {
+  currentRecord.status = '已审核';
+  currentRecord.updated_at = now();
+  persist();
+  closeApproveModal();
+  showToast('审核通过', 'success');
+  document.getElementById('dStatus').innerHTML = st(currentRecord.status);
+  renderActions();
+}
+
+function openRejectModal() {
+  document.getElementById('rejectReason').value = '';
+  document.getElementById('rejectError').style.display = 'none';
+  document.getElementById('rejectModal').style.display = 'flex';
+}
+function closeRejectModal() { document.getElementById('rejectModal').style.display = 'none'; }
+function confirmReject() {
+  var reason = document.getElementById('rejectReason').value.trim();
+  if (!reason) { document.getElementById('rejectError').style.display = 'block'; return; }
+  currentRecord.status = '已驳回';
+  currentRecord.updated_at = now();
+  currentRecord.reject_logs = currentRecord.reject_logs || [];
+  currentRecord.reject_logs.push({ reason: reason, time: now(), operator: 'BD-当前用户' });
+  persist();
+  closeRejectModal();
+  showToast('已驳回', 'success');
+  init();
+}
+
+function persist() {
+  var idx = mockData.findIndex(function(r) { return r.id === currentRecord.id; });
+  if (idx >= 0) mockData[idx] = currentRecord;
+  localStorage.setItem('recruit_applications', JSON.stringify(mockData));
+}
+
+function st(s) {
+  var m = { '已提交':'submitted', '审核中':'reviewing', '已审核':'approved', '已驳回':'rejected' };
+  return '<span class="status-tag '+(m[s]||'')+'">'+s+'</span>';
+}
+function esc(s) { if(!s) return ''; var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function now(){ return new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'); }
+function goBack(){ location.href='list.html'; }
+
+// Toast 轻提示
+function showToast(message, type) {
+  type = type || 'info';
+  var container = document.getElementById('toastContainer');
+  if (!container) return;
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(function() {
+    if (toast.parentNode) {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s';
+      setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+    }
+  }, 2500);
+}
+
+init();
+</script>
+</body>
+</html>
