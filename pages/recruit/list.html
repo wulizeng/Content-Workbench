@@ -5,6 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>招商入驻审核 - 列表</title>
   <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    /* 桌面端：操作列图标+文字链接 */
+    .link-action-icon {
+      display: inline-flex; align-items: center; gap: 4px;
+    }
+    .link-action-icon svg { flex-shrink: 0; }
+    /* 窄桌面（1024~1279px）：平台账号摘要允许换行，不单独隐藏 */
+    @media (min-width: 1024px) and (max-width: 1279px) {
+      #dataTable td.col-platform { white-space: normal; word-break: break-all; }
+    }
+  </style>
 </head>
 <body>
 <div class="page-container">
@@ -108,12 +119,12 @@ function renderTable(data) {
       html += '<td>' + (index+1) + '</td>';
       html += '<td>' + esc(talentName(row.phone)) + '</td>';
       html += '<td>' + esc(row.phone) + '</td>';
-      html += '<td>' + esc(platformSummary(row.platform_accounts)) + '</td>';
+      html += '<td class="col-platform" title="' + esc(platformSummary(row.platform_accounts)) + '">' + esc(platformSummary(row.platform_accounts)) + '</td>';
       html += '<td>&#165;' + Number(row.gmv).toLocaleString('zh-CN') + '</td>';
       html += '<td>' + st(row.status) + '</td>';
       html += '<td>' + esc(row.created_at) + '</td>';
       html += '<td class="col-actions">';
-      html += '<a class="link-action" href="detail.html?id='+row.id+'&mode=view">查看</a>';
+      html += '<a class="link-action link-action-icon" title="查看详情" href="detail.html?id='+row.id+'&mode=view"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>查看</a>';
       html += '</td></tr>';
     });
   }
