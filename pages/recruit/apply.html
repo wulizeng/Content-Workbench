@@ -238,7 +238,7 @@ function updateStepUI() {
 }
 
 function stepPrev() {
-  if (currentStep > 1) { currentStep--; updateStepUI(); window.scrollTo(0, 0); }
+  if (currentStep > 1) { currentStep--; updateStepUI(); saveDraft(); window.scrollTo(0, 0); }
 }
 
 function stepNext() {
@@ -250,6 +250,7 @@ function stepNext() {
     }
     currentStep++;
     updateStepUI();
+    saveDraft();
     window.scrollTo(0, 0);
   } else {
     clearErrors();
@@ -265,6 +266,47 @@ function stepNext() {
     }
     doSubmit();
   }
+}
+
+var DRAFT_KEY = 'recruit_apply_draft_' + phone;
+
+function saveDraft() {
+  if (mode !== 'add') return;
+  var draft = {
+    currentStep: currentStep,
+    brand: document.getElementById('brand').value,
+    mainProduct: document.getElementById('mainProduct').value,
+    gmv: document.getElementById('gmv').value,
+    platformAccounts: collectPlatformAccounts().map(function(a) { return { platform: a.platform, account_name: a.account_name }; }),
+    shots: shots.slice()
+  };
+  localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+}
+
+function restoreDraft() {
+  if (mode !== 'add') return false;
+  var raw = localStorage.getItem(DRAFT_KEY);
+  if (!raw) return false;
+  var draft;
+  try { draft = JSON.parse(raw); } catch (e) { return false; }
+  if (!draft) return false;
+
+  document.getElementById('brand').value = draft.brand || '';
+  document.getElementById('mainProduct').value = draft.mainProduct || '';
+  document.getElementById('gmv').value = draft.gmv || '';
+  shots = (draft.shots || []).slice();
+  renderShots();
+  document.getElementById('platformAccountList').innerHTML = '';
+  (draft.platformAccounts || []).forEach(function(pa) {
+    addPlatformAccount(pa.platform, pa.account_name);
+  });
+  if ((draft.platformAccounts || []).length === 0) addPlatformAccount();
+  currentStep = draft.currentStep || 1;
+  return true;
+}
+
+function clearDraft() {
+  localStorage.removeItem(DRAFT_KEY);
 }
 
 var PLATFORM_OPTIONS = ['抖音', '视频号', '快手'];
@@ -346,7 +388,11 @@ function init() {
       return;
     }
   }
-  addPlatformAccount();
+  if (mode === 'add' && restoreDraft()) {
+    showToast('已恢复上次填写的草稿', 'info');
+  } else {
+    addPlatformAccount();
+  }
 }
 
 function setReadOnly(v) {
@@ -438,6 +484,7 @@ function doSubmit() {
   }
 
   localStorage.setItem('recruit_applications', JSON.stringify(apps));
+  clearDraft();
   showToast('提交成功', 'success');
   setTimeout(function() { location.href = 'mine.html'; }, 400);
 }
@@ -465,6 +512,8 @@ function showToast(message, type) {
 
 init();
 updateStepUI();
+document.getElementById('mainForm').addEventListener('input', saveDraft);
+document.getElementById('mainForm').addEventListener('change', saveDraft);
 </script>
 </body>
 </html>
