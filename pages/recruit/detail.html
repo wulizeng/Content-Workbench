@@ -296,5 +296,62 @@ function showToast(message, type) {
 
 init();
 </script>
+<!-- 设备效果预览切换器：电脑 / 手机 -->
+<script>
+(function() {
+  if (self !== top) return;
+  function esc(s) { s = String(s); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function inject(doc) {
+    if (!doc || !doc.body) return;
+    var bar = doc.createElement('div');
+    bar.id = 'deviceSwitcher';
+    bar.innerHTML = '<button type="button" id="dsBtnPc" class="ds-active">💻 电脑</button><button type="button" id="dsBtnPhone">📱 手机预览</button>';
+    doc.body.appendChild(bar);
+    var st = doc.createElement('style');
+    st.textContent = '#deviceSwitcher{position:fixed;top:16px;right:16px;z-index:99999;display:flex;gap:2px;background:#fff;border:1px solid #e2e8f0;border-radius:22px;padding:4px;box-shadow:0 6px 20px rgba(15,23,42,.18)}' +
+      '#deviceSwitcher button{border:none;background:transparent;padding:7px 14px;border-radius:18px;font-size:13px;font-weight:600;color:#64748b;cursor:pointer;line-height:1.4;font-family:inherit}' +
+      '#deviceSwitcher button.ds-active{background:#5b6cf5;color:#fff}';
+    doc.body.appendChild(st);
+    var btnPc = doc.getElementById('dsBtnPc');
+    var btnPhone = doc.getElementById('dsBtnPhone');
+    function enterPhone() {
+      var html = '<!DOCTYPE html>' + doc.documentElement.outerHTML;
+      var wrap = doc.createElement('div');
+      wrap.id = 'devicePhone';
+      wrap.innerHTML = '<div class="dp-frame"><div class="dp-notch"></div><iframe id="dpFrame" title="手机效果预览"></iframe></div>' +
+        '<div class="dp-hint">📱 手机效果预览（390px 视口）· 点右上角「电脑」返回</div>';
+      var st2 = doc.createElement('style');
+      st2.textContent = 'html.dp-phone,html.dp-phone body{height:100%;margin:0}' +
+        'html.dp-phone body{background:#0f172a !important;display:flex !important;align-items:center;justify-content:center !important;overflow:hidden !important}' +
+        'html.dp-phone > body > *:not(#devicePhone){display:none !important}' +
+        '#devicePhone{display:flex;flex-direction:column;align-items:center;gap:14px}' +
+        '#devicePhone .dp-frame{width:390px;height:min(800px,88vh);background:#fff;border:10px solid #1e293b;border-radius:44px;box-shadow:0 24px 60px rgba(0,0,0,.5);overflow:hidden;position:relative}' +
+        '#devicePhone .dp-notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:150px;height:24px;background:#1e293b;border-radius:0 0 16px 16px;z-index:3}' +
+        '#devicePhone #dpFrame{width:100%;height:100%;border:none;display:block;background:#fff}' +
+        '#devicePhone .dp-hint{color:#94a3b8;font-size:12px;text-align:center}';
+      doc.body.appendChild(st2);
+      doc.body.appendChild(wrap);
+      doc.documentElement.classList.add('dp-phone');
+      doc.getElementById('dpFrame').srcdoc = html;
+      btnPc.classList.remove('ds-active');
+      btnPhone.classList.add('ds-active');
+    }
+    function exitPhone() {
+      var w = doc.getElementById('devicePhone');
+      if (w) w.parentNode.removeChild(w);
+      doc.documentElement.classList.remove('dp-phone');
+      btnPc.classList.add('ds-active');
+      btnPhone.classList.remove('ds-active');
+    }
+    btnPhone.addEventListener('click', enterPhone);
+    btnPc.addEventListener('click', exitPhone);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() { inject(document); });
+  } else {
+    inject(document);
+  }
+})();
+</script>
 </body>
 </html>
