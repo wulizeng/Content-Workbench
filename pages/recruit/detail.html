@@ -73,6 +73,14 @@
       font:inherit; font-size:13px; outline:none; resize:vertical; line-height:1.6; box-sizing:border-box;
     }
     .form-textarea:focus { border-color:var(--primary); }
+    @media (max-width: 640px) {
+      .detail-card { padding: 16px; }
+      .detail-grid { grid-template-columns: 1fr; gap: 12px; }
+      .shot-thumb { width: calc(50% - 5px); height: 100px; }
+      .modal { width: 92vw; }
+      .form-actions { flex-direction: column; }
+      .form-actions .btn { width: 100%; height: 48px; }
+    }
   </style>
 </head>
 <body>
