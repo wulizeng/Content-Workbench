@@ -15,6 +15,28 @@
     @media (min-width: 1024px) and (max-width: 1279px) {
       #dataTable td.col-platform { white-space: normal; word-break: break-all; }
     }
+    /* 基础规则：折叠按钮默认隐藏（必须写在平板媒体查询之前，平板区间内靠后出现的 display:block 才能覆盖它） */
+    .search-fold-bar { display: none; }
+    /* 平板（641~1023px）：隐藏次要列、压缩平台摘要、筛选区可折叠 */
+    @media (min-width: 641px) and (max-width: 1023px) {
+      /* 隐藏"提交时间"独立列（收进状态列下方小字展示） */
+      #dataTable thead th:nth-child(7),
+      #dataTable tbody td:nth-child(7) { display: none; }
+      /* 状态列下方叠加的创建时间小字：平板显示、桌面隐藏 */
+      #dataTable .td-sub-time { display: block; margin-top: 4px; font-size: 11px; color: #94a3b8; }
+      /* 平台账号摘要列：压缩宽度 + 省略号 + hover 提示（title 已由 renderTable 提供） */
+      #dataTable td.col-platform {
+        max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      /* 筛选区折叠：折叠按钮仅在平板区间显示；带 folded 类时隐藏筛选项与按钮 */
+      .search-fold-bar { display: block; margin-bottom: 8px; }
+      .search-area.folded .search-row,
+      .search-area.folded .search-actions { display: none; }
+    }
+    /* 桌面端：状态列下方叠加时间小字隐藏（独立"提交时间"列恢复显示由浏览器默认表格布局提供） */
+    @media (min-width: 1024px) {
+      #dataTable .td-sub-time { display: none; }
+    }
   </style>
 </head>
 <body>
@@ -31,7 +53,10 @@
 
   <div class="page-title">招商入驻审核（公共池）</div>
 
-  <div class="search-area">
+  <div class="search-area folded">
+    <div class="search-fold-bar">
+      <button type="button" class="btn" id="searchFoldBtn" onclick="toggleSearchFold()">筛选 &#9662;</button>
+    </div>
     <div class="search-row">
       <div class="search-item">
         <label>申请人手机号：</label>
@@ -121,7 +146,7 @@ function renderTable(data) {
       html += '<td>' + esc(row.phone) + '</td>';
       html += '<td class="col-platform" title="' + esc(platformSummary(row.platform_accounts)) + '">' + esc(platformSummary(row.platform_accounts)) + '</td>';
       html += '<td>&#165;' + Number(row.gmv).toLocaleString('zh-CN') + '</td>';
-      html += '<td>' + st(row.status) + '</td>';
+      html += '<td class="col-status">' + st(row.status) + '<div class="td-sub-time">' + esc(row.created_at) + '</div></td>';
       html += '<td>' + esc(row.created_at) + '</td>';
       html += '<td class="col-actions">';
       html += '<a class="link-action link-action-icon" title="查看详情" href="detail.html?id='+row.id+'&mode=view"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>查看</a>';
@@ -180,6 +205,12 @@ function showSearchTags() {
 function clearSearchTag(id) {
   document.getElementById(id).value = '';
   doSearch();
+}
+function toggleSearchFold() {
+  var area = document.querySelector('.search-area');
+  var btn = document.getElementById('searchFoldBtn');
+  var folded = area.classList.toggle('folded');
+  btn.innerHTML = folded ? '筛选 &#9662;' : '筛选 &#9652;';
 }
 
 // Toast 轻提示
