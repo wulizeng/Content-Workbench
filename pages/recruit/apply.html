@@ -134,9 +134,41 @@
         flex: 0 0 100%;
       }
     }
+    @media (min-width: 1024px) {
+      body { display: flex; justify-content: center; }
+      .apply-shell { max-width: 640px; margin: 24px 0 24px 260px; }
+      .desktop-step-nav {
+        display: flex; flex-direction: column; gap: 4px;
+        position: fixed; top: 24px; left: max(20px, calc(50% - 460px));
+        width: 220px; background: #fff; border: 1px solid var(--border);
+        border-radius: 14px; padding: 16px;
+      }
+      .desktop-step-nav .dsn-item {
+        display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+        border-radius: 8px; font-size: 13px; color: #94a3b8; cursor: pointer;
+      }
+      .desktop-step-nav .dsn-item .num {
+        width: 22px; height: 22px; border-radius: 50%; background: #f1f5f9; color: #94a3b8;
+        display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700;
+        flex-shrink: 0;
+      }
+      .desktop-step-nav .dsn-item.filled { color: var(--text); }
+      .desktop-step-nav .dsn-item.filled .num { background: var(--primary-light); color: var(--primary); }
+      .desktop-step-nav .dsn-item.current { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+      .desktop-step-nav .dsn-item.current .num { background: var(--primary); color: #fff; }
+      .desktop-step-nav .dsn-item.disabled { cursor: not-allowed; }
+    }
+    @media (max-width: 1023px) {
+      .desktop-step-nav { display: none; }
+    }
   </style>
 </head>
 <body>
+  <div class="desktop-step-nav" id="desktopStepNav">
+    <div class="dsn-item" data-dsn-step="1" onclick="desktopGoToStep(1)"><span class="num">1</span>基础信息</div>
+    <div class="dsn-item" data-dsn-step="2" onclick="desktopGoToStep(2)"><span class="num">2</span>平台账号</div>
+    <div class="dsn-item" data-dsn-step="3" onclick="desktopGoToStep(3)"><span class="num">3</span>业绩证明</div>
+  </div>
 <div class="apply-shell">
 
   <div class="apply-header">
@@ -248,7 +280,7 @@ function isMobileStepMode() {
 }
 
 function updateStepUI() {
-  if (!isMobileStepMode()) return;
+  if (!isMobileStepMode()) { updateDesktopNavUI(); return; }
   document.querySelectorAll('.form-card[data-step]').forEach(function(card) {
     card.classList.toggle('step-active', Number(card.getAttribute('data-step')) === currentStep);
   });
@@ -329,6 +361,37 @@ function restoreDraft() {
 
 function clearDraft() {
   localStorage.removeItem(DRAFT_KEY);
+}
+
+function isStepFilled(step) {
+  if (step === 1) {
+    return !!(document.getElementById('brand').value.trim() && document.getElementById('mainProduct').value.trim());
+  }
+  if (step === 2) {
+    var accounts = collectPlatformAccounts();
+    return accounts.length > 0 && accounts.every(function(a) { return a.account_name; });
+  }
+  if (step === 3) {
+    return !!(document.getElementById('gmv').value.toString().trim()) && shots.length > 0;
+  }
+  return false;
+}
+
+function desktopGoToStep(step) {
+  if (step > 1 && !isStepFilled(step - 1)) return;
+  var target = document.querySelector('.form-card[data-step="' + step + '"]');
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function updateDesktopNavUI() {
+  var nav = document.getElementById('desktopStepNav');
+  if (!nav) return;
+  for (var s = 1; s <= TOTAL_STEPS; s++) {
+    var item = nav.querySelector('[data-dsn-step="' + s + '"]');
+    var filled = isStepFilled(s);
+    item.classList.toggle('filled', filled);
+    item.classList.toggle('disabled', s > 1 && !isStepFilled(s - 1));
+  }
 }
 
 var PLATFORM_OPTIONS = ['抖音', '视频号', '快手'];
@@ -536,6 +599,8 @@ init();
 updateStepUI();
 document.getElementById('mainForm').addEventListener('input', saveDraft);
 document.getElementById('mainForm').addEventListener('change', saveDraft);
+document.getElementById('mainForm').addEventListener('input', updateStepUI);
+document.getElementById('mainForm').addEventListener('change', updateStepUI);
 </script>
 </body>
 </html>
