@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>招商入驻审核 - 列表</title>
+  <title>入驻意向审核 - 列表</title>
   <link rel="stylesheet" href="../../css/style.css">
   <style>
     /* 桌面端：操作列图标+文字链接 */
@@ -11,37 +11,29 @@
       display: inline-flex; align-items: center; gap: 4px;
     }
     .link-action-icon svg { flex-shrink: 0; }
-    /* 窄桌面（1024~1279px）：平台账号摘要允许换行，不单独隐藏 */
+    /* 平台 / 运营账号 分字段展示：平台灰色标签 + 账号文本，多账号逐行等高对齐 */
+    .plat-tag {
+      display: inline-flex; align-items: center; padding: 1px 9px; border-radius: 10px;
+      background: #f1f5f9; color: var(--text-secondary); font-size: 12px; font-weight: 600;
+      line-height: 1.6; white-space: nowrap;
+    }
+    .acct-text { font-size: 13px; color: var(--text); }
+    #dataTable .ml { min-height: 24px; display: flex; align-items: center; }
+    #dataTable .ml + .ml { margin-top: 4px; }
+    /* 窄桌面（1024~1279px）：运营账号过长允许换行 */
     @media (min-width: 1024px) and (max-width: 1279px) {
-      #dataTable td.col-platform { white-space: normal; word-break: break-all; }
+      #dataTable td.col-account { white-space: normal; word-break: break-all; }
     }
     /* 基础规则：折叠按钮默认隐藏（必须写在平板媒体查询之前，平板区间内靠后出现的 display:block 才能覆盖它） */
     .search-fold-bar { display: none; }
-    /* 平板（641~1023px）：隐藏次要列、压缩平台摘要、筛选区可折叠 */
-    @media (min-width: 641px) and (max-width: 1023px) {
-      /* 隐藏"提交时间"独立列（收进状态列下方小字展示） */
-      #dataTable thead th:nth-child(7),
-      #dataTable tbody td:nth-child(7) { display: none; }
-      /* 状态列下方叠加的创建时间小字：平板显示、桌面隐藏 */
-      #dataTable .td-sub-time { display: block; margin-top: 4px; font-size: 11px; color: #94a3b8; }
-      /* 平台账号摘要列：压缩宽度 + 省略号 + hover 提示（title 已由 renderTable 提供） */
-      /* auto 表格布局下 td 会被 nowrap 内容撑开，截断规则改挂内层块元素才能生效 */
-      #dataTable td.col-platform { max-width: 140px; }
-      #dataTable td.col-platform .cell-ellipsis {
-        display: block; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-      }
-      /* 筛选区折叠：折叠按钮仅在平板区间显示；带 folded 类时隐藏筛选项与按钮 */
-      .search-fold-bar { display: block; margin-bottom: 8px; }
-      .search-area.folded .search-row,
-      .search-area.folded .search-actions { display: none; }
-    }
+    /* 无 PAD 专用模式：< 1024 统一走手机端卡片，≥ 1024 走电脑端表格 */
     /* 桌面端：状态列下方叠加时间小字隐藏（独立"提交时间"列恢复显示由浏览器默认表格布局提供） */
     @media (min-width: 1024px) {
       #dataTable .td-sub-time { display: none; }
     }
-    /* 移动端（≤640px）：卡片流 + 底部抽屉筛选 + 加载更多 */
+    /* 移动端（<1024px）：卡片流 + 底部抽屉筛选 + 加载更多 */
     .card-list, .load-more-bar, .filter-fab, .filter-sheet-overlay { display: none; }
-    @media (max-width: 640px) {
+    @media (max-width: 1023px) {
       .search-area { display: none; }
       .table-area .table-scroll, .table-area .pagination { display: none; }
       .card-list { display: block; }
@@ -55,10 +47,8 @@
       .recruit-card-head .name { font-size: 15px; font-weight: 700; color: var(--text); }
       .recruit-card-body { font-size: 13px; color: var(--text-secondary); line-height: 1.9; }
       .recruit-card-body .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-      .chip {
-        display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 12px;
-        background: var(--primary-light); color: var(--primary); font-size: 12px; font-weight: 600;
-      }
+      .recruit-card-body .chip-row .pa-line { display: inline-flex; align-items: center; gap: 6px; }
+      .recruit-card-body .chip-row .acct { font-size: 13px; color: var(--text); }
       .recruit-card-foot {
         display: flex; justify-content: space-between; align-items: center;
         margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-light);
@@ -105,11 +95,11 @@
 
   <script>
     if (window.parent) {
-      window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 招商入驻审核'}, '*');
+      window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 入驻意向审核'}, '*');
     }
   </script>
 
-  <div class="page-title">招商入驻审核（公共池）</div>
+  <div class="page-title">入驻意向审核列表</div>
 
   <div class="search-area folded">
     <div class="search-fold-bar">
@@ -135,8 +125,11 @@
           <option value="">全部</option>
           <option value="已提交">已提交</option>
           <option value="审核中">审核中</option>
-          <option value="已审核">已审核</option>
           <option value="已驳回">已驳回</option>
+          <option value="待提交项目规划">待提交项目规划</option>
+          <option value="规划审核中">规划审核中</option>
+          <option value="规划已驳回">规划已驳回</option>
+          <option value="已通过">已通过</option>
         </select>
       </div>
     </div>
@@ -160,7 +153,8 @@
             <th>序号</th>
             <th>姓名</th>
             <th>申请人手机号</th>
-            <th>平台账号摘要</th>
+            <th>平台</th>
+            <th>运营账号</th>
             <th>近3个月GMV</th>
             <th>状态</th>
             <th>提交时间</th>
@@ -198,7 +192,7 @@
           <select id="mSPlatform"><option value="">全部</option><option value="抖音">抖音</option><option value="视频号">视频号</option><option value="快手">快手</option></select>
         </div>
         <div class="search-item"><label>状态：</label>
-          <select id="mSStatus"><option value="">全部</option><option value="已提交">已提交</option><option value="审核中">审核中</option><option value="已审核">已审核</option><option value="已驳回">已驳回</option></select>
+          <select id="mSStatus"><option value="">全部</option><option value="已提交">已提交</option><option value="审核中">审核中</option><option value="已驳回">已驳回</option><option value="待提交项目规划">待提交项目规划</option><option value="规划审核中">规划审核中</option><option value="规划已驳回">规划已驳回</option><option value="已通过">已通过</option></select>
         </div>
       </div>
       <div class="filter-sheet-foot">
@@ -212,11 +206,43 @@
 var mockData = JSON.parse(localStorage.getItem('recruit_applications') || 'null') || [
   { id:1, phone:'138****2231', platform_accounts:[{platform:'抖音',account_name:'@潮流小美'}], gmv:128000, status:'已提交', created_at:'2026-07-20 10:12:00', brand:'品牌A', main_product:'女装连衣裙', screenshots:[], reject_logs:[] },
   { id:2, phone:'159****8820', platform_accounts:[{platform:'抖音',account_name:'@数码老王'},{platform:'视频号',account_name:'老王数码测评'}], gmv:356000, status:'审核中', created_at:'2026-07-21 14:05:00', brand:'品牌B', main_product:'蓝牙耳机', screenshots:[], reject_logs:[] },
-  { id:3, phone:'186****0093', platform_accounts:[{platform:'快手',account_name:'家居好物研究所'}], gmv:76000, status:'已审核', created_at:'2026-07-18 09:30:00', brand:'品牌C', main_product:'收纳用品', screenshots:[], reject_logs:[] },
+  { id:5, phone:'135****9911', platform_accounts:[{platform:'抖音',account_name:'@潮玩阿К'}], gmv:210000, status:'规划审核中', created_at:'2026-07-24 10:00:00', brand:'品牌D', main_product:'潮玩盲盒', screenshots:[], reject_logs:[],
+    project_plan: {
+      company_intro: '公司成立于2019年，注册资本500万元，团队规模约40人，专注3C数码类目电商代运营。',
+      categories: [], maternity_scale:'', maternity_brands:'', apparel_scale:'', apparel_brands:'',
+      paid_traffic_case: '2025年双11期间通过千川投放实现单场GMV破百万，ROI稳定在3.2以上。',
+      paid_traffic_shots: [],
+      content_case: '数码测评账号"老王数码测评"粉丝120万，单条爆款视频播放量超800万。',
+      content_case_shots: [],
+      people_goods_field: '主播2人+场控1人+中控1人，账号定位为专业数码测评+性价比好物推荐。',
+      short_video_strategy: '每周产出10条测评类短视频，聚焦新品首发与横向对比测评。',
+      ad_strategy: '千川+磁力金牛组合投放，前期以放量测试计划为主，稳定后转精准投放。',
+      team_plan: [{role:'主播', count:2, duty:'直播带货'}, {role:'场控', count:1, duty:'直播间节奏控制'}, {role:'中控', count:1, duty:'后台数据与话术支持'}],
+      venue_plan: '在杭州市余杭区租用200平米直播基地，预计装修投入30万元。',
+      submitted_at: '2026-07-24 11:00:00'
+    }
+  },
+  { id:3, phone:'186****0093', platform_accounts:[{platform:'快手',account_name:'家居好物研究所'}], gmv:76000, status:'已通过', created_at:'2026-07-18 09:30:00', brand:'品牌C', main_product:'收纳用品', screenshots:[], reject_logs:[],
+    project_plan: {
+      company_intro: '公司成立于2017年，注册资本300万元，深耕家居收纳品类电商运营6年。',
+      categories: ['母婴'], maternity_scale:'母婴品类年GMV约2000万元，覆盖全国15个省份。', maternity_brands:'代理知名母婴品牌3个，自营品牌1个。',
+      apparel_scale:'', apparel_brands:'',
+      paid_traffic_case: '通过巨量千川精准投放，家居收纳类目单月GMV突破300万元。',
+      paid_traffic_shots: [],
+      content_case: '"家居好物研究所"账号粉丝85万，收纳类种草视频平均播放量50万+。',
+      content_case_shots: [],
+      people_goods_field: '主播1人+助播1人，账号定位为家居收纳好物测评与场景化种草。',
+      short_video_strategy: '每周产出8条收纳场景类短视频，突出使用前后对比效果。',
+      ad_strategy: '磁力金牛为主，结合达人分销扩大曝光。',
+      team_plan: [{role:'主播', count:1, duty:'直播带货'}, {role:'助播', count:1, duty:'配合互动与上架'}],
+      venue_plan: '在广州市白云区租用80平米直播间，预计装修投入12万元。',
+      submitted_at: '2026-07-19 15:20:00'
+    }
+  },
   { id:4, phone:'177****5567', platform_accounts:[{platform:'抖音',account_name:'@美妆小鹿'}], gmv:42000, status:'已驳回', created_at:'2026-07-22 16:48:00', brand:'品牌A', main_product:'口红套装', screenshots:[], reject_logs:[{reason:'业绩截图模糊，无法核实GMV数据', time:'2026-07-23 09:00:00', operator:'BD-张敏'}] }
 ];
 var mockTalentNames = {
-  '138****2231':'李潮', '159****8820':'王强', '186****0093':'陈静', '177****5567':'林晓鹿'
+  '138****2231':'李潮', '159****8820':'王强', '186****0093':'陈静', '177****5567':'林晓鹿', '135****9911':'赵凯'
 };
 var talents = JSON.parse(localStorage.getItem('recruit_talents') || '{}');
 function talentName(phone) {
@@ -227,14 +253,15 @@ function renderTable(data) {
   var tbody = document.getElementById('tableBody');
   var html = '';
   if (data.length === 0) {
-    html = '<tr><td colspan="7" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无数据</div><div class="empty-hint">公共池暂无符合条件的申请</div></td></tr>';
+    html = '<tr><td colspan="9" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无数据</div><div class="empty-hint">暂无符合条件的申请</div></td></tr>';
   } else {
     data.forEach(function(row, index) {
       html += '<tr>';
       html += '<td>' + (index+1) + '</td>';
       html += '<td>' + esc(talentName(row.phone)) + '</td>';
       html += '<td>' + esc(row.phone) + '</td>';
-      html += '<td class="col-platform" title="' + esc(platformSummary(row.platform_accounts)) + '"><span class="cell-ellipsis">' + esc(platformSummary(row.platform_accounts)) + '</span></td>';
+      html += '<td class="col-platform">' + platCells(row.platform_accounts) + '</td>';
+      html += '<td class="col-account">' + acctCells(row.platform_accounts) + '</td>';
       html += '<td>&#165;' + Number(row.gmv).toLocaleString('zh-CN') + '</td>';
       html += '<td class="col-status">' + st(row.status) + '<div class="td-sub-time">' + esc(row.created_at) + '</div></td>';
       html += '<td>' + esc(row.created_at) + '</td>';
@@ -246,12 +273,19 @@ function renderTable(data) {
   tbody.innerHTML = html;
   document.getElementById('totalCount').textContent = data.length;
 }
-function platformSummary(accounts) {
-  if (!accounts || accounts.length === 0) return '-';
-  return accounts.map(function(a) { return a.platform + ' ' + a.account_name; }).join('；');
+function platCells(accounts) {
+  if (!accounts || accounts.length === 0) return '<div class="ml">-</div>';
+  return accounts.map(function(a) { return '<div class="ml"><span class="plat-tag">' + esc(a.platform) + '</span></div>'; }).join('');
+}
+function acctCells(accounts) {
+  if (!accounts || accounts.length === 0) return '<div class="ml">-</div>';
+  return accounts.map(function(a) { return '<div class="ml"><span class="acct-text">' + esc(a.account_name) + '</span></div>'; }).join('');
 }
 function st(s) {
-  var m = { '已提交':'submitted', '审核中':'reviewing', '已审核':'approved', '已驳回':'rejected' };
+  var m = {
+    '已提交':'submitted', '审核中':'reviewing', '已驳回':'rejected',
+    '待提交项目规划':'initial', '规划审核中':'reviewing', '规划已驳回':'rejected', '已通过':'approved'
+  };
   return '<span class="status-tag '+(m[s]||'')+'">'+s+'</span>';
 }
 function esc(s) { if(!s) return ''; var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
@@ -308,7 +342,7 @@ var mobileShownCount = MOBILE_PAGE_SIZE;
 var currentFiltered = mockData.slice();
 
 function isMobileView() {
-  return window.matchMedia('(max-width: 640px)').matches;
+  return window.matchMedia('(max-width: 1023px)').matches;
 }
 
 function renderCards(data) {
@@ -320,7 +354,7 @@ function renderCards(data) {
   } else {
     slice.forEach(function(row) {
       var chips = (row.platform_accounts || []).map(function(a) {
-        return '<span class="chip">' + esc(a.platform) + ' ' + esc(a.account_name) + '</span>';
+        return '<span class="pa-line"><span class="plat-tag">' + esc(a.platform) + '</span><span class="acct">' + esc(a.account_name) + '</span></span>';
       }).join('');
       html += '<div class="recruit-card">';
       html += '<div class="recruit-card-head"><span class="name">' + esc(talentName(row.phone)) + '</span>' + st(row.status) + '</div>';
@@ -401,8 +435,10 @@ function showToast(message, type) {
   }, 2500);
 }
 
-localStorage.setItem('recruit_applications', JSON.stringify(mockData));
-renderView(mockData);
+if (!localStorage.getItem('recruit_applications')) {
+  localStorage.setItem('recruit_applications', JSON.stringify(mockData));
+}
+renderView(JSON.parse(localStorage.getItem('recruit_applications')) || mockData);
 </script>
 <!-- 设备效果预览切换器：电脑 / 手机 -->
 <script>

@@ -106,12 +106,23 @@ function render() {
     if (a.status === '已驳回' && a.reject_logs && a.reject_logs.length > 0) {
       var lastReason = a.reject_logs[a.reject_logs.length - 1].reason;
       rejectHtml = '<div class="app-card-reject">驳回原因：' + esc(lastReason) + '</div>';
+    } else if (a.status === '规划已驳回' && a.plan_reject_logs && a.plan_reject_logs.length > 0) {
+      var lastPlanReason = a.plan_reject_logs[a.plan_reject_logs.length - 1].reason;
+      rejectHtml = '<div class="app-card-reject">项目规划驳回原因：' + esc(lastPlanReason) + '</div>';
     }
     var actionsHtml = '';
     if (a.status === '已驳回') {
       actionsHtml = '<button class="btn btn-primary" style="padding:6px 16px;font-size:12px;" onclick="goApply(\'edit\',' + a.id + ')">修改重提</button>';
+    } else if (a.status === '待提交项目规划') {
+      actionsHtml = '<button class="btn btn-primary" style="padding:6px 16px;font-size:12px;" onclick="goPlan(' + a.id + ')">填写项目规划</button>';
+    } else if (a.status === '规划已驳回') {
+      actionsHtml = '<button class="btn btn-primary" style="padding:6px 16px;font-size:12px;" onclick="goPlan(' + a.id + ')">修改重提</button>';
+    } else if (a.status === '规划审核中') {
+      actionsHtml = '<button class="btn" style="padding:6px 16px;font-size:12px;" onclick="viewDetail(' + a.id + ')">查看详情</button>';
+    } else if (a.status === '已通过') {
+      actionsHtml = '<button class="btn btn-primary" style="padding:6px 16px;font-size:12px;" onclick="viewDetail(' + a.id + ')">查看详情</button>';
     } else {
-      actionsHtml = '<button class="btn" style="padding:6px 16px;font-size:12px;" disabled>' + (a.status === '已审核' ? '已完成' : '审核中，请联系BD处理') + '</button>';
+      actionsHtml = '<button class="btn" style="padding:6px 16px;font-size:12px;" disabled>审核中，请联系BD处理</button>';
     }
     html += '<div class="app-card">' +
       '<div class="app-card-top"><span class="app-card-time">提交于 ' + esc(a.created_at) + '</span>' + st(a.status) + '</div>' +
@@ -128,13 +139,24 @@ function goApply(mode, id) {
   else { location.href = 'apply.html?mode=add'; }
 }
 
+function goPlan(id) {
+  location.href = 'project-plan.html?id=' + id;
+}
+
+function viewDetail(id) {
+  location.href = 'apply.html?mode=edit&id=' + id;
+}
+
 function doLogout() {
   localStorage.removeItem('recruit_current_phone');
   location.href = 'login.html';
 }
 
 function st(s) {
-  var m = { '已提交':'submitted', '审核中':'reviewing', '已审核':'approved', '已驳回':'rejected' };
+  var m = {
+    '已提交':'submitted', '审核中':'reviewing', '已驳回':'rejected',
+    '待提交项目规划':'initial', '规划审核中':'reviewing', '规划已驳回':'rejected', '已通过':'approved'
+  };
   return '<span class="status-tag '+(m[s]||'')+'">'+s+'</span>';
 }
 function esc(s) { if(!s) return ''; var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }

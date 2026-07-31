@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>招商入驻审核 - 详情</title>
+  <title>入驻意向审核 - 详情</title>
   <link rel="stylesheet" href="../../css/style.css">
   <style>
     .modal-overlay {
@@ -62,11 +62,21 @@
       border:1px solid var(--border); cursor:pointer; background:#f1f5f9;
       display:flex; align-items:center; justify-content:center; color:#94a3b8; font-size:12px;
     }
+    .shot-thumb img { width:100%; height:100%; object-fit:cover; }
     .reject-log-item {
       padding:12px 14px; background:#fef2f2; border-radius:8px; margin-bottom:8px;
     }
     .reject-log-item .reason { font-size:13px; color:#dc2626; font-weight:500; }
     .reject-log-item .meta { font-size:12px; color:var(--text-tertiary,#94a3b8); margin-top:4px; }
+    .pp-section { margin-bottom:18px; }
+    .pp-section:last-child { margin-bottom:0; }
+    .pp-section-title { font-size:13px; font-weight:700; color:var(--ink,#0f172a); margin:0 0 10px; }
+    .pp-empty { color:#94a3b8; font-size:13px; padding:12px 0; }
+    .pp-cats { display:flex; gap:8px; margin-bottom:10px; }
+    .team-plan-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .team-plan-table th, .team-plan-table td { padding:8px 10px; border:1px solid var(--border-light,#e2e8f0); text-align:center; }
+    .team-plan-table th { color:var(--text-tertiary,#94a3b8); font-weight:600; font-size:12px; background:#f8fafc; }
+    .team-plan-table tbody td:first-child { text-align:left; }
     .form-actions { display:flex; justify-content:flex-end; gap:10px; padding:16px 0; }
     .form-textarea {
       width:100%; padding:10px 14px; border:1px solid var(--border); border-radius:8px;
@@ -91,7 +101,7 @@
 
   <script>
     if (window.parent) {
-      window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 招商入驻审核 <span>/</span> 详情'}, '*');
+      window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 入驻意向审核 <span>/</span> 详情'}, '*');
     }
   </script>
 
@@ -100,7 +110,7 @@
       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
       返回
     </button>
-    <div class="page-title" style="margin-bottom:0;">招商入驻审核详情</div>
+    <div class="page-title" style="margin-bottom:0;">入驻意向审核详情</div>
   </div>
 
   <div class="detail-card">
@@ -131,6 +141,16 @@
     <div id="dRejectLogs"></div>
   </div>
 
+  <div class="detail-card" id="dPlanCard" style="display:none;">
+    <h3 class="detail-card-title">项目规划</h3>
+    <div id="dPlanBody"></div>
+  </div>
+
+  <div class="detail-card" id="dPlanRejectCard" style="display:none;">
+    <h3 class="detail-card-title">项目规划驳回历史</h3>
+    <div id="dPlanRejectLogs"></div>
+  </div>
+
   <div class="form-actions" id="dActions"></div>
 
 </div>
@@ -139,11 +159,11 @@
 <div id="approveModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this) closeApproveModal()">
   <div class="modal" style="width:420px;">
     <div class="modal-head">
-      <h3>确认通过审核</h3>
+      <h3 id="approveModalTitle">确认通过审核</h3>
       <button class="modal-close" onclick="closeApproveModal()">&times;</button>
     </div>
     <div class="modal-body">
-      <p style="font-size:13px;color:var(--text-secondary,#475569);line-height:1.7;">通过后该申请状态变为"已审核"（终态），操作不可撤销，确认要通过吗？</p>
+      <p style="font-size:13px;color:var(--text-secondary,#475569);line-height:1.7;" id="approveModalDesc">通过后该申请状态变为"已审核"（终态），操作不可撤销，确认要通过吗？</p>
     </div>
     <div class="modal-foot">
       <button class="btn" onclick="closeApproveModal()">取消</button>
@@ -156,7 +176,7 @@
 <div id="rejectModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this) closeRejectModal()">
   <div class="modal" style="width:480px;">
     <div class="modal-head">
-      <h3>驳回申请</h3>
+      <h3 id="rejectModalTitle">驳回申请</h3>
       <button class="modal-close" onclick="closeRejectModal()">&times;</button>
     </div>
     <div class="modal-body">
@@ -174,7 +194,7 @@
 <script>
 var mockData = JSON.parse(localStorage.getItem('recruit_applications') || 'null') || [];
 var mockTalentNames = {
-  '138****2231':'李潮', '159****8820':'王强', '186****0093':'陈静', '177****5567':'林晓鹿'
+  '138****2231':'李潮', '159****8820':'王强', '186****0093':'陈静', '177****5567':'林晓鹿', '135****9911':'赵凯'
 };
 var talents = JSON.parse(localStorage.getItem('recruit_talents') || '{}');
 function talentName(phone) {
@@ -207,7 +227,12 @@ function init() {
     document.getElementById('dShots').innerHTML = '<div class="shot-thumb">示例截图</div><div class="shot-thumb">示例截图</div>';
   } else {
     document.getElementById('dShots').innerHTML = shots.map(function(s) {
-      return '<div class="shot-thumb" onclick="window.open(\'' + s + '\',\'_blank\')">' + esc(s) + '</div>';
+      var name = typeof s === 'string' ? s : s.name;
+      var dataUrl = typeof s === 'string' ? '' : s.dataUrl;
+      if (dataUrl) {
+        return '<div class="shot-thumb" onclick="window.open(\'' + dataUrl + '\',\'_blank\')"><img src="' + dataUrl + '" alt="' + esc(name) + '"></div>';
+      }
+      return '<div class="shot-thumb">' + esc(name) + '</div>';
     }).join('');
   }
 
@@ -219,31 +244,112 @@ function init() {
     }).join('');
   }
 
+  renderPlanCard();
   renderActions();
+}
+
+var PLAN_VISIBLE_STATUSES = ['待提交项目规划', '规划审核中', '规划已驳回', '已通过'];
+
+function renderPlanCard() {
+  if (PLAN_VISIBLE_STATUSES.indexOf(currentRecord.status) === -1) return;
+  document.getElementById('dPlanCard').style.display = '';
+  var plan = currentRecord.project_plan;
+  if (!plan) {
+    document.getElementById('dPlanBody').innerHTML = '<div class="pp-empty">等待客户提交项目规划</div>';
+    return;
+  }
+  var catsHtml = (plan.categories || []).map(function(c) { return '<span class="plat-tag">' + esc(c) + '</span>'; }).join(' ');
+  var shotsHtml = function(shots) {
+    if (!shots || shots.length === 0) return '<div class="pp-empty" style="padding:6px 0;">暂无截图</div>';
+    return '<div class="shot-grid">' + shots.map(function(s) {
+      var name = typeof s === 'string' ? s : s.name;
+      var dataUrl = typeof s === 'string' ? '' : s.dataUrl;
+      if (dataUrl) return '<div class="shot-thumb" onclick="window.open(\'' + dataUrl + '\',\'_blank\')"><img src="' + dataUrl + '" alt="' + esc(name) + '"></div>';
+      return '<div class="shot-thumb">' + esc(name) + '</div>';
+    }).join('') + '</div>';
+  };
+  var teamHtml = '<table class="team-plan-table"><thead><tr><th>岗位</th><th>人数</th><th>职责说明</th></tr></thead><tbody>' +
+    (plan.team_plan || []).map(function(t) {
+      return '<tr><td>' + esc(t.role) + '</td><td>' + esc(String(t.count)) + '</td><td>' + esc(t.duty) + '</td></tr>';
+    }).join('') + '</tbody></table>';
+
+  var html = '';
+  html += '<div class="pp-section"><h4 class="pp-section-title">公司介绍</h4><div class="detail-item v">' + esc(plan.company_intro) + '</div></div>';
+  html += '<div class="pp-section"><h4 class="pp-section-title">经营项目介绍</h4><div class="pp-cats">' + catsHtml + '</div>';
+  if ((plan.categories || []).indexOf('母婴') > -1) {
+    html += '<div class="detail-grid" style="margin-bottom:10px;"><div class="detail-item"><div class="k">母婴规模介绍</div><div class="v">' + esc(plan.maternity_scale) + '</div></div><div class="detail-item"><div class="k">母婴品牌介绍</div><div class="v">' + esc(plan.maternity_brands) + '</div></div></div>';
+  }
+  if ((plan.categories || []).indexOf('服饰') > -1) {
+    html += '<div class="detail-grid"><div class="detail-item"><div class="k">服饰规模介绍</div><div class="v">' + esc(plan.apparel_scale) + '</div></div><div class="detail-item"><div class="k">服饰品牌介绍</div><div class="v">' + esc(plan.apparel_brands) + '</div></div></div>';
+  }
+  html += '</div>';
+  html += '<div class="pp-section"><h4 class="pp-section-title">付费流量运营案例</h4><div class="detail-item v" style="margin-bottom:8px;">' + esc(plan.paid_traffic_case) + '</div>' + shotsHtml(plan.paid_traffic_shots) + '</div>';
+  html += '<div class="pp-section"><h4 class="pp-section-title">内容打造案例</h4><div class="detail-item v" style="margin-bottom:8px;">' + esc(plan.content_case) + '</div>' + shotsHtml(plan.content_case_shots) + '</div>';
+  html += '<div class="pp-section"><h4 class="pp-section-title">直播间人货场构建</h4><div class="detail-item v">' + esc(plan.people_goods_field) + '</div></div>';
+  html += '<div class="pp-section"><h4 class="pp-section-title">短视频内容策略</h4><div class="detail-item v">' + esc(plan.short_video_strategy) + '</div></div>';
+  html += '<div class="pp-section"><h4 class="pp-section-title">投放策略</h4><div class="detail-item v">' + esc(plan.ad_strategy) + '</div></div>';
+  html += '<div class="pp-section"><h4 class="pp-section-title">团队配置规模</h4>' + teamHtml + '</div>';
+  html += '<div class="pp-section"><h4 class="pp-section-title">场地投入计划</h4><div class="detail-item v">' + esc(plan.venue_plan) + '</div></div>';
+  if (plan.gmv_target_monthly && plan.gmv_target_monthly.length === 12) {
+    var gmvTotal = plan.gmv_target_monthly.reduce(function(sum, v) { return sum + Number(v || 0); }, 0);
+    var gmvMonthHtml = plan.gmv_target_monthly.map(function(v, idx) {
+      return '<td style="text-align:right;padding:8px 10px;">' + (Number(v) || 0).toLocaleString('zh-CN', { maximumFractionDigits: 2 }) + '</td>';
+    }).join('');
+    var gmvTableHtml = '<table class="team-plan-table"><thead><tr><th>1月</th><th>2月</th><th>3月</th><th>4月</th><th>5月</th><th>6月</th><th>7月</th><th>8月</th><th>9月</th><th>10月</th><th>11月</th><th>12月</th><th>合计</th></tr></thead>' +
+      '<tbody><tr>' + gmvMonthHtml + '<td style="text-align:right;padding:8px 10px;background:#fffbeb;font-weight:600;color:var(--primary);">' + gmvTotal.toLocaleString('zh-CN', { maximumFractionDigits: 2 }) + '</td></tr></tbody></table>';
+    html += '<div class="pp-section"><h4 class="pp-section-title">年度GMV业绩目标（万元）</h4>' + gmvTableHtml + '</div>';
+  }
+  document.getElementById('dPlanBody').innerHTML = html;
+
+  var planLogs = currentRecord.plan_reject_logs || [];
+  if (planLogs.length > 0) {
+    document.getElementById('dPlanRejectCard').style.display = '';
+    document.getElementById('dPlanRejectLogs').innerHTML = planLogs.map(function(l) {
+      return '<div class="reject-log-item"><div class="reason">' + esc(l.reason) + '</div><div class="meta">' + esc(l.operator) + ' &middot; ' + esc(l.time) + '</div></div>';
+    }).join('');
+  }
+}
+
+function currentPhase() {
+  if (currentRecord.status === '已提交' || currentRecord.status === '审核中') return 'intent';
+  if (currentRecord.status === '规划审核中') return 'plan';
+  return null;
 }
 
 function renderActions() {
   var actions = document.getElementById('dActions');
-  if (currentRecord.status === '已提交' || currentRecord.status === '审核中') {
+  if (currentPhase()) {
     actions.innerHTML = '<button class="btn btn-danger" onclick="openRejectModal()">驳回</button><button class="btn btn-primary" onclick="openApproveModal()">通过</button>';
   } else {
     actions.innerHTML = '';
   }
 }
 
-function openApproveModal() { document.getElementById('approveModal').style.display = 'flex'; }
+function openApproveModal() {
+  var phase = currentPhase();
+  if (phase === 'plan') {
+    document.getElementById('approveModalTitle').textContent = '确认通过项目规划审核';
+    document.getElementById('approveModalDesc').textContent = '通过后该申请状态变为"已通过"（终态），操作不可撤销，确认要通过吗？';
+  } else {
+    document.getElementById('approveModalTitle').textContent = '确认通过审核';
+    document.getElementById('approveModalDesc').textContent = '通过后该申请状态变为"待提交项目规划"，客户需在线提交项目规划，确认要通过吗？';
+  }
+  document.getElementById('approveModal').style.display = 'flex';
+}
 function closeApproveModal() { document.getElementById('approveModal').style.display = 'none'; }
 function confirmApprove() {
-  currentRecord.status = '已审核';
+  var phase = currentPhase();
+  currentRecord.status = phase === 'plan' ? '已通过' : '待提交项目规划';
   currentRecord.updated_at = now();
   persist();
   closeApproveModal();
   showToast('审核通过', 'success');
-  document.getElementById('dStatus').innerHTML = st(currentRecord.status);
-  renderActions();
+  init();
 }
 
 function openRejectModal() {
+  var phase = currentPhase();
+  document.getElementById('rejectModalTitle').textContent = phase === 'plan' ? '驳回项目规划' : '驳回申请';
   document.getElementById('rejectReason').value = '';
   document.getElementById('rejectError').style.display = 'none';
   document.getElementById('rejectModal').style.display = 'flex';
@@ -252,10 +358,17 @@ function closeRejectModal() { document.getElementById('rejectModal').style.displ
 function confirmReject() {
   var reason = document.getElementById('rejectReason').value.trim();
   if (!reason) { document.getElementById('rejectError').style.display = 'block'; return; }
-  currentRecord.status = '已驳回';
+  var phase = currentPhase();
   currentRecord.updated_at = now();
-  currentRecord.reject_logs = currentRecord.reject_logs || [];
-  currentRecord.reject_logs.push({ reason: reason, time: now(), operator: 'BD-当前用户' });
+  if (phase === 'plan') {
+    currentRecord.status = '规划已驳回';
+    currentRecord.plan_reject_logs = currentRecord.plan_reject_logs || [];
+    currentRecord.plan_reject_logs.push({ reason: reason, time: now(), operator: 'BD-当前用户' });
+  } else {
+    currentRecord.status = '已驳回';
+    currentRecord.reject_logs = currentRecord.reject_logs || [];
+    currentRecord.reject_logs.push({ reason: reason, time: now(), operator: 'BD-当前用户' });
+  }
   persist();
   closeRejectModal();
   showToast('已驳回', 'success');
@@ -269,7 +382,10 @@ function persist() {
 }
 
 function st(s) {
-  var m = { '已提交':'submitted', '审核中':'reviewing', '已审核':'approved', '已驳回':'rejected' };
+  var m = {
+    '已提交':'submitted', '审核中':'reviewing', '已驳回':'rejected',
+    '待提交项目规划':'initial', '规划审核中':'reviewing', '规划已驳回':'rejected', '已通过':'approved'
+  };
   return '<span class="status-tag '+(m[s]||'')+'">'+s+'</span>';
 }
 function esc(s) { if(!s) return ''; var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }

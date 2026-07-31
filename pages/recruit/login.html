@@ -119,7 +119,7 @@
 
   <button class="login-submit" onclick="doLogin()">登录 / 注册</button>
 
-  <div class="login-hint">未注册的手机号验证通过后将自动创建达人身份<br>登录即代表同意平台入驻协议</div>
+  <div class="login-hint">未注册的手机号验证通过后将自动创建达人身份<br>登录即代表同意平台入驻协议<br><br><a href="javascript:void(0)" onclick="quickDemo()" style="color:var(--primary);font-weight:600;text-decoration:underline;">演示快捷登录（跳过验证）</a></div>
 </div>
 
 <div id="toastContainer" class="toast-container"></div>
@@ -180,6 +180,19 @@ function doLogin() {
   }
   localStorage.setItem('recruit_current_phone', phone);
   showToast('登录成功', 'success');
+  setTimeout(function() { location.href = 'mine.html'; }, 400);
+}
+
+function quickDemo() {
+  var demoPhone = '138****2231';
+  var demoName = '李潮';
+  var talents = JSON.parse(localStorage.getItem('recruit_talents') || '{}');
+  if (!talents[demoPhone]) {
+    talents[demoPhone] = { phone: demoPhone, name: demoName, talent_id: 'T_DEMO_001', created_at: nowStr() };
+    localStorage.setItem('recruit_talents', JSON.stringify(talents));
+  }
+  localStorage.setItem('recruit_current_phone', demoPhone);
+  showToast('演示账号已登录（' + demoName + '）', 'success');
   setTimeout(function() { location.href = 'mine.html'; }, 400);
 }
 

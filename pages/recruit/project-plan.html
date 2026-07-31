@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>入驻意向审核 - 项目规划</title>
+<link rel="stylesheet" href="../../css/style.css">
+<style>
+  body { background: #f5f7fb; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  .section-head { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 16px; }
+  .section-head .form-card-title { margin-bottom: 0; }
+  .section-num, .section-titles .section-desc, .section-status, #desktopActionBar { display: none; }
+  .apply-shell { max-width: 960px; margin: 0 auto; padding: 24px 20px 80px; }
+  .apply-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+  .apply-header .title { font-size: 20px; font-weight: 700; color: var(--text); }
+  .back-link { display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--text-secondary); cursor: pointer; }
+
+  .form-card { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 22px 20px; margin-bottom: 16px; }
+  .form-card-title { font-size: 14px; font-weight: 700; color: var(--text); margin: 0 0 16px; display: flex; align-items: center; gap: 8px; }
+  .form-card-title svg { color: var(--primary); }
+  .form-group { display: flex; flex-direction: column; margin-bottom: 14px; }
+  .form-group:last-child { margin-bottom: 0; }
+  .form-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+  .form-label .required { color: #ef4444; margin-left: 2px; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%; padding: 11px 14px; border: 1px solid var(--border); border-radius: 9px;
+    font: inherit; font-size: 13px; outline: none; background: #fafbfd; box-sizing: border-box;
+    transition: border-color .18s;
+  }
+  .form-textarea { resize: vertical; line-height: 1.6; min-height: 92px; }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--primary); background: #fff; }
+  .field-error { display: none; color: #dc2626; font-size: 12px; margin-top: 5px; }
+  .has-error .form-input, .has-error .form-select, .has-error .form-textarea { border-color: #ef4444; background: #fef2f2; }
+  .has-error .field-error { display: block; }
+  .field-hint { font-size: 12px; color: var(--text-tertiary); margin-top: 4px; }
+
+  .category-checkboxes { display: flex; gap: 12px; flex-wrap: wrap; }
+  .cat-check {
+    display: flex; align-items: center; gap: 8px; padding: 10px 16px; border: 1px solid var(--border);
+    border-radius: 9px; background: #fafbfd; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-secondary);
+    transition: all .18s;
+  }
+  .cat-check.checked { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+  .cat-check input { width: 16px; height: 16px; accent-color: var(--primary); }
+  .category-fields { display: none; margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border); }
+  .category-fields.show { display: block; }
+
+  .team-plan-row {
+    border: 1px solid var(--border-light); border-radius: 10px; padding: 14px;
+    background: #fafbfd; margin-bottom: 10px; display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;
+  }
+  .team-plan-row .form-group { margin-bottom: 0; }
+  .tp-g-role { flex: 1 1 180px; }
+  .tp-g-count { flex: 0 0 100px; }
+  .tp-g-duty { flex: 2 1 220px; }
+  .tp-remove { font-size: 12px; color: #dc2626; cursor: pointer; background: none; border: none; padding: 8px 4px; flex-shrink: 0; }
+  .tp-remove:disabled { color: var(--text-disabled); cursor: not-allowed; }
+  .add-row-btn {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    width: 100%; padding: 11px; border-radius: 9px; border: 1.5px dashed var(--primary);
+    background: var(--primary-light); color: var(--primary); font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+
+  .gmv-table {
+    width: 100%; border-collapse: collapse; font-size: 12px; background: #fafbfd; border-radius: 10px; overflow: hidden;
+  }
+  .gmv-table th, .gmv-table td { padding: 8px 6px; text-align: center; border: 1px solid var(--border-light); }
+  .gmv-table th { background: #f1f5f9; color: var(--text-secondary); font-weight: 600; font-size: 11px; white-space: nowrap; }
+  .gmv-table td input {
+    width: 100%; min-width: 60px; padding: 6px 4px; border: 1px solid var(--border); border-radius: 4px;
+    font-size: 12px; text-align: right; box-sizing: border-box;
+  }
+  .gmv-table td input:focus { border-color: var(--primary); outline: none; background: #fff; }
+  .gmv-table .total-row { background: #fffbeb; font-weight: 600; }
+  .gmv-table .total-value { color: var(--primary); font-size: 13px; white-space: nowrap; }
+  .gmv-scroll-wrapper { overflow-x: auto; margin: 0 -20px; padding: 0 20px; }
+  .gmv-scroll-wrapper::-webkit-scrollbar { height: 6px; }
+  .gmv-scroll-wrapper::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 3px; }
+  .gmv-scroll-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  .gmv-scroll-wrapper::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+  .gmv-list-mobile { display: none; }
+  .gmv-list-item {
+    display: flex; align-items: center; justify-content: space-between; padding: 12px 14px;
+    border-bottom: 1px solid var(--border-light); background: #fff;
+  }
+  .gmv-list-item:last-child { border-bottom: none; }
+  .gmv-list-item.total-row { background: #fffbeb; font-weight: 600; }
+  .gmv-list-label { font-size: 13px; color: var(--text-secondary); font-weight: 600; min-width: 60px; }
+  .gmv-list-item.total-row .gmv-list-label { color: var(--text); }
+  .gmv-list-input {
+    flex: 1; max-width: 180px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px;
+    font-size: 13px; text-align: right; box-sizing: border-box;
+  }
+  .gmv-list-input:focus { border-color: var(--primary); outline: none; background: #fff; }
+  .gmv-list-value { font-size: 14px; color: var(--primary); font-weight: 600; }
+
+  @media (max-width: 640px) {
+    .gmv-scroll-wrapper { display: none; }
+    .gmv-list-mobile { display: block; background: #fafbfd; border-radius: 10px; overflow: hidden; }
+    .apply-shell { padding-bottom: 100px; }
+    .team-plan-row { flex-direction: column; align-items: stretch; gap: 0; padding: 8px 12px; }
+    .team-plan-row .tp-g-role,
+    .team-plan-row .tp-g-count,
+    .team-plan-row .tp-g-duty { flex: 0 0 auto; margin-bottom: 6px !important; }
+    .team-plan-row .tp-g-duty { margin-bottom: 0 !important; }
+    .team-plan-row .form-label { margin-bottom: 2px; font-size: 12px; }
+    .team-plan-row .form-input { height: 36px !important; padding: 6px 10px; font-size: 13px; }
+    .tp-remove { align-self: flex-end; margin-top: 4px; padding: 4px; }
+  }
+
+  .upload-zone {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    padding: 20px; border: 2px dashed #cbd5e1; border-radius: 12px; cursor: pointer;
+    transition: all .18s; background: #fafbfd;
+  }
+  .upload-zone:hover { border-color: var(--primary); background: var(--primary-50); }
+  .upload-zone svg { width: 26px; height: 26px; color: var(--primary); }
+  .upload-zone .title { font-size: 13px; font-weight: 600; color: #475569; }
+  .upload-zone .hint { font-size: 12px; color: var(--text-tertiary); }
+  .shot-list { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+  .shot-chip {
+    display: flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; background: #ecfdf5;
+    border-radius: 8px; font-size: 12px; color: #059669;
+  }
+  .shot-chip img { width: 32px; height: 32px; border-radius: 4px; object-fit: cover; flex-shrink: 0; }
+  .shot-chip .rm { cursor: pointer; color: #dc2626; font-weight: 700; }
+
+  .form-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 8px 0 20px; }
+  .locked-banner { background: #fffbeb; color: #d97706; border-radius: 10px; padding: 12px 16px; font-size: 13px; margin-bottom: 16px; }
+  .plan-reject-banner { background: #fef2f2; color: #dc2626; border-radius: 10px; padding: 12px 16px; font-size: 13px; margin-bottom: 16px; line-height: 1.7; }
+  @media (max-width: 640px) {
+    .apply-shell { padding: 0 0 88px; }
+    .apply-header { padding: 16px 20px 0; }
+    .mobile-step-bar {
+      display: flex; position: sticky; top: 0; z-index: 10;
+      background: #fff; border-bottom: 1px solid var(--border);
+      padding: 12px 20px; margin: 12px 0 0; overflow-x: auto;
+    }
+    .mobile-step-item {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+      font-size: 12px; color: #94a3b8; white-space: nowrap;
+    }
+    .mobile-step-item .num {
+      width: 20px; height: 20px; border-radius: 50%; background: #e2e8f0; color: #64748b;
+      display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700;
+      flex-shrink: 0;
+    }
+    .mobile-step-item.active { color: var(--primary); font-weight: 600; }
+    .mobile-step-item.active .num { background: var(--primary); color: #fff; }
+    .form-card[data-step] { display: none; margin-left: 20px; margin-right: 20px; }
+    .form-card[data-step].step-active { display: block; }
+    #formActions { display: none; }
+    .mobile-step-nav {
+      display: flex; gap: 10px; position: fixed; bottom: 0; left: 0; right: 0;
+      background: #fff; border-top: 1px solid var(--border); padding: 12px 20px; z-index: 10;
+    }
+    .mobile-step-nav .btn { flex: 1; height: 48px; }
+    .form-input, .form-select { height: 48px; }
+    .team-plan-row { flex-direction: column; align-items: stretch; gap: 0; padding: 8px 12px; }
+    .team-plan-row .tp-g-role,
+    .team-plan-row .tp-g-count,
+    .team-plan-row .tp-g-duty { flex: 0 0 auto; margin-bottom: 6px !important; }
+    .team-plan-row .tp-g-duty { margin-bottom: 0 !important; }
+    .team-plan-row .form-label { margin-bottom: 2px; font-size: 12px; }
+    .team-plan-row .form-input { height: 36px !important; padding: 6px 10px; font-size: 13px; }
+    .tp-remove { align-self: flex-end; margin-top: 4px; padding: 4px; }
+  }
+  @media (min-width: 641px) {
+    .mobile-step-bar, .mobile-step-nav { display: none; }
+  }
+  @media (min-width: 1024px) {
+    body { display: flex; justify-content: center; align-items: flex-start; gap: 28px; padding: 36px 28px 60px; }
+    .apply-shell { max-width: 1200px; width: 100%; flex: 1; margin: 0; padding: 0; }
+    .apply-header { margin-bottom: 16px; }
+    .apply-header .title { font-size: 22px; }
+    .desktop-step-nav {
+      position: sticky; top: 32px; z-index: 1;
+      display: flex; flex-direction: column; gap: 4px;
+      width: 230px; flex-shrink: 0;
+      background: #fff; border: 1px solid var(--border); border-radius: 16px;
+      padding: 14px; box-shadow: var(--shadow-md);
+    }
+    .desktop-step-nav .dsn-item {
+      position: relative; display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 10px;
+      font-size: 13px; font-weight: 500; color: #94a3b8; cursor: pointer;
+      transition: background .18s, color .18s;
+    }
+    .desktop-step-nav .dsn-item:hover { background: #f8fafc; }
+    .desktop-step-nav .dsn-item .num {
+      width: 22px; height: 22px; border-radius: 50%; background: #f1f5f9; color: #94a3b8;
+      display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700;
+      flex-shrink: 0;
+    }
+    .desktop-step-nav .dsn-item.current { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+    .desktop-step-nav .dsn-item.current .num { background: var(--primary); color: #fff; }
+  }
+  @media (max-width: 1023px) {
+    .desktop-step-nav { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="desktop-step-nav" id="desktopStepNav">
+    <div class="dsn-item" data-dsn-step="1" onclick="desktopGoToStep(1)"><span class="num">1</span>公司介绍</div>
+    <div class="dsn-item" data-dsn-step="2" onclick="desktopGoToStep(2)"><span class="num">2</span>经营项目介绍</div>
+    <div class="dsn-item" data-dsn-step="3" onclick="desktopGoToStep(3)"><span class="num">3</span>运营案例</div>
+    <div class="dsn-item" data-dsn-step="4" onclick="desktopGoToStep(4)"><span class="num">4</span>投入计划与策略</div>
+  </div>
+<div class="apply-shell">
+
+  <div class="apply-header">
+    <span class="back-link" onclick="goBack()">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      返回
+    </span>
+    <div class="title" id="pageTitle">项目规划</div>
+  </div>
+
+  <div class="locked-banner" id="lockedBanner" style="display:none;"></div>
+  <div class="plan-reject-banner" id="planRejectBanner" style="display:none;"></div>
+
+  <div class="mobile-step-bar" id="mobileStepBar">
+    <div class="mobile-step-item" data-step-tab="1"><span class="num">1</span>公司介绍</div>
+    <div class="mobile-step-item" data-step-tab="2"><span class="num">2</span>经营项目</div>
+    <div class="mobile-step-item" data-step-tab="3"><span class="num">3</span>运营案例</div>
+    <div class="mobile-step-item" data-step-tab="4"><span class="num">4</span>投入计划</div>
+  </div>
+
+  <form id="mainForm">
+    <div class="form-card" data-step="1">
+      <div class="section-head">
+        <div class="section-titles">
+          <h3 class="form-card-title">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            公司介绍
+          </h3>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">公司介绍 <span class="required">*</span></label>
+        <textarea class="form-textarea" id="companyIntro" rows="6" placeholder="请介绍公司基本情况，如成立时间、注册资本、团队规模等"></textarea>
+        <div class="field-error">公司介绍为必填项</div>
+      </div>
+    </div>
+
+    <div class="form-card" data-step="2">
+      <div class="section-head">
+        <div class="section-titles">
+          <h3 class="form-card-title">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 9h20"/></svg>
+            经营项目介绍
+          </h3>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">所经营项目品类 <span class="required">*</span></label>
+        <div class="category-checkboxes">
+          <label class="cat-check" id="catCheckMaternity">
+            <input type="checkbox" value="母婴" onchange="toggleCategory(this)"> 母婴
+          </label>
+          <label class="cat-check" id="catCheckApparel">
+            <input type="checkbox" value="服饰" onchange="toggleCategory(this)"> 服饰
+          </label>
+        </div>
+        <div class="field-error" id="categoryError">请至少选择一个经营品类</div>
+      </div>
+      <div class="category-fields" id="maternityFields">
+        <div class="form-group">
+          <label class="form-label">母婴规模介绍 <span class="required">*</span></label>
+          <textarea class="form-textarea" id="maternityScale" rows="3" placeholder="请介绍母婴品类的经营规模，如年GMV、门店数等"></textarea>
+          <div class="field-error">母婴规模介绍为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">母婴品牌介绍 <span class="required">*</span></label>
+          <textarea class="form-textarea" id="maternityBrands" rows="3" placeholder="请介绍代理/自营的母婴品牌情况"></textarea>
+          <div class="field-error">母婴品牌介绍为必填项</div>
+        </div>
+      </div>
+      <div class="category-fields" id="apparelFields">
+        <div class="form-group">
+          <label class="form-label">服饰规模介绍 <span class="required">*</span></label>
+          <textarea class="form-textarea" id="apparelScale" rows="3" placeholder="请介绍服饰品类的经营规模，如年GMV、门店数等"></textarea>
+          <div class="field-error">服饰规模介绍为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">服饰品牌介绍 <span class="required">*</span></label>
+          <textarea class="form-textarea" id="apparelBrands" rows="3" placeholder="请介绍代理/自营的服饰品牌情况"></textarea>
+          <div class="field-error">服饰品牌介绍为必填项</div>
+        </div>
+      </div>
+    </div>
+    <div class="form-card" data-step="3">
+      <div class="section-head">
+        <div class="section-titles">
+          <h3 class="form-card-title">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-6"/></svg>
+            运营案例
+          </h3>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">付费流量运营案例 <span class="required">*</span></label>
+        <textarea class="form-textarea" id="paidTrafficCase" rows="4" placeholder="请描述付费流量运营的具体案例与效果"></textarea>
+        <div class="field-error">付费流量运营案例为必填项</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">付费流量案例截图</label>
+        <div class="upload-zone" onclick="document.getElementById('paidTrafficShotInput').click()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <div class="title">点击上传案例截图</div>
+          <div class="hint">支持多图，模拟上传（.png/.jpg）</div>
+          <input type="file" id="paidTrafficShotInput" style="display:none" accept="image/*" multiple onchange="handleShotSelect(this.files, 'paidTraffic')">
+        </div>
+        <div class="shot-list" id="paidTrafficShotList"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">内容打造案例 <span class="required">*</span></label>
+        <textarea class="form-textarea" id="contentCase" rows="4" placeholder="请描述短视频/直播内容打造的具体案例与效果"></textarea>
+        <div class="field-error">内容打造案例为必填项</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">内容打造案例截图</label>
+        <div class="upload-zone" onclick="document.getElementById('contentCaseShotInput').click()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <div class="title">点击上传案例截图</div>
+          <div class="hint">支持多图，模拟上传（.png/.jpg）</div>
+          <input type="file" id="contentCaseShotInput" style="display:none" accept="image/*" multiple onchange="handleShotSelect(this.files, 'contentCase')">
+        </div>
+        <div class="shot-list" id="contentCaseShotList"></div>
+      </div>
+    </div>
+
+    <div class="form-card" data-step="4">
+      <div class="section-head">
+        <div class="section-titles">
+          <h3 class="form-card-title">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            投入计划与经营策略
+          </h3>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">直播间人货场构建（人员、账号定位） <span class="required">*</span></label>
+        <textarea class="form-textarea" id="peopleGoodsField" rows="4" placeholder="请描述直播间的人员配置、账号定位规划"></textarea>
+        <div class="field-error">人货场构建为必填项</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">短视频内容策略 <span class="required">*</span></label>
+        <textarea class="form-textarea" id="shortVideoStrategy" rows="4" placeholder="请描述短视频内容规划与策略"></textarea>
+        <div class="field-error">短视频内容策略为必填项</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">投放策略 <span class="required">*</span></label>
+        <textarea class="form-textarea" id="adStrategy" rows="4" placeholder="请描述付费投放的策略规划"></textarea>
+        <div class="field-error">投放策略为必填项</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">团队配置规模 <span class="required">*</span></label>
+        <div id="teamPlanList"></div>
+        <div class="add-row-btn" onclick="addTeamPlanRow()">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          添加岗位
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">场地投入计划 <span class="required">*</span></label>
+        <textarea class="form-textarea" id="venuePlan" rows="4" placeholder="请描述场地面积、地址、装修预算等投入计划"></textarea>
+        <div class="field-error">场地投入计划为必填项</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">年度GMV业绩目标（万元） <span class="required">*</span></label>
+        <div class="field-hint" style="margin-bottom:10px;">请填写1-12月的月度GMV目标拆解</div>
+        <div id="gmvTargetTable"></div>
+      </div>
+    </div>
+
+    <div class="form-actions" id="formActions">
+      <button type="button" class="btn" onclick="goBack()">取消</button>
+      <button type="button" class="btn" onclick="saveDraft()">保存草稿</button>
+      <button type="button" class="btn btn-primary" onclick="doSubmit()">提交项目规划</button>
+    </div>
+
+    <div class="mobile-step-nav" id="mobileStepNav">
+      <button type="button" class="btn" id="stepPrevBtn" onclick="stepPrev()">上一步</button>
+      <button type="button" class="btn btn-primary" id="stepNextBtn" onclick="stepNext()">下一步</button>
+    </div>
+  </form>
+
+</div>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<script>
+var phone = localStorage.getItem('recruit_current_phone');
+if (!phone) { location.href = 'login.html'; }
+
+function g(name) { var r = location.search.match(new RegExp('[?&]'+name+'=([^&]*)')); return r ? decodeURIComponent(r[1]) : ''; }
+var appId = parseInt(g('id')) || 0;
+var currentRecord = null;
+var teamSeq = 0;
+var shotsMap = { paidTraffic: [], contentCase: [] };
+
+var TOTAL_STEPS = 4;
+var currentStep = 1;
+var EDITABLE_STATUSES = ['待提交项目规划', '规划已驳回'];
+
+function isMobileStepMode() {
+  return window.matchMedia('(max-width: 640px)').matches;
+}
+
+function updateStepUI() {
+  if (!isMobileStepMode()) return;
+  document.querySelectorAll('.form-card[data-step]').forEach(function(card) {
+    card.classList.toggle('step-active', Number(card.getAttribute('data-step')) === currentStep);
+  });
+  document.querySelectorAll('.mobile-step-item').forEach(function(tab) {
+    tab.classList.toggle('active', Number(tab.getAttribute('data-step-tab')) === currentStep);
+  });
+  document.getElementById('stepPrevBtn').style.visibility = currentStep === 1 ? 'hidden' : 'visible';
+  document.getElementById('stepNextBtn').textContent = currentStep === TOTAL_STEPS ? '提交项目规划' : '下一步';
+}
+
+function stepPrev() {
+  if (currentStep > 1) { currentStep--; updateStepUI(); window.scrollTo(0, 0); }
+}
+
+function stepNext() {
+  if (currentStep < TOTAL_STEPS) {
+    clearErrors();
+    if (!validateStep(currentStep)) { showToast('请完善表单中的必填项', 'error'); return; }
+    currentStep++;
+    updateStepUI();
+    window.scrollTo(0, 0);
+  } else {
+    doSubmit();
+  }
+}
+
+function setCurrentDsn(step) {
+  document.querySelectorAll('.dsn-item').forEach(function(item) {
+    item.classList.toggle('current', Number(item.getAttribute('data-dsn-step')) === step);
+  });
+}
+
+function desktopGoToStep(step) {
+  var target = document.querySelector('.form-card[data-step="' + step + '"]');
+  if (!target) return;
+  setCurrentDsn(step);
+  target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+if ('IntersectionObserver' in window) {
+  var stepSpy = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) setCurrentDsn(Number(e.target.getAttribute('data-step')));
+    });
+  }, { rootMargin: '-20% 0px -65% 0px' });
+  document.querySelectorAll('.form-card[data-step]').forEach(function(card) { stepSpy.observe(card); });
+}
+window.addEventListener('resize', updateStepUI);
+function toggleCategory(checkbox) {
+  checkbox.closest('.cat-check').classList.toggle('checked', checkbox.checked);
+  var fieldsEl = checkbox.value === '母婴' ? document.getElementById('maternityFields') : document.getElementById('apparelFields');
+  fieldsEl.classList.toggle('show', checkbox.checked);
+}
+
+function getCheckedCategories() {
+  return Array.prototype.slice.call(document.querySelectorAll('.category-checkboxes input:checked')).map(function(c) { return c.value; });
+}
+
+function addTeamPlanRow(role, count, duty) {
+  teamSeq++;
+  var id = 'tp_' + teamSeq;
+  var wrap = document.createElement('div');
+  wrap.className = 'team-plan-row';
+  wrap.id = id;
+  wrap.innerHTML =
+    '<div class="form-group tp-g-role"><label class="form-label">岗位</label>' +
+    '<input type="text" class="form-input tp-role" placeholder="如：主播/中控/场控" value="'+(role?esc(role):'')+'"></div>' +
+    '<div class="form-group tp-g-count"><label class="form-label">人数</label>' +
+    '<input type="number" min="0" class="form-input tp-count" placeholder="人数" value="'+(count!=null?esc(String(count)):'')+'"></div>' +
+    '<div class="form-group tp-g-duty"><label class="form-label">职责说明</label>' +
+    '<input type="text" class="form-input tp-duty" placeholder="请输入职责说明" value="'+(duty?esc(duty):'')+'"></div>' +
+    '<button type="button" class="tp-remove" onclick="removeTeamPlanRow(\''+id+'\')">删除</button>';
+  document.getElementById('teamPlanList').appendChild(wrap);
+  updateTeamRemoveButtons();
+}
+
+function removeTeamPlanRow(id) {
+  var list = document.getElementById('teamPlanList');
+  if (list.children.length <= 1) { showToast('至少保留1个岗位配置', 'error'); return; }
+  var el = document.getElementById(id);
+  if (el) el.remove();
+  updateTeamRemoveButtons();
+}
+
+function updateTeamRemoveButtons() {
+  var list = document.getElementById('teamPlanList');
+  var single = list.children.length <= 1;
+  Array.prototype.forEach.call(list.querySelectorAll('.tp-remove'), function(btn) { btn.disabled = single; });
+}
+
+var GMV_MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+
+function renderGmvTable(values) {
+  values = values || [];
+  var headHtml = GMV_MONTHS.map(function(m) { return '<th>' + m + '</th>'; }).join('');
+  var inputHtml = GMV_MONTHS.map(function(m, idx) {
+    var v = values[idx] != null ? values[idx] : '';
+    return '<td><input type="number" min="0" step="0.01" class="gmv-month-input" data-idx="' + idx + '" value="' + esc(String(v)) + '" oninput="syncGmvInputs(this);updateGmvTotal()" placeholder="0"></td>';
+  }).join('');
+  var desktopHtml = '<div class="gmv-scroll-wrapper"><table class="gmv-table"><thead><tr>' + headHtml + '<th>合计</th></tr></thead>' +
+    '<tbody><tr>' + inputHtml + '<td class="total-row"><span class="total-value" id="gmvTotalValue">0</span></td></tr></tbody></table></div>';
+
+  var mobileItems = GMV_MONTHS.map(function(m, idx) {
+    var v = values[idx] != null ? values[idx] : '';
+    return '<div class="gmv-list-item"><span class="gmv-list-label">' + m + '</span>' +
+      '<input type="number" min="0" step="0.01" class="gmv-list-input gmv-month-input" data-idx="' + idx + '" value="' + esc(String(v)) + '" oninput="syncGmvInputs(this);updateGmvTotal()" placeholder="0"></div>';
+  }).join('');
+  var mobileHtml = '<div class="gmv-list-mobile">' + mobileItems +
+    '<div class="gmv-list-item total-row"><span class="gmv-list-label">合计</span>' +
+    '<span class="gmv-list-value" id="gmvTotalValueMobile">0</span></div></div>';
+
+  document.getElementById('gmvTargetTable').innerHTML = desktopHtml + mobileHtml;
+  updateGmvTotal();
+}
+
+function collectGmvTargets() {
+  var inputs = document.querySelectorAll('.gmv-month-input');
+  var values = [];
+  var seen = {};
+  for (var i = 0; i < inputs.length; i++) {
+    var idx = inputs[i].getAttribute('data-idx');
+    if (!seen[idx]) {
+      seen[idx] = true;
+      values[Number(idx)] = Number(inputs[i].value) || 0;
+    }
+  }
+  return values;
+}
+
+function syncGmvInputs(changedInput) {
+  var idx = changedInput.getAttribute('data-idx');
+  var val = changedInput.value;
+  var allInputs = document.querySelectorAll('.gmv-month-input[data-idx="' + idx + '"]');
+  for (var i = 0; i < allInputs.length; i++) {
+    if (allInputs[i] !== changedInput) {
+      allInputs[i].value = val;
+    }
+  }
+}
+
+function updateGmvTotal() {
+  var total = collectGmvTargets().reduce(function(sum, v) { return sum + (v || 0); }, 0);
+  var desktopEl = document.getElementById('gmvTotalValue');
+  if (desktopEl) desktopEl.textContent = total.toLocaleString('zh-CN', { maximumFractionDigits: 2 });
+  var mobileEl = document.getElementById('gmvTotalValueMobile');
+  if (mobileEl) mobileEl.textContent = total.toLocaleString('zh-CN', { maximumFractionDigits: 2 });
+}
+
+function collectTeamPlan() {
+  var list = [];
+  document.querySelectorAll('#teamPlanList .team-plan-row').forEach(function(row) {
+    list.push({
+      role: row.querySelector('.tp-role').value.trim(),
+      count: Number(row.querySelector('.tp-count').value) || 0,
+      duty: row.querySelector('.tp-duty').value.trim()
+    });
+  });
+  return list;
+}
+
+function handleShotSelect(files, key) {
+  Array.prototype.forEach.call(files, function(f) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      shotsMap[key].push({ name: f.name, dataUrl: e.target.result });
+      renderShots(key);
+    };
+    reader.readAsDataURL(f);
+  });
+}
+function removeShot(key, idx) {
+  shotsMap[key].splice(idx, 1);
+  renderShots(key);
+}
+function renderShots(key) {
+  var listId = key === 'paidTraffic' ? 'paidTrafficShotList' : 'contentCaseShotList';
+  var html = shotsMap[key].map(function(s, idx) {
+    var img = s.dataUrl ? '<img src="' + s.dataUrl + '" alt="">' : '';
+    return '<span class="shot-chip">' + img + esc(s.name) + '<span class="rm" onclick="removeShot(\''+key+'\','+idx+')">&times;</span></span>';
+  }).join('');
+  document.getElementById(listId).innerHTML = html;
+}
+function clearErrors() {
+  document.querySelectorAll('.form-group').forEach(function(g) { g.classList.remove('has-error'); });
+  document.getElementById('categoryError').style.display = 'none';
+}
+
+function validateStep(step) {
+  var ok = true;
+  function req(id) {
+    var el = document.getElementById(id);
+    if (!el.value.trim()) { el.closest('.form-group').classList.add('has-error'); ok = false; }
+  }
+  if (step === 1) {
+    req('companyIntro');
+  } else if (step === 2) {
+    var cats = getCheckedCategories();
+    if (cats.length === 0) {
+      document.getElementById('categoryError').style.display = 'block';
+      ok = false;
+    } else {
+      if (cats.indexOf('母婴') > -1) { req('maternityScale'); req('maternityBrands'); }
+      if (cats.indexOf('服饰') > -1) { req('apparelScale'); req('apparelBrands'); }
+    }
+  } else if (step === 3) {
+    req('paidTrafficCase');
+    req('contentCase');
+  } else if (step === 4) {
+    req('peopleGoodsField');
+    req('shortVideoStrategy');
+    req('adStrategy');
+    req('venuePlan');
+    var team = collectTeamPlan();
+    if (!team.every(function(t) { return t.role && t.count > 0; })) {
+      showToast('请完善团队配置规模中的岗位与人数', 'error');
+      ok = false;
+    }
+    var gmvTargets = collectGmvTargets();
+    if (gmvTargets.reduce(function(sum, v) { return sum + v; }, 0) <= 0) {
+      showToast('请填写年度GMV业绩目标拆解', 'error');
+      ok = false;
+    }
+  }
+  return ok;
+}
+
+function validateAll() {
+  clearErrors();
+  var results = [1, 2, 3, 4].map(validateStep);
+  var ok = results.every(Boolean);
+  if (!ok) {
+    var firstBad = results.indexOf(false) + 1;
+    if (isMobileStepMode()) { currentStep = firstBad; updateStepUI(); }
+    else { desktopGoToStep(firstBad); }
+    showToast('请完善表单中的必填项', 'error');
+  }
+  return ok;
+}
+function setReadOnly(v) {
+  document.querySelectorAll('#mainForm input, #mainForm select, #mainForm textarea').forEach(function(el) { el.disabled = v; });
+  document.querySelectorAll('.upload-zone, .add-row-btn, .tp-remove').forEach(function(el) { el.style.pointerEvents = v ? 'none' : ''; el.style.opacity = v ? '.6' : ''; });
+}
+
+function fillPlan(plan) {
+  plan = plan || {};
+  document.getElementById('companyIntro').value = plan.company_intro || '';
+  (plan.categories || []).forEach(function(cat) {
+    var input = document.querySelector('.category-checkboxes input[value="' + cat + '"]');
+    if (input) { input.checked = true; toggleCategory(input); }
+  });
+  document.getElementById('maternityScale').value = plan.maternity_scale || '';
+  document.getElementById('maternityBrands').value = plan.maternity_brands || '';
+  document.getElementById('apparelScale').value = plan.apparel_scale || '';
+  document.getElementById('apparelBrands').value = plan.apparel_brands || '';
+  document.getElementById('paidTrafficCase').value = plan.paid_traffic_case || '';
+  document.getElementById('contentCase').value = plan.content_case || '';
+  shotsMap.paidTraffic = (plan.paid_traffic_shots || []).slice();
+  shotsMap.contentCase = (plan.content_case_shots || []).slice();
+  renderShots('paidTraffic');
+  renderShots('contentCase');
+  document.getElementById('peopleGoodsField').value = plan.people_goods_field || '';
+  document.getElementById('shortVideoStrategy').value = plan.short_video_strategy || '';
+  document.getElementById('adStrategy').value = plan.ad_strategy || '';
+  document.getElementById('venuePlan').value = plan.venue_plan || '';
+  document.getElementById('teamPlanList').innerHTML = '';
+  (plan.team_plan || []).forEach(function(t) { addTeamPlanRow(t.role, t.count, t.duty); });
+  if ((plan.team_plan || []).length === 0) addTeamPlanRow();
+  renderGmvTable(plan.gmv_target_monthly);
+}
+
+var INTENT_NOT_PASSED_STATUSES = ['已提交', '审核中', '已驳回'];
+
+function init() {
+  var apps = JSON.parse(localStorage.getItem('recruit_applications') || '[]');
+  currentRecord = apps.find(function(a) { return a.id === appId && a.phone === phone; });
+  if (!currentRecord) { showToast('未找到该申请记录', 'error'); setTimeout(function(){ location.href = 'mine.html'; }, 800); return; }
+
+  if (INTENT_NOT_PASSED_STATUSES.indexOf(currentRecord.status) > -1) {
+    showToast('入驻意向审核通过后才能填写项目规划', 'error');
+    setTimeout(function(){ location.href = 'mine.html'; }, 800);
+    return;
+  }
+
+  if (EDITABLE_STATUSES.indexOf(currentRecord.status) === -1) {
+    document.getElementById('pageTitle').textContent = '项目规划详情';
+    document.getElementById('lockedBanner').textContent = currentRecord.status === '已通过'
+      ? '项目规划已通过审核，仅供查看。'
+      : '项目规划正在审核中，暂不支持自行修改。';
+    document.getElementById('lockedBanner').style.display = 'block';
+    document.getElementById('formActions').innerHTML = '<button type="button" class="btn" onclick="goBack()">返回</button>';
+    document.getElementById('mobileStepNav').style.display = 'none';
+    fillPlan(currentRecord.project_plan);
+    setReadOnly(true);
+    return;
+  }
+
+  if (currentRecord.status === '规划已驳回') {
+    document.getElementById('pageTitle').textContent = '修改项目规划';
+    var logs = currentRecord.plan_reject_logs || [];
+    if (logs.length > 0) {
+      var last = logs[logs.length - 1];
+      document.getElementById('planRejectBanner').textContent = '驳回原因：' + last.reason;
+      document.getElementById('planRejectBanner').style.display = 'block';
+    }
+    fillPlan(currentRecord.project_plan);
+  } else {
+    var draft = loadDraft();
+    if (draft) {
+      fillPlan(draft);
+      showToast('已恢复上次保存的草稿', 'info');
+    } else {
+      addTeamPlanRow();
+      renderGmvTable();
+    }
+  }
+}
+
+function doSubmit() {
+  if (!currentRecord || EDITABLE_STATUSES.indexOf(currentRecord.status) === -1) {
+    showToast('当前状态不支持提交', 'error');
+    return;
+  }
+  if (!validateAll()) return;
+
+  var cats = getCheckedCategories();
+  currentRecord.project_plan = {
+    company_intro: document.getElementById('companyIntro').value.trim(),
+    categories: cats,
+    maternity_scale: cats.indexOf('母婴') > -1 ? document.getElementById('maternityScale').value.trim() : '',
+    maternity_brands: cats.indexOf('母婴') > -1 ? document.getElementById('maternityBrands').value.trim() : '',
+    apparel_scale: cats.indexOf('服饰') > -1 ? document.getElementById('apparelScale').value.trim() : '',
+    apparel_brands: cats.indexOf('服饰') > -1 ? document.getElementById('apparelBrands').value.trim() : '',
+    paid_traffic_case: document.getElementById('paidTrafficCase').value.trim(),
+    paid_traffic_shots: shotsMap.paidTraffic.map(function(s){ return {name: s.name}; }),
+    content_case: document.getElementById('contentCase').value.trim(),
+    content_case_shots: shotsMap.contentCase.map(function(s){ return {name: s.name}; }),
+    people_goods_field: document.getElementById('peopleGoodsField').value.trim(),
+    short_video_strategy: document.getElementById('shortVideoStrategy').value.trim(),
+    ad_strategy: document.getElementById('adStrategy').value.trim(),
+    team_plan: collectTeamPlan(),
+    venue_plan: document.getElementById('venuePlan').value.trim(),
+    gmv_target_monthly: collectGmvTargets(),
+    submitted_at: now()
+  };
+  currentRecord.status = '规划审核中';
+  currentRecord.updated_at = now();
+
+  var apps = JSON.parse(localStorage.getItem('recruit_applications') || '[]');
+  var idx = apps.findIndex(function(a) { return a.id === currentRecord.id; });
+  if (idx >= 0) apps[idx] = currentRecord;
+  localStorage.setItem('recruit_applications', JSON.stringify(apps));
+  clearDraft();
+
+  showToast('提交成功，等待运营审核', 'success');
+  setTimeout(function() { location.href = 'mine.html'; }, 400);
+}
+
+function saveDraft() {
+  if (!currentRecord) return;
+  var cats = getCheckedCategories();
+  var draft = {
+    company_intro: document.getElementById('companyIntro').value.trim(),
+    categories: cats,
+    maternity_scale: cats.indexOf('母婴') > -1 ? document.getElementById('maternityScale').value.trim() : '',
+    maternity_brands: cats.indexOf('母婴') > -1 ? document.getElementById('maternityBrands').value.trim() : '',
+    apparel_scale: cats.indexOf('服饰') > -1 ? document.getElementById('apparelScale').value.trim() : '',
+    apparel_brands: cats.indexOf('服饰') > -1 ? document.getElementById('apparelBrands').value.trim() : '',
+    paid_traffic_case: document.getElementById('paidTrafficCase').value.trim(),
+    paid_traffic_shots: shotsMap.paidTraffic.map(function(s){ return {name: s.name}; }),
+    content_case: document.getElementById('contentCase').value.trim(),
+    content_case_shots: shotsMap.contentCase.map(function(s){ return {name: s.name}; }),
+    people_goods_field: document.getElementById('peopleGoodsField').value.trim(),
+    short_video_strategy: document.getElementById('shortVideoStrategy').value.trim(),
+    ad_strategy: document.getElementById('adStrategy').value.trim(),
+    team_plan: collectTeamPlan(),
+    venue_plan: document.getElementById('venuePlan').value.trim(),
+    gmv_target_monthly: collectGmvTargets(),
+    saved_at: now()
+  };
+  localStorage.setItem('recruit_plan_draft_' + currentRecord.id, JSON.stringify(draft));
+  showToast('草稿已保存', 'success');
+}
+
+function loadDraft() {
+  if (!currentRecord) return null;
+  var key = 'recruit_plan_draft_' + currentRecord.id;
+  var draft = localStorage.getItem(key);
+  return draft ? JSON.parse(draft) : null;
+}
+
+function clearDraft() {
+  if (!currentRecord) return;
+  localStorage.removeItem('recruit_plan_draft_' + currentRecord.id);
+}
+
+function esc(s) { if(!s) return ''; var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function now(){ return new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'); }
+function goBack(){ location.href = 'mine.html'; }
+
+function showToast(message, type) {
+  type = type || 'info';
+  var container = document.getElementById('toastContainer');
+  if (!container) return;
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(function() {
+    if (toast.parentNode) {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s';
+      setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+    }
+  }, 2500);
+}
+
+init();
+updateStepUI();
+</script>
+<!-- 设备效果预览切换器：电脑 / 手机 -->
+<script>
+(function() {
+  if (self !== top) return;
+  function inject(doc) {
+    if (!doc || !doc.body) return;
+    var bar = doc.createElement('div');
+    bar.id = 'deviceSwitcher';
+    bar.innerHTML = '<button type="button" id="dsBtnPc" class="ds-active">💻 电脑</button><button type="button" id="dsBtnPhone">📱 手机预览</button>';
+    doc.body.appendChild(bar);
+    var st = doc.createElement('style');
+    st.textContent = '#deviceSwitcher{position:fixed;top:16px;right:16px;z-index:99999;display:flex;gap:2px;background:#fff;border:1px solid #e2e8f0;border-radius:22px;padding:4px;box-shadow:0 6px 20px rgba(15,23,42,.18)}' +
+      '#deviceSwitcher button{border:none;background:transparent;padding:7px 14px;border-radius:18px;font-size:13px;font-weight:600;color:#64748b;cursor:pointer;line-height:1.4;font-family:inherit}' +
+      '#deviceSwitcher button.ds-active{background:#5b6cf5;color:#fff}';
+    doc.body.appendChild(st);
+    var btnPc = doc.getElementById('dsBtnPc');
+    var btnPhone = doc.getElementById('dsBtnPhone');
+    function enterPhone() {
+      if (doc.getElementById('devicePhone')) return;
+      var wrap = doc.createElement('div');
+      wrap.id = 'devicePhone';
+      wrap.innerHTML = '<div class="dp-frame"><div class="dp-notch"></div><iframe id="dpFrame" title="手机效果预览"></iframe></div>' +
+        '<div class="dp-hint">📱 手机效果预览（390px 视口）· 预览内操作同样生效 · 点右上角「电脑」返回</div>';
+      var st2 = doc.createElement('style');
+      st2.id = 'dpStyle';
+      st2.textContent = 'html.dp-phone,html.dp-phone body{height:100%;margin:0}' +
+        'html.dp-phone body{background:#0f172a !important;display:flex !important;align-items:center;justify-content:center !important;overflow:hidden !important}' +
+        'html.dp-phone > body > *:not(#devicePhone):not(#deviceSwitcher){display:none !important}' +
+        '#devicePhone{display:flex;flex-direction:column;align-items:center;gap:14px}' +
+        '#devicePhone .dp-frame{width:390px;height:min(800px,88vh);background:#fff;border:10px solid #1e293b;border-radius:44px;box-shadow:0 24px 60px rgba(0,0,0,.5);overflow:hidden;position:relative}' +
+        '#devicePhone .dp-notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:150px;height:24px;background:#1e293b;border-radius:0 0 16px 16px;z-index:3}' +
+        '#devicePhone #dpFrame{width:100%;height:100%;border:none;display:block;background:#fff}' +
+        '#devicePhone .dp-hint{color:#94a3b8;font-size:12px;text-align:center}';
+      doc.body.appendChild(st2);
+      doc.body.appendChild(wrap);
+      doc.documentElement.classList.add('dp-phone');
+      doc.getElementById('dpFrame').src = location.href;
+      btnPc.classList.remove('ds-active');
+      btnPhone.classList.add('ds-active');
+    }
+    function exitPhone() {
+      var w = doc.getElementById('devicePhone');
+      if (w) w.parentNode.removeChild(w);
+      var s = doc.getElementById('dpStyle');
+      if (s) s.parentNode.removeChild(s);
+      doc.documentElement.classList.remove('dp-phone');
+      btnPc.classList.add('ds-active');
+      btnPhone.classList.remove('ds-active');
+    }
+    btnPhone.addEventListener('click', enterPhone);
+    btnPc.addEventListener('click', exitPhone);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() { inject(document); });
+  } else {
+    inject(document);
+  }
+})();
+</script>
+</body>
+</html>
