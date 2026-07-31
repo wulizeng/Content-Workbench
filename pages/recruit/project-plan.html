@@ -3,17 +3,80 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>入驻意向审核 - 项目规划</title>
+<title>达人工作台 - 项目规划</title>
 <link rel="stylesheet" href="../../css/style.css">
 <style>
-  body { background: #f5f7fb; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+
+  /* 工作台整体布局 */
+  .talent-workspace {
+    display: flex; flex-direction: column; height: 100vh;
+  }
+
+  /* 顶栏样式 */
+  .topnav {
+    background: #fff; border-bottom: 1px solid var(--border);
+    padding: 0 28px; height: 60px; display: flex; align-items: center;
+    justify-content: space-between; flex-shrink: 0; box-shadow: var(--shadow-sm);
+  }
+  .topnav-left { display: flex; align-items: center; gap: 20px; }
+  .topnav-brand { display: flex; align-items: center; gap: 10px; }
+  .brand-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--primary), #7c6cf5);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .brand-name { font-size: 16px; font-weight: 700; color: var(--text); }
+  .topnav-right { display: flex; align-items: center; gap: 12px; }
+  .topnav-user {
+    display: flex; align-items: center; gap: 8px; padding: 6px 12px;
+    border-radius: 10px; cursor: pointer; transition: background .15s;
+  }
+  .topnav-user:hover { background: #f1f5f9; }
+  .user-avatar {
+    width: 32px; height: 32px; border-radius: 50%; background: var(--primary);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 600;
+  }
+  .user-name { font-size: 13px; color: var(--text); font-weight: 600; }
+
+  /* 下方主体区 */
+  .app-body { display: flex; flex: 1; overflow: hidden; }
+
+  /* 左侧菜单 */
+  .sidebar {
+    width: 220px; background: #fff; border-right: 1px solid var(--border);
+    overflow-y: auto; flex-shrink: 0;
+  }
+  .sidebar-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 20px;
+    color: var(--text-secondary); font-size: 13px; cursor: pointer;
+    transition: all .15s; text-decoration: none;
+  }
+  .sidebar-item:hover { background: #f8f9fb; color: var(--primary); }
+  .sidebar-item.active {
+    background: var(--primary-light); color: var(--primary); font-weight: 600;
+  }
+  .sidebar-item svg { flex-shrink: 0; }
+
+  /* 主内容区 */
+  .main-area { flex: 1; display: flex; flex-direction: column; background: #f5f7fb; overflow: hidden; }
+  .main-header {
+    background: #fff; border-bottom: 1px solid var(--border);
+    padding: 14px 28px; flex-shrink: 0;
+  }
+  .breadcrumb {
+    display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary);
+  }
+  .breadcrumb .sep { color: var(--border); }
+  .breadcrumb .current { color: var(--text); font-weight: 600; }
+  .main-content { flex: 1; overflow-y: auto; }
+
+  /* 表单区域样式 */
   .section-head { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 16px; }
   .section-head .form-card-title { margin-bottom: 0; }
   .section-num, .section-titles .section-desc, .section-status, #desktopActionBar { display: none; }
   .apply-shell { max-width: 960px; margin: 0 auto; padding: 24px 20px 80px; }
-  .apply-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
-  .apply-header .title { font-size: 20px; font-weight: 700; color: var(--text); }
-  .back-link { display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--text-secondary); cursor: pointer; }
 
   .form-card { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 22px 20px; margin-bottom: 16px; }
   .form-card-title { font-size: 14px; font-weight: 700; color: var(--text); margin: 0 0 16px; display: flex; align-items: center; gap: 8px; }
@@ -168,65 +231,74 @@
   }
   @media (min-width: 641px) {
     .mobile-step-bar, .mobile-step-nav { display: none; }
+    .sidebar, .topnav { display: flex; }
+  }
+  @media (max-width: 640px) {
+    .sidebar, .topnav { display: none; }
+    .talent-workspace .app-body { display: block; }
+    .main-area { height: auto; }
+    .main-header { display: none; }
   }
   @media (min-width: 1024px) {
-    body { display: flex; justify-content: center; align-items: flex-start; gap: 28px; padding: 36px 28px 60px; }
-    .apply-shell { max-width: 1200px; width: 100%; flex: 1; margin: 0; padding: 0; }
-    .apply-header { margin-bottom: 16px; }
-    .apply-header .title { font-size: 22px; }
-    .desktop-step-nav {
-      position: sticky; top: 32px; z-index: 1;
-      display: flex; flex-direction: column; gap: 4px;
-      width: 230px; flex-shrink: 0;
-      background: #fff; border: 1px solid var(--border); border-radius: 16px;
-      padding: 14px; box-shadow: var(--shadow-md);
-    }
-    .desktop-step-nav .dsn-item {
-      position: relative; display: flex; align-items: center; gap: 10px;
-      padding: 10px 12px; border-radius: 10px;
-      font-size: 13px; font-weight: 500; color: #94a3b8; cursor: pointer;
-      transition: background .18s, color .18s;
-    }
-    .desktop-step-nav .dsn-item:hover { background: #f8fafc; }
-    .desktop-step-nav .dsn-item .num {
-      width: 22px; height: 22px; border-radius: 50%; background: #f1f5f9; color: #94a3b8;
-      display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700;
-      flex-shrink: 0;
-    }
-    .desktop-step-nav .dsn-item.current { background: var(--primary-light); color: var(--primary); font-weight: 600; }
-    .desktop-step-nav .dsn-item.current .num { background: var(--primary); color: #fff; }
-  }
-  @media (max-width: 1023px) {
-    .desktop-step-nav { display: none; }
+    .apply-shell { max-width: 1200px; width: 100%; }
   }
 </style>
 </head>
 <body>
-  <div class="desktop-step-nav" id="desktopStepNav">
-    <div class="dsn-item" data-dsn-step="1" onclick="desktopGoToStep(1)"><span class="num">1</span>公司介绍</div>
-    <div class="dsn-item" data-dsn-step="2" onclick="desktopGoToStep(2)"><span class="num">2</span>经营项目介绍</div>
-    <div class="dsn-item" data-dsn-step="3" onclick="desktopGoToStep(3)"><span class="num">3</span>运营案例</div>
-    <div class="dsn-item" data-dsn-step="4" onclick="desktopGoToStep(4)"><span class="num">4</span>投入计划与策略</div>
-  </div>
-<div class="apply-shell">
+<div class="talent-workspace">
 
-  <div class="apply-header">
-    <span class="back-link" onclick="goBack()">
-      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-      返回
-    </span>
-    <div class="title" id="pageTitle">项目规划</div>
-  </div>
+  <header class="topnav">
+    <div class="topnav-left">
+      <div class="topnav-brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" width="18" height="18"><path d="M16.3 4.2c.7 2.1 1.9 3.6 3.7 4.4v3.8a8.8 8.8 0 0 1-3.5-.9v4.9a6.2 6.2 0 1 1-6.2-6.2c.4 0 .8 0 1.2.1v3.9c-.4-.2-.8-.3-1.2-.3a2.4 2.4 0 1 0 2.4 2.4V4.2h3.6Z" fill="#fff"/></svg>
+        </div>
+        <span class="brand-name">达人工作台</span>
+      </div>
+    </div>
+    <div class="topnav-right">
+      <div class="topnav-user" onclick="doLogout()" title="点击退出登录">
+        <div class="user-avatar" id="userAvatar">-</div>
+        <span class="user-name" id="phoneTag">-</span>
+      </div>
+    </div>
+  </header>
 
-  <div class="locked-banner" id="lockedBanner" style="display:none;"></div>
-  <div class="plan-reject-banner" id="planRejectBanner" style="display:none;"></div>
+  <div class="app-body">
+    <aside class="sidebar">
+      <a class="sidebar-item" onclick="goToMine()">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span>我的申请</span>
+      </a>
+      <a class="sidebar-item" onclick="goApply()">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span>新建申请</span>
+      </a>
+      <a class="sidebar-item active">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-6"/></svg>
+        <span>项目规划</span>
+      </a>
+    </aside>
 
-  <div class="mobile-step-bar" id="mobileStepBar">
-    <div class="mobile-step-item" data-step-tab="1"><span class="num">1</span>公司介绍</div>
-    <div class="mobile-step-item" data-step-tab="2"><span class="num">2</span>经营项目</div>
-    <div class="mobile-step-item" data-step-tab="3"><span class="num">3</span>运营案例</div>
-    <div class="mobile-step-item" data-step-tab="4"><span class="num">4</span>投入计划</div>
-  </div>
+    <main class="main-area">
+      <div class="main-header">
+        <div class="breadcrumb">
+          <span onclick="goToMine()" style="cursor:pointer;">我的申请</span>
+          <span class="sep">›</span>
+          <span class="current">项目规划</span>
+        </div>
+      </div>
+      <div class="main-content">
+        <div class="apply-shell">
+          <div class="locked-banner" id="lockedBanner" style="display:none;"></div>
+          <div class="plan-reject-banner" id="planRejectBanner" style="display:none;"></div>
+
+          <div class="mobile-step-bar" id="mobileStepBar">
+            <div class="mobile-step-item" data-step-tab="1"><span class="num">1</span>公司介绍</div>
+            <div class="mobile-step-item" data-step-tab="2"><span class="num">2</span>经营项目</div>
+            <div class="mobile-step-item" data-step-tab="3"><span class="num">3</span>运营案例</div>
+            <div class="mobile-step-item" data-step-tab="4"><span class="num">4</span>投入计划</div>
+          </div>
 
   <form id="mainForm">
     <div class="form-card" data-step="1">
@@ -388,13 +460,42 @@
     </div>
   </form>
 
+        </div>
+      </div>
+    </main>
+  </div>
+
 </div>
 
 <div id="toastContainer" class="toast-container"></div>
 
 <script>
+// 登录检查和用户信息初始化
 var phone = localStorage.getItem('recruit_current_phone');
 if (!phone) { location.href = 'login.html'; }
+
+document.getElementById('phoneTag').textContent = phone;
+
+var talents = JSON.parse(localStorage.getItem('recruit_talents') || '{}');
+var talentName = (talents[phone] || {}).name;
+if (talentName) {
+  var initial = talentName.charAt(0);
+  document.getElementById('userAvatar').textContent = initial;
+}
+
+// 导航函数
+function goToMine() {
+  location.href = 'mine.html';
+}
+
+function goApply() {
+  location.href = 'apply.html?mode=add';
+}
+
+function doLogout() {
+  localStorage.removeItem('recruit_current_phone');
+  location.href = 'login.html';
+}
 
 function g(name) { var r = location.search.match(new RegExp('[?&]'+name+'=([^&]*)')); return r ? decodeURIComponent(r[1]) : ''; }
 var appId = parseInt(g('id')) || 0;
@@ -438,27 +539,6 @@ function stepNext() {
   }
 }
 
-function setCurrentDsn(step) {
-  document.querySelectorAll('.dsn-item').forEach(function(item) {
-    item.classList.toggle('current', Number(item.getAttribute('data-dsn-step')) === step);
-  });
-}
-
-function desktopGoToStep(step) {
-  var target = document.querySelector('.form-card[data-step="' + step + '"]');
-  if (!target) return;
-  setCurrentDsn(step);
-  target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-if ('IntersectionObserver' in window) {
-  var stepSpy = new IntersectionObserver(function(entries) {
-    entries.forEach(function(e) {
-      if (e.isIntersecting) setCurrentDsn(Number(e.target.getAttribute('data-step')));
-    });
-  }, { rootMargin: '-20% 0px -65% 0px' });
-  document.querySelectorAll('.form-card[data-step]').forEach(function(card) { stepSpy.observe(card); });
-}
 window.addEventListener('resize', updateStepUI);
 function toggleCategory(checkbox) {
   checkbox.closest('.cat-check').classList.toggle('checked', checkbox.checked);
@@ -696,7 +776,6 @@ function init() {
   }
 
   if (EDITABLE_STATUSES.indexOf(currentRecord.status) === -1) {
-    document.getElementById('pageTitle').textContent = '项目规划详情';
     document.getElementById('lockedBanner').textContent = currentRecord.status === '已通过'
       ? '项目规划已通过审核，仅供查看。'
       : '项目规划正在审核中，暂不支持自行修改。';
@@ -709,7 +788,6 @@ function init() {
   }
 
   if (currentRecord.status === '规划已驳回') {
-    document.getElementById('pageTitle').textContent = '修改项目规划';
     var logs = currentRecord.plan_reject_logs || [];
     if (logs.length > 0) {
       var last = logs[logs.length - 1];

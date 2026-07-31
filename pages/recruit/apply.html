@@ -3,10 +3,78 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>达人入驻登记 - 申请表单</title>
+  <title>达人工作台 - 新建申请</title>
   <link rel="stylesheet" href="../../css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
-    body { background: #f5f7fb; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+
+    /* ========== 工作台布局 ========== */
+    .talent-workspace { display: flex; flex-direction: column; height: 100vh; }
+
+    /* 顶栏样式 */
+    .topnav {
+      background: #fff; border-bottom: 1px solid var(--border);
+      padding: 0 28px; height: 60px; display: flex; align-items: center;
+      justify-content: space-between; flex-shrink: 0; box-shadow: var(--shadow-sm);
+    }
+    .topnav-left { display: flex; align-items: center; gap: 20px; }
+    .topnav-brand { display: flex; align-items: center; gap: 10px; }
+    .brand-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary), #7c6cf5);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .brand-name { font-size: 16px; font-weight: 700; color: var(--text); }
+    .topnav-right { display: flex; align-items: center; gap: 12px; }
+    .topnav-user {
+      display: flex; align-items: center; gap: 8px; padding: 6px 12px;
+      border-radius: 10px; cursor: pointer; transition: background .15s;
+    }
+    .topnav-user:hover { background: #f1f5f9; }
+    .user-avatar {
+      width: 32px; height: 32px; border-radius: 50%; background: var(--primary);
+      color: #fff; display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 600;
+    }
+    .user-name { font-size: 13px; color: var(--text); font-weight: 600; }
+
+    /* 下方主体区 */
+    .app-body { display: flex; flex: 1; overflow: hidden; }
+
+    /* 左侧菜单 */
+    .sidebar {
+      width: 220px; background: #fff; border-right: 1px solid var(--border);
+      overflow-y: auto; flex-shrink: 0;
+    }
+    .sidebar-item {
+      display: flex; align-items: center; gap: 10px; padding: 10px 20px;
+      color: var(--text-secondary); font-size: 13px; cursor: pointer;
+      transition: all .15s; text-decoration: none;
+    }
+    .sidebar-item:hover { background: #f8f9fb; color: var(--primary); }
+    .sidebar-item.active {
+      background: var(--primary-light); color: var(--primary); font-weight: 600;
+    }
+    .sidebar-item svg { flex-shrink: 0; }
+
+    /* 主内容区 */
+    .main-area { flex: 1; display: flex; flex-direction: column; background: #f5f7fb; overflow: hidden; }
+    .main-header {
+      background: #fff; border-bottom: 1px solid var(--border);
+      padding: 14px 28px; flex-shrink: 0;
+    }
+    .breadcrumb { font-size: 15px; font-weight: 600; color: var(--text); }
+    .main-content { flex: 1; overflow-y: auto; padding: 24px 28px; }
+
+    /* ========== 表单样式 ========== */
+    /* ---- 区块卡头系统(编号/描述/状态默认隐藏,移动端保持原样) ---- */
+    .section-head { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 16px; }
+    .section-head .form-card-title { margin-bottom: 0; }
+    .section-num, .section-titles .section-desc, .section-status,
+    .prep-bar, #desktopActionBar, .input-unit { display: none; }
     .apply-shell { max-width: 640px; margin: 0 auto; padding: 24px 20px 80px; }
     .apply-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
     .apply-header .title { font-size: 20px; font-weight: 700; color: var(--text); }
@@ -68,9 +136,10 @@
     .upload-zone .hint { font-size: 12px; color: var(--text-tertiary); }
     .shot-list { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
     .shot-chip {
-      display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #ecfdf5;
+      display: flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; background: #ecfdf5;
       border-radius: 8px; font-size: 12px; color: #059669;
     }
+    .shot-chip img { width: 32px; height: 32px; border-radius: 4px; object-fit: cover; flex-shrink: 0; }
     .shot-chip .rm { cursor: pointer; color: #dc2626; font-weight: 700; }
 
     .form-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 8px 0 20px; }
@@ -120,73 +189,299 @@
         flex-wrap: wrap;
         gap: 0 16px;
       }
-      .form-card[data-step="1"] > .form-card-title,
-      .form-card[data-step="3"] > .form-card-title {
+      .form-card[data-step="1"] > .section-head,
+      .form-card[data-step="3"] > .section-head {
         flex: 0 0 100%;
       }
       .form-card[data-step="1"] > .form-group {
         flex: 1 1 calc(50% - 16px);
       }
-      .form-card[data-step="3"] > .form-group:first-of-type {
+      .form-card[data-step="3"] > .form-group:nth-of-type(2) {
         flex: 0 0 calc(50% - 16px);
       }
-      .form-card[data-step="3"] > .form-group:not(:first-of-type) {
+      .form-card[data-step="3"] > .form-group:nth-of-type(3) {
         flex: 0 0 100%;
       }
     }
+    /* ================================================================
+       桌面端 ≥1024px:单页分区 + 左侧目录导航
+       层级:页面框架(概览条/主体/吸底栏) → 目录+主栏 → 编号区块卡 → 字段行
+       ================================================================ */
     @media (min-width: 1024px) {
-      body { display: flex; justify-content: center; align-items: flex-start; gap: 32px; padding: 32px 24px; }
-      .apply-shell { max-width: 900px; width: 100%; flex: 1; margin: 0; padding: 0 0 40px; }
+      .main-content {
+        display: flex; justify-content: center; align-items: flex-start; gap: 28px;
+        padding: 36px 28px 128px; position: relative;
+      }
+      /* 顶部极浅品牌氛围层,替代纯灰底 */
+      .main-content::before {
+        content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+        background:
+          radial-gradient(920px 360px at 76% -140px, rgba(91,108,245,.08), transparent 70%),
+          radial-gradient(760px 320px at -8% 4%, rgba(16,185,129,.05), transparent 70%);
+      }
+      .apply-shell { position: relative; z-index: 1; max-width: 860px; width: 100%; flex: 1; margin: 0; padding: 0; }
+      .apply-header { margin-bottom: 16px; }
+      .apply-header .title { font-size: 22px; }
+
+      /* ---- 页首概览条 ---- */
+      .prep-bar {
+        display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px;
+        background: var(--primary-light); border: 1px solid var(--primary-100);
+        border-radius: 14px; padding: 13px 18px; margin-bottom: 22px;
+      }
+      .prep-time { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 700; color: var(--primary-700); }
+      .prep-sep { width: 1px; height: 14px; background: var(--primary-200); }
+      .prep-label { font-size: 12px; color: var(--text-secondary); }
+      .prep-chip {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: #fff; border: 1px solid var(--primary-100); border-radius: 999px;
+        padding: 5px 12px; font-size: 12px; font-weight: 600; color: var(--text-secondary);
+        transition: transform .18s var(--transition), box-shadow .18s;
+      }
+      .prep-chip:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+      .prep-chip svg { color: var(--primary); flex-shrink: 0; }
+
+      /* ---- 左侧目录导航 ---- */
       .desktop-step-nav {
+        position: sticky; top: 32px; z-index: 1;
         display: flex; flex-direction: column; gap: 4px;
-        position: sticky; top: 32px; left: auto;
-        width: 230px; flex-shrink: 0;
-        background: #fff; border: 1px solid var(--border);
-        border-radius: 14px; padding: 16px;
-        box-shadow: 0 1px 3px rgba(15,23,42,.06);
+        width: 250px; flex-shrink: 0;
+        background: #fff; border: 1px solid var(--border); border-radius: 16px;
+        padding: 18px 14px 14px; box-shadow: var(--shadow-md);
+      }
+      .dsn-progress { padding: 0 8px 14px; border-bottom: 1px solid var(--border-light); margin-bottom: 8px; }
+      .dsn-progress .lab { font-size: 12px; color: var(--text-muted); }
+      .dsn-progress .val {
+        font-family: 'Sora', -apple-system, sans-serif;
+        font-size: 22px; font-weight: 700; line-height: 1.25; margin: 2px 0 9px; color: var(--text);
+      }
+      .dsn-progress .val small { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+      .dsn-bar { height: 6px; border-radius: 999px; background: #eef1f6; overflow: hidden; }
+      .dsn-bar i {
+        display: block; height: 100%; width: 0;
+        background: linear-gradient(90deg, var(--primary), #7c88fa); border-radius: 999px;
+        transition: width .45s cubic-bezier(.4,0,.2,1);
       }
       .desktop-step-nav .dsn-item {
-        display: flex; align-items: center; gap: 10px; padding: 10px 12px;
-        border-radius: 8px; font-size: 13px; color: #94a3b8; cursor: pointer;
+        position: relative; display: flex; align-items: center; gap: 10px;
+        padding: 10px 12px; border-radius: 10px;
+        font-size: 13px; font-weight: 500; color: #94a3b8; cursor: pointer;
+        transition: background .18s, color .18s;
       }
+      .desktop-step-nav .dsn-item:hover { background: #f8fafc; }
       .desktop-step-nav .dsn-item .num {
         width: 22px; height: 22px; border-radius: 50%; background: #f1f5f9; color: #94a3b8;
-        display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700;
-        flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Sora', -apple-system, sans-serif; font-size: 11px; font-weight: 700;
+        flex-shrink: 0; transition: background .25s, color .25s, box-shadow .25s;
       }
-      .desktop-step-nav .dsn-item.filled { color: var(--text); }
-      .desktop-step-nav .dsn-item.filled .num { background: var(--primary-light); color: var(--primary); }
+      .desktop-step-nav .dsn-item.filled { color: var(--text-secondary); }
+      .desktop-step-nav .dsn-item.filled .num { background: var(--success-light); color: #059669; }
       .desktop-step-nav .dsn-item.current { background: var(--primary-light); color: var(--primary); font-weight: 600; }
-      .desktop-step-nav .dsn-item.current .num { background: var(--primary); color: #fff; }
-      .desktop-step-nav .dsn-item.disabled { cursor: not-allowed; }
-      /* PC 表单：更宽卡片，字段两列 */
-      .form-card { padding: 26px 28px; }
+      .desktop-step-nav .dsn-item.current .num { background: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(91,108,245,.4); }
+      .desktop-step-nav .dsn-item.current::before {
+        content: ''; position: absolute; left: -14px; top: 22%; bottom: 22%;
+        width: 3px; border-radius: 999px; background: var(--primary);
+      }
+      .dsn-tip {
+        display: flex; gap: 8px; margin-top: 10px; padding: 12px;
+        border-radius: 10px; background: #f8fafc; border: 1px dashed var(--border);
+        font-size: 12px; line-height: 1.7; color: var(--text-secondary);
+      }
+      .dsn-tip svg { flex-shrink: 0; margin-top: 2px; color: var(--warning); }
+      .dsn-tip b { color: var(--text); }
+
+      /* ---- 区块卡:编号卡头 + 入场 stagger ---- */
+      .form-card {
+        padding: 24px 26px; margin-bottom: 18px; border-radius: 16px;
+        box-shadow: var(--shadow-sm); scroll-margin-top: 20px;
+        animation: cardIn .5s cubic-bezier(.4,0,.2,1) both;
+        animation-delay: calc(var(--i, 0) * 90ms);
+      }
+      @keyframes cardIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+      .form-card.flash { animation: flashRing 1s ease-out; }
+      @keyframes flashRing {
+        0% { box-shadow: 0 0 0 3px rgba(91,108,245,.35); }
+        100% { box-shadow: 0 0 0 3px rgba(91,108,245,0); }
+      }
+      .section-head {
+        align-items: center; margin-bottom: 20px; padding-bottom: 16px;
+        border-bottom: 1px solid var(--border-light);
+      }
+      .section-num {
+        display: flex; align-items: center; justify-content: center;
+        width: 38px; height: 38px; border-radius: 11px; flex-shrink: 0;
+        background: #f1f5f9; border: 1px solid var(--border); color: #94a3b8;
+        font-family: 'Sora', -apple-system, sans-serif; font-size: 15px; font-weight: 700;
+        transition: background .3s, color .3s, border-color .3s, box-shadow .3s;
+      }
+      .form-card.done .section-num {
+        background: var(--primary); border-color: var(--primary); color: #fff;
+        box-shadow: 0 4px 12px rgba(91,108,245,.35);
+      }
+      .section-titles { flex: 1; min-width: 0; }
+      .section-head .form-card-title { font-size: 16px; }
+      .section-head .form-card-title svg { display: none; } /* 桌面端由编号徽章承担标识 */
+      .section-desc { display: block; font-size: 12.5px; color: var(--text-muted); margin-top: 3px; }
+      .section-status {
+        display: inline-flex; align-items: center; white-space: nowrap;
+        padding: 5px 11px; border-radius: 999px;
+        background: #f8fafc; border: 1px solid var(--border-light);
+        font-size: 12px; font-weight: 600; color: var(--text-muted);
+        transition: background .25s, color .25s, border-color .25s;
+      }
+      .section-status.partial { background: var(--primary-light); border-color: var(--primary-100); color: var(--primary); }
+      .section-status.done { background: var(--success-light); border-color: #bbf7d0; color: #059669; }
+      .section-status.pop { animation: chipPop .35s cubic-bezier(.34,1.56,.64,1); }
+      @keyframes chipPop { 0% { transform: scale(.7); } 100% { transform: scale(1); } }
+
+      /* ---- 字段两列(step1 / step3) ---- */
       .form-card[data-step="1"],
       .form-card[data-step="3"] {
         display: grid; grid-template-columns: 1fr 1fr; gap: 22px 28px;
       }
-      .form-card[data-step="1"] .form-card-title,
-      .form-card[data-step="3"] .form-card-title {
+      .form-card[data-step="1"] .section-head,
+      .form-card[data-step="3"] .section-head {
         grid-column: 1 / -1; margin-bottom: 2px;
       }
       .form-card[data-step="1"] .form-group,
       .form-card[data-step="3"] .form-group { margin-bottom: 0; }
-      /* 平台账号：每行两张卡片；卡内"平台"与"运营账号"并排 */
-      #platformAccountList { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-      .platform-account-card { display: flex; flex-wrap: wrap; gap: 0 16px; margin-bottom: 0; }
-      .platform-account-card .pa-head { flex: 0 0 100%; }
-      .platform-account-card .form-group { flex: 1 1 calc(50% - 16px); margin-bottom: 0; }
+      /* GMV 输入框带单位后缀 */
+      .input-with-unit { position: relative; }
+      .input-with-unit .form-input { padding-right: 44px; }
+      .input-unit {
+        display: inline-block;
+        position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+        font-size: 13px; font-weight: 600; color: var(--text-muted); pointer-events: none;
+      }
+
+      /* ---- 平台账号:单行列表 ---- */
+      #platformAccountList { display: flex; flex-direction: column; gap: 10px; }
+      .platform-account-card {
+        display: flex; align-items: flex-end; gap: 14px;
+        margin: 0; padding: 12px 14px;
+        background: #fafbfd; border: 1px solid var(--border-light); border-radius: 12px;
+        transition: border-color .18s, background .18s, box-shadow .18s;
+        animation: rowIn .28s ease both;
+      }
+      @keyframes rowIn { from { opacity: 0; transform: translateY(-8px); } }
+      .platform-account-card:hover { border-color: var(--primary-200); background: #fff; box-shadow: var(--shadow-sm); }
+      .platform-account-card .pa-head { display: contents; }
+      .platform-account-card .pa-index { display: none; }
+      .platform-account-card .form-group { flex: 1 1 auto; margin-bottom: 0; }
+      .platform-account-card .pa-g-platform { flex: 0 0 180px; }
+      .pa-remove { order: 9; margin-bottom: 12px; flex-shrink: 0; transition: opacity .18s; }
+      .pa-remove:hover:not(:disabled) { opacity: .7; }
+      .add-platform-btn { margin-top: 12px; transition: background .18s, transform .18s; }
+      .add-platform-btn:hover { background: #e3e6ff; transform: translateY(-1px); }
+
+      /* ---- 吸底操作栏 ---- */
+      #formActions { display: none; }
+      #desktopActionBar {
+        display: block;
+        position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+        background: rgba(255,255,255,.94);
+        -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+        border-top: 1px solid var(--border);
+        box-shadow: 0 -6px 24px rgba(15,23,42,.07);
+        animation: barIn .45s .2s cubic-bezier(.4,0,.2,1) both;
+      }
+      @keyframes barIn { from { transform: translateY(100%); } }
+      .dab-inner {
+        max-width: 1140px; margin: 0 auto; padding: 13px 30px;
+        display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      }
+      .dab-left { display: flex; align-items: center; gap: 12px; }
+      .dab-count {
+        font-family: 'Sora', -apple-system, sans-serif;
+        font-size: 15px; font-weight: 700; color: var(--text); white-space: nowrap;
+      }
+      .dab-count em { font-style: normal; font-size: 13px; font-weight: 600; color: var(--text-muted); }
+      .dab-bar { width: 130px; height: 6px; border-radius: 999px; background: #eef1f6; overflow: hidden; }
+      .dab-bar i {
+        display: block; height: 100%; width: 0;
+        background: linear-gradient(90deg, var(--primary), #7c88fa); border-radius: 999px;
+        transition: width .45s cubic-bezier(.4,0,.2,1);
+      }
+      .dab-locked { font-size: 13px; font-weight: 600; color: var(--warning-hover); }
+      .dab-right { display: flex; gap: 10px; }
+      .dab-right .btn { min-width: 104px; height: 40px; }
+    }
+    /* 无障碍:偏好减少动效时全部降级 */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important; animation-delay: 0ms !important;
+        transition-duration: .01ms !important; scroll-behavior: auto !important;
+      }
     }
     @media (max-width: 1023px) {
       .desktop-step-nav { display: none; }
     }
+    /* 移动端隐藏工作台布局 */
+    @media (max-width: 640px) {
+      .talent-workspace .topnav,
+      .talent-workspace .sidebar { display: none; }
+      .talent-workspace .main-area {
+        background: #f5f7fb;
+      }
+      .talent-workspace .main-header { display: none; }
+      .talent-workspace .main-content { padding: 0; }
+      .apply-shell { padding: 0 0 88px; }
+      .apply-header { padding: 16px 20px 0; display: flex; }
+    }
   </style>
 </head>
 <body>
+<div class="talent-workspace">
+
+  <header class="topnav">
+    <div class="topnav-left">
+      <div class="topnav-brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" width="18" height="18"><path d="M16.3 4.2c.7 2.1 1.9 3.6 3.7 4.4v3.8a8.8 8.8 0 0 1-3.5-.9v4.9a6.2 6.2 0 1 1-6.2-6.2c.4 0 .8 0 1.2.1v3.9c-.4-.2-.8-.3-1.2-.3a2.4 2.4 0 1 0 2.4 2.4V4.2h3.6Z" fill="#fff"/></svg>
+        </div>
+        <span class="brand-name">达人工作台</span>
+      </div>
+    </div>
+    <div class="topnav-right">
+      <div class="topnav-user" onclick="doLogout()" title="点击退出登录">
+        <div class="user-avatar" id="userAvatar">-</div>
+        <span class="user-name" id="phoneTag">-</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="app-body">
+    <aside class="sidebar">
+      <a class="sidebar-item" onclick="goBack()">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span>我的申请</span>
+      </a>
+      <a class="sidebar-item active">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span>新建申请</span>
+      </a>
+    </aside>
+
+    <main class="main-area">
+      <div class="main-header">
+        <div class="breadcrumb" id="pageTitle">新建申请</div>
+      </div>
+      <div class="main-content">
+
   <div class="desktop-step-nav" id="desktopStepNav">
+    <div class="dsn-progress">
+      <div class="lab">填写进度</div>
+      <div class="val"><span id="dsnDone">0</span><small> / 3 区块</small></div>
+      <div class="dsn-bar"><i id="dsnBarFill"></i></div>
+    </div>
     <div class="dsn-item" data-dsn-step="1" onclick="desktopGoToStep(1)"><span class="num">1</span>基础信息</div>
     <div class="dsn-item" data-dsn-step="2" onclick="desktopGoToStep(2)"><span class="num">2</span>平台账号</div>
     <div class="dsn-item" data-dsn-step="3" onclick="desktopGoToStep(3)"><span class="num">3</span>业绩证明</div>
+    <div class="dsn-tip">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.4 1 2.3h6c0-.9.4-1.8 1-2.3A7 7 0 0 0 12 2z"/></svg>
+      <span>提交后,BD 将在 <b>1-3 个工作日</b>内与你联系,请保持手机畅通。</span>
+    </div>
   </div>
 <div class="apply-shell">
 
@@ -195,7 +490,28 @@
       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
       返回
     </span>
-    <div class="title" id="pageTitle">新建入驻申请</div>
+    <div class="title" style="display:none;">新建入驻申请</div>
+  </div>
+
+  <div class="prep-bar" id="prepBar">
+    <span class="prep-time">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      全程约 3 分钟
+    </span>
+    <span class="prep-sep"></span>
+    <span class="prep-label">请准备</span>
+    <span class="prep-chip">
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41L11 3.83A2 2 0 0 0 9.59 3.24H4a2 2 0 0 0-2 2v5.59c0 .53.21 1.04.59 1.41l9.58 9.59a2 2 0 0 0 2.83 0l5.59-5.59a2 2 0 0 0 0-2.83z"/><circle cx="7.5" cy="8.5" r="1"/></svg>
+      品牌信息
+    </span>
+    <span class="prep-chip">
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      平台运营账号
+    </span>
+    <span class="prep-chip">
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      后台业绩截图
+    </span>
   </div>
 
   <div class="locked-banner" id="lockedBanner" style="display:none;">
@@ -209,11 +525,18 @@
   </div>
 
   <form id="mainForm">
-    <div class="form-card" data-step="1">
-      <h3 class="form-card-title">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-        基础信息
-      </h3>
+    <div class="form-card" data-step="1" style="--i:0">
+      <div class="section-head">
+        <div class="section-num">01</div>
+        <div class="section-titles">
+          <h3 class="form-card-title">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            基础信息
+          </h3>
+          <div class="section-desc">你运营的品牌与主推产品</div>
+        </div>
+        <span class="section-status" id="secStatus1">待填写</span>
+      </div>
       <div class="form-group">
         <label class="form-label">运营品牌 <span class="required">*</span></label>
         <select class="form-select" id="brand">
@@ -231,11 +554,18 @@
       </div>
     </div>
 
-    <div class="form-card" data-step="2">
-      <h3 class="form-card-title">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 9h20"/></svg>
-        平台账号
-      </h3>
+    <div class="form-card" data-step="2" style="--i:1">
+      <div class="section-head">
+        <div class="section-num">02</div>
+        <div class="section-titles">
+          <h3 class="form-card-title">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 9h20"/></svg>
+            平台账号
+          </h3>
+          <div class="section-desc">至少填写 1 个运营账号,支持多平台</div>
+        </div>
+        <span class="section-status" id="secStatus2">待填写</span>
+      </div>
       <div id="platformAccountList"></div>
       <div class="add-platform-btn" onclick="addPlatformAccount()">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -243,14 +573,24 @@
       </div>
     </div>
 
-    <div class="form-card" data-step="3">
-      <h3 class="form-card-title">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-6"/></svg>
-        业绩证明
-      </h3>
+    <div class="form-card" data-step="3" style="--i:2">
+      <div class="section-head">
+        <div class="section-num">03</div>
+        <div class="section-titles">
+          <h3 class="form-card-title">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-6"/></svg>
+            业绩证明
+          </h3>
+          <div class="section-desc">近 3 个月 GMV 与后台数据截图</div>
+        </div>
+        <span class="section-status" id="secStatus3">待填写</span>
+      </div>
       <div class="form-group">
         <label class="form-label">近3个月GMV（元） <span class="required">*</span></label>
-        <input type="number" class="form-input" id="gmv" placeholder="请输入近3个月GMV数值">
+        <div class="input-with-unit">
+          <input type="number" class="form-input" id="gmv" placeholder="请输入近3个月GMV数值">
+          <span class="input-unit">元</span>
+        </div>
         <div class="field-error">近3个月GMV为必填项</div>
       </div>
       <div class="form-group">
@@ -279,11 +619,50 @@
 
 </div>
 
+<!-- 桌面端吸底操作栏(仅 ≥1024px 显示) -->
+<div id="desktopActionBar">
+  <div class="dab-inner">
+    <div class="dab-left" id="dabLeft">
+      <span class="dab-count"><span id="dabDone">0</span><em> / 3 区块已完成</em></span>
+      <span class="dab-bar"><i id="dabBarFill"></i></span>
+    </div>
+    <div class="dab-right" id="dabRight">
+      <button type="button" class="btn" onclick="goBack()">取消</button>
+      <button type="button" class="btn btn-primary" onclick="doSubmit()">提交申请</button>
+    </div>
+  </div>
+</div>
+
+      </div>
+    </main>
+  </div>
+
+</div>
+
 <div id="toastContainer" class="toast-container"></div>
 
 <script>
+// 登录检查和用户信息初始化
 var phone = localStorage.getItem('recruit_current_phone');
 if (!phone) { location.href = 'login.html'; }
+
+document.getElementById('phoneTag').textContent = phone;
+
+var talents = JSON.parse(localStorage.getItem('recruit_talents') || '{}');
+var talentName = (talents[phone] || {}).name;
+if (talentName) {
+  var initial = talentName.charAt(0);
+  document.getElementById('userAvatar').textContent = initial;
+}
+
+function doLogout() {
+  localStorage.removeItem('recruit_current_phone');
+  location.href = 'login.html';
+}
+
+function goBack() {
+  location.href = 'mine.html';
+}
 
 function g(name) { var r = location.search.match(new RegExp('[?&]'+name+'=([^&]*)')); return r ? decodeURIComponent(r[1]) : ''; }
 var mode = g('mode') || 'add';
@@ -351,7 +730,7 @@ function saveDraft() {
     mainProduct: document.getElementById('mainProduct').value,
     gmv: document.getElementById('gmv').value,
     platformAccounts: collectPlatformAccounts().map(function(a) { return { platform: a.platform, account_name: a.account_name }; }),
-    shots: shots.slice()
+    shots: shots.map(function(s){ return {name: s.name}; })
   };
   localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
 }
@@ -396,21 +775,93 @@ function isStepFilled(step) {
   return false;
 }
 
-function desktopGoToStep(step) {
-  if (step > 1 && !isStepFilled(step - 1)) return;
-  var target = document.querySelector('.form-card[data-step="' + step + '"]');
-  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+/* ---- 桌面端:目录自由导航 + 滚动跟随 + 实时进度联动 ---- */
+function setCurrentDsn(step) {
+  document.querySelectorAll('.dsn-item').forEach(function(item) {
+    item.classList.toggle('current', Number(item.getAttribute('data-dsn-step')) === step);
+  });
 }
+
+function desktopGoToStep(step) {
+  var target = document.querySelector('.form-card[data-step="' + step + '"]');
+  if (!target) return;
+  setCurrentDsn(step);
+  target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  target.classList.remove('flash');
+  void target.offsetWidth;
+  target.classList.add('flash');
+}
+
+if ('IntersectionObserver' in window) {
+  var stepSpy = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) setCurrentDsn(Number(e.target.getAttribute('data-step')));
+    });
+  }, { rootMargin: '-20% 0px -65% 0px' });
+  document.querySelectorAll('.form-card[data-step]').forEach(function(card) { stepSpy.observe(card); });
+}
+window.addEventListener('resize', function() { updateStepUI(); });
+
+/* 某区块已填写的字段/账号数(用于"进行中 n/2"等中间态) */
+function stepFilledCount(step) {
+  if (step === 1) {
+    var n = 0;
+    if (document.getElementById('brand').value.trim()) n++;
+    if (document.getElementById('mainProduct').value.trim()) n++;
+    return n;
+  }
+  if (step === 2) {
+    return collectPlatformAccounts().filter(function(a) { return a.account_name; }).length;
+  }
+  if (step === 3) {
+    var m = 0;
+    if (document.getElementById('gmv').value.toString().trim()) m++;
+    if (shots.length > 0) m++;
+    return m;
+  }
+  return 0;
+}
+
+var stepDoneState = {};
 
 function updateDesktopNavUI() {
   var nav = document.getElementById('desktopStepNav');
   if (!nav) return;
+  var doneCount = 0;
   for (var s = 1; s <= TOTAL_STEPS; s++) {
-    var item = nav.querySelector('[data-dsn-step="' + s + '"]');
     var filled = isStepFilled(s);
-    item.classList.toggle('filled', filled);
-    item.classList.toggle('disabled', s > 1 && !isStepFilled(s - 1));
+    var n = stepFilledCount(s);
+    var chip = document.getElementById('secStatus' + s);
+    var card = document.querySelector('.form-card[data-step="' + s + '"]');
+    var item = nav.querySelector('[data-dsn-step="' + s + '"]');
+    var text, cls = '';
+    if (filled) {
+      text = '✓ 已完成'; cls = 'done'; doneCount++;
+    } else if (n > 0) {
+      text = s === 2 ? ('已填 ' + n + ' 个账号') : ('进行中 ' + n + '/2');
+      cls = 'partial';
+    } else {
+      text = '待填写';
+    }
+    if (chip) {
+      chip.textContent = text;
+      chip.className = 'section-status' + (cls ? ' ' + cls : '');
+      if (filled && !stepDoneState[s]) chip.classList.add('pop');
+    }
+    stepDoneState[s] = filled;
+    if (card) card.classList.toggle('done', filled);
+    if (item) {
+      item.classList.toggle('filled', filled);
+      item.querySelector('.num').textContent = filled ? '✓' : String(s);
+    }
   }
+  var pct = Math.round(doneCount / TOTAL_STEPS * 100) + '%';
+  document.getElementById('dsnDone').textContent = doneCount;
+  document.getElementById('dsnBarFill').style.width = pct;
+  var dabDone = document.getElementById('dabDone');
+  if (dabDone) dabDone.textContent = doneCount;
+  var dabFill = document.getElementById('dabBarFill');
+  if (dabFill) dabFill.style.width = pct;
 }
 
 var PLATFORM_OPTIONS = ['抖音', '视频号', '快手'];
@@ -426,12 +877,13 @@ function addPlatformAccount(platform, accountName) {
   }).join('');
   wrap.innerHTML =
     '<div class="pa-head"><span class="pa-index">平台账号</span><button type="button" class="pa-remove" onclick="removePlatformAccount(\''+id+'\')">删除</button></div>' +
-    '<div class="form-group"><label class="form-label">平台 <span class="required">*</span></label>' +
+    '<div class="form-group pa-g-platform"><label class="form-label">平台 <span class="required">*</span></label>' +
     '<select class="form-select pa-platform">' + optionsHtml + '</select></div>' +
-    '<div class="form-group" style="margin-bottom:0;"><label class="form-label">运营账号 <span class="required">*</span></label>' +
+    '<div class="form-group pa-g-account" style="margin-bottom:0;"><label class="form-label">运营账号 <span class="required">*</span></label>' +
     '<input type="text" class="form-input pa-account" placeholder="请输入运营账号" value="'+(accountName?esc(accountName):'')+'"></div>';
   document.getElementById('platformAccountList').appendChild(wrap);
   updateRemoveButtons();
+  updateStepUI();
 }
 
 function removePlatformAccount(id) {
@@ -440,6 +892,7 @@ function removePlatformAccount(id) {
   var el = document.getElementById(id);
   if (el) el.remove();
   updateRemoveButtons();
+  updateStepUI();
 }
 
 function updateRemoveButtons() {
@@ -452,17 +905,24 @@ function updateRemoveButtons() {
 
 function handleShotSelect(files) {
   Array.prototype.forEach.call(files, function(f) {
-    shots.push(f.name);
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      shots.push({ name: f.name, dataUrl: e.target.result });
+      renderShots();
+    };
+    reader.readAsDataURL(f);
   });
-  renderShots();
 }
 function removeShot(idx) {
   shots.splice(idx, 1);
   renderShots();
 }
 function renderShots() {
-  var html = shots.map(function(name, idx) {
-    return '<span class="shot-chip">' + esc(name) + '<span class="rm" onclick="removeShot('+idx+')">&times;</span></span>';
+  var html = shots.map(function(s, idx) {
+    var name = typeof s === 'string' ? s : s.name;
+    var dataUrl = typeof s === 'string' ? '' : s.dataUrl;
+    var img = dataUrl ? '<img src="' + dataUrl + '" alt="">' : '';
+    return '<span class="shot-chip">' + img + esc(name) + '<span class="rm" onclick="removeShot('+idx+')">&times;</span></span>';
   }).join('');
   document.getElementById('shotList').innerHTML = html;
 }
@@ -477,6 +937,10 @@ function init() {
         document.getElementById('lockedBanner').style.display = 'block';
         document.getElementById('formActions').innerHTML = '<button type="button" class="btn" onclick="goBack()">返回</button>';
         document.getElementById('mobileStepNav').style.display = 'none';
+        // 桌面端:吸底栏切换为只读形态,隐藏材料概览条
+        document.getElementById('dabLeft').innerHTML = '<span class="dab-locked">该申请正在审核中,仅供查看</span>';
+        document.getElementById('dabRight').innerHTML = '<button type="button" class="btn" onclick="goBack()">返回</button>';
+        document.getElementById('prepBar').style.display = 'none';
         setReadOnly(true);
       } else {
         document.getElementById('pageTitle').textContent = '修改重提';
@@ -569,7 +1033,15 @@ function doSubmit() {
     }
   }
 
-  if (!validate()) return;
+  if (!validate()) {
+    // 桌面端/平板:自动滚动并高亮首个未完成区块
+    if (!isMobileStepMode()) {
+      for (var fs = 1; fs <= TOTAL_STEPS; fs++) {
+        if (!isStepFilled(fs)) { desktopGoToStep(fs); break; }
+      }
+    }
+    return;
+  }
 
   var accounts = collectPlatformAccounts().map(function(a) { return { platform: a.platform, account_name: a.account_name }; });
   var data = {
@@ -578,7 +1050,7 @@ function doSubmit() {
     main_product: document.getElementById('mainProduct').value.trim(),
     platform_accounts: accounts,
     gmv: Number(document.getElementById('gmv').value),
-    screenshots: shots.slice(),
+    screenshots: shots.map(function(s){ return {name: s.name}; }),
     updated_at: now()
   };
 
