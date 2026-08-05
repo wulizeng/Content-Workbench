@@ -60,6 +60,42 @@
     .tab-close:hover { background: #fee2e2; color: #dc2626; }
     .tab-item.active .tab-close { color: rgba(255,255,255,0.75); }
     .tab-item.active .tab-close:hover { background: rgba(255,255,255,0.25); color: #fff; }
+
+    /* ===== 右上角账号切换下拉 ===== */
+    .topnav-user { position: relative; }
+    .topnav-user .user-caret { color: rgba(255,255,255,0.85); transition: transform .18s; }
+    .topnav-user.open .user-caret { transform: rotate(180deg); }
+    .account-menu {
+      display: none; position: absolute; top: calc(100% + 10px); right: 0; z-index: 999;
+      width: 240px; background: #fff; border: 1px solid var(--border); border-radius: 12px;
+      box-shadow: 0 12px 32px rgba(15,23,42,.16); padding: 6px; cursor: default;
+    }
+    .topnav-user.open .account-menu { display: block; }
+    .account-menu .menu-title {
+      font-size: 11px; color: var(--text-tertiary); font-weight: 600; padding: 8px 10px 4px;
+    }
+    .account-item {
+      display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+      border-radius: 9px; cursor: pointer; transition: background .15s;
+    }
+    .account-item:hover { background: #f4f6fb; }
+    .account-item .acc-avatar {
+      width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; color: #fff;
+    }
+    .account-item .acc-info { flex: 1; min-width: 0; }
+    .account-item .acc-name { font-size: 13px; font-weight: 600; color: var(--text); }
+    .account-item .acc-role { font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
+    .account-item .acc-check { color: var(--primary); flex-shrink: 0; display: none; }
+    .account-item.current { background: var(--primary-light); }
+    .account-item.current .acc-check { display: block; }
+    .account-menu .menu-divider { height: 1px; background: var(--border); margin: 6px 4px; }
+    .account-menu .menu-logout {
+      display: flex; align-items: center; gap: 8px; padding: 9px 10px; border-radius: 9px;
+      font-size: 13px; color: #dc2626; cursor: pointer; transition: background .15s;
+    }
+    .account-menu .menu-logout:hover { background: #fef2f2; }
   </style>
 </head>
 <body>
@@ -76,9 +112,14 @@
         </div>
         <div class="topnav-divider"></div>
         <nav class="topnav-menu" id="topnavMenu">
-          <a class="topnav-item active" data-key="guide" onclick="toggleSidebar()">
+          <a class="topnav-item active" data-key="guide" onclick="toggleSidebar('guide')">
             <svg viewBox="0 0 24 24" width="16" height="16"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
             <span>店铺引擎</span>
+            <svg class="chevron-down" viewBox="0 0 24 24" width="12" height="12"><path d="m6 9 6 6 6-6"/></svg>
+          </a>
+          <a class="topnav-item" data-key="recruit" onclick="toggleSidebar('recruit')">
+            <svg viewBox="0 0 24 24" width="16" height="16"><circle cx="9" cy="7" r="4"/><path d="M2.5 21a6.5 6.5 0 0 1 13 0"/><circle cx="18" cy="7.5" r="2.8"/><path d="M16.5 13.2a6.5 6.5 0 0 1 5.5 6.8"/></svg>
+            <span>分销枢纽</span>
             <svg class="chevron-down" viewBox="0 0 24 24" width="12" height="12"><path d="m6 9 6 6 6-6"/></svg>
           </a>
         </nav>
@@ -92,10 +133,11 @@
           <svg viewBox="0 0 24 24" width="18" height="18"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
           <span class="notify-dot"></span>
         </button>
-        <div class="topnav-user">
-          <div class="user-avatar">U</div>
-          <span class="user-name">管理员</span>
-          <svg viewBox="0 0 24 24" width="14" height="14"><path d="m6 9 6 6 6-6"/></svg>
+        <div class="topnav-user" id="topnavUser" onclick="toggleAccountMenu(event)" style="cursor:pointer;" title="切换账号">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <span class="user-name" id="userName">管理员</span>
+          <svg class="user-caret" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="account-menu" id="accountMenu" onclick="event.stopPropagation()"></div>
         </div>
       </div>
     </header>
@@ -105,18 +147,95 @@
 
       <!-- 左侧菜单 -->
       <aside class="sidebar" id="sidebar">
-        <a class="sidebar-item active" data-page="pages/guide/list.html" onclick="switchSidebar(this)">
-          <svg viewBox="0 0 24 24" width="17" height="17"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-          <span>开店指南</span>
-        </a>
-        <a class="sidebar-item" data-page="pages/phone/list.html" onclick="switchSidebar(this)">
-          <svg viewBox="0 0 24 24" width="17" height="17"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-          <span>电话号码申请</span>
-        </a>
-        <a class="sidebar-item" data-page="pages/auth/list.html" onclick="switchSidebar(this)">
-          <svg viewBox="0 0 24 24" width="17" height="17"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          <span>平台店铺授权书</span>
-        </a>
+        <div class="sidebar-group" id="sidebarGroup-guide">
+        <div class="sidebar-parent open" onclick="toggleSubmenu(this)">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span>店铺管理</span>
+          <svg class="arrow" viewBox="0 0 24 24" width="12" height="12"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+        <div class="sidebar-children">
+          <a class="sidebar-item sidebar-child active" data-home="1" onclick="switchToHome(this, 'pages/guide/list.html')">
+            <svg viewBox="0 0 24 24" width="17" height="17"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            <span>开店指南</span>
+          </a>
+          <a class="sidebar-item sidebar-child" data-page="pages/phone/list.html" onclick="switchSidebar(this)">
+            <svg viewBox="0 0 24 24" width="17" height="17"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            <span>电话号码申请</span>
+          </a>
+          <a class="sidebar-item sidebar-child" data-page="pages/auth/list.html" onclick="switchSidebar(this)">
+            <svg viewBox="0 0 24 24" width="17" height="17"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>平台店铺授权书</span>
+          </a>
+          <a class="sidebar-item sidebar-child" data-page="pages/store-engine/manage.html" onclick="switchSidebar(this)">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+            <span>店铺入驻</span>
+          </a>
+        </div>
+        <div class="sidebar-parent" onclick="toggleSubmenu(this)">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>基础运营</span>
+          <svg class="arrow" viewBox="0 0 24 24" width="12" height="12"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+        <div class="sidebar-children">
+          <a class="sidebar-item sidebar-child" data-page="pages/store-engine/list.html" onclick="switchSidebar(this)">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            <span>平台商品列表</span>
+          </a>
+          <a class="sidebar-item sidebar-child" data-page="pages/store-engine/product-add.html" onclick="switchSidebar(this)">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+            <span>商品上新</span>
+          </a>
+          <a class="sidebar-item sidebar-child" data-page="pages/store-engine/price-manage.html" onclick="switchSidebar(this)">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span>价格管理</span>
+          </a>
+          <a class="sidebar-item sidebar-child" data-page="pages/store-engine/channel-product.html" onclick="switchSidebar(this)">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            <span>渠道品管理</span>
+          </a>
+          <a class="sidebar-item sidebar-child" data-page="pages/store-engine/commission-manage.html" onclick="switchSidebar(this)">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            <span>佣金管理</span>
+          </a>
+          <a class="sidebar-item sidebar-child" data-page="pages/store-engine/season-plan.html" onclick="switchSidebar(this)">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span>季度上市计划</span>
+          </a>
+          <a class="sidebar-item sidebar-child" data-page="pages/store-engine/product-listing.html" onclick="switchSidebar(this)">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            <span>商品上新列表</span>
+          </a>
+        </div>
+        <div class="sidebar-parent" onclick="toggleSubmenu(this)">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          <span>活动运营</span>
+          <svg class="arrow" viewBox="0 0 24 24" width="12" height="12"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+        <div class="sidebar-children">
+          <a class="sidebar-item sidebar-child" data-page="pages/store-engine/activity-apply.html" onclick="switchSidebar(this)">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            <span>报名管理</span>
+          </a>
+          <a class="sidebar-item sidebar-child" data-page="pages/store-engine/subsidy-helper.html" onclick="switchSidebar(this)">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+            <span>过补助手</span>
+          </a>
+        </div>
+        <div class="sidebar-parent" onclick="toggleSubmenu(this)">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          <span>产品运营</span>
+          <svg class="arrow" viewBox="0 0 24 24" width="12" height="12"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+        <div class="sidebar-children">
+          <a class="sidebar-item sidebar-child" data-page="pages/store-engine/link-optimize.html" onclick="switchSidebar(this)">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            <span>链接优化</span>
+          </a>
+          <a class="sidebar-item sidebar-child" data-page="pages/store-engine/product-diagnose.html" onclick="switchSidebar(this)">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            <span>产品诊断</span>
+          </a>
+        </div>
         <div class="sidebar-parent" onclick="toggleSubmenu(this)">
           <svg viewBox="0 0 24 24" width="17" height="17"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
           <span>包装优化</span>
@@ -151,6 +270,8 @@
             <span>公章使用申请</span>
           </a>
         </div>
+        </div>
+        <div class="sidebar-group" id="sidebarGroup-recruit" style="display:none;"></div>
       </aside>
 
       <!-- 右侧主内容区 -->
@@ -168,11 +289,20 @@
   <!-- Toast 容器 -->
   <div class="toast-container" id="toastContainer"></div>
 
+  <script src="js/auth.js"></script>
   <script>
+    // ===== 登录检查 =====
+    if (!Auth.isAuthenticated()) {
+      window.location.href = 'login.html';
+    }
+
+    var currentUser = Auth.getCurrentUser();
+
     // ===== 多页签管理 =====
     var tabs = [];
     var activeTabId = null;
     var tabSeq = 0;
+    var homeTabId = null;
 
     function findTab(id) {
       for (var i = 0; i < tabs.length; i++) { if (tabs[i].id === id) return tabs[i]; }
@@ -249,15 +379,59 @@
       createTab({ title: title, page: page, closable: true, activate: true });
     }
 
+    // 切换固定"首页"页签的内容（不新建页签，仅替换首页iframe的地址，页签文字始终显示"首页"）
+    function switchToHome(el, page) {
+      document.querySelectorAll('.sidebar-item').forEach(function(i) { i.classList.remove('active'); });
+      el.classList.add('active');
+      var home = findTab(homeTabId);
+      // 客户账号无首页页签，降级为普通页签打开
+      if (!home) { openTab(page, el.textContent.trim()); return; }
+      home.page = page;
+      home.iframe.src = buildFrameSrc(page);
+      activateTab(homeTabId);
+    }
+
     // ===== 展开/收起侧边栏二级菜单 =====
     function toggleSubmenu(el) {
       el.classList.toggle('open');
     }
 
-    // ===== 点击店铺引擎切换左侧菜单 =====
-    function toggleSidebar() {
+    // ===== 顶部一级菜单 → 每类首个页面 =====
+    var topMenuDefaultPage = {
+      guide: { page: 'pages/guide/list.html', title: '开店指南' },
+      recruit: { page: 'pages/recruit/flow.html', title: '入驻流程' }
+    };
+    var currentTopKey = 'guide';
+
+    // ===== 点击顶部一级菜单：切换左侧菜单分组 =====
+    function toggleSidebar(key) {
       var body = document.querySelector('.app-body');
-      var btn = document.querySelector('.topnav-item[data-key="guide"]');
+
+      if (key && key !== currentTopKey) {
+        // 切换到另一个一级菜单分组
+        document.querySelectorAll('.topnav-item').forEach(function(i) { i.classList.remove('active', 'sidebar-open'); });
+        var btn = document.querySelector('.topnav-item[data-key="' + key + '"]');
+        btn.classList.add('active', 'sidebar-open');
+
+        document.querySelectorAll('.sidebar-group').forEach(function(g) { g.style.display = 'none'; });
+        document.getElementById('sidebarGroup-' + key).style.display = '';
+
+        body.classList.remove('sidebar-hidden');
+        currentTopKey = key;
+
+        var def = topMenuDefaultPage[key];
+        if (def) {
+          // 首页型菜单（data-home）优先，其次页签型（data-page），跳过用户注册等外链型菜单项
+          var firstItem = document.querySelector('#sidebarGroup-' + key + ' .sidebar-item[data-home]') ||
+            document.querySelector('#sidebarGroup-' + key + ' .sidebar-item[data-page]') ||
+            document.querySelector('#sidebarGroup-' + key + ' .sidebar-item');
+          if (firstItem) firstItem.click();
+        }
+        return;
+      }
+
+      // 再次点击当前激活分组：收起/展开侧边栏
+      var btn = document.querySelector('.topnav-item[data-key="' + currentTopKey + '"]');
       body.classList.toggle('sidebar-hidden');
       btn.classList.toggle('sidebar-open');
     }
@@ -305,8 +479,215 @@
       }
     });
 
-    // ===== 初始化：创建首页页签 =====
-    createTab({ title: '首页', page: 'pages/guide/list.html', closable: false, activate: true });
+    // ===== 初始化：创建首页页签（仅运营视角账号，客户账号无首页） =====
+    var HAS_HOME = !currentUser || currentUser.role !== 'talent';
+    if (HAS_HOME) {
+      homeTabId = createTab({ title: '首页', page: 'pages/guide/list.html', closable: false, activate: true }).id;
+    }
+
+    // ===== 根据角色渲染菜单（分销枢纽下按"客户视角/运营视角"二级菜单组织） =====
+    function renderMenuByRole(role) {
+      var recruitMenu = document.getElementById('sidebarGroup-recruit');
+      recruitMenu.innerHTML = '';
+
+      // 二级菜单组（默认展开，复用 sidebar-parent/sidebar-children 模式）
+      function submenuBlock(title, iconSvg, childrenHtml) {
+        return '<div class="sidebar-parent open" onclick="toggleSubmenu(this)">' +
+          iconSvg + '<span>' + title + '</span>' +
+          '<svg class="arrow" viewBox="0 0 24 24" width="12" height="12"><path d="m6 9 6 6 6-6"/></svg>' +
+          '</div>' +
+          '<div class="sidebar-children">' + childrenHtml + '</div>';
+      }
+
+      // 客户视角：达人端全部操作页（用户注册排第一位）
+      var clientItems =
+        '<a class="sidebar-item sidebar-child" onclick="openRegisterPage()">' +
+        '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>' +
+        '<span>用户注册</span>' +
+        '</a>' +
+        '<a class="sidebar-item sidebar-child" data-page="pages/recruit/mine.html" onclick="switchSidebar(this)">' +
+        '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' +
+        '<span>我的申请</span>' +
+        '</a>' +
+        '<a class="sidebar-item sidebar-child" data-page="pages/recruit/invoice-info.html" onclick="switchSidebar(this)">' +
+        '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>' +
+        '<span>开票信息录入</span>' +
+        '</a>' +
+        '<a class="sidebar-item sidebar-child" data-page="pages/recruit/live-account-client.html" onclick="switchSidebar(this)">' +
+        '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>' +
+        '<span>直播账号管理</span>' +
+        '</a>' +
+        '<a class="sidebar-item sidebar-child" data-page="pages/recruit/deposit-flow.html" onclick="switchSidebar(this)">' +
+        '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3 3 0 0 0 0 6h5a3 3 0 0 1 0 6H6"/></svg>' +
+        '<span>保证金流水</span>' +
+        '</a>';
+
+      // 运营视角：入驻流程（分销枢纽首页） + 申请审核（BD 仅可查看列表） + 供应商申请入驻 + 客户合同管理 + 直播账号管理 + 保证金流水
+      function operatorItems(label) {
+        return '<a class="sidebar-item sidebar-child" data-home="1" onclick="switchToHome(this, \'pages/recruit/flow.html\')">' +
+          '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>' +
+          '<span>入驻流程</span>' +
+          '</a>' +
+          '<a class="sidebar-item sidebar-child" data-page="pages/recruit/list.html" onclick="switchSidebar(this)">' +
+          '<svg viewBox="0 0 24 24" width="17" height="17"><circle cx="9" cy="7" r="4"/><path d="M2.5 21a6.5 6.5 0 0 1 13 0"/><circle cx="18" cy="7.5" r="2.8"/><path d="M16.5 13.2a6.5 6.5 0 0 1 5.5 6.8"/></svg>' +
+          '<span>' + label + '</span>' +
+          '</a>' +
+          '<a class="sidebar-item sidebar-child" data-page="pages/recruit/supplier.html" onclick="switchSidebar(this)">' +
+          '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>' +
+          '<span>供应商申请入驻</span>' +
+          '</a>' +
+          '<a class="sidebar-item sidebar-child" data-page="pages/recruit/contract.html" onclick="switchSidebar(this)">' +
+          '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>' +
+          '<span>客户合同管理</span>' +
+          '</a>' +
+          '<a class="sidebar-item sidebar-child" data-page="pages/recruit/live-account.html" onclick="switchSidebar(this)">' +
+          '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>' +
+          '<span>直播账号管理</span>' +
+          '</a>' +
+          '<a class="sidebar-item sidebar-child" data-page="pages/recruit/deposit-flow.html" onclick="switchSidebar(this)">' +
+          '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3 3 0 0 0 0 6h5a3 3 0 0 1 0 6H6"/></svg>' +
+          '<span>保证金流水</span>' +
+          '</a>';
+      }
+
+      var clientIcon = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+      var operatorIcon = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>';
+
+      if (role === 'talent') {
+        // 达人：仅客户视角
+        recruitMenu.innerHTML = submenuBlock('客户视角', clientIcon, clientItems);
+      } else if (role === 'operator') {
+        // 运营：仅运营视角
+        recruitMenu.innerHTML = submenuBlock('运营视角', operatorIcon, operatorItems('入驻意向审核'));
+      } else if (role === 'bd') {
+        // BD：仅运营视角（只读列表）
+        recruitMenu.innerHTML = submenuBlock('运营视角', operatorIcon, operatorItems('申请列表'));
+      } else if (role === 'admin') {
+        // 管理员：客户视角 + 运营视角全量菜单
+        recruitMenu.innerHTML =
+          submenuBlock('客户视角', clientIcon, clientItems) +
+          submenuBlock('运营视角', operatorIcon, operatorItems('入驻意向审核'));
+      }
+    }
+
+    // ===== 用户注册：新标签页跳转到客户端注册页 =====
+    function openRegisterPage() {
+      window.open('pages/recruit/login.html?mode=register', '_blank');
+    }
+
+    // ===== 达人端：定位当前达人的申请记录（管理员可见全部） =====
+    function getTalentApps() {
+      var apps = JSON.parse(localStorage.getItem('recruit_applications') || '[]');
+      if (currentUser && currentUser.role === 'admin') return apps;
+      var phone = localStorage.getItem('recruit_current_phone') || currentUser.phone;
+      return apps.filter(function(a) { return a.phone === phone; });
+    }
+
+    function markSidebarActive(el) {
+      document.querySelectorAll('.sidebar-item').forEach(function(i) { i.classList.remove('active'); });
+      el.classList.add('active');
+    }
+
+    // 项目规划：打开最新一条可规划/已规划的申请，无记录则引导到我的申请
+    function openTalentPlan(el) {
+      markSidebarActive(el);
+      var apps = getTalentApps();
+      var target = null;
+      var PLAN_STATUSES = ['待提交项目规划', '规划已驳回', '规划审核中', '已通过'];
+      for (var i = apps.length - 1; i >= 0; i--) {
+        if (PLAN_STATUSES.indexOf(apps[i].status) > -1) { target = apps[i]; break; }
+      }
+      if (target) openTab('pages/recruit/project-plan.html?id=' + target.id, '项目规划');
+      else openTab('pages/recruit/mine.html', '我的申请');
+    }
+
+    // 申请详情：打开最新一条申请的详情，无记录则引导到我的申请
+    function openTalentDetail(el) {
+      markSidebarActive(el);
+      var apps = getTalentApps();
+      if (apps.length > 0) openTab('pages/recruit/detail.html?id=' + apps[apps.length - 1].id, '申请详情');
+      else openTab('pages/recruit/mine.html', '我的申请');
+    }
+
+    // ===== 右上角账号切换：客户 / 运营 / 管理员 =====
+    var PRESET_ACCOUNTS = [
+      { role: 'talent', roleLabel: '客户（达人）', name: '李潮', phone: '138****2231', color: '#f59e0b' },
+      { role: 'operator', roleLabel: '运营', name: '张运营', email: 'operator@company.com', color: '#10b981' },
+      { role: 'admin', roleLabel: '管理员', name: '系统管理员', email: 'admin@company.com', color: '#5b6cf5' }
+    ];
+
+    function renderAccountMenu() {
+      var html = '<div class="menu-title">切换账号</div>';
+      PRESET_ACCOUNTS.forEach(function(acc, i) {
+        var isCur = currentUser && currentUser.role === acc.role;
+        html += '<div class="account-item' + (isCur ? ' current' : '') + '" onclick="switchAccount(' + i + ')">' +
+          '<div class="acc-avatar" style="background:' + acc.color + '">' + acc.name.charAt(0) + '</div>' +
+          '<div class="acc-info"><div class="acc-name">' + acc.name + '</div><div class="acc-role">' + acc.roleLabel + '</div></div>' +
+          '<svg class="acc-check" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>' +
+          '</div>';
+      });
+      html += '<div class="menu-divider"></div>' +
+        '<div class="menu-logout" onclick="logout()">' +
+        '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>' +
+        '退出登录</div>';
+      document.getElementById('accountMenu').innerHTML = html;
+    }
+
+    function switchAccount(i) {
+      var acc = PRESET_ACCOUNTS[i];
+      if (currentUser && currentUser.role === acc.role) {
+        document.getElementById('topnavUser').classList.remove('open');
+        return;
+      }
+      var user = { role: acc.role, name: acc.name, permissions: Auth.getRolePermissions(acc.role) };
+      if (acc.phone) user.phone = acc.phone;
+      if (acc.email) user.email = acc.email;
+      Auth.setCurrentUser(user);
+      if (acc.role === 'talent') {
+        // 保证演示达人身份存在并写入客户端登录态
+        var talents = JSON.parse(localStorage.getItem('recruit_talents') || '{}');
+        if (!talents[acc.phone]) {
+          talents[acc.phone] = { phone: acc.phone, name: acc.name, talent_id: 'T_DEMO_001', created_at: new Date().toLocaleString('zh-CN', {hour12:false}).replace(/\//g, '-') };
+          localStorage.setItem('recruit_talents', JSON.stringify(talents));
+        }
+        localStorage.setItem('recruit_current_phone', acc.phone);
+      } else {
+        localStorage.removeItem('recruit_current_phone');
+      }
+      location.reload();
+    }
+
+    function toggleAccountMenu() {
+      document.getElementById('topnavUser').classList.toggle('open');
+    }
+
+    document.addEventListener('click', function(e) {
+      var u = document.getElementById('topnavUser');
+      if (u && !u.contains(e.target)) u.classList.remove('open');
+    });
+
+    // ===== 更新用户信息显示 =====
+    function updateUserDisplay() {
+      var roleLabels = { talent: '客户', operator: '运营', bd: 'BD', admin: '管理员' };
+      var userName = currentUser.name || currentUser.email || currentUser.phone || '用户';
+      var label = roleLabels[currentUser.role];
+      document.getElementById('userName').textContent = userName + (label ? ' · ' + label : '');
+      document.getElementById('userAvatar').textContent = userName.charAt(0).toUpperCase();
+    }
+
+    // ===== 退出登录 =====
+    function logout() {
+      if (confirm('确定要退出登录吗？')) {
+        Auth.logout();
+      }
+    }
+
+    // ===== 页面加载时初始化 =====
+    renderMenuByRole(currentUser.role);
+    updateUserDisplay();
+    renderAccountMenu();
+    // 客户账号无首页：默认直接进入分销枢纽（自动打开我的申请）
+    if (!HAS_HOME) toggleSidebar('recruit');
   </script>
 </body>
 </html>
