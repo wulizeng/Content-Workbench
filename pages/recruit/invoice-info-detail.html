@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>开票信息详情</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+    .page-container { min-height: 100vh; background: #f5f7fb; padding: 24px 28px; }
+    .page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .page-title { font-size: 18px; font-weight: 700; color: var(--text); flex: 1; }
+
+    .detail-card {
+      background:#fff; border:1px solid var(--border); border-radius:12px;
+      padding:24px; margin-bottom:16px;
+    }
+    .detail-card-title {
+      font-size:15px; font-weight:700; color:var(--text,#0f172a);
+      margin:0 0 18px; padding-bottom:12px; border-bottom:1px solid var(--border-light);
+    }
+    .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px 24px; }
+    .detail-item .k { font-size:12px; color:var(--text-tertiary,#94a3b8); margin-bottom:4px; }
+    .detail-item .v { font-size:14px; color:var(--text,#0f172a); font-weight:500; min-height:22px; word-break:break-all; }
+    .detail-item.span-2 { grid-column: span 2; }
+    .type-tag {
+      display:inline-flex; align-items:center; padding:1px 9px; border-radius:10px;
+      background:#f1f5f9; color:var(--text-secondary); font-size:12px; font-weight:600; line-height:1.6;
+    }
+    .form-actions { display:flex; justify-content:flex-end; gap:10px; padding:16px 0; }
+
+    @media (max-width: 640px) {
+      .page-container { padding: 16px; }
+      .detail-card { padding: 16px; }
+      .detail-grid { grid-template-columns: 1fr; gap: 12px; }
+      .detail-item.span-2 { grid-column: span 1; }
+    }
+  </style>
+</head>
+<body>
+<div class="page-container">
+
+  <div class="page-header">
+    <button class="btn" onclick="goBack()" style="display:flex;align-items:center;gap:4px;padding:6px 12px;height:auto;">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      返回
+    </button>
+    <div class="page-title">开票信息详情</div>
+  </div>
+
+  <div class="detail-card">
+    <h3 class="detail-card-title">开票信息</h3>
+    <div class="detail-grid">
+      <div class="detail-item"><div class="k">开票抬头</div><div class="v" id="dFullName"></div></div>
+      <div class="detail-item span-2"><div class="k">注册地址</div><div class="v" id="dStreet"></div></div>
+      <div class="detail-item"><div class="k">纳税人类别</div><div class="v" id="dTaxpayerType"></div></div>
+      <div class="detail-item"><div class="k">纳税人识别号</div><div class="v" id="dTaxRegNo"></div></div>
+    </div>
+  </div>
+
+  <div class="detail-card">
+    <h3 class="detail-card-title">银行账户信息</h3>
+    <div class="detail-grid">
+      <div class="detail-item"><div class="k">银行账户名称</div><div class="v" id="dAccountHolder"></div></div>
+      <div class="detail-item"><div class="k">银行账号</div><div class="v" id="dPayeeAccount"></div></div>
+      <div class="detail-item"><div class="k">银行名称</div><div class="v" id="dBankName"></div></div>
+      <div class="detail-item"><div class="k">银行代码</div><div class="v" id="dBankCode"></div></div>
+      <div class="detail-item"><div class="k">银行联行号</div><div class="v" id="dBankCnapsNo"></div></div>
+      <div class="detail-item"><div class="k">开户省</div><div class="v" id="dBankProvince"></div></div>
+      <div class="detail-item"><div class="k">开户市</div><div class="v" id="dBankCity"></div></div>
+      <div class="detail-item span-2"><div class="k">开户行</div><div class="v" id="dBankBranch"></div></div>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button class="btn" onclick="goBack()">返回</button>
+    <button class="btn btn-primary" onclick="goEdit()">编辑</button>
+  </div>
+
+</div>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<script src="../../js/auth.js"></script>
+<script>
+// 权限检查
+if (!Auth.requireAuth()) {
+  // 已在 requireAuth 中跳转到登录页
+}
+
+var STORAGE_KEY = 'recruit_supplier_applications';
+
+if (window.parent) {
+  window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 客户视角 <span>/</span> 开票信息录入 <span>/</span> 详情'}, '*');
+}
+
+function g(name) { var r = location.search.match(new RegExp('[?&]' + name + '=([^&]*)')); return r ? decodeURIComponent(r[1]) : ''; }
+var recordId = parseInt(g('id')) || 0;
+
+// 无值字段统一显示为空
+function val(v) { return (v === null || v === undefined) ? '' : String(v); }
+
+function init() {
+  var list = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  var record = list.find(function(r) { return r.id === recordId; });
+  if (!record) { showToast('未找到该开票信息', 'error'); return; }
+
+  var map = {
+    dFullName: record.supplier_full_name,
+    dStreet: record.street_address,
+    dTaxRegNo: record.tax_reg_no,
+    dAccountHolder: record.account_holder,
+    dPayeeAccount: record.payee_account,
+    dBankName: record.bank_name,
+    dBankCode: record.bank_code,
+    dBankCnapsNo: record.bank_cnaps_no,
+    dBankProvince: record.bank_province,
+    dBankCity: record.bank_city,
+    dBankBranch: record.bank_branch
+  };
+  Object.keys(map).forEach(function(id) {
+    document.getElementById(id).textContent = val(map[id]);
+  });
+  document.getElementById('dTaxpayerType').innerHTML = record.taxpayer_type
+    ? '<span class="type-tag">' + esc(record.taxpayer_type) + '</span>' : '';
+}
+
+function esc(s) {
+  if (s === null || s === undefined || s === '') return '';
+  var d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function goBack() { location.href = 'invoice-info.html'; }
+function goEdit() { location.href = 'invoice-info-edit.html?mode=edit&id=' + recordId; }
+
+// Toast 轻提示
+function showToast(message, type) {
+  type = type || 'info';
+  var container = document.getElementById('toastContainer');
+  if (!container) return;
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(function() {
+    if (toast.parentNode) {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s';
+      setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+    }
+  }, 2500);
+}
+
+init();
+
+// 从编辑页返回时自动刷新数据
+window.addEventListener('pageshow', function() { init(); });
+</script>
+</body>
+</html>

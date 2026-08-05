@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>开票信息编辑</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+    .page-container { min-height: 100vh; background: #f5f7fb; padding: 24px 28px; }
+    .page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .page-title { font-size: 18px; font-weight: 700; color: var(--text); flex: 1; }
+
+    .form-card {
+      background: #fff; border: 1px solid var(--border); border-radius: 12px;
+      padding: 24px; margin-bottom: 16px;
+    }
+    .form-card-title {
+      font-size: 15px; font-weight: 700; color: var(--text, #0f172a);
+      margin: 0 0 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border-light);
+    }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; }
+    .form-group { display: flex; flex-direction: column; }
+    .form-group.span-2 { grid-column: span 2; }
+    .form-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+    .form-label .required { color: #ef4444; margin-left: 2px; }
+    .form-input, .form-select {
+      width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 9px;
+      font: inherit; font-size: 13px; outline: none; background: #fafbfd; box-sizing: border-box;
+      transition: border-color .18s;
+    }
+    .form-input:focus, .form-select:focus { border-color: var(--primary); background: #fff; }
+    .field-error { display: none; color: #dc2626; font-size: 12px; margin-top: 5px; }
+    .has-error .form-input, .has-error .form-select { border-color: #ef4444; background: #fef2f2; }
+    .has-error .field-error { display: block; }
+
+    .form-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 0; }
+
+    @media (max-width: 640px) {
+      .page-container { padding: 16px; }
+      .form-card { padding: 16px; }
+      .form-grid { grid-template-columns: 1fr; gap: 14px; }
+      .form-group.span-2 { grid-column: span 1; }
+    }
+  </style>
+</head>
+<body>
+<div class="page-container">
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <div class="page-header">
+    <button class="btn" onclick="goBack()" style="display:flex;align-items:center;gap:4px;padding:6px 12px;height:auto;">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      返回
+    </button>
+    <div class="page-title" id="pageTitle">新增开票信息</div>
+  </div>
+
+  <form id="mainForm">
+    <div class="form-card">
+      <h3 class="form-card-title">开票信息</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">开票抬头 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="supplierFullName" placeholder="请输入开票抬头">
+          <div class="field-error">开票抬头为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">纳税人识别号 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="taxRegNo" placeholder="请输入纳税人识别号">
+          <div class="field-error">纳税人识别号为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">纳税人类别 <span class="required">*</span></label>
+          <select class="form-select" id="taxpayerType">
+            <option value="">请选择纳税人类别</option>
+            <option value="一般纳税人">一般纳税人</option>
+            <option value="小规模纳税人">小规模纳税人</option>
+            <option value="其他">其他</option>
+          </select>
+          <div class="field-error">纳税人类别为必填项</div>
+        </div>
+        <div class="form-group span-2">
+          <label class="form-label">注册地址 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="streetAddress" placeholder="请输入注册地址">
+          <div class="field-error">注册地址为必填项</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <h3 class="form-card-title">银行账户信息</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">银行账户名称 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="accountHolder" placeholder="请输入银行账户名称">
+          <div class="field-error">银行账户名称为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">银行账号 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="payeeAccount" placeholder="请输入银行账号">
+          <div class="field-error">银行账号为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">银行名称 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="bankName" placeholder="请输入银行名称">
+          <div class="field-error">银行名称为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">银行代码 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="bankCode" placeholder="请输入银行代码">
+          <div class="field-error">银行代码为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">银行联行号 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="bankCnapsNo" placeholder="请输入银行联行号">
+          <div class="field-error">银行联行号为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">开户行 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="bankBranch" placeholder="请输入开户行">
+          <div class="field-error">开户行为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">开户省 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="bankProvince" placeholder="请输入开户省">
+          <div class="field-error">开户省为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">开户市 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="bankCity" placeholder="请输入开户市">
+          <div class="field-error">开户市为必填项</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn" onclick="goBack()">取消</button>
+      <button type="button" class="btn btn-primary" onclick="doSubmit()">保存</button>
+    </div>
+  </form>
+
+</div>
+
+<script src="../../js/auth.js"></script>
+<script>
+// 权限检查
+if (!Auth.requireAuth()) {
+  // 已在 requireAuth 中跳转到登录页
+}
+
+var STORAGE_KEY = 'recruit_supplier_applications';
+
+if (window.parent) {
+  window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 客户视角 <span>/</span> 开票信息录入 <span>/</span> 编辑'}, '*');
+}
+
+function g(name) { var r = location.search.match(new RegExp('[?&]' + name + '=([^&]*)')); return r ? decodeURIComponent(r[1]) : ''; }
+var mode = g('mode') || 'add';
+var editId = parseInt(g('id')) || 0;
+
+// 字段映射：表单ID → 数据key
+var FIELD_MAP = {
+  supplierFullName: 'supplier_full_name',
+  streetAddress: 'street_address',
+  taxRegNo: 'tax_reg_no',
+  accountHolder: 'account_holder',
+  payeeAccount: 'payee_account',
+  bankName: 'bank_name',
+  bankCode: 'bank_code',
+  bankCnapsNo: 'bank_cnaps_no',
+  bankProvince: 'bank_province',
+  bankCity: 'bank_city',
+  bankBranch: 'bank_branch',
+  taxpayerType: 'taxpayer_type'
+};
+
+// 必填字段
+var REQUIRED_FIELDS = ['supplierFullName', 'taxRegNo', 'taxpayerType', 'streetAddress', 'accountHolder', 'payeeAccount', 'bankName', 'bankCode', 'bankCnapsNo', 'bankBranch', 'bankProvince', 'bankCity'];
+
+function init() {
+  if (mode === 'edit' && editId > 0) {
+    document.getElementById('pageTitle').textContent = '编辑开票信息';
+    var list = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    var record = list.find(function(r) { return r.id === editId; });
+    if (record) {
+      Object.keys(FIELD_MAP).forEach(function(formId) {
+        var el = document.getElementById(formId);
+        if (el) el.value = record[FIELD_MAP[formId]] || '';
+      });
+    } else {
+      showToast('未找到该开票信息', 'error');
+    }
+  }
+}
+
+function clearErrors() {
+  document.querySelectorAll('.form-group').forEach(function(g) { g.classList.remove('has-error'); });
+}
+
+function validate() {
+  clearErrors();
+  var ok = true;
+  REQUIRED_FIELDS.forEach(function(fieldId) {
+    var el = document.getElementById(fieldId);
+    if (el && !el.value.trim()) {
+      el.closest('.form-group').classList.add('has-error');
+      ok = false;
+    }
+  });
+  return ok;
+}
+
+function doSubmit() {
+  if (!validate()) {
+    showToast('请完善必填项', 'error');
+    return;
+  }
+
+  var list = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  var data = {};
+  Object.keys(FIELD_MAP).forEach(function(formId) {
+    data[FIELD_MAP[formId]] = document.getElementById(formId).value.trim();
+  });
+
+  if (mode === 'edit' && editId > 0) {
+    var idx = list.findIndex(function(r) { return r.id === editId; });
+    if (idx >= 0) {
+      data.id = editId;
+      data.creator = list[idx].creator;
+      data.created_at = list[idx].created_at;
+      list[idx] = data;
+    }
+  } else {
+    data.id = list.length > 0 ? Math.max.apply(null, list.map(function(r) { return r.id; })) + 1 : 1;
+    data.creator = currentUser ? currentUser.name : '';
+    data.created_at = now();
+    list.push(data);
+  }
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  showToast(mode === 'edit' ? '保存成功' : '新增成功', 'success');
+  setTimeout(function() { goBack(); }, 400);
+}
+
+function esc(s) { if (!s) return ''; var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function now() { return new Date().toLocaleString('zh-CN', {hour12: false}).replace(/\//g, '-'); }
+function goBack() { location.href = 'invoice-info.html'; }
+
+// Toast 轻提示
+function showToast(message, type) {
+  type = type || 'info';
+  var container = document.getElementById('toastContainer');
+  if (!container) return;
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(function() {
+    if (toast.parentNode) {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s';
+      setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+    }
+  }, 2500);
+}
+
+init();
+</script>
+</body>
+</html>

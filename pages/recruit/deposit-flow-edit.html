@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>保证金流水编辑</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+    .page-container { min-height: 100vh; background: #f5f7fb; padding: 24px 28px; }
+    .page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .page-title { font-size: 18px; font-weight: 700; color: var(--text); flex: 1; }
+    .form-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+    .form-card-title { font-size: 15px; font-weight: 700; color: var(--text, #0f172a); margin: 0 0 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border-light); }
+    .form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 24px; }
+    .form-group { display: flex; flex-direction: column; }
+    .form-group.span-2 { grid-column: span 2; }
+    .form-group.span-4 { grid-column: span 4; }
+    .form-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+    .form-label .required { color: #ef4444; margin-left: 2px; }
+    .form-input, .form-select { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 9px; font: inherit; font-size: 13px; outline: none; background: #fafbfd; box-sizing: border-box; transition: border-color .18s; }
+    .form-input:focus, .form-select:focus { border-color: var(--primary); background: #fff; }
+    .field-error { display: none; color: #dc2626; font-size: 12px; margin-top: 5px; }
+    .has-error .form-input, .has-error .form-select { border-color: #ef4444; background: #fef2f2; }
+    .has-error .field-error { display: block; }
+    .form-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 0; }
+    @media (max-width: 640px) {
+      .page-container { padding: 16px; }
+      .form-card { padding: 16px; }
+      .form-grid { grid-template-columns: 1fr; gap: 14px; }
+      .form-group.span-2, .form-group.span-4 { grid-column: span 1; }
+    }
+  </style>
+</head>
+<body>
+<div class="page-container">
+  <div id="toastContainer" class="toast-container"></div>
+
+  <div class="page-header">
+    <button class="btn" onclick="goBack()" style="display:flex;align-items:center;gap:4px;padding:6px 12px;height:auto;">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      返回
+    </button>
+    <div class="page-title" id="pageTitle">编辑保证金流水</div>
+  </div>
+
+  <form id="mainForm">
+    <!-- 打款信息 -->
+    <div class="form-card">
+      <h3 class="form-card-title">打款信息</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">打款记录编号 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="paymentNo" placeholder="请输入打款记录编号" maxlength="50">
+          <div class="field-error">打款记录编号为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">业务单号 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="businessNo" placeholder="请输入业务单号" maxlength="50">
+          <div class="field-error">业务单号为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">缴纳主体 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="payerEntity" placeholder="请输入缴纳主体" maxlength="100">
+          <div class="field-error">缴纳主体为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">保证金类型 <span class="required">*</span></label>
+          <select class="form-select" id="depositType">
+            <option value="">请选择保证金类型</option>
+            <option value="入驻保证金">入驻保证金</option>
+            <option value="履约保证金">履约保证金</option>
+            <option value="质量保证金">质量保证金</option>
+          </select>
+          <div class="field-error">保证金类型为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">打款金额 <span class="required">*</span></label>
+          <input type="number" class="form-input" id="paymentAmount" placeholder="请输入打款金额" step="0.01" min="0">
+          <div class="field-error">打款金额为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">打款方式 <span class="required">*</span></label>
+          <select class="form-select" id="paymentMethod">
+            <option value="">请选择打款方式</option>
+            <option value="银行转账">银行转账</option>
+            <option value="支付宝">支付宝</option>
+            <option value="微信支付">微信支付</option>
+            <option value="国际汇款">国际汇款</option>
+          </select>
+          <div class="field-error">打款方式为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">打款时间 <span class="required">*</span></label>
+          <input type="datetime-local" class="form-input" id="paymentTime">
+          <div class="field-error">打款时间为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">交易流水号 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="transactionNo" placeholder="请输入交易流水号" maxlength="50">
+          <div class="field-error">交易流水号为必填项</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 审核信息 -->
+    <div class="form-card">
+      <h3 class="form-card-title">审核信息</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">状态 <span class="required">*</span></label>
+          <select class="form-select" id="status">
+            <option value="">请选择状态</option>
+            <option value="未提交">未提交</option>
+            <option value="已提交">已提交</option>
+          </select>
+          <div class="field-error">状态为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">审核人</label>
+          <input type="text" class="form-input" id="reviewer" placeholder="请输入审核人" maxlength="50">
+          <div class="field-error"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn" type="button" onclick="goBack()">取消</button>
+      <button class="btn btn-primary" type="submit">保存</button>
+    </div>
+  </form>
+</div>
+
+<script src="../../js/auth.js"></script>
+<script>
+if (!Auth.requireAuth()) {}
+
+var STORAGE_KEY = 'recruit_deposit_flow';
+
+if (window.parent) {
+  window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 保证金流水 <span>/</span> 编辑'}, '*');
+}
+
+function g(name) { var r = location.search.match(new RegExp('[?&]' + name + '=([^&]*)')); return r ? decodeURIComponent(r[1]) : ''; }
+var recordId = parseInt(g('id')) || 0;
+var isEdit = recordId > 0;
+
+function initForm() {
+  if (!isEdit) return;
+  var list = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  var record = list.find(function(r) { return r.id === recordId; });
+  if (!record) { showToast('未找到该保证金流水', 'error'); return; }
+
+  // 已提交状态不可编辑
+  if (record.status === '已提交') {
+    showToast('该记录已提交，不可编辑', 'error');
+    setTimeout(function() { location.href = 'deposit-flow-detail.html?id=' + recordId; }, 1000);
+    return;
+  }
+
+  document.getElementById('paymentNo').value = record.payment_no || '';
+  document.getElementById('businessNo').value = record.business_no || '';
+  document.getElementById('payerEntity').value = record.payer_entity || '';
+  document.getElementById('depositType').value = record.deposit_type || '';
+  document.getElementById('paymentAmount').value = record.payment_amount || '';
+  document.getElementById('paymentMethod').value = record.payment_method || '';
+  document.getElementById('paymentTime').value = record.payment_time ? record.payment_time.replace(' ', 'T') : '';
+  document.getElementById('transactionNo').value = record.transaction_no || '';
+  document.getElementById('status').value = record.status || '';
+  document.getElementById('reviewer').value = record.reviewer || '';
+}
+
+document.getElementById('mainForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  // 简单验证
+  var required = ['paymentNo', 'businessNo', 'payerEntity', 'depositType', 'paymentAmount', 'paymentMethod', 'paymentTime', 'transactionNo', 'status'];
+  var valid = true;
+  required.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el.value.trim()) {
+      el.parentElement.classList.add('has-error');
+      valid = false;
+    } else {
+      el.parentElement.classList.remove('has-error');
+    }
+  });
+
+  if (!valid) { showToast('请填写所有必填项', 'error'); return; }
+
+  var list = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  var data = {
+    payment_no: document.getElementById('paymentNo').value.trim(),
+    business_no: document.getElementById('businessNo').value.trim(),
+    payer_entity: document.getElementById('payerEntity').value.trim(),
+    deposit_type: document.getElementById('depositType').value,
+    payment_amount: parseFloat(document.getElementById('paymentAmount').value) || 0,
+    payment_method: document.getElementById('paymentMethod').value,
+    payment_time: document.getElementById('paymentTime').value.replace('T', ' '),
+    transaction_no: document.getElementById('transactionNo').value.trim(),
+    status: document.getElementById('status').value,
+    reviewer: document.getElementById('reviewer').value.trim()
+  };
+
+  if (isEdit) {
+    var idx = list.findIndex(function(r) { return r.id === recordId; });
+    if (idx >= 0) {
+      Object.assign(list[idx], data);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+      showToast('保存成功', 'success');
+      setTimeout(function() { location.href = 'deposit-flow-detail.html?id=' + recordId; }, 1000);
+    }
+  }
+});
+
+function goBack() { 
+  if (isEdit) {
+    location.href = 'deposit-flow-detail.html?id=' + recordId; 
+  } else {
+    location.href = 'deposit-flow.html';
+  }
+}
+
+function showToast(message, type) {
+  type = type || 'info';
+  var container = document.getElementById('toastContainer');
+  if (!container) return;
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(function() {
+    if (toast.parentNode) {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s';
+      setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+    }
+  }, 2500);
+}
+
+initForm();
+</script>
+</body>
+</html>

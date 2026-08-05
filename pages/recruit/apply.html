@@ -11,62 +11,14 @@
   <style>
     body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
 
-    /* ========== 工作台布局 ========== */
+    /* ========== 页面布局（壳应用已提供导航，页内仅保留内容区） ========== */
     .talent-workspace { display: flex; flex-direction: column; height: 100vh; }
-
-    /* 顶栏样式 */
-    .topnav {
-      background: #fff; border-bottom: 1px solid var(--border);
-      padding: 0 28px; height: 60px; display: flex; align-items: center;
-      justify-content: space-between; flex-shrink: 0; box-shadow: var(--shadow-sm);
-    }
-    .topnav-left { display: flex; align-items: center; gap: 20px; }
-    .topnav-brand { display: flex; align-items: center; gap: 10px; }
-    .brand-icon {
-      width: 36px; height: 36px; border-radius: 10px;
-      background: linear-gradient(135deg, var(--primary), #7c6cf5);
-      display: flex; align-items: center; justify-content: center;
-    }
-    .brand-name { font-size: 16px; font-weight: 700; color: var(--text); }
-    .topnav-right { display: flex; align-items: center; gap: 12px; }
-    .topnav-user {
-      display: flex; align-items: center; gap: 8px; padding: 6px 12px;
-      border-radius: 10px; cursor: pointer; transition: background .15s;
-    }
-    .topnav-user:hover { background: #f1f5f9; }
-    .user-avatar {
-      width: 32px; height: 32px; border-radius: 50%; background: var(--primary);
-      color: #fff; display: flex; align-items: center; justify-content: center;
-      font-size: 14px; font-weight: 600;
-    }
-    .user-name { font-size: 13px; color: var(--text); font-weight: 600; }
 
     /* 下方主体区 */
     .app-body { display: flex; flex: 1; overflow: hidden; }
 
-    /* 左侧菜单 */
-    .sidebar {
-      width: 220px; background: #fff; border-right: 1px solid var(--border);
-      overflow-y: auto; flex-shrink: 0;
-    }
-    .sidebar-item {
-      display: flex; align-items: center; gap: 10px; padding: 10px 20px;
-      color: var(--text-secondary); font-size: 13px; cursor: pointer;
-      transition: all .15s; text-decoration: none;
-    }
-    .sidebar-item:hover { background: #f8f9fb; color: var(--primary); }
-    .sidebar-item.active {
-      background: var(--primary-light); color: var(--primary); font-weight: 600;
-    }
-    .sidebar-item svg { flex-shrink: 0; }
-
     /* 主内容区 */
     .main-area { flex: 1; display: flex; flex-direction: column; background: #f5f7fb; overflow: hidden; }
-    .main-header {
-      background: #fff; border-bottom: 1px solid var(--border);
-      padding: 14px 28px; flex-shrink: 0;
-    }
-    .breadcrumb { font-size: 15px; font-weight: 600; color: var(--text); }
     .main-content { flex: 1; overflow-y: auto; padding: 24px 28px; }
 
     /* ========== 表单样式 ========== */
@@ -182,7 +134,7 @@
       .mobile-step-bar, .mobile-step-nav { display: none; }
     }
     @media (min-width: 641px) and (max-width: 1023px) {
-      .apply-shell { max-width: 720px; }
+      .apply-shell { max-width: none; }
       .form-card[data-step="1"],
       .form-card[data-step="3"] {
         display: flex;
@@ -219,7 +171,7 @@
           radial-gradient(920px 360px at 76% -140px, rgba(91,108,245,.08), transparent 70%),
           radial-gradient(760px 320px at -8% 4%, rgba(16,185,129,.05), transparent 70%);
       }
-      .apply-shell { position: relative; z-index: 1; max-width: 860px; width: 100%; flex: 1; margin: 0; padding: 0; }
+      .apply-shell { position: relative; z-index: 1; max-width: none; width: 100%; flex: 1; margin: 0; padding: 0; }
       .apply-header { margin-bottom: 16px; }
       .apply-header .title { font-size: 22px; }
 
@@ -240,56 +192,6 @@
       }
       .prep-chip:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
       .prep-chip svg { color: var(--primary); flex-shrink: 0; }
-
-      /* ---- 左侧目录导航 ---- */
-      .desktop-step-nav {
-        position: sticky; top: 32px; z-index: 1;
-        display: flex; flex-direction: column; gap: 4px;
-        width: 250px; flex-shrink: 0;
-        background: #fff; border: 1px solid var(--border); border-radius: 16px;
-        padding: 18px 14px 14px; box-shadow: var(--shadow-md);
-      }
-      .dsn-progress { padding: 0 8px 14px; border-bottom: 1px solid var(--border-light); margin-bottom: 8px; }
-      .dsn-progress .lab { font-size: 12px; color: var(--text-muted); }
-      .dsn-progress .val {
-        font-family: 'Sora', -apple-system, sans-serif;
-        font-size: 22px; font-weight: 700; line-height: 1.25; margin: 2px 0 9px; color: var(--text);
-      }
-      .dsn-progress .val small { font-size: 13px; font-weight: 600; color: var(--text-muted); }
-      .dsn-bar { height: 6px; border-radius: 999px; background: #eef1f6; overflow: hidden; }
-      .dsn-bar i {
-        display: block; height: 100%; width: 0;
-        background: linear-gradient(90deg, var(--primary), #7c88fa); border-radius: 999px;
-        transition: width .45s cubic-bezier(.4,0,.2,1);
-      }
-      .desktop-step-nav .dsn-item {
-        position: relative; display: flex; align-items: center; gap: 10px;
-        padding: 10px 12px; border-radius: 10px;
-        font-size: 13px; font-weight: 500; color: #94a3b8; cursor: pointer;
-        transition: background .18s, color .18s;
-      }
-      .desktop-step-nav .dsn-item:hover { background: #f8fafc; }
-      .desktop-step-nav .dsn-item .num {
-        width: 22px; height: 22px; border-radius: 50%; background: #f1f5f9; color: #94a3b8;
-        display: flex; align-items: center; justify-content: center;
-        font-family: 'Sora', -apple-system, sans-serif; font-size: 11px; font-weight: 700;
-        flex-shrink: 0; transition: background .25s, color .25s, box-shadow .25s;
-      }
-      .desktop-step-nav .dsn-item.filled { color: var(--text-secondary); }
-      .desktop-step-nav .dsn-item.filled .num { background: var(--success-light); color: #059669; }
-      .desktop-step-nav .dsn-item.current { background: var(--primary-light); color: var(--primary); font-weight: 600; }
-      .desktop-step-nav .dsn-item.current .num { background: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(91,108,245,.4); }
-      .desktop-step-nav .dsn-item.current::before {
-        content: ''; position: absolute; left: -14px; top: 22%; bottom: 22%;
-        width: 3px; border-radius: 999px; background: var(--primary);
-      }
-      .dsn-tip {
-        display: flex; gap: 8px; margin-top: 10px; padding: 12px;
-        border-radius: 10px; background: #f8fafc; border: 1px dashed var(--border);
-        font-size: 12px; line-height: 1.7; color: var(--text-secondary);
-      }
-      .dsn-tip svg { flex-shrink: 0; margin-top: 2px; color: var(--warning); }
-      .dsn-tip b { color: var(--text); }
 
       /* ---- 区块卡:编号卡头 + 入场 stagger ---- */
       .form-card {
@@ -388,21 +290,10 @@
       }
       @keyframes barIn { from { transform: translateY(100%); } }
       .dab-inner {
-        max-width: 1140px; margin: 0 auto; padding: 13px 30px;
+        max-width: none; margin: 0 auto; padding: 13px 28px;
         display: flex; align-items: center; justify-content: space-between; gap: 16px;
       }
       .dab-left { display: flex; align-items: center; gap: 12px; }
-      .dab-count {
-        font-family: 'Sora', -apple-system, sans-serif;
-        font-size: 15px; font-weight: 700; color: var(--text); white-space: nowrap;
-      }
-      .dab-count em { font-style: normal; font-size: 13px; font-weight: 600; color: var(--text-muted); }
-      .dab-bar { width: 130px; height: 6px; border-radius: 999px; background: #eef1f6; overflow: hidden; }
-      .dab-bar i {
-        display: block; height: 100%; width: 0;
-        background: linear-gradient(90deg, var(--primary), #7c88fa); border-radius: 999px;
-        transition: width .45s cubic-bezier(.4,0,.2,1);
-      }
       .dab-locked { font-size: 13px; font-weight: 600; color: var(--warning-hover); }
       .dab-right { display: flex; gap: 10px; }
       .dab-right .btn { min-width: 104px; height: 40px; }
@@ -414,17 +305,8 @@
         transition-duration: .01ms !important; scroll-behavior: auto !important;
       }
     }
-    @media (max-width: 1023px) {
-      .desktop-step-nav { display: none; }
-    }
-    /* 移动端隐藏工作台布局 */
+    /* 移动端内容区去除内边距 */
     @media (max-width: 640px) {
-      .talent-workspace .topnav,
-      .talent-workspace .sidebar { display: none; }
-      .talent-workspace .main-area {
-        background: #f5f7fb;
-      }
-      .talent-workspace .main-header { display: none; }
       .talent-workspace .main-content { padding: 0; }
       .apply-shell { padding: 0 0 88px; }
       .apply-header { padding: 16px 20px 0; display: flex; }
@@ -434,55 +316,10 @@
 <body>
 <div class="talent-workspace">
 
-  <header class="topnav">
-    <div class="topnav-left">
-      <div class="topnav-brand">
-        <div class="brand-icon">
-          <svg viewBox="0 0 24 24" width="18" height="18"><path d="M16.3 4.2c.7 2.1 1.9 3.6 3.7 4.4v3.8a8.8 8.8 0 0 1-3.5-.9v4.9a6.2 6.2 0 1 1-6.2-6.2c.4 0 .8 0 1.2.1v3.9c-.4-.2-.8-.3-1.2-.3a2.4 2.4 0 1 0 2.4 2.4V4.2h3.6Z" fill="#fff"/></svg>
-        </div>
-        <span class="brand-name">达人工作台</span>
-      </div>
-    </div>
-    <div class="topnav-right">
-      <div class="topnav-user" onclick="doLogout()" title="点击退出登录">
-        <div class="user-avatar" id="userAvatar">-</div>
-        <span class="user-name" id="phoneTag">-</span>
-      </div>
-    </div>
-  </header>
-
   <div class="app-body">
-    <aside class="sidebar">
-      <a class="sidebar-item" onclick="goBack()">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        <span>我的申请</span>
-      </a>
-      <a class="sidebar-item active">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        <span>新建申请</span>
-      </a>
-    </aside>
-
     <main class="main-area">
-      <div class="main-header">
-        <div class="breadcrumb" id="pageTitle">新建申请</div>
-      </div>
       <div class="main-content">
 
-  <div class="desktop-step-nav" id="desktopStepNav">
-    <div class="dsn-progress">
-      <div class="lab">填写进度</div>
-      <div class="val"><span id="dsnDone">0</span><small> / 3 区块</small></div>
-      <div class="dsn-bar"><i id="dsnBarFill"></i></div>
-    </div>
-    <div class="dsn-item" data-dsn-step="1" onclick="desktopGoToStep(1)"><span class="num">1</span>基础信息</div>
-    <div class="dsn-item" data-dsn-step="2" onclick="desktopGoToStep(2)"><span class="num">2</span>平台账号</div>
-    <div class="dsn-item" data-dsn-step="3" onclick="desktopGoToStep(3)"><span class="num">3</span>业绩证明</div>
-    <div class="dsn-tip">
-      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.4 1 2.3h6c0-.9.4-1.8 1-2.3A7 7 0 0 0 12 2z"/></svg>
-      <span>提交后,BD 将在 <b>1-3 个工作日</b>内与你联系,请保持手机畅通。</span>
-    </div>
-  </div>
 <div class="apply-shell">
 
   <div class="apply-header">
@@ -490,7 +327,7 @@
       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
       返回
     </span>
-    <div class="title" style="display:none;">新建入驻申请</div>
+    <div class="title" id="pageTitle">新建申请</div>
   </div>
 
   <div class="prep-bar" id="prepBar">
@@ -551,6 +388,10 @@
         <label class="form-label">主推产品 <span class="required">*</span></label>
         <input type="text" class="form-input" id="mainProduct" placeholder="请输入主推产品">
         <div class="field-error">主推产品为必填项</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">推荐人</label>
+        <input type="text" class="form-input" id="recommender" placeholder="请输入推荐人">
       </div>
     </div>
 
@@ -622,10 +463,7 @@
 <!-- 桌面端吸底操作栏(仅 ≥1024px 显示) -->
 <div id="desktopActionBar">
   <div class="dab-inner">
-    <div class="dab-left" id="dabLeft">
-      <span class="dab-count"><span id="dabDone">0</span><em> / 3 区块已完成</em></span>
-      <span class="dab-bar"><i id="dabBarFill"></i></span>
-    </div>
+    <div class="dab-left" id="dabLeft"></div>
     <div class="dab-right" id="dabRight">
       <button type="button" class="btn" onclick="goBack()">取消</button>
       <button type="button" class="btn btn-primary" onclick="doSubmit()">提交申请</button>
@@ -641,24 +479,17 @@
 
 <div id="toastContainer" class="toast-container"></div>
 
+<script src="../../js/auth.js"></script>
 <script>
-// 登录检查和用户信息初始化
-var phone = localStorage.getItem('recruit_current_phone');
-if (!phone) { location.href = 'login.html'; }
-
-document.getElementById('phoneTag').textContent = phone;
-
-var talents = JSON.parse(localStorage.getItem('recruit_talents') || '{}');
-var talentName = (talents[phone] || {}).name;
-if (talentName) {
-  var initial = talentName.charAt(0);
-  document.getElementById('userAvatar').textContent = initial;
+// 权限检查
+if (!Auth.requireAuth()) {
+  // 已在 requireAuth 中跳转到登录页
 }
 
-function doLogout() {
-  localStorage.removeItem('recruit_current_phone');
-  location.href = 'login.html';
-}
+var currentUser = Auth.getCurrentUser();
+
+// 登录检查和用户信息初始化（兼容旧系统）
+var phone = localStorage.getItem('recruit_current_phone') || currentUser.phone;
 
 function goBack() {
   location.href = 'mine.html';
@@ -729,6 +560,7 @@ function saveDraft() {
     brand: document.getElementById('brand').value,
     mainProduct: document.getElementById('mainProduct').value,
     gmv: document.getElementById('gmv').value,
+    recommender: document.getElementById('recommender').value,
     platformAccounts: collectPlatformAccounts().map(function(a) { return { platform: a.platform, account_name: a.account_name }; }),
     shots: shots.map(function(s){ return {name: s.name}; })
   };
@@ -745,6 +577,7 @@ function restoreDraft() {
 
   document.getElementById('brand').value = draft.brand || '';
   document.getElementById('mainProduct').value = draft.mainProduct || '';
+  document.getElementById('recommender').value = draft.recommender || '';
   document.getElementById('gmv').value = draft.gmv || '';
   shots = (draft.shots || []).slice();
   renderShots();
@@ -775,31 +608,7 @@ function isStepFilled(step) {
   return false;
 }
 
-/* ---- 桌面端:目录自由导航 + 滚动跟随 + 实时进度联动 ---- */
-function setCurrentDsn(step) {
-  document.querySelectorAll('.dsn-item').forEach(function(item) {
-    item.classList.toggle('current', Number(item.getAttribute('data-dsn-step')) === step);
-  });
-}
-
-function desktopGoToStep(step) {
-  var target = document.querySelector('.form-card[data-step="' + step + '"]');
-  if (!target) return;
-  setCurrentDsn(step);
-  target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  target.classList.remove('flash');
-  void target.offsetWidth;
-  target.classList.add('flash');
-}
-
-if ('IntersectionObserver' in window) {
-  var stepSpy = new IntersectionObserver(function(entries) {
-    entries.forEach(function(e) {
-      if (e.isIntersecting) setCurrentDsn(Number(e.target.getAttribute('data-step')));
-    });
-  }, { rootMargin: '-20% 0px -65% 0px' });
-  document.querySelectorAll('.form-card[data-step]').forEach(function(card) { stepSpy.observe(card); });
-}
+/* ---- 桌面端:区块状态实时联动 ---- */
 window.addEventListener('resize', function() { updateStepUI(); });
 
 /* 某区块已填写的字段/账号数(用于"进行中 n/2"等中间态) */
@@ -825,18 +634,14 @@ function stepFilledCount(step) {
 var stepDoneState = {};
 
 function updateDesktopNavUI() {
-  var nav = document.getElementById('desktopStepNav');
-  if (!nav) return;
-  var doneCount = 0;
   for (var s = 1; s <= TOTAL_STEPS; s++) {
     var filled = isStepFilled(s);
     var n = stepFilledCount(s);
     var chip = document.getElementById('secStatus' + s);
     var card = document.querySelector('.form-card[data-step="' + s + '"]');
-    var item = nav.querySelector('[data-dsn-step="' + s + '"]');
     var text, cls = '';
     if (filled) {
-      text = '✓ 已完成'; cls = 'done'; doneCount++;
+      text = '✓ 已完成'; cls = 'done';
     } else if (n > 0) {
       text = s === 2 ? ('已填 ' + n + ' 个账号') : ('进行中 ' + n + '/2');
       cls = 'partial';
@@ -850,18 +655,7 @@ function updateDesktopNavUI() {
     }
     stepDoneState[s] = filled;
     if (card) card.classList.toggle('done', filled);
-    if (item) {
-      item.classList.toggle('filled', filled);
-      item.querySelector('.num').textContent = filled ? '✓' : String(s);
-    }
   }
-  var pct = Math.round(doneCount / TOTAL_STEPS * 100) + '%';
-  document.getElementById('dsnDone').textContent = doneCount;
-  document.getElementById('dsnBarFill').style.width = pct;
-  var dabDone = document.getElementById('dabDone');
-  if (dabDone) dabDone.textContent = doneCount;
-  var dabFill = document.getElementById('dabBarFill');
-  if (dabFill) dabFill.style.width = pct;
 }
 
 var PLATFORM_OPTIONS = ['抖音', '视频号', '快手'];
@@ -947,6 +741,7 @@ function init() {
       }
       document.getElementById('brand').value = rec.brand || '';
       document.getElementById('mainProduct').value = rec.main_product || '';
+      document.getElementById('recommender').value = rec.recommender || '';
       document.getElementById('gmv').value = rec.gmv || '';
       shots = (rec.screenshots || []).slice();
       renderShots();
@@ -1048,6 +843,7 @@ function doSubmit() {
     phone: phone,
     brand: document.getElementById('brand').value.trim(),
     main_product: document.getElementById('mainProduct').value.trim(),
+    recommender: document.getElementById('recommender').value.trim(),
     platform_accounts: accounts,
     gmv: Number(document.getElementById('gmv').value),
     screenshots: shots.map(function(s){ return {name: s.name}; }),

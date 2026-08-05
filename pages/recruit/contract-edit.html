@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>客户合同编辑</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+    .page-container { min-height: 100vh; background: #f5f7fb; padding: 24px 28px; }
+    .page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .page-title { font-size: 18px; font-weight: 700; color: var(--text); flex: 1; }
+    .form-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+    .form-card-title { font-size: 15px; font-weight: 700; color: var(--text, #0f172a); margin: 0 0 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border-light); }
+    .form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 24px; }
+    .form-group { display: flex; flex-direction: column; }
+    .form-group.span-2 { grid-column: span 2; }
+    .form-group.span-4 { grid-column: span 4; }
+    .form-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+    .form-label .required { color: #ef4444; margin-left: 2px; }
+    .form-input, .form-select { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 9px; font: inherit; font-size: 13px; outline: none; background: #fafbfd; box-sizing: border-box; transition: border-color .18s; }
+    .form-input:focus, .form-select:focus { border-color: var(--primary); background: #fff; }
+    .field-error { display: none; color: #dc2626; font-size: 12px; margin-top: 5px; }
+    .has-error .form-input, .has-error .form-select { border-color: #ef4444; background: #fef2f2; }
+    .has-error .field-error { display: block; }
+    .form-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 0; }
+    @media (max-width: 640px) {
+      .page-container { padding: 16px; }
+      .form-card { padding: 16px; }
+      .form-grid { grid-template-columns: 1fr; gap: 14px; }
+      .form-group.span-2, .form-group.span-4 { grid-column: span 1; }
+    }
+  </style>
+</head>
+<body>
+<div class="page-container">
+  <div id="toastContainer" class="toast-container"></div>
+
+  <div class="page-header">
+    <button class="btn" onclick="goBack()" style="display:flex;align-items:center;gap:4px;padding:6px 12px;height:auto;">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      返回
+    </button>
+    <div class="page-title" id="pageTitle">编辑客户合同</div>
+  </div>
+
+  <form id="mainForm">
+    <!-- 合同基本信息 -->
+    <div class="form-card">
+      <h3 class="form-card-title">合同基本信息</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">境内/境外合同 <span class="required">*</span></label>
+          <select class="form-select" id="contractRegion">
+            <option value="">请选择</option>
+            <option value="境内合同">境内合同</option>
+            <option value="境外合同">境外合同</option>
+          </select>
+          <div class="field-error">境内/境外合同为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">合同类型 <span class="required">*</span></label>
+          <select class="form-select" id="contractType">
+            <option value="">请选择</option>
+            <option value="一般合同">一般合同</option>
+            <option value="不涉及财务条款的协议">不涉及财务条款的协议</option>
+          </select>
+          <div class="field-error">合同类型为必填项</div>
+        </div>
+        <div class="form-group span-2">
+          <label class="form-label">合同名称 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="contractName" placeholder="请输入合同名称" maxlength="200">
+          <div class="field-error">合同名称为必填项</div>
+        </div>
+        <div class="form-group span-2">
+          <label class="form-label">合同主体 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="contractEntity" placeholder="请输入合同主体" maxlength="100">
+          <div class="field-error">合同主体为必填项</div>
+        </div>
+        <div class="form-group span-2">
+          <label class="form-label">供应商 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="supplier" placeholder="请输入供应商" maxlength="100">
+          <div class="field-error">供应商为必填项</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 合同执行信息 -->
+    <div class="form-card">
+      <h3 class="form-card-title">合同执行信息</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">合同履约人 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="contractExecutor" placeholder="请输入合同履约人" maxlength="50">
+          <div class="field-error">合同履约人为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">费用归属部门负责人 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="deptHead" placeholder="请输入费用归属部门负责人" maxlength="50">
+          <div class="field-error">费用归属部门负责人为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">合同开始日期 <span class="required">*</span></label>
+          <input type="date" class="form-input" id="startDate">
+          <div class="field-error">合同开始日期为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">合同结束日期 <span class="required">*</span></label>
+          <input type="date" class="form-input" id="endDate">
+          <div class="field-error">合同结束日期为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">合同币种 <span class="required">*</span></label>
+          <select class="form-select" id="currency">
+            <option value="人民币">人民币</option>
+            <option value="美元">美元</option>
+            <option value="欧元">欧元</option>
+          </select>
+          <div class="field-error">合同币种为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">合同金额（元） <span class="required">*</span></label>
+          <input type="number" class="form-input" id="contractAmount" placeholder="请输入合同金额" step="0.01" min="0">
+          <div class="field-error">合同金额为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">不含税金额</label>
+          <input type="number" class="form-input" id="taxExcludedAmount" placeholder="请输入不含税金额" step="0.01" min="0">
+          <div class="field-error"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">归属利润中心</label>
+          <input type="text" class="form-input" id="profitCenter" placeholder="请输入归属利润中心" maxlength="50">
+          <div class="field-error"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 印章与审批信息 -->
+    <div class="form-card">
+      <h3 class="form-card-title">印章与审批信息</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">是否传法大大盖电子章 <span class="required">*</span></label>
+          <select class="form-select" id="eSealFadada">
+            <option value="">请选择</option>
+            <option value="是">是</option>
+            <option value="否">否</option>
+          </select>
+          <div class="field-error">是否传法大大盖电子章为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">是否加盖法人章 <span class="required">*</span></label>
+          <select class="form-select" id="legalSeal">
+            <option value="">请选择</option>
+            <option value="是">是</option>
+            <option value="否">否</option>
+          </select>
+          <div class="field-error">是否加盖法人章为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">印章</label>
+          <input type="text" class="form-input" id="sealEntity" placeholder="请输入公司主体" maxlength="100">
+          <div class="field-error"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">普通用印次数</label>
+          <input type="number" class="form-input" id="sealCount" placeholder="请输入用印次数" min="0" step="1">
+          <div class="field-error"></div>
+        </div>
+        <div class="form-group span-2">
+          <label class="form-label">待审合同（附件）</label>
+          <input type="text" class="form-input" id="pendingAttachment" placeholder="请输入附件名称" maxlength="200">
+          <div class="field-error"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">印花税合同类型</label>
+          <input type="text" class="form-input" id="stampTaxType" placeholder="请输入印花税合同类型" maxlength="50">
+          <div class="field-error"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn" type="button" onclick="goBack()">取消</button>
+      <button class="btn btn-primary" type="submit">保存</button>
+    </div>
+  </form>
+</div>
+
+<script src="../../js/auth.js"></script>
+<script>
+if (!Auth.requireAuth()) {}
+
+var STORAGE_KEY = 'recruit_contract_management';
+
+if (window.parent) {
+  window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 客户合同管理 <span>/</span> 编辑'}, '*');
+}
+
+function g(name) { var r = location.search.match(new RegExp('[?&]' + name + '=([^&]*)')); return r ? decodeURIComponent(r[1]) : ''; }
+var recordId = parseInt(g('id')) || 0;
+var isEdit = recordId > 0;
+
+function initForm() {
+  if (!isEdit) return;
+  var list = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  var record = list.find(function(r) { return r.id === recordId; });
+  if (!record) { showToast('未找到该客户合同', 'error'); return; }
+
+  document.getElementById('contractRegion').value = record.contract_region || '';
+  document.getElementById('contractType').value = record.contract_type || '';
+  document.getElementById('contractName').value = record.contract_name || '';
+  document.getElementById('contractEntity').value = record.contract_entity || '';
+  document.getElementById('supplier').value = record.supplier || '';
+  document.getElementById('contractExecutor').value = record.contract_executor || '';
+  document.getElementById('deptHead').value = record.dept_head || '';
+  document.getElementById('startDate').value = record.start_date || '';
+  document.getElementById('endDate').value = record.end_date || '';
+  document.getElementById('currency').value = record.currency || '人民币';
+  document.getElementById('contractAmount').value = record.contract_amount || '';
+  document.getElementById('taxExcludedAmount').value = record.tax_excluded_amount || '';
+  document.getElementById('profitCenter').value = record.profit_center || '';
+  document.getElementById('eSealFadada').value = record.e_seal_fadada || '';
+  document.getElementById('legalSeal').value = record.legal_seal || '';
+  document.getElementById('sealEntity').value = record.seal_entity || '';
+  document.getElementById('sealCount').value = record.seal_count || '';
+  document.getElementById('pendingAttachment').value = record.pending_attachment || '';
+  document.getElementById('stampTaxType').value = record.stamp_tax_type || '';
+}
+
+document.getElementById('mainForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  // 简单验证
+  var required = ['contractRegion', 'contractType', 'contractName', 'contractEntity', 'supplier', 'contractExecutor', 'deptHead', 'startDate', 'endDate', 'currency', 'contractAmount', 'eSealFadada', 'legalSeal'];
+  var valid = true;
+  required.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el.value.trim()) {
+      el.parentElement.classList.add('has-error');
+      valid = false;
+    } else {
+      el.parentElement.classList.remove('has-error');
+    }
+  });
+
+  if (!valid) { showToast('请填写所有必填项', 'error'); return; }
+
+  var list = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  var data = {
+    contract_region: document.getElementById('contractRegion').value,
+    contract_type: document.getElementById('contractType').value,
+    contract_name: document.getElementById('contractName').value.trim(),
+    contract_entity: document.getElementById('contractEntity').value.trim(),
+    supplier: document.getElementById('supplier').value.trim(),
+    contract_executor: document.getElementById('contractExecutor').value.trim(),
+    dept_head: document.getElementById('deptHead').value.trim(),
+    start_date: document.getElementById('startDate').value,
+    end_date: document.getElementById('endDate').value,
+    currency: document.getElementById('currency').value,
+    contract_amount: parseFloat(document.getElementById('contractAmount').value) || 0,
+    tax_excluded_amount: parseFloat(document.getElementById('taxExcludedAmount').value) || 0,
+    profit_center: document.getElementById('profitCenter').value.trim(),
+    e_seal_fadada: document.getElementById('eSealFadada').value,
+    legal_seal: document.getElementById('legalSeal').value,
+    seal_entity: document.getElementById('sealEntity').value.trim(),
+    seal_count: parseInt(document.getElementById('sealCount').value) || 0,
+    pending_attachment: document.getElementById('pendingAttachment').value.trim(),
+    stamp_tax_type: document.getElementById('stampTaxType').value.trim()
+  };
+
+  if (isEdit) {
+    var idx = list.findIndex(function(r) { return r.id === recordId; });
+    if (idx >= 0) {
+      Object.assign(list[idx], data);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+      showToast('保存成功', 'success');
+      setTimeout(function() { location.href = 'contract-detail.html?id=' + recordId; }, 1000);
+    }
+  }
+});
+
+function goBack() { 
+  if (isEdit) {
+    location.href = 'contract-detail.html?id=' + recordId; 
+  } else {
+    location.href = 'contract.html';
+  }
+}
+
+function showToast(message, type) {
+  type = type || 'info';
+  var container = document.getElementById('toastContainer');
+  if (!container) return;
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(function() {
+    if (toast.parentNode) {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s';
+      setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+    }
+  }, 2500);
+}
+
+initForm();
+</script>
+</body>
+</html>

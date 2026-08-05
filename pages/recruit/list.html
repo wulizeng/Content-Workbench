@@ -93,7 +93,15 @@
   <!-- Toast 轻提示容器 -->
   <div id="toastContainer" class="toast-container"></div>
 
+  <script src="../../js/auth.js"></script>
   <script>
+    // 权限检查
+    if (!Auth.requireAuth()) {
+      // 已在 requireAuth 中跳转到登录页
+    }
+
+    var currentUser = Auth.getCurrentUser();
+
     if (window.parent) {
       window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 入驻意向审核'}, '*');
     }
@@ -156,6 +164,7 @@
             <th>平台</th>
             <th>运营账号</th>
             <th>近3个月GMV</th>
+            <th>运营负责人</th>
             <th>状态</th>
             <th>提交时间</th>
             <th>操作</th>
@@ -204,9 +213,9 @@
 
 <script>
 var mockData = JSON.parse(localStorage.getItem('recruit_applications') || 'null') || [
-  { id:1, phone:'138****2231', platform_accounts:[{platform:'抖音',account_name:'@潮流小美'}], gmv:128000, status:'已提交', created_at:'2026-07-20 10:12:00', brand:'品牌A', main_product:'女装连衣裙', screenshots:[], reject_logs:[] },
-  { id:2, phone:'159****8820', platform_accounts:[{platform:'抖音',account_name:'@数码老王'},{platform:'视频号',account_name:'老王数码测评'}], gmv:356000, status:'审核中', created_at:'2026-07-21 14:05:00', brand:'品牌B', main_product:'蓝牙耳机', screenshots:[], reject_logs:[] },
-  { id:5, phone:'135****9911', platform_accounts:[{platform:'抖音',account_name:'@潮玩阿К'}], gmv:210000, status:'规划审核中', created_at:'2026-07-24 10:00:00', brand:'品牌D', main_product:'潮玩盲盒', screenshots:[], reject_logs:[],
+  { id:1, phone:'138****2231', platform_accounts:[{platform:'抖音',account_name:'@潮流小美'}], gmv:128000, status:'已提交', created_at:'2026-07-20 10:12:00', brand:'品牌A', main_product:'女装连衣裙', recommender:'李明', screenshots:[], reject_logs:[] },
+  { id:2, phone:'159****8820', platform_accounts:[{platform:'抖音',account_name:'@数码老王'},{platform:'视频号',account_name:'老王数码测评'}], gmv:356000, status:'审核中', created_at:'2026-07-21 14:05:00', brand:'品牌B', main_product:'蓝牙耳机', recommender:'张华', screenshots:[], reject_logs:[] },
+  { id:5, phone:'135****9911', platform_accounts:[{platform:'抖音',account_name:'@潮玩阿К'}], gmv:210000, status:'规划审核中', created_at:'2026-07-24 10:00:00', brand:'品牌D', main_product:'潮玩盲盒', recommender:'王磊', screenshots:[], reject_logs:[],
     project_plan: {
       company_intro: '公司成立于2019年，注册资本500万元，团队规模约40人，专注3C数码类目电商代运营。',
       categories: [], maternity_scale:'', maternity_brands:'', apparel_scale:'', apparel_brands:'',
@@ -222,7 +231,7 @@ var mockData = JSON.parse(localStorage.getItem('recruit_applications') || 'null'
       submitted_at: '2026-07-24 11:00:00'
     }
   },
-  { id:3, phone:'186****0093', platform_accounts:[{platform:'快手',account_name:'家居好物研究所'}], gmv:76000, status:'已通过', created_at:'2026-07-18 09:30:00', brand:'品牌C', main_product:'收纳用品', screenshots:[], reject_logs:[],
+  { id:3, phone:'186****0093', platform_accounts:[{platform:'快手',account_name:'家居好物研究所'}], gmv:76000, status:'已通过', created_at:'2026-07-18 09:30:00', brand:'品牌C', main_product:'收纳用品', recommender:'刘芳', screenshots:[], reject_logs:[],
     project_plan: {
       company_intro: '公司成立于2017年，注册资本300万元，深耕家居收纳品类电商运营6年。',
       categories: ['母婴'], maternity_scale:'母婴品类年GMV约2000万元，覆盖全国15个省份。', maternity_brands:'代理知名母婴品牌3个，自营品牌1个。',
@@ -239,8 +248,12 @@ var mockData = JSON.parse(localStorage.getItem('recruit_applications') || 'null'
       submitted_at: '2026-07-19 15:20:00'
     }
   },
-  { id:4, phone:'177****5567', platform_accounts:[{platform:'抖音',account_name:'@美妆小鹿'}], gmv:42000, status:'已驳回', created_at:'2026-07-22 16:48:00', brand:'品牌A', main_product:'口红套装', screenshots:[], reject_logs:[{reason:'业绩截图模糊，无法核实GMV数据', time:'2026-07-23 09:00:00', operator:'BD-张敏'}] }
+  { id:4, phone:'177****5567', platform_accounts:[{platform:'抖音',account_name:'@美妆小鹿'}], gmv:42000, status:'已驳回', created_at:'2026-07-22 16:48:00', brand:'品牌A', main_product:'口红套装', recommender:'', screenshots:[], reject_logs:[{reason:'业绩截图模糊，无法核实GMV数据', time:'2026-07-23 09:00:00', operator:'BD-张敏'}] }
 ];
+
+// 根据角色过滤数据
+mockData = Auth.filterApplications(mockData);
+
 var mockTalentNames = {
   '138****2231':'李潮', '159****8820':'王强', '186****0093':'陈静', '177****5567':'林晓鹿', '135****9911':'赵凯'
 };
@@ -253,7 +266,7 @@ function renderTable(data) {
   var tbody = document.getElementById('tableBody');
   var html = '';
   if (data.length === 0) {
-    html = '<tr><td colspan="9" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无数据</div><div class="empty-hint">暂无符合条件的申请</div></td></tr>';
+    html = '<tr><td colspan="10" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无数据</div><div class="empty-hint">暂无符合条件的申请</div></td></tr>';
   } else {
     data.forEach(function(row, index) {
       html += '<tr>';
@@ -263,6 +276,7 @@ function renderTable(data) {
       html += '<td class="col-platform">' + platCells(row.platform_accounts) + '</td>';
       html += '<td class="col-account">' + acctCells(row.platform_accounts) + '</td>';
       html += '<td>&#165;' + Number(row.gmv).toLocaleString('zh-CN') + '</td>';
+      html += '<td>' + esc(row.recommender || '-') + '</td>';
       html += '<td class="col-status">' + st(row.status) + '<div class="td-sub-time">' + esc(row.created_at) + '</div></td>';
       html += '<td>' + esc(row.created_at) + '</td>';
       html += '<td class="col-actions">';
@@ -361,6 +375,7 @@ function renderCards(data) {
       html += '<div class="recruit-card-body">';
       html += '<div>手机号：' + esc(row.phone) + '</div>';
       html += '<div>近3个月GMV：&#165;' + Number(row.gmv).toLocaleString('zh-CN') + '</div>';
+      html += '<div>运营负责人：' + esc(row.recommender || '-') + '</div>';
       if (chips) html += '<div class="chip-row">' + chips + '</div>';
       html += '</div>';
       html += '<div class="recruit-card-foot"><span class="time">' + esc(row.created_at) + '</span>';

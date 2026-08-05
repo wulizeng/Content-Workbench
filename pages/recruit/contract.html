@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>客户合同管理 - 列表</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    /* 桌面端：操作列图标+文字链接 */
+    .link-action-icon { display: inline-flex; align-items: center; gap: 4px; }
+    .link-action-icon svg { flex-shrink: 0; }
+    /* 主表字段较多：单元格统一不换行，横向滚动查看 */
+    #dataTable th, #dataTable td { white-space: nowrap; }
+    /* 操作列固定在右侧，表头与数据列同步吸附以保持对齐 */
+    #dataTable thead th:last-child,
+    #dataTable td.col-actions { position: sticky; right: 0; z-index: 2; }
+    #dataTable td.col-actions {
+      background: #fff;
+      box-shadow: inset 1px 0 0 var(--border-light);
+    }
+    #dataTable tbody tr:hover td.col-actions { background: var(--primary-50); }
+    /* 枚举值灰色标签 */
+    .type-tag {
+      display: inline-flex; align-items: center; padding: 1px 9px; border-radius: 10px;
+      background: #f1f5f9; color: var(--text-secondary); font-size: 12px; font-weight: 600;
+      line-height: 1.6; white-space: nowrap;
+    }
+    /* 移动端（<1024px）：卡片流替代宽表格 */
+    .card-list { display: none; }
+    @media (max-width: 1023px) {
+      .table-area .table-scroll, .table-area .pagination { display: none; }
+      .card-list { display: block; }
+      .contract-card {
+        background: #fff; border: 1px solid var(--border); border-radius: 12px;
+        padding: 14px 16px; margin-bottom: 12px;
+      }
+      .contract-card-head {
+        display: flex; justify-content: space-between; align-items: center;
+        gap: 10px; margin-bottom: 10px;
+      }
+      .contract-card-head .name { font-size: 15px; font-weight: 700; color: var(--text); }
+      .contract-card-body { font-size: 13px; color: var(--text-secondary); line-height: 1.9; }
+      .contract-card-foot {
+        display: flex; justify-content: flex-end;
+        margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-light);
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page-container">
+
+  <!-- Toast 轻提示容器 -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="../../js/auth.js"></script>
+  <script>
+    // 权限检查
+    if (!Auth.requireAuth()) {
+      // 已在 requireAuth 中跳转到登录页
+    }
+
+    var currentUser = Auth.getCurrentUser();
+
+    if (window.parent) {
+      window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 客户合同管理'}, '*');
+    }
+  </script>
+
+  <div class="page-title">客户合同管理列表</div>
+
+  <div class="search-area">
+    <div class="search-row">
+      <div class="search-item">
+        <label>合同名称：</label>
+        <input type="text" id="sContractName" placeholder="请输入合同名称">
+      </div>
+      <div class="search-item">
+        <label>合同主体：</label>
+        <input type="text" id="sContractEntity" placeholder="请输入合同主体">
+      </div>
+      <div class="search-item">
+        <label>供应商：</label>
+        <input type="text" id="sSupplier" placeholder="请输入供应商">
+      </div>
+      <div class="search-item">
+        <label>境内/境外合同：</label>
+        <select id="sContractRegion">
+          <option value="">全部</option>
+          <option value="境内合同">境内合同</option>
+          <option value="境外合同">境外合同</option>
+        </select>
+      </div>
+      <div class="search-item">
+        <label>合同类型：</label>
+        <select id="sContractType">
+          <option value="">全部</option>
+          <option value="一般合同">一般合同</option>
+          <option value="不涉及财务条款的协议">不涉及财务条款的协议</option>
+        </select>
+      </div>
+    </div>
+    <div class="search-actions">
+      <button class="btn btn-primary" onclick="doSearch()">查询</button>
+      <button class="btn" onclick="resetSearch()">重置</button>
+    </div>
+    <div class="search-active-tags" id="searchTags" style="display:none;"></div>
+  </div>
+
+  <div class="card-list" id="cardList"></div>
+
+  <div class="table-area">
+    <div class="table-toolbar">
+      <button class="btn btn-primary" onclick="addNew()">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        新增
+      </button>
+      <button class="btn" onclick="importData()">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        导入
+      </button>
+      <button class="btn btn-primary" onclick="syncBPM()">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        同步BPM
+      </button>
+    </div>
+    <div class="table-scroll">
+      <table class="data-table" id="dataTable">
+        <thead>
+          <tr>
+            <th style="width:40px;"><input type="checkbox" id="checkAll" onclick="toggleCheckAll(this)"></th>
+            <th>序号</th>
+            <th>境内/境外合同</th>
+            <th>合同类型</th>
+            <th>合同名称</th>
+            <th>合同主体</th>
+            <th>供应商</th>
+            <th>合同履约人</th>
+            <th>费用归属部门负责人</th>
+            <th>合同开始日期</th>
+            <th>合同结束日期</th>
+            <th>合同币种</th>
+            <th>合同金额（元）</th>
+            <th>不含税金额</th>
+            <th>归属利润中心</th>
+            <th>是否传法大大盖电子章</th>
+            <th>是否加盖法人章</th>
+            <th>印章</th>
+            <th>普通用印次数</th>
+            <th>待审合同（附件）</th>
+            <th>印花税合同类型</th>
+            <th>BPM流程编号</th>
+            <th>BPM审批状态</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <span class="page-info">共 <strong id="totalCount">0</strong> 条</span>
+      <span class="page-btn disabled">&laquo;</span>
+      <span class="page-btn active">1</span>
+      <span class="page-btn">&raquo;</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+var STORAGE_KEY = 'recruit_contract_management';
+
+var defaultData = [
+  {
+    id: 1,
+    contract_region: '境内合同',
+    contract_type: '一般合同',
+    contract_name: '2026年度供应链服务框架协议',
+    contract_entity: '杭州星辰供应链管理有限公司',
+    supplier: '杭州星辰供应链管理有限公司',
+    contract_executor: '张三',
+    dept_head: '李四',
+    start_date: '2026-01-01',
+    end_date: '2026-12-31',
+    currency: '人民币',
+    contract_amount: 1500000.00,
+    tax_excluded_amount: 1415094.34,
+    profit_center: 'PC-001',
+    e_seal_fadada: '是',
+    legal_seal: '是',
+    seal_entity: '杭州星辰供应链管理有限公司',
+    seal_count: 3,
+    pending_attachment: '2026年度供应链服务框架协议.pdf',
+    stamp_tax_type: '购销合同',
+    bpm_process_no: 'BPM-20260101-001',
+    bpm_approval_status: '已通过',
+    creator: '运营-李婷',
+    created_at: '2026-01-05 10:12:00'
+  },
+  {
+    id: 2,
+    contract_region: '境内合同',
+    contract_type: '不涉及财务条款的协议',
+    contract_name: '保密协议',
+    contract_entity: '广州锦华日用品有限公司',
+    supplier: '广州锦华日用品有限公司',
+    contract_executor: '王五',
+    dept_head: '赵六',
+    start_date: '2026-02-01',
+    end_date: '2027-01-31',
+    currency: '人民币',
+    contract_amount: 0,
+    tax_excluded_amount: 0,
+    profit_center: 'PC-002',
+    e_seal_fadada: '是',
+    legal_seal: '否',
+    seal_entity: '广州锦华日用品有限公司',
+    seal_count: 1,
+    pending_attachment: '保密协议.pdf',
+    stamp_tax_type: '',
+    bpm_process_no: 'BPM-20260201-002',
+    bpm_approval_status: '审批中',
+    creator: '运营-王强',
+    created_at: '2026-02-03 14:05:00'
+  },
+  {
+    id: 3,
+    contract_region: '境外合同',
+    contract_type: '一般合同',
+    contract_name: 'International Supply Agreement',
+    contract_entity: 'SUNRISE TRADING CO., LIMITED',
+    supplier: 'SUNRISE TRADING CO., LIMITED',
+    contract_executor: 'John Chen',
+    dept_head: '李四',
+    start_date: '2026-03-01',
+    end_date: '2027-02-28',
+    currency: '美元',
+    contract_amount: 250000.00,
+    tax_excluded_amount: 250000.00,
+    profit_center: 'PC-003',
+    e_seal_fadada: '否',
+    legal_seal: '否',
+    seal_entity: '',
+    seal_count: 0,
+    pending_attachment: 'International Supply Agreement.pdf',
+    stamp_tax_type: '',
+    bpm_process_no: '',
+    bpm_approval_status: '待提交',
+    creator: '运营-陈静',
+    created_at: '2026-03-02 09:30:00'
+  },
+  {
+    id: 4,
+    contract_region: '境内合同',
+    contract_type: '一般合同',
+    contract_name: '物流配送服务合同',
+    contract_entity: '深圳速达物流有限公司',
+    supplier: '深圳速达物流有限公司',
+    contract_executor: '刘七',
+    dept_head: '赵六',
+    start_date: '2026-04-01',
+    end_date: '2026-09-30',
+    currency: '人民币',
+    contract_amount: 480000.00,
+    tax_excluded_amount: 452830.19,
+    profit_center: 'PC-004',
+    e_seal_fadada: '是',
+    legal_seal: '是',
+    seal_entity: '深圳速达物流有限公司',
+    seal_count: 2,
+    pending_attachment: '物流配送服务合同.pdf',
+    stamp_tax_type: '运输合同',
+    bpm_process_no: 'BPM-20260401-004',
+    bpm_approval_status: '已驳回',
+    creator: '运营-李婷',
+    created_at: '2026-04-05 16:48:00'
+  }
+];
+
+var mockData = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') || defaultData;
+if (!localStorage.getItem(STORAGE_KEY)) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(mockData));
+}
+
+// 无值字段统一显示为空
+function esc(s) {
+  if (s === null || s === undefined || s === '') return '';
+  var d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function formatAmount(n) {
+  if (n === null || n === undefined || n === '') return '';
+  return Number(n).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function renderTable(data) {
+  var tbody = document.getElementById('tableBody');
+  var html = '';
+  if (data.length === 0) {
+    html = '<tr><td colspan="24" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无数据</div><div class="empty-hint">暂无符合条件的客户合同</div></td></tr>';
+  } else {
+    data.forEach(function(row, index) {
+      html += '<tr>';
+      html += '<td><input type="checkbox" class="row-check" data-id="' + row.id + '"></td>';
+      html += '<td>' + (index + 1) + '</td>';
+      html += '<td>' + (row.contract_region ? '<span class="type-tag">' + esc(row.contract_region) + '</span>' : '') + '</td>';
+      html += '<td>' + (row.contract_type ? '<span class="type-tag">' + esc(row.contract_type) + '</span>' : '') + '</td>';
+      html += '<td>' + esc(row.contract_name) + '</td>';
+      html += '<td>' + esc(row.contract_entity) + '</td>';
+      html += '<td>' + esc(row.supplier) + '</td>';
+      html += '<td>' + esc(row.contract_executor) + '</td>';
+      html += '<td>' + esc(row.dept_head) + '</td>';
+      html += '<td>' + esc(row.start_date) + '</td>';
+      html += '<td>' + esc(row.end_date) + '</td>';
+      html += '<td>' + esc(row.currency) + '</td>';
+      html += '<td>' + formatAmount(row.contract_amount) + '</td>';
+      html += '<td>' + formatAmount(row.tax_excluded_amount) + '</td>';
+      html += '<td>' + esc(row.profit_center) + '</td>';
+      html += '<td>' + (row.e_seal_fadada ? '<span class="type-tag">' + esc(row.e_seal_fadada) + '</span>' : '') + '</td>';
+      html += '<td>' + (row.legal_seal ? '<span class="type-tag">' + esc(row.legal_seal) + '</span>' : '') + '</td>';
+      html += '<td>' + esc(row.seal_entity) + '</td>';
+      html += '<td>' + esc(row.seal_count) + '</td>';
+      html += '<td>' + esc(row.pending_attachment) + '</td>';
+      html += '<td>' + esc(row.stamp_tax_type) + '</td>';
+      html += '<td>' + esc(row.bpm_process_no) + '</td>';
+      html += '<td>' + bpmStatus(row.bpm_approval_status) + '</td>';
+      html += '<td class="col-actions">';
+      html += '<a class="link-action link-action-icon" title="编辑" href="contract-edit.html?id=' + row.id + '"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>编辑</a> ';
+      html += '<a class="link-action link-action-icon" title="查看详情" href="contract-detail.html?id=' + row.id + '"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>查看</a>';
+      html += '</td></tr>';
+    });
+  }
+  tbody.innerHTML = html;
+  document.getElementById('totalCount').textContent = data.length;
+}
+
+function bpmStatus(s) {
+  if (!s) return '';
+  var m = { '待提交': 'initial', '审批中': 'reviewing', '已通过': 'approved', '已驳回': 'rejected' };
+  return '<span class="status-tag ' + (m[s] || '') + '">' + esc(s) + '</span>';
+}
+
+function toggleCheckAll(el) {
+  document.querySelectorAll('.row-check').forEach(function(cb) { cb.checked = el.checked; });
+}
+
+function syncBPM() {
+  var checked = document.querySelectorAll('.row-check:checked');
+  if (checked.length === 0) { showToast('请先勾选需要同步的记录', 'warning'); return; }
+  var ids = [].map.call(checked, function(cb) { return cb.getAttribute('data-id'); });
+  showToast('已同步 ' + ids.length + ' 条记录到BPM', 'success');
+}
+
+function addNew() {
+  location.href = 'contract-edit.html';
+}
+
+function importData() {
+  showToast('导入功能开发中', 'info');
+}
+
+function renderCards(data) {
+  var list = document.getElementById('cardList');
+  var html = '';
+  if (data.length === 0) {
+    html = '<div class="contract-card"><div class="contract-card-body">暂无符合条件的客户合同</div></div>';
+  } else {
+    data.forEach(function(row) {
+      html += '<div class="contract-card">';
+      html += '<div class="contract-card-head"><span class="name">' + esc(row.contract_name) + '</span>' +
+        (row.contract_region ? '<span class="type-tag">' + esc(row.contract_region) + '</span>' : '') + '</div>';
+      html += '<div class="contract-card-body">';
+      html += '<div>合同主体：' + esc(row.contract_entity) + '</div>';
+      html += '<div>供应商：' + esc(row.supplier) + '</div>';
+      html += '<div>合同金额：' + formatAmount(row.contract_amount) + ' ' + esc(row.currency) + '</div>';
+      html += '</div>';
+      html += '<div class="contract-card-foot"><a class="btn btn-primary" style="height:48px;line-height:48px;padding:0 16px;" href="contract-detail.html?id=' + row.id + '">查看详情</a></div>';
+      html += '</div>';
+    });
+  }
+  list.innerHTML = html;
+}
+
+var currentFiltered = mockData.slice();
+
+function isMobileView() {
+  return window.matchMedia('(max-width: 1023px)').matches;
+}
+
+function renderView(data) {
+  currentFiltered = data;
+  if (isMobileView()) renderCards(data);
+  else renderTable(data);
+}
+
+function filterData() {
+  var name = document.getElementById('sContractName').value.trim();
+  var entity = document.getElementById('sContractEntity').value.trim();
+  var supplier = document.getElementById('sSupplier').value.trim();
+  var region = document.getElementById('sContractRegion').value;
+  var type = document.getElementById('sContractType').value;
+  return mockData.filter(function(x) {
+    if (name && (x.contract_name || '').indexOf(name) < 0) return false;
+    if (entity && (x.contract_entity || '').indexOf(entity) < 0) return false;
+    if (supplier && (x.supplier || '').indexOf(supplier) < 0) return false;
+    if (region && x.contract_region !== region) return false;
+    if (type && x.contract_type !== type) return false;
+    return true;
+  });
+}
+
+function doSearch() {
+  renderView(filterData());
+  showSearchTags();
+}
+
+function resetSearch() {
+  ['sContractName', 'sContractEntity', 'sSupplier', 'sContractRegion', 'sContractType'].forEach(function(id) {
+    document.getElementById(id).value = '';
+  });
+  renderView(mockData);
+  showSearchTags();
+}
+
+function showSearchTags() {
+  var map = {
+    sContractName: '合同名称', sContractEntity: '合同主体',
+    sSupplier: '供应商', sContractRegion: '境内/境外合同', sContractType: '合同类型'
+  };
+  var tags = [];
+  Object.keys(map).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el && el.value) tags.push({ name: map[id], value: el.value, id: id });
+  });
+  var container = document.getElementById('searchTags');
+  if (!container) return;
+  if (tags.length === 0) { container.style.display = 'none'; container.innerHTML = ''; return; }
+  var html = '';
+  tags.forEach(function(t) {
+    html += '<span class="search-active-tag">' + t.name + '：' + esc(t.value) + '<span class="tag-remove" onclick="clearSearchTag(\'' + t.id + '\')">&times;</span></span>';
+  });
+  container.style.display = '';
+  container.innerHTML = html;
+}
+
+function clearSearchTag(id) {
+  document.getElementById(id).value = '';
+  doSearch();
+}
+
+// Toast 轻提示
+function showToast(message, type) {
+  type = type || 'info';
+  var container = document.getElementById('toastContainer');
+  if (!container) return;
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(function() {
+    if (toast.parentNode) {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s';
+      setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+    }
+  }, 2500);
+}
+
+window.addEventListener('resize', function() { renderView(currentFiltered); });
+
+renderView(mockData);
+</script>
+</body>
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>商品上新</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+  .data-table thead th,
+  .data-table tbody td {
+    text-align: center;
+    white-space: nowrap;
+  }
+  .data-table .col-actions { text-align: center; }
+  </style>
+</head>
+<body>
+<div class="page-container">
+  <div id="toastContainer" class="toast-container"></div>
+  <script>
+    if (window.parent) {
+      window.parent.postMessage({type:'breadcrumb', text:'基础运营 <span>/</span> 商品上新'}, '*');
+    }
+  </script>
+
+  <div class="page-title">商品上新</div>
+
+  <!-- 搜索区域 -->
+  <div class="search-area">
+    <div class="search-row">
+      <div class="search-item">
+        <label>商品名称：</label>
+        <input type="text" id="searchProductName" placeholder="请输入商品名称">
+      </div>
+      <div class="search-item">
+        <label>平台名称：</label>
+        <select id="searchPlatform">
+          <option value="">全部</option>
+          <option value="抖音">抖音</option>
+          <option value="快手">快手</option>
+          <option value="小红书">小红书</option>
+          <option value="淘宝">淘宝</option>
+          <option value="京东">京东</option>
+        </select>
+      </div>
+      <div class="search-item">
+        <label>状态：</label>
+        <select id="searchStatus">
+          <option value="">全部</option>
+          <option value="待上架">待上架</option>
+          <option value="已上架">已上架</option>
+          <option value="已下架">已下架</option>
+        </select>
+      </div>
+    </div>
+    <div class="search-actions">
+      <button class="btn btn-primary" onclick="doSearch()">查询</button>
+      <button class="btn" onclick="resetSearch()">重置</button>
+    </div>
+    <div class="search-active-tags" id="searchTags" style="display:none;"></div>
+  </div>
+
+  <!-- 表格区域 -->
+  <div class="table-area">
+    <div class="table-toolbar">
+      <button class="btn btn-primary" onclick="goAdd()">+ 新增商品</button>
+    </div>
+    <div class="table-scroll">
+      <table class="data-table" id="dataTable">
+        <thead>
+          <tr>
+            <th style="width:40px;"><input type="checkbox" id="checkAll" onclick="toggleAll(this)"></th>
+            <th style="width:50px;">序号</th>
+            <th style="width:100px;">商品款号</th>
+            <th style="width:160px;">商品名称</th>
+            <th style="width:90px;">平台名称</th>
+            <th style="width:110px;">平台商品ID</th>
+            <th style="width:80px;">销售价</th>
+            <th style="width:80px;">状态</th>
+            <th style="width:130px;">创建时间</th>
+            <th style="width:130px;">更新时间</th>
+            <th style="width:100px;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="pagination">
+      <span class="page-info">共 <strong id="totalCount">0</strong> 条</span>
+      <span class="page-btn disabled">&laquo;</span>
+      <span class="page-btn active">1</span>
+      <span class="page-btn">2</span>
+      <span class="page-btn">&raquo;</span>
+    </div>
+  </div>
+</div>
+
+<script>
+var mockData = [
+  { id:1, itemNo:'KN-2026-A01', productName:'2026春季新款蓝色休闲衬衫男', platformName:'抖音', platformProductId:'PDI_100238', salePrice:'199.00', status:'已上架', createTime:'2026-03-15 10:20:00', updateTime:'2026-07-20 14:30:00' },
+  { id:2, itemNo:'DR-2026-B03', productName:'夏季新款红色连衣裙女', platformName:'快手', platformProductId:'PDI_200456', salePrice:'299.00', status:'已上架', createTime:'2026-04-02 09:00:00', updateTime:'2026-07-18 11:20:00' },
+  { id:3, itemNo:'TS-2026-C02', productName:'卡通印花纯棉T恤 白色', platformName:'小红书', platformProductId:'PDI_300789', salePrice:'129.00', status:'待上架', createTime:'2026-05-10 14:45:00', updateTime:'2026-07-15 09:10:00' },
+  { id:4, itemNo:'JK-2026-D01', productName:'秋季防风运动夹克 黑色', platformName:'淘宝', platformProductId:'PDI_400123', salePrice:'459.00', status:'已下架', createTime:'2026-06-01 08:30:00', updateTime:'2026-07-22 16:45:00' }
+];
+
+function renderTable(data) {
+  var tbody = document.getElementById('tableBody');
+  var html = '';
+  if (data.length === 0) {
+    html = '<tr><td colspan="11" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无数据</div><div class="empty-hint">点击「+ 新增商品」创建记录</div></td></tr>';
+  } else {
+    data.forEach(function(row, index) {
+      html += '<tr>';
+      html += '<td><input type="checkbox" class="row-check" value="' + row.id + '" onclick="toggleRow(this)"></td>';
+      html += '<td>' + (index + 1) + '</td>';
+      html += '<td>' + escapeHtml(row.itemNo) + '</td>';
+      html += '<td>' + escapeHtml(row.productName) + '</td>';
+      html += '<td>' + escapeHtml(row.platformName) + '</td>';
+      html += '<td>' + escapeHtml(row.platformProductId) + '</td>';
+      html += '<td>' + escapeHtml(row.salePrice) + '</td>';
+      html += '<td>' + getStatusTag(row.status) + '</td>';
+      html += '<td>' + escapeHtml(row.createTime) + '</td>';
+      html += '<td>' + escapeHtml(row.updateTime) + '</td>';
+      html += '<td class="col-actions"><a class="link-action" href="javascript:void(0)">编辑</a><a class="link-action" href="javascript:void(0)">查看</a></td>';
+      html += '</tr>';
+    });
+  }
+  tbody.innerHTML = html;
+  document.getElementById('totalCount').textContent = data.length;
+  document.getElementById('checkAll').checked = false;
+}
+
+function toggleAll(el) {
+  document.querySelectorAll('.row-check').forEach(function(c) {
+    c.checked = el.checked;
+    var tr = c.closest('tr');
+    if (tr) tr.classList.toggle('row-selected', el.checked);
+  });
+}
+function toggleRow(el) {
+  var tr = el.closest('tr');
+  if (tr) tr.classList.toggle('row-selected', el.checked);
+  var all = document.querySelectorAll('.row-check');
+  var checked = document.querySelectorAll('.row-check:checked');
+  document.getElementById('checkAll').checked = all.length > 0 && all.length === checked.length;
+}
+
+function getStatusTag(status) {
+  var cls = status === '已上架' ? 'submitted' : status === '已下架' ? 'cancelled' : 'initial';
+  return '<span class="status-tag ' + cls + '">' + escapeHtml(status) + '</span>';
+}
+function escapeHtml(str) {
+  if (!str) return '';
+  var div = document.createElement('div'); div.textContent = str; return div.innerHTML;
+}
+
+function doSearch() {
+  var name = document.getElementById('searchProductName').value.trim();
+  var platform = document.getElementById('searchPlatform').value;
+  var status = document.getElementById('searchStatus').value;
+  var filtered = mockData.filter(function(r) {
+    if (name && r.productName.indexOf(name) === -1) return false;
+    if (platform && r.platformName !== platform) return false;
+    if (status && r.status !== status) return false;
+    return true;
+  });
+  renderTable(filtered);
+}
+function resetSearch() {
+  document.getElementById('searchProductName').value = '';
+  document.getElementById('searchPlatform').value = '';
+  document.getElementById('searchStatus').value = '';
+  renderTable(mockData);
+}
+function goAdd() { showToast('新增商品功能开发中', 'info'); }
+function showToast(msg, type) {
+  var c = document.getElementById('toastContainer');
+  var t = document.createElement('div'); t.className = 'toast toast-' + (type||'info'); t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(function(){ t.classList.add('toast-hide'); }, 2500);
+  setTimeout(function(){ t.remove(); }, 3000);
+}
+renderTable(mockData);
+</script>
+</body>
+</html>

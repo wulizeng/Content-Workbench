@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>商品上新列表</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    /* ===== 表格样式 ===== */
+    .pkg-table {
+      width:100%;
+      table-layout:fixed;
+      border-collapse:separate;
+      border-spacing:0;
+      font-size:12px;
+    }
+    .pkg-table thead th {
+      background:linear-gradient(180deg, #f8fafc, #f1f5f9);
+      padding:8px 3px;
+      text-align:center;
+      font-weight:600;
+      font-size:11px;
+      color:var(--text-secondary);
+      border-bottom:2px solid var(--border);
+      white-space:nowrap;
+      position:sticky;
+      top:0;
+      z-index:10;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .pkg-table tbody td {
+      padding:7px 3px;
+      border-bottom:1px solid var(--border-light);
+      font-size:12px;
+      color:var(--text-primary);
+      text-align:center;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .pkg-table tbody tr:hover td { background:#f8fafc; }
+    .pkg-table tbody tr.row-selected td { background:var(--primary-50) !important; }
+
+    /* ===== 状态标签（与平台商品列表一致） ===== */
+    .status-tag {
+      display:inline-block; padding:2px 6px; border-radius:4px;
+      font-size:11px; font-weight:600;
+    }
+    .status-tag.submitted { color:#059669; background:#ecfdf5; }
+    .status-tag.cancelled { color:#dc2626; background:#fef2f2; }
+    .status-tag.initial { color:#64748b; background:#f1f5f9; }
+
+    /* ===== 流程说明 ===== */
+    .flow-section {
+      background: linear-gradient(135deg, #eef0ff 0%, #f8f9ff 100%);
+      border: 1px solid #dce0f8;
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 12px;
+    }
+    .flow-header { display:flex; align-items:center; gap:6px; margin-bottom:10px; }
+    .flow-header svg { color:var(--primary); }
+    .flow-header h3 { margin:0; font-size:14px; font-weight:700; color:var(--ink); }
+    .flow-steps { display:flex; align-items:center; gap:0; }
+    .flow-step {
+      display:flex; align-items:center; gap:8px;
+      padding:8px 14px; background:#fff; border-radius:6px;
+      border:1px solid #e4e9f1; flex:1; transition:all .2s;
+    }
+    .flow-step:hover { border-color:var(--primary); box-shadow:0 2px 8px rgba(91,108,245,.12); }
+    .flow-step-icon {
+      width:28px; height:28px; border-radius:6px;
+      display:grid; place-items:center; font-size:14px;
+      flex-shrink:0; background:var(--primary-50); color:var(--primary);
+    }
+    .flow-step-info { flex:1; min-width:0; }
+    .flow-step-title { font-size:12px; font-weight:650; color:var(--ink); }
+    .flow-step-desc { font-size:11px; color:var(--text-tertiary); margin-top:1px; }
+    .flow-arrow { flex-shrink:0; color:#cbd5e1; padding:0 4px; display:flex; align-items:center; }
+  </style>
+</head>
+<body>
+<div class="page-container">
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script>
+    if (window.parent) {
+      window.parent.postMessage({type:'breadcrumb', text:'基础运营 <span>/</span> 商品上新列表'}, '*');
+    }
+  </script>
+
+  <div class="page-title">商品上新列表</div>
+
+  <!-- ===== 流程说明 ===== -->
+  <div class="flow-section">
+    <div class="flow-header">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+        <line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/>
+      </svg>
+      <h3>流程说明</h3>
+    </div>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="flow-step-icon">📋</div>
+        <div class="flow-step-info">
+          <div class="flow-step-title">维护季度上市计划</div>
+          <div class="flow-step-desc">店铺运营维护季度上市计划数据</div>
+        </div>
+      </div>
+      <div class="flow-arrow"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="flow-step">
+        <div class="flow-step-icon">🔍</div>
+        <div class="flow-step-info">
+          <div class="flow-step-title">自动检索平台商品</div>
+          <div class="flow-step-desc">工作台自动检索官旗店平台商品</div>
+        </div>
+      </div>
+      <div class="flow-arrow"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="flow-step">
+        <div class="flow-step-icon">📊</div>
+        <div class="flow-step-info">
+          <div class="flow-step-title">生成商品上新列表</div>
+          <div class="flow-step-desc">自动生成商品上新列表</div>
+        </div>
+      </div>
+      <div class="flow-arrow"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="flow-step">
+        <div class="flow-step-icon">🔔</div>
+        <div class="flow-step-info">
+          <div class="flow-step-title">触发上新通知</div>
+          <div class="flow-step-desc">店铺运营触发上新通知到钉钉群</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 筛选区域 ===== -->
+  <div class="search-area">
+    <div class="search-row">
+      <div class="search-item">
+        <label>平台：</label>
+        <input type="text" id="sPlatform" placeholder="请输入平台名称">
+      </div>
+      <div class="search-item">
+        <label>店铺：</label>
+        <input type="text" id="sShop" placeholder="请输入店铺名称">
+      </div>
+      <div class="search-item">
+        <label>商品款号：</label>
+        <input type="text" id="sItemNo" placeholder="请输入商品款号">
+      </div>
+      <div class="search-item">
+        <label>平台商品ID：</label>
+        <input type="text" id="sProductId" placeholder="请输入平台商品ID">
+      </div>
+      <div class="search-item">
+        <label>平台SKUID：</label>
+        <input type="text" id="sSkuId" placeholder="请输入平台SKUID">
+      </div>
+      <div class="search-item">
+        <label>SKU编码：</label>
+        <input type="text" id="sSkuCode" placeholder="请输入SKU编码">
+      </div>
+      <div class="search-item">
+        <label>状态：</label>
+        <select id="sStatus">
+          <option value="">全部</option>
+          <option value="在售">在售</option>
+          <option value="下架">下架</option>
+          <option value="草稿">草稿</option>
+        </select>
+      </div>
+      <div class="search-item">
+        <label>创建时间：</label>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <input type="date" id="sTimeStart" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font:inherit;font-size:12px;outline:none;background:var(--bg-secondary,#f8fafc);width:130px;">
+          <span style="color:var(--text-tertiary);font-size:12px;">~</span>
+          <input type="date" id="sTimeEnd" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font:inherit;font-size:12px;outline:none;background:var(--bg-secondary,#f8fafc);width:130px;">
+        </div>
+      </div>
+    </div>
+    <div class="search-actions">
+      <button class="btn btn-primary" onclick="doSearch()">查询</button>
+      <button class="btn" onclick="resetSearch()">重置</button>
+    </div>
+    <div class="search-active-tags" id="searchTags" style="display:none;"></div>
+  </div>
+
+  <!-- ===== 列表区域 ===== -->
+  <div class="table-area">
+    <div class="table-toolbar">
+      <button class="btn" onclick="doExport()">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>导出
+      </button>
+      <button class="btn btn-primary" onclick="doNotify()">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>上新通知
+      </button>
+      <div style="flex:1;"></div>
+    </div>
+
+    <div class="table-scroll">
+      <table class="pkg-table" id="dataTable">
+        <thead>
+          <tr>
+            <th style="width:28px;"><input type="checkbox" id="checkAll" onclick="toggleAll(this)"></th>
+            <th style="width:28px;">序号</th>
+            <th style="width:60px;">平台</th>
+            <th style="width:70px;">店铺编码</th>
+            <th style="width:75px;">店铺名称</th>
+            <th style="width:82px;">商品款号</th>
+            <th style="width:75px;">SKU编码</th>
+            <th style="width:82px;">平台商品ID</th>
+            <th style="width:80px;">平台SKUID</th>
+            <th style="width:80px;">SKU名称</th>
+            <th style="width:70px;">规格</th>
+            <th style="width:55px;">销售价</th>
+            <th style="width:80px;">商家SPU</th>
+            <th style="width:80px;">商家SKU</th>
+            <th style="width:90px;">商品名称</th>
+            <th style="width:48px;">佣金比例</th>
+            <th style="width:48px;">标签</th>
+            <th style="width:55px;">商品链接</th>
+            <th style="width:78px;">抖音上市日期</th>
+            <th style="width:78px;">视频号上市日期</th>
+            <th style="width:78px;">小红书上市日期</th>
+            <th style="width:78px;">快手上市日期</th>
+            <th style="width:52px;">状态</th>
+            <th style="width:82px;">创建时间</th>
+            <th style="width:82px;">更新时间</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <span class="page-info">共 <strong id="totalCount">0</strong> 条</span>
+      <span class="page-btn disabled">&laquo;</span>
+      <span class="page-btn active">1</span>
+      <span class="page-btn">&raquo;</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// 模拟数据
+var mockData = [
+  { id:1, platform:'抖音', shopCode:'DY-001', shopName:'官方旗舰店', itemNo:'KN-2026-A01', skuCode:'KN-A01-BK-M', productId:'68001234', skuId:'3710001', skuName:'黑色 M码', spec:'黑色/M', price:299.00, spuCode:'SPU-KN-A01', merchantSku:'MC-KN-A01-BK-M', productName:'针织衫黑色M', commission:5.0, tag:'主推', link:'https://item.douyin.com/68001234', douyinDate:'2026-03-15', wechatDate:'', xhsDate:'', kuaishouDate:'', status:'在售', createTime:'2026-03-01', updateTime:'2026-03-05' },
+  { id:2, platform:'视频号', shopCode:'WX-002', shopName:'视频号旗舰店', itemNo:'DR-2026-B03', skuCode:'DR-B03-WH-L', productId:'72003456', skuId:'3720002', skuName:'白色 L码', spec:'白色/L', price:399.00, spuCode:'SPU-DR-B03', merchantSku:'MC-DR-B03-WH-L', productName:'连衣裙白色L', commission:3.5, tag:'新品', link:'https://item.weixin.com/72003456', douyinDate:'', wechatDate:'2026-03-20', xhsDate:'', kuaishouDate:'', status:'在售', createTime:'2026-03-10', updateTime:'2026-03-15' },
+  { id:3, platform:'小红书', shopCode:'XHS-003', shopName:'小红书官方店', itemNo:'TS-2026-C02', skuCode:'TS-C02-RD-S', productId:'85005678', skuId:'3730003', skuName:'红色 S码', spec:'红色/S', price:199.00, spuCode:'SPU-TS-C02', merchantSku:'MC-TS-C02-RD-S', productName:'T恤红色S', commission:8.0, tag:'', link:'https://item.xiaohongshu.com/85005678', douyinDate:'', wechatDate:'', xhsDate:'2026-03-18', kuaishouDate:'', status:'下架', createTime:'2026-03-15', updateTime:'2026-03-20' },
+  { id:4, platform:'快手', shopCode:'KS-004', shopName:'快手旗舰店', itemNo:'JK-2026-D01', skuCode:'JK-D01-BL-XL', productId:'91007890', skuId:'3740004', skuName:'蓝色 XL码', spec:'蓝色/XL', price:459.00, spuCode:'SPU-JK-D01', merchantSku:'MC-JK-D01-BL-XL', productName:'夹克蓝色XL', commission:4.0, tag:'热销', link:'https://item.kuaishou.com/91007890', douyinDate:'', wechatDate:'', xhsDate:'', kuaishouDate:'2026-04-10', status:'在售', createTime:'2026-04-01', updateTime:'2026-04-05' },
+  { id:5, platform:'抖音', shopCode:'DY-001', shopName:'官方旗舰店', itemNo:'PN-2026-E05', skuCode:'PN-E05-GY-M', productId:'68009012', skuId:'3750005', skuName:'灰色 M码', spec:'灰色/M', price:259.00, spuCode:'SPU-PN-E05', merchantSku:'MC-PN-E05-GY-M', productName:'休闲裤灰色M', commission:5.0, tag:'', link:'https://item.douyin.com/68009012', douyinDate:'2026-05-01', wechatDate:'', xhsDate:'', kuaishouDate:'', status:'草稿', createTime:'2026-04-10', updateTime:'2026-04-15' },
+  { id:6, platform:'视频号', shopCode:'WX-002', shopName:'视频号旗舰店', itemNo:'SH-2026-F02', skuCode:'SH-F02-NV-L', productId:'72011234', skuId:'3760006', skuName:'藏青 L码', spec:'藏青/L', price:349.00, spuCode:'SPU-SH-F02', merchantSku:'MC-SH-F02-NV-L', productName:'衬衫藏青L', commission:3.5, tag:'主推', link:'https://item.weixin.com/72011234', douyinDate:'', wechatDate:'2026-05-10', xhsDate:'2026-05-12', kuaishouDate:'', status:'在售', createTime:'2026-04-20', updateTime:'2026-04-25' }
+];
+
+function renderTable(data) {
+  var tbody = document.getElementById('tableBody');
+  var html = '';
+  if (data.length === 0) {
+    html = '<tr><td colspan="25" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无数据</div></td></tr>';
+  } else {
+    data.forEach(function(row, index) {
+      html += '<tr>';
+      html += '<td><input type="checkbox" class="row-check" value="' + row.id + '" onclick="toggleRow(this)"></td>';
+      html += '<td>' + (index + 1) + '</td>';
+      html += '<td>' + escapeHtml(row.platform) + '</td>';
+      html += '<td style="font-family:monospace;font-size:11px;">' + escapeHtml(row.shopCode) + '</td>';
+      html += '<td>' + escapeHtml(row.shopName) + '</td>';
+      html += '<td style="font-weight:600;color:var(--primary);">' + escapeHtml(row.itemNo) + '</td>';
+      html += '<td style="font-family:monospace;font-size:11px;">' + escapeHtml(row.skuCode) + '</td>';
+      html += '<td style="font-family:monospace;font-size:11px;">' + escapeHtml(row.productId) + '</td>';
+      html += '<td style="font-family:monospace;font-size:11px;">' + escapeHtml(row.skuId) + '</td>';
+      html += '<td>' + escapeHtml(row.skuName) + '</td>';
+      html += '<td>' + escapeHtml(row.spec) + '</td>';
+      html += '<td>¥' + row.price.toFixed(2) + '</td>';
+      html += '<td style="font-family:monospace;font-size:11px;">' + escapeHtml(row.spuCode) + '</td>';
+      html += '<td style="font-family:monospace;font-size:11px;">' + escapeHtml(row.merchantSku) + '</td>';
+      html += '<td title="' + escapeHtml(row.productName) + '">' + escapeHtml(row.productName) + '</td>';
+      html += '<td>' + row.commission + '%</td>';
+      html += '<td>' + (row.tag ? '<span style="color:var(--primary);font-weight:600;">' + escapeHtml(row.tag) + '</span>' : '-') + '</td>';
+      html += '<td><a href="' + escapeHtml(row.link) + '" target="_blank" class="link-action" style="font-size:11px;">查看</a></td>';
+      html += '<td>' + (row.douyinDate || '<span style="color:#d97706;">-</span>') + '</td>';
+      html += '<td>' + (row.wechatDate || '<span style="color:#d97706;">-</span>') + '</td>';
+      html += '<td>' + (row.xhsDate || '<span style="color:#d97706;">-</span>') + '</td>';
+      html += '<td>' + (row.kuaishouDate || '<span style="color:#d97706;">-</span>') + '</td>';
+      html += '<td>' + renderStatus(row.status) + '</td>';
+      html += '<td>' + escapeHtml(row.createTime) + '</td>';
+      html += '<td>' + escapeHtml(row.updateTime) + '</td>';
+      html += '</tr>';
+    });
+  }
+  tbody.innerHTML = html;
+  document.getElementById('totalCount').textContent = data.length;
+  document.getElementById('checkAll').checked = false;
+}
+
+function renderStatus(s) {
+  var cls = 'initial';
+  switch(s) {
+    case '在售': cls = 'submitted'; break;
+    case '下架': cls = 'cancelled'; break;
+    case '草稿': cls = 'initial'; break;
+    default: cls = 'initial';
+  }
+  return '<span class="status-tag ' + cls + '">' + escapeHtml(s) + '</span>';
+}
+
+function toggleAll(el) {
+  document.querySelectorAll('.row-check').forEach(function(c) {
+    c.checked = el.checked;
+    var tr = c.closest('tr');
+    if (tr) tr.classList.toggle('row-selected', el.checked);
+  });
+}
+function toggleRow(el) {
+  var tr = el.closest('tr');
+  if (tr) tr.classList.toggle('row-selected', el.checked);
+  var all = document.querySelectorAll('.row-check');
+  var checked = document.querySelectorAll('.row-check:checked');
+  document.getElementById('checkAll').checked = all.length > 0 && all.length === checked.length;
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  var div = document.createElement('div'); div.textContent = str; return div.innerHTML;
+}
+
+// 搜索
+function doSearch() {
+  var platform = document.getElementById('sPlatform').value.trim();
+  var shop = document.getElementById('sShop').value.trim();
+  var itemNo = document.getElementById('sItemNo').value.trim();
+  var productId = document.getElementById('sProductId').value.trim();
+  var skuId = document.getElementById('sSkuId').value.trim();
+  var skuCode = document.getElementById('sSkuCode').value.trim();
+  var status = document.getElementById('sStatus').value;
+  var filtered = mockData.filter(function(r) {
+    if (platform && r.platform.indexOf(platform) === -1) return false;
+    if (shop && r.shopName.indexOf(shop) === -1 && r.shopCode.indexOf(shop) === -1) return false;
+    if (itemNo && r.itemNo.indexOf(itemNo) === -1) return false;
+    if (productId && r.productId.indexOf(productId) === -1) return false;
+    if (skuId && r.skuId.indexOf(skuId) === -1) return false;
+    if (skuCode && r.skuCode.indexOf(skuCode) === -1) return false;
+    if (status && r.status !== status) return false;
+    return true;
+  });
+  renderTable(filtered);
+  showSearchTags();
+}
+
+function resetSearch() {
+  ['sPlatform','sShop','sItemNo','sProductId','sSkuId','sSkuCode','sStatus','sTimeStart','sTimeEnd'].forEach(function(id) {
+    document.getElementById(id).value = '';
+  });
+  renderTable(mockData);
+  hideSearchTags();
+}
+
+function showSearchTags() {
+  var tags = [];
+  var map = [
+    {id:'sPlatform', label:'平台'}, {id:'sShop', label:'店铺'}, {id:'sItemNo', label:'商品款号'},
+    {id:'sProductId', label:'平台商品ID'}, {id:'sSkuId', label:'平台SKUID'}, {id:'sSkuCode', label:'SKU编码'},
+    {id:'sStatus', label:'状态'}
+  ];
+  map.forEach(function(m) {
+    var v = document.getElementById(m.id).value.trim();
+    if (v) tags.push({label: m.label + ': ' + v, field: m.id});
+  });
+  var container = document.getElementById('searchTags');
+  if (tags.length === 0) { container.style.display = 'none'; return; }
+  container.style.display = '';
+  container.innerHTML = tags.map(function(t) {
+    return '<span class="active-tag" onclick="clearTag(\'' + t.field + '\')">' + t.label + ' ×</span>';
+  }).join('');
+}
+function hideSearchTags() { document.getElementById('searchTags').style.display = 'none'; }
+function clearTag(field) { document.getElementById(field).value = ''; doSearch(); }
+
+// 操作
+function doExport() { showToast('导出功能开发中', 'info'); }
+
+function doNotify() {
+  var checked = document.querySelectorAll('.row-check:checked');
+  if (checked.length === 0) { showToast('请先选择需要通知的商品', 'error'); return; }
+  var ids = [];
+  checked.forEach(function(c) { ids.push(Number(c.value)); });
+  var count = 0;
+  mockData.forEach(function(r) {
+    if (ids.indexOf(r.id) !== -1 && r.status === '草稿') {
+      r.status = '在售';
+      r.updateTime = new Date().toISOString().substring(0, 10);
+      count++;
+    }
+  });
+  renderTable(mockData);
+  showToast('已向钉钉群发送 ' + count + ' 条上新通知', 'success');
+}
+
+// Toast
+function showToast(msg, type) {
+  var c = document.getElementById('toastContainer');
+  var t = document.createElement('div');
+  t.className = 'toast toast-' + (type || 'info');
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(function(){ t.classList.add('toast-hide'); }, 2500);
+  setTimeout(function(){ t.remove(); }, 3000);
+}
+
+// 初始化
+renderTable(mockData);
+</script>
+</body>
+</html>

@@ -6,79 +6,47 @@
   <title>达人工作台 - 我的申请</title>
   <link rel="stylesheet" href="../../css/style.css">
   <style>
-    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
-    .talent-workspace {
-      display: flex; flex-direction: column; height: 100vh;
-    }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f7fb; }
 
-    /* 顶栏样式 - 复用主工作台样式 */
-    .topnav {
-      background: #fff; border-bottom: 1px solid var(--border);
-      padding: 0 28px; height: 60px; display: flex; align-items: center;
-      justify-content: space-between; flex-shrink: 0; box-shadow: var(--shadow-sm);
+    /* 页面容器：宽度自适应屏幕 */
+    .page-wrap { width: 100%; margin: 0 auto; padding: 24px 28px 48px; box-sizing: border-box; }
+
+    /* 页头：标题 + 副标题左侧，主操作右侧 */
+    .page-head {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 16px; margin-bottom: 20px;
     }
-    .topnav-left { display: flex; align-items: center; gap: 20px; }
-    .topnav-brand { display: flex; align-items: center; gap: 10px; }
-    .brand-icon {
-      width: 36px; height: 36px; border-radius: 10px;
-      background: linear-gradient(135deg, var(--primary), #7c6cf5);
-      display: flex; align-items: center; justify-content: center;
+    .page-head h1 { margin: 0 0 4px; font-size: 20px; font-weight: 700; color: var(--text); }
+    .ph-sub { font-size: 12.5px; color: var(--text-tertiary); }
+    .ph-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .ph-new-btn {
+      display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px;
+      border: none; border-radius: 10px; background: var(--primary); color: #fff;
+      font-size: 13px; font-weight: 600; cursor: pointer; transition: all .18s;
+      box-shadow: 0 2px 8px rgba(91,108,245,.25);
     }
-    .brand-name { font-size: 16px; font-weight: 700; color: var(--text); }
-    .topnav-right { display: flex; align-items: center; gap: 12px; }
-    .topnav-user {
-      display: flex; align-items: center; gap: 8px; padding: 6px 12px;
-      border-radius: 10px; cursor: pointer; transition: background .15s;
+    .ph-new-btn:hover { background: #4a5ae4; box-shadow: 0 4px 12px rgba(91,108,245,.35); }
+    .user-chip {
+      display: none; align-items: center; gap: 8px; padding: 5px 10px 5px 5px;
+      border: 1px solid var(--border); border-radius: 20px; background: #fff;
+      cursor: pointer; transition: all .15s;
     }
-    .topnav-user:hover { background: #f1f5f9; }
+    .user-chip:hover { border-color: #fca5a5; background: #fef2f2; }
+    .user-chip .logout-txt { font-size: 12px; color: var(--text-secondary); }
+    .user-chip:hover .logout-txt { color: #dc2626; }
     .user-avatar {
-      width: 32px; height: 32px; border-radius: 50%; background: var(--primary);
+      width: 26px; height: 26px; border-radius: 50%; background: var(--primary);
       color: #fff; display: flex; align-items: center; justify-content: center;
-      font-size: 14px; font-weight: 600;
+      font-size: 12px; font-weight: 600;
     }
-    .user-name { font-size: 13px; color: var(--text); font-weight: 600; }
 
-    /* 下方主体区 */
-    .app-body { display: flex; flex: 1; overflow: hidden; }
-
-    /* 左侧菜单 */
-    .sidebar {
-      width: 220px; background: #fff; border-right: 1px solid var(--border);
-      overflow-y: auto; flex-shrink: 0;
-    }
-    .sidebar-item {
-      display: flex; align-items: center; gap: 10px; padding: 10px 20px;
-      color: var(--text-secondary); font-size: 13px; cursor: pointer;
-      transition: all .15s; text-decoration: none;
-    }
-    .sidebar-item:hover { background: #f8f9fb; color: var(--primary); }
-    .sidebar-item.active {
-      background: var(--primary-light); color: var(--primary); font-weight: 600;
-    }
-    .sidebar-item svg { flex-shrink: 0; }
-
-    /* 主内容区 */
-    .main-area { flex: 1; display: flex; flex-direction: column; background: #f5f7fb; overflow: hidden; }
-    .main-header {
-      background: #fff; border-bottom: 1px solid var(--border);
-      padding: 14px 28px; flex-shrink: 0;
-    }
-    .breadcrumb { font-size: 15px; font-weight: 600; color: var(--text); }
-    .main-content { flex: 1; overflow-y: auto; padding: 24px 28px; }
-
-    /* 内容区卡片和组件 */
-    .new-apply-btn {
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      width: 100%; padding: 16px; border-radius: 14px; border: 1.5px dashed var(--primary);
-      background: var(--primary-light); color: var(--primary); font-size: 14px; font-weight: 600;
-      cursor: pointer; margin-bottom: 20px; transition: all .18s;
-    }
-    .new-apply-btn:hover { background: #e3e6ff; }
-
+    /* 申请卡片列表 */
     .app-card {
       background: #fff; border-radius: 14px; border: 1px solid var(--border);
       padding: 18px 20px; margin-bottom: 14px; box-shadow: var(--shadow-sm);
+      transition: box-shadow .18s, transform .18s;
     }
+    .app-card:hover { box-shadow: 0 6px 18px rgba(15,23,42,.08); transform: translateY(-1px); }
     .app-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
     .app-card-time { font-size: 12px; color: var(--text-tertiary); }
     .app-card-accounts { font-size: 13px; color: var(--text); line-height: 1.8; margin-bottom: 10px; }
@@ -93,88 +61,91 @@
     .app-card-actions { display: flex; justify-content: flex-end; gap: 10px; }
 
     .empty-wrap {
-      text-align: center; padding: 60px 0; color: var(--text-tertiary);
+      text-align: center; padding: 70px 0; color: var(--text-tertiary);
+      background: #fff; border: 1px dashed var(--border); border-radius: 14px;
     }
     .empty-wrap svg { color: #cbd5e1; margin-bottom: 12px; }
     .empty-wrap .t { font-size: 14px; margin-bottom: 18px; }
+
+    /* 移动端适配 */
+    @media (max-width: 640px) {
+      .page-wrap { padding: 16px 14px 40px; }
+      .page-head { flex-direction: column; align-items: stretch; }
+      .ph-right { justify-content: space-between; }
+      .ph-new-btn { flex: 1; justify-content: center; }
+    }
   </style>
 </head>
 <body>
-<div class="talent-workspace">
+<div class="page-wrap">
 
-  <header class="topnav">
-    <div class="topnav-left">
-      <div class="topnav-brand">
-        <div class="brand-icon">
-          <svg viewBox="0 0 24 24" width="18" height="18"><path d="M16.3 4.2c.7 2.1 1.9 3.6 3.7 4.4v3.8a8.8 8.8 0 0 1-3.5-.9v4.9a6.2 6.2 0 1 1-6.2-6.2c.4 0 .8 0 1.2.1v3.9c-.4-.2-.8-.3-1.2-.3a2.4 2.4 0 1 0 2.4 2.4V4.2h3.6Z" fill="#fff"/></svg>
-        </div>
-        <span class="brand-name">达人工作台</span>
-      </div>
+  <div class="page-head">
+    <div class="ph-left">
+      <h1 id="mineTitle">我的申请</h1>
+      <div class="ph-sub"><span id="phoneTag">-</span><span id="appCount"></span></div>
     </div>
-    <div class="topnav-right">
-      <div class="topnav-user" onclick="doLogout()" title="点击退出登录">
+    <div class="ph-right">
+      <button class="ph-new-btn" onclick="goApply('add')">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        新建申请
+      </button>
+      <div class="user-chip" id="logoutChip" onclick="doLogout()" title="点击退出登录">
         <div class="user-avatar" id="userAvatar">-</div>
-        <span class="user-name" id="phoneTag">-</span>
+        <span class="logout-txt">退出</span>
       </div>
     </div>
-  </header>
-
-  <div class="app-body">
-    <aside class="sidebar">
-      <a class="sidebar-item active">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        <span>我的申请</span>
-      </a>
-      <a class="sidebar-item" onclick="goApply('add')">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        <span>新建申请</span>
-      </a>
-    </aside>
-
-    <main class="main-area">
-      <div class="main-header">
-        <div class="breadcrumb" id="mineTitle">我的申请</div>
-      </div>
-      <div class="main-content">
-        <div class="new-apply-btn" onclick="goApply('add')">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          新建申请
-        </div>
-        <div id="appList"></div>
-      </div>
-    </main>
   </div>
+
+  <div id="appList"></div>
 
 </div>
 
 <div id="toastContainer" class="toast-container"></div>
 
+<script src="../../js/auth.js"></script>
 <script>
-var phone = localStorage.getItem('recruit_current_phone');
-if (!phone) { location.href = 'login.html'; }
+// 权限检查
+if (!Auth.requireAuth()) {
+  // 已在 requireAuth 中跳转到登录页
+}
 
-document.getElementById('phoneTag').textContent = phone;
+var currentUser = Auth.getCurrentUser();
+
+// 兼容旧登录态
+var phone = localStorage.getItem('recruit_current_phone') || currentUser.phone;
+
+document.getElementById('phoneTag').textContent = phone || '';
+
+// 独立打开（非工作台 iframe）时才显示退出入口
+if (self === top) {
+  document.getElementById('logoutChip').style.display = 'flex';
+}
 
 var talents = JSON.parse(localStorage.getItem('recruit_talents') || '{}');
 var talentName = (talents[phone] || {}).name;
 if (talentName) {
   document.getElementById('mineTitle').textContent = talentName + ' 的申请';
-  var initial = talentName.charAt(0);
-  document.getElementById('userAvatar').textContent = initial;
+  document.getElementById('userAvatar').textContent = talentName.charAt(0);
 }
 
 function loadApps() {
   var all = JSON.parse(localStorage.getItem('recruit_applications') || '[]');
+  // 管理员可见全部申请
+  if (currentUser && currentUser.role === 'admin') return all;
   return all.filter(function(a) { return a.phone === phone || a.talentPhone === phone; });
 }
 
 function render() {
   var apps = loadApps();
   var container = document.getElementById('appList');
+  document.getElementById('appCount').textContent = apps.length > 0 ? ((phone ? ' · ' : '') + '共 ' + apps.length + ' 条申请') : '';
   if (apps.length === 0) {
     container.innerHTML = '<div class="empty-wrap">' +
       '<svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' +
       '<div class="t">还没有提交过入驻申请</div>' +
+      '<button class="ph-new-btn" onclick="goApply(\'add\')">' +
+      '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
+      '新建申请</button>' +
       '</div>';
     return;
   }
@@ -225,12 +196,21 @@ function goPlan(id) {
 }
 
 function viewDetail(id) {
-  location.href = 'apply.html?mode=edit&id=' + id;
+  var apps = loadApps();
+  var app = apps.find(function(a) { return a.id === id; });
+  // 已进入项目规划阶段（已提交规划/规划审核中/规划已驳回/已通过且已有项目规划）→ 跳转详情页
+  var planStatuses = ['规划审核中', '规划已驳回'];
+  if (app && (planStatuses.indexOf(app.status) > -1 || (app.status === '已通过' && app.project_plan))) {
+    location.href = 'detail.html?id=' + id + '&mode=view';
+  } else {
+    location.href = 'apply.html?mode=edit&id=' + id;
+  }
 }
 
 function doLogout() {
-  localStorage.removeItem('recruit_current_phone');
-  location.href = 'login.html';
+  if (confirm('确定要退出登录吗？')) {
+    Auth.logout();
+  }
 }
 
 function st(s) {

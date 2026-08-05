@@ -3,68 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>达人工作台 - 申请详情</title>
+  <title>申请详情</title>
   <link rel="stylesheet" href="../../css/style.css">
   <style>
     body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
-    .talent-workspace {
-      display: flex; flex-direction: column; height: 100vh;
+    .page-container {
+      min-height: 100vh; background: #f5f7fb; padding: 24px 28px;
     }
-
-    /* 顶栏样式 - 复用主工作台样式 */
-    .topnav {
-      background: #fff; border-bottom: 1px solid var(--border);
-      padding: 0 28px; height: 60px; display: flex; align-items: center;
-      justify-content: space-between; flex-shrink: 0; box-shadow: var(--shadow-sm);
+    .page-header {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
     }
-    .topnav-left { display: flex; align-items: center; gap: 20px; }
-    .topnav-brand { display: flex; align-items: center; gap: 10px; }
-    .brand-icon {
-      width: 36px; height: 36px; border-radius: 10px;
-      background: linear-gradient(135deg, var(--primary), #7c6cf5);
-      display: flex; align-items: center; justify-content: center;
-    }
-    .brand-name { font-size: 16px; font-weight: 700; color: var(--text); }
-    .topnav-right { display: flex; align-items: center; gap: 12px; }
-    .topnav-user {
-      display: flex; align-items: center; gap: 8px; padding: 6px 12px;
-      border-radius: 10px; cursor: pointer; transition: background .15s;
-    }
-    .topnav-user:hover { background: #f1f5f9; }
-    .user-avatar {
-      width: 32px; height: 32px; border-radius: 50%; background: var(--primary);
-      color: #fff; display: flex; align-items: center; justify-content: center;
-      font-size: 14px; font-weight: 600;
-    }
-    .user-name { font-size: 13px; color: var(--text); font-weight: 600; }
-
-    /* 下方主体区 */
-    .app-body { display: flex; flex: 1; overflow: hidden; }
-
-    /* 左侧菜单 */
-    .sidebar {
-      width: 220px; background: #fff; border-right: 1px solid var(--border);
-      overflow-y: auto; flex-shrink: 0;
-    }
-    .sidebar-item {
-      display: flex; align-items: center; gap: 10px; padding: 10px 20px;
-      color: var(--text-secondary); font-size: 13px; cursor: pointer;
-      transition: all .15s; text-decoration: none;
-    }
-    .sidebar-item:hover { background: #f8f9fb; color: var(--primary); }
-    .sidebar-item.active {
-      background: var(--primary-light); color: var(--primary); font-weight: 600;
-    }
-    .sidebar-item svg { flex-shrink: 0; }
-
-    /* 主内容区 */
-    .main-area { flex: 1; display: flex; flex-direction: column; background: #f5f7fb; overflow: hidden; }
-    .main-header {
-      background: #fff; border-bottom: 1px solid var(--border);
-      padding: 14px 28px; flex-shrink: 0; display: flex; align-items: center; gap: 12px;
-    }
-    .breadcrumb { font-size: 15px; font-weight: 600; color: var(--text); flex: 1; }
-    .main-content { flex: 1; overflow-y: auto; padding: 24px 28px; }
+    .page-title { font-size: 18px; font-weight: 700; color: var(--text); flex: 1; }
 
     .modal-overlay {
       position:fixed; top:0; left:0; right:0; bottom:0;
@@ -145,11 +94,7 @@
     .form-textarea:focus { border-color:var(--primary); }
 
     @media (max-width: 640px) {
-      .topnav { padding: 0 16px; height: 56px; }
-      .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
-      .app-body { flex-direction: column; }
-      .main-header { padding: 12px 16px; }
-      .main-content { padding: 16px; }
+      .page-container { padding: 16px; }
       .detail-card { padding: 16px; }
       .detail-grid { grid-template-columns: 1fr; gap: 12px; }
       .shot-thumb { width: calc(50% - 5px); height: 100px; }
@@ -160,46 +105,15 @@
   </style>
 </head>
 <body>
-<div class="talent-workspace">
+<div class="page-container">
 
-  <header class="topnav">
-    <div class="topnav-left">
-      <div class="topnav-brand">
-        <div class="brand-icon">
-          <svg viewBox="0 0 24 24" width="18" height="18"><path d="M16.3 4.2c.7 2.1 1.9 3.6 3.7 4.4v3.8a8.8 8.8 0 0 1-3.5-.9v4.9a6.2 6.2 0 1 1-6.2-6.2c.4 0 .8 0 1.2.1v3.9c-.4-.2-.8-.3-1.2-.3a2.4 2.4 0 1 0 2.4 2.4V4.2h3.6Z" fill="#fff"/></svg>
-        </div>
-        <span class="brand-name">达人工作台</span>
-      </div>
-    </div>
-    <div class="topnav-right">
-      <div class="topnav-user" onclick="doLogout()" title="点击退出登录">
-        <div class="user-avatar" id="userAvatar">-</div>
-        <span class="user-name" id="phoneTag">-</span>
-      </div>
-    </div>
-  </header>
-
-  <div class="app-body">
-    <aside class="sidebar">
-      <a class="sidebar-item" href="mine.html">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        <span>我的申请</span>
-      </a>
-      <a class="sidebar-item" href="apply.html?mode=add">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        <span>新建申请</span>
-      </a>
-    </aside>
-
-    <main class="main-area">
-      <div class="main-header">
-        <button class="btn" onclick="goBack()" style="display:flex;align-items:center;gap:4px;padding:6px 12px;height:auto;">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-          返回
-        </button>
-        <div class="breadcrumb">申请详情</div>
-      </div>
-      <div class="main-content">
+  <div class="page-header">
+    <button class="btn" onclick="goBack()" style="display:flex;align-items:center;gap:4px;padding:6px 12px;height:auto;">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      返回
+    </button>
+    <div class="page-title">申请详情</div>
+  </div>
 
   <div class="detail-card">
     <h3 class="detail-card-title">申请人信息</h3>
@@ -209,6 +123,7 @@
       <div class="detail-item"><div class="k">当前状态</div><div class="v" id="dStatus">-</div></div>
       <div class="detail-item"><div class="k">运营品牌</div><div class="v" id="dBrand">-</div></div>
       <div class="detail-item"><div class="k">主推产品</div><div class="v" id="dProduct">-</div></div>
+      <div class="detail-item"><div class="k">运营负责人</div><div class="v" id="dRecommender">-</div></div>
       <div class="detail-item"><div class="k">提交时间</div><div class="v" id="dCreatedAt">-</div></div>
       <div class="detail-item"><div class="k">近3个月GMV</div><div class="v" id="dGmv">-</div></div>
     </div>
@@ -240,10 +155,6 @@
   </div>
 
   <div class="form-actions" id="dActions"></div>
-
-      </div>
-    </main>
-  </div>
 
 </div>
 
@@ -285,12 +196,17 @@
   </div>
 </div>
 
+<script src="../../js/auth.js"></script>
 <script>
-// 登录校验与用户信息初始化
-var phone = localStorage.getItem('recruit_current_phone');
-if (!phone) { location.href = 'login.html'; }
-document.getElementById('phoneTag').textContent = phone;
+// 权限检查
+if (!Auth.requireAuth()) {
+  // 已在 requireAuth 中跳转到登录页
+}
 
+var currentUser = Auth.getCurrentUser();
+
+// 登录校验与用户信息初始化（兼容旧系统）
+var phone = localStorage.getItem('recruit_current_phone');
 var mockData = JSON.parse(localStorage.getItem('recruit_applications') || 'null') || [];
 var mockTalentNames = {
   '138****2231':'李潮', '159****8820':'王强', '186****0093':'陈静', '177****5567':'林晓鹿', '135****9911':'赵凯'
@@ -317,6 +233,7 @@ function init() {
   document.getElementById('dStatus').innerHTML = st(currentRecord.status);
   document.getElementById('dBrand').textContent = currentRecord.brand || '-';
   document.getElementById('dProduct').textContent = currentRecord.main_product || '-';
+  document.getElementById('dRecommender').textContent = currentRecord.recommender || '-';
   document.getElementById('dCreatedAt').textContent = currentRecord.created_at;
   document.getElementById('dGmv').textContent = '¥' + Number(currentRecord.gmv || 0).toLocaleString('zh-CN');
 
@@ -422,7 +339,9 @@ function currentPhase() {
 
 function renderActions() {
   var actions = document.getElementById('dActions');
-  if (currentPhase()) {
+  var phase = currentPhase();
+  var canReview = phase === 'plan' ? Auth.canReviewPlan() : Auth.canReviewApplication();
+  if (phase && canReview) {
     actions.innerHTML = '<button class="btn btn-danger" onclick="openRejectModal()">驳回</button><button class="btn btn-primary" onclick="openApproveModal()">通过</button>';
   } else {
     actions.innerHTML = '';
@@ -467,11 +386,11 @@ function confirmReject() {
   if (phase === 'plan') {
     currentRecord.status = '规划已驳回';
     currentRecord.plan_reject_logs = currentRecord.plan_reject_logs || [];
-    currentRecord.plan_reject_logs.push({ reason: reason, time: now(), operator: 'BD-当前用户' });
+    currentRecord.plan_reject_logs.push({ reason: reason, time: now(), operator: currentUser.name });
   } else {
     currentRecord.status = '已驳回';
     currentRecord.reject_logs = currentRecord.reject_logs || [];
-    currentRecord.reject_logs.push({ reason: reason, time: now(), operator: 'BD-当前用户' });
+    currentRecord.reject_logs.push({ reason: reason, time: now(), operator: currentUser.name });
   }
   persist();
   closeRejectModal();
@@ -494,11 +413,7 @@ function st(s) {
 }
 function esc(s) { if(!s) return ''; var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
 function now(){ return new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'); }
-function goBack(){ location.href='mine.html'; }
-function doLogout() {
-  localStorage.removeItem('recruit_current_phone');
-  location.href = 'login.html';
-}
+function goBack(){ history.back(); }
 
 // Toast 轻提示
 function showToast(message, type) {

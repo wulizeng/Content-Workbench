@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>统一登录 - 内容电商AI工作台</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body {
+      background: linear-gradient(160deg, #eef0ff 0%, #f5f7fb 55%, #ffffff 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+      margin: 0;
+    }
+    .login-shell {
+      width: 420px;
+      max-width: 92vw;
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: var(--shadow-xl);
+      padding: 40px 36px;
+    }
+    .login-brand {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
+    }
+    .login-brand .icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary), #7c6cf5);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .login-brand span { font-size: 16px; font-weight: 700; color: var(--text); }
+    .login-title { font-size: 22px; font-weight: 700; color: var(--text); margin: 24px 0 6px; }
+    .login-sub { font-size: 13px; color: var(--text-tertiary); margin-bottom: 28px; }
+
+    .login-tabs {
+      display: flex; gap: 8px; margin-bottom: 24px;
+      background: #f1f5f9; border-radius: 12px; padding: 4px;
+    }
+    .login-tab {
+      flex: 1; padding: 10px; text-align: center; border-radius: 8px;
+      font-size: 14px; font-weight: 600; color: var(--text-secondary);
+      cursor: pointer; transition: all .18s; border: none; background: transparent;
+    }
+    .login-tab.active {
+      background: #fff; color: var(--primary); box-shadow: 0 2px 6px rgba(15,23,42,.08);
+    }
+
+    .login-form { display: none; }
+    .login-form.active { display: block; }
+
+    .login-field { margin-bottom: 18px; }
+    .login-field label { display:block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; }
+    .login-input-row { display: flex; gap: 10px; }
+    .login-input {
+      flex: 1; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px;
+      font-size: 14px; outline: none; transition: border-color .18s; box-sizing: border-box;
+      width: 100%;
+    }
+    .login-input:focus { border-color: var(--primary); }
+    .code-btn {
+      flex-shrink: 0; padding: 0 16px; border-radius: 10px; border: 1px solid var(--primary);
+      background: #fff; color: var(--primary); font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: all .18s; white-space: nowrap;
+    }
+    .code-btn:hover { background: var(--primary-light); }
+    .code-btn:disabled { border-color: var(--border); color: var(--text-disabled); cursor: not-allowed; background: #fff; }
+    .login-submit {
+      width: 100%; padding: 13px; border: none; border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary), #7c6cf5); color: #fff;
+      font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px;
+      box-shadow: 0 8px 20px rgba(91,108,245,.28); transition: all .18s;
+    }
+    .login-submit:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(91,108,245,.35); }
+    .login-hint { font-size: 12px; color: var(--text-tertiary); margin-top: 18px; line-height: 1.7; text-align: center; }
+    .field-error-text { font-size: 12px; color: #dc2626; margin-top: 6px; display: none; }
+
+    @media (max-width: 640px) {
+      .login-shell {
+        width: 100%; max-width: none; margin: 0 20px; padding: 32px 20px;
+      }
+      .login-input { height: 48px; font-size: 15px; padding: 0 14px; }
+      .login-input-row { gap: 8px; }
+      .code-btn { min-width: 96px; height: 48px; font-size: 13px; padding: 0 10px; }
+      .login-submit { height: 48px; font-size: 15px; }
+    }
+  </style>
+</head>
+<body>
+<div class="login-shell">
+  <div class="login-brand">
+    <div class="icon">
+      <svg viewBox="0 0 24 24" width="18" height="18"><path d="M16.3 4.2c.7 2.1 1.9 3.6 3.7 4.4v3.8a8.8 8.8 0 0 1-3.5-.9v4.9a6.2 6.2 0 1 1-6.2-6.2c.4 0 .8 0 1.2.1v3.9c-.4-.2-.8-.3-1.2-.3a2.4 2.4 0 1 0 2.4 2.4V4.2h3.6Z" fill="#fff"/></svg>
+    </div>
+    <span>内容电商AI工作台</span>
+  </div>
+  <div class="login-title">统一登录</div>
+  <div class="login-sub">根据您的身份选择登录方式</div>
+
+  <div class="login-tabs">
+    <button class="login-tab active" onclick="switchTab('talent')">达人登录</button>
+    <button class="login-tab" onclick="switchTab('staff')">运营/BD登录</button>
+  </div>
+
+  <!-- 达人登录表单 -->
+  <div class="login-form active" id="talentForm">
+    <div class="login-field">
+      <label>手机号</label>
+      <input type="tel" class="login-input" id="talentPhone" maxlength="11" placeholder="请输入手机号">
+      <div class="field-error-text" id="talentPhoneError">请输入正确的11位手机号</div>
+    </div>
+
+    <div class="login-field">
+      <label>姓名</label>
+      <input type="text" class="login-input" id="talentName" placeholder="请输入姓名（首次登录需填写）">
+      <div class="field-error-text" id="talentNameError">请输入姓名</div>
+    </div>
+
+    <div class="login-field">
+      <label>验证码</label>
+      <div class="login-input-row">
+        <input type="text" class="login-input" id="talentCode" maxlength="6" placeholder="请输入验证码">
+        <button class="code-btn" id="talentCodeBtn" onclick="sendTalentCode()">获取验证码</button>
+      </div>
+      <div class="field-error-text" id="talentCodeError">验证码错误，请重新输入</div>
+    </div>
+
+    <button class="login-submit" onclick="doTalentLogin()">登录 / 注册</button>
+
+    <div class="login-hint">未注册的手机号验证通过后将自动创建达人身份<br><a href="javascript:void(0)" onclick="quickDemoTalent()" style="color:var(--primary);font-weight:600;text-decoration:underline;">演示快捷登录（跳过验证）</a></div>
+  </div>
+
+  <!-- 运营/BD登录表单 -->
+  <div class="login-form" id="staffForm">
+    <div class="login-field">
+      <label>邮箱</label>
+      <input type="email" class="login-input" id="staffEmail" placeholder="请输入公司邮箱">
+      <div class="field-error-text" id="staffEmailError">请输入正确的邮箱地址</div>
+    </div>
+
+    <div class="login-field">
+      <label>密码</label>
+      <input type="password" class="login-input" id="staffPassword" placeholder="请输入密码">
+      <div class="field-error-text" id="staffPasswordError">密码错误</div>
+    </div>
+
+    <button class="login-submit" onclick="doStaffLogin()">登录</button>
+
+    <div class="login-hint">
+      演示账号：<br>
+      运营 - <a href="javascript:void(0)" onclick="quickDemoOperator()" style="color:var(--primary);font-weight:600;text-decoration:underline;">operator@company.com / 123456</a><br>
+      BD - <a href="javascript:void(0)" onclick="quickDemoBD()" style="color:var(--primary);font-weight:600;text-decoration:underline;">bd@company.com / 123456</a>
+    </div>
+  </div>
+</div>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<script src="js/auth.js"></script>
+<script>
+var MOCK_CODE = '1234';
+var talentCountdownTimer = null;
+
+// Mock 用户数据
+var mockUsers = {
+  '138****2231': { role: 'talent', phone: '138****2231', name: '李潮', permissions: Auth.getRolePermissions('talent') },
+  '159****8820': { role: 'talent', phone: '159****8820', name: '王强', permissions: Auth.getRolePermissions('talent') },
+  'operator@company.com': { role: 'operator', email: 'operator@company.com', name: '张运营', permissions: Auth.getRolePermissions('operator') },
+  'bd@company.com': { role: 'bd', email: 'bd@company.com', name: '李BD', permissions: Auth.getRolePermissions('bd') }
+};
+
+// 切换登录方式
+function switchTab(type) {
+  document.querySelectorAll('.login-tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.login-form').forEach(function(f) { f.classList.remove('active'); });
+
+  if (type === 'talent') {
+    document.querySelectorAll('.login-tab')[0].classList.add('active');
+    document.getElementById('talentForm').classList.add('active');
+  } else {
+    document.querySelectorAll('.login-tab')[1].classList.add('active');
+    document.getElementById('staffForm').classList.add('active');
+  }
+}
+
+// ===== 达人登录逻辑 =====
+function sendTalentCode() {
+  var phone = document.getElementById('talentPhone').value.trim();
+  if (!/^1\d{10}$/.test(phone)) {
+    document.getElementById('talentPhoneError').style.display = 'block';
+    return;
+  }
+  document.getElementById('talentPhoneError').style.display = 'none';
+  showToast('验证码已发送（模拟：' + MOCK_CODE + '）', 'success');
+  var btn = document.getElementById('talentCodeBtn');
+  var sec = 60;
+  btn.disabled = true;
+  btn.textContent = sec + 's后重试';
+  talentCountdownTimer = setInterval(function() {
+    sec--;
+    if (sec <= 0) {
+      clearInterval(talentCountdownTimer);
+      btn.disabled = false;
+      btn.textContent = '获取验证码';
+    } else {
+      btn.textContent = sec + 's后重试';
+    }
+  }, 1000);
+}
+
+function doTalentLogin() {
+  var phone = document.getElementById('talentPhone').value.trim();
+  var name = document.getElementById('talentName').value.trim();
+  var code = document.getElementById('talentCode').value.trim();
+
+  document.getElementById('talentPhoneError').style.display = 'none';
+  document.getElementById('talentNameError').style.display = 'none';
+  document.getElementById('talentCodeError').style.display = 'none';
+
+  if (!/^1\d{10}$/.test(phone)) {
+    document.getElementById('talentPhoneError').style.display = 'block';
+    return;
+  }
+  if (code !== MOCK_CODE) {
+    document.getElementById('talentCodeError').style.display = 'block';
+    return;
+  }
+
+  var talents = JSON.parse(localStorage.getItem('recruit_talents') || '{}');
+  if (!talents[phone]) {
+    if (!name) {
+      document.getElementById('talentNameError').style.display = 'block';
+      return;
+    }
+    talents[phone] = { phone: phone, name: name, talent_id: 'T' + Date.now(), created_at: nowStr() };
+    localStorage.setItem('recruit_talents', JSON.stringify(talents));
+  }
+
+  var user = mockUsers[phone] || {
+    role: 'talent',
+    phone: phone,
+    name: talents[phone].name,
+    permissions: Auth.getRolePermissions('talent')
+  };
+
+  Auth.setCurrentUser(user);
+  localStorage.removeItem('recruit_current_phone');
+
+  showToast('登录成功', 'success');
+  setTimeout(function() { location.href = 'index.html'; }, 400);
+}
+
+function quickDemoTalent() {
+  var demoPhone = '138****2231';
+  var demoName = '李潮';
+  var talents = JSON.parse(localStorage.getItem('recruit_talents') || '{}');
+  if (!talents[demoPhone]) {
+    talents[demoPhone] = { phone: demoPhone, name: demoName, talent_id: 'T_DEMO_001', created_at: nowStr() };
+    localStorage.setItem('recruit_talents', JSON.stringify(talents));
+  }
+
+  Auth.setCurrentUser(mockUsers[demoPhone]);
+  localStorage.removeItem('recruit_current_phone');
+
+  showToast('演示账号已登录（' + demoName + '）', 'success');
+  setTimeout(function() { location.href = 'index.html'; }, 400);
+}
+
+// ===== 运营/BD登录逻辑 =====
+function doStaffLogin() {
+  var email = document.getElementById('staffEmail').value.trim();
+  var password = document.getElementById('staffPassword').value.trim();
+
+  document.getElementById('staffEmailError').style.display = 'none';
+  document.getElementById('staffPasswordError').style.display = 'none';
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    document.getElementById('staffEmailError').style.display = 'block';
+    return;
+  }
+
+  if (!mockUsers[email]) {
+    document.getElementById('staffEmailError').textContent = '邮箱未注册';
+    document.getElementById('staffEmailError').style.display = 'block';
+    return;
+  }
+
+  if (password !== '123456') {
+    document.getElementById('staffPasswordError').style.display = 'block';
+    return;
+  }
+
+  Auth.setCurrentUser(mockUsers[email]);
+  showToast('登录成功', 'success');
+  setTimeout(function() { location.href = 'index.html'; }, 400);
+}
+
+function quickDemoOperator() {
+  document.getElementById('staffEmail').value = 'operator@company.com';
+  document.getElementById('staffPassword').value = '123456';
+  doStaffLogin();
+}
+
+function quickDemoBD() {
+  document.getElementById('staffEmail').value = 'bd@company.com';
+  document.getElementById('staffPassword').value = '123456';
+  doStaffLogin();
+}
+
+function nowStr() {
+  return new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-');
+}
+
+function showToast(message, type) {
+  type = type || 'info';
+  var container = document.getElementById('toastContainer');
+  if (!container) return;
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(function() {
+    if (toast.parentNode) {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s';
+      setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+    }
+  }, 2500);
+}
+
+// 兼容旧登录态迁移
+var oldPhone = localStorage.getItem('recruit_current_phone');
+if (oldPhone && !Auth.isAuthenticated()) {
+  var user = mockUsers[oldPhone];
+  if (user) {
+    Auth.setCurrentUser(user);
+    localStorage.removeItem('recruit_current_phone');
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>平台商品列表</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+  /* 表格单元格不换行 */
+  .data-table thead th,
+  .data-table tbody td {
+    text-align: center;
+    white-space: nowrap;
+  }
+  .data-table .col-actions {
+    text-align: center;
+  }
+  /* 平台商品名称列允许换行 */
+  .data-table tbody td:nth-child(12),
+  .data-table thead th:nth-child(12) {
+    white-space: normal;
+    min-width: 140px;
+  }
+  /* 商品链接列 */
+  .data-table tbody td:nth-child(13) {
+    white-space: normal;
+    min-width: 120px;
+  }
+  </style>
+</head>
+<body>
+<div class="page-container">
+
+  <!-- Toast 轻提示容器 -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- 面包屑通知 -->
+  <script>
+    if (window.parent) {
+      window.parent.postMessage({type:'breadcrumb', text:'店铺引擎 <span>/</span> 平台商品列表'}, '*');
+    }
+  </script>
+
+  <div class="page-title">平台商品列表</div>
+
+  <!-- 搜索区域 -->
+  <div class="search-area">
+    <div class="search-row">
+      <div class="search-item">
+        <label>平台名称：</label>
+        <select id="searchPlatform">
+          <option value="">全部</option>
+          <option value="抖音">抖音</option>
+          <option value="快手">快手</option>
+          <option value="小红书">小红书</option>
+          <option value="淘宝">淘宝</option>
+          <option value="京东">京东</option>
+        </select>
+      </div>
+      <div class="search-item">
+        <label>店铺名称：</label>
+        <input type="text" id="searchShopName" placeholder="请输入店铺名称">
+      </div>
+      <div class="search-item">
+        <label>平台商品ID：</label>
+        <input type="text" id="searchPlatformProductId" placeholder="请输入平台商品ID">
+      </div>
+      <div class="search-item">
+        <label>状态：</label>
+        <select id="searchStatus">
+          <option value="">全部</option>
+          <option value="在售">在售</option>
+          <option value="下架">下架</option>
+          <option value="草稿">草稿</option>
+        </select>
+      </div>
+      <div class="search-item">
+        <label>产品线：</label>
+        <select id="searchProductLine">
+          <option value="">全部</option>
+          <option value="男装">男装</option>
+          <option value="女装">女装</option>
+          <option value="童装">童装</option>
+          <option value="运动">运动</option>
+        </select>
+      </div>
+    </div>
+    <div class="search-actions">
+      <button class="btn btn-primary" onclick="doSearch()">查询</button>
+      <button class="btn" onclick="resetSearch()">重置</button>
+    </div>
+    <div class="search-active-tags" id="searchTags" style="display:none;"></div>
+  </div>
+
+  <!-- 表格区域 -->
+  <div class="table-area">
+    <div class="table-toolbar">
+      <button class="btn btn-primary" onclick="doExport()">导出</button>
+    </div>
+
+    <div class="table-scroll">
+      <table class="data-table" id="dataTable">
+        <thead>
+          <tr>
+            <th style="width:40px;"><input type="checkbox" id="checkAll" onclick="toggleAll(this)"></th>
+            <th style="width:50px;">序号</th>
+            <th style="width:90px;">平台名称</th>
+            <th style="width:100px;">店铺编码</th>
+            <th style="width:130px;">店铺名称</th>
+            <th style="width:110px;">平台店铺ID</th>
+            <th style="width:100px;">商品款号</th>
+            <th style="width:100px;">SKU编码</th>
+            <th style="width:110px;">平台商品ID</th>
+            <th style="width:100px;">平台SKUID</th>
+            <th style="width:80px;">销售价</th>
+            <th style="width:130px;">平台商家SPU编码</th>
+            <th style="width:130px;">平台商家SKU编码</th>
+            <th style="width:160px;">平台商品名称</th>
+            <th style="width:140px;">商品链接</th>
+            <th style="width:80px;">中类名称</th>
+            <th style="width:80px;">产品线</th>
+            <th style="width:70px;">季节编码</th>
+            <th style="width:70px;">年份编码</th>
+            <th style="width:50px;">性别</th>
+            <th style="width:70px;">状态</th>
+            <th style="width:130px;">创建时间</th>
+            <th style="width:130px;">更新时间</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- 分页 -->
+    <div class="pagination" id="pagination">
+      <span class="page-info">共 <strong id="totalCount">0</strong> 条</span>
+      <span class="page-btn disabled">&laquo;</span>
+      <span class="page-btn active">1</span>
+      <span class="page-btn">2</span>
+      <span class="page-btn">&raquo;</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// 模拟数据
+var mockData = [
+  { id:1, platformName:'抖音', shopCode:'SHOP-DY-001', shopName:'潮流男装旗舰店', platformShopId:'DShop_88231', itemNo:'KN-2026-A01', skuCode:'SKU-BLUE-XL', platformProductId:'PDI_100238', platformSkuId:'PSKU_90012', salePrice:'199.00', merchantSpuCode:'MSPU-20260001', merchantSkuCode:'MSKU-20260001-XL', productName:'2026春季新款蓝色休闲衬衫男 XL码', productLink:'https://example.com/product/100238', category:'衬衫', productLine:'男装', seasonCode:'SP', yearCode:'2026', gender:'男', status:'在售', createTime:'2026-03-15 10:20:00', updateTime:'2026-07-20 14:30:00' },
+  { id:2, platformName:'快手', shopCode:'SHOP-KS-002', shopName:'时尚女装专营店', platformShopId:'KShop_55102', itemNo:'DR-2026-B03', skuCode:'SKU-RED-M', platformProductId:'PDI_200456', platformSkuId:'PSKU_88023', salePrice:'299.00', merchantSpuCode:'MSPU-20260012', merchantSkuCode:'MSKU-20260012-M', productName:'夏季新款红色连衣裙女 M码', productLink:'https://example.com/product/200456', category:'连衣裙', productLine:'女装', seasonCode:'SU', yearCode:'2026', gender:'女', status:'在售', createTime:'2026-04-02 09:00:00', updateTime:'2026-07-18 11:20:00' },
+  { id:3, platformName:'小红书', shopCode:'SHOP-XHS-003', shopName:'童装优选店', platformShopId:'XShop_77321', itemNo:'TS-2026-C02', skuCode:'SKU-WHITE-120', platformProductId:'PDI_300789', platformSkuId:'PSKU_77045', salePrice:'129.00', merchantSpuCode:'MSPU-20260025', merchantSkuCode:'MSKU-20260025-120', productName:'卡通印花纯棉T恤 白色 120码', productLink:'https://example.com/product/300789', category:'T恤', productLine:'童装', seasonCode:'SU', yearCode:'2026', gender:'中性', status:'下架', createTime:'2026-05-10 14:45:00', updateTime:'2026-07-15 09:10:00' },
+  { id:4, platformName:'淘宝', shopCode:'SHOP-TB-004', shopName:'运动户外专营店', platformShopId:'TShop_99012', itemNo:'JK-2026-D01', skuCode:'SKU-BLACK-L', platformProductId:'PDI_400123', platformSkuId:'PSKU_66078', salePrice:'459.00', merchantSpuCode:'MSPU-20260038', merchantSkuCode:'MSKU-20260038-L', productName:'秋季防风运动夹克 黑色 L码', productLink:'https://example.com/product/400123', category:'夹克', productLine:'运动', seasonCode:'AU', yearCode:'2026', gender:'男', status:'在售', createTime:'2026-06-01 08:30:00', updateTime:'2026-07-22 16:45:00' },
+  { id:5, platformName:'京东', shopCode:'SHOP-JD-005', shopName:'品质男装官方旗舰店', platformShopId:'JShop_33456', itemNo:'PN-2026-E05', skuCode:'SKU-GRAY-XL', platformProductId:'PDI_500678', platformSkuId:'PSKU_55091', salePrice:'259.00', merchantSpuCode:'MSPU-20260050', merchantSkuCode:'MSKU-20260050-XL', productName:'商务休闲西裤 灰色 XL码', productLink:'https://example.com/product/500678', category:'西裤', productLine:'男装', seasonCode:'AW', yearCode:'2026', gender:'男', status:'草稿', createTime:'2026-07-01 11:00:00', updateTime:'2026-07-25 10:00:00' },
+  { id:6, platformName:'抖音', shopCode:'SHOP-DY-001', shopName:'潮流男装旗舰店', platformShopId:'DShop_88231', itemNo:'SH-2026-F02', skuCode:'SKU-BEIGE-M', platformProductId:'PDI_100301', platformSkuId:'PSKU_90045', salePrice:'179.00', merchantSpuCode:'MSPU-20260062', merchantSkuCode:'MSKU-20260062-M', productName:'夏季薄款休闲短裤 米色 M码', productLink:'https://example.com/product/100301', category:'短裤', productLine:'男装', seasonCode:'SU', yearCode:'2026', gender:'男', status:'在售', createTime:'2026-06-20 15:30:00', updateTime:'2026-07-28 09:20:00' }
+];
+
+// 渲染表格
+function renderTable(data) {
+  var tbody = document.getElementById('tableBody');
+  var html = '';
+  if (data.length === 0) {
+    html = '<tr><td colspan="23" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无数据</div><div class="empty-hint">暂无符合条件的平台商品记录</div></td></tr>';
+  } else {
+    data.forEach(function(row, index) {
+      html += '<tr class="' + (row._checked ? 'row-selected' : '') + '">';
+      html += '<td><input type="checkbox" class="row-check" value="' + row.id + '" ' + (row._checked ? 'checked' : '') + ' onclick="toggleRow(this,' + row.id + ')"></td>';
+      html += '<td>' + (index + 1) + '</td>';
+      html += '<td>' + escapeHtml(row.platformName) + '</td>';
+      html += '<td>' + escapeHtml(row.shopCode) + '</td>';
+      html += '<td>' + escapeHtml(row.shopName) + '</td>';
+      html += '<td>' + escapeHtml(row.platformShopId) + '</td>';
+      html += '<td>' + escapeHtml(row.itemNo) + '</td>';
+      html += '<td>' + escapeHtml(row.skuCode) + '</td>';
+      html += '<td>' + escapeHtml(row.platformProductId) + '</td>';
+      html += '<td>' + escapeHtml(row.platformSkuId) + '</td>';
+      html += '<td>' + escapeHtml(row.salePrice) + '</td>';
+      html += '<td>' + escapeHtml(row.merchantSpuCode) + '</td>';
+      html += '<td>' + escapeHtml(row.merchantSkuCode) + '</td>';
+      html += '<td>' + escapeHtml(row.productName) + '</td>';
+      html += '<td><a href="' + escapeHtml(row.productLink) + '" target="_blank" class="link-action">查看链接</a></td>';
+      html += '<td>' + escapeHtml(row.category) + '</td>';
+      html += '<td>' + escapeHtml(row.productLine) + '</td>';
+      html += '<td>' + escapeHtml(row.seasonCode) + '</td>';
+      html += '<td>' + escapeHtml(row.yearCode) + '</td>';
+      html += '<td>' + escapeHtml(row.gender) + '</td>';
+      html += '<td>' + getStatusTag(row.status) + '</td>';
+      html += '<td>' + escapeHtml(row.createTime) + '</td>';
+      html += '<td>' + escapeHtml(row.updateTime) + '</td>';
+      html += '</tr>';
+    });
+  }
+  tbody.innerHTML = html;
+  document.getElementById('totalCount').textContent = data.length;
+  document.getElementById('checkAll').checked = false;
+}
+
+// 全选/取消全选
+function toggleAll(el) {
+  var checks = document.querySelectorAll('.row-check');
+  checks.forEach(function(c) {
+    c.checked = el.checked;
+    var tr = c.closest('tr');
+    if (tr) tr.classList.toggle('row-selected', el.checked);
+  });
+}
+function toggleRow(el, id) {
+  var tr = el.closest('tr');
+  if (tr) tr.classList.toggle('row-selected', el.checked);
+  updateCheckAll();
+}
+function updateCheckAll() {
+  var all = document.querySelectorAll('.row-check');
+  var checked = document.querySelectorAll('.row-check:checked');
+  document.getElementById('checkAll').checked = all.length > 0 && all.length === checked.length;
+}
+
+// 状态标签
+function getStatusTag(status) {
+  var cls = '';
+  switch(status) {
+    case '在售': cls = 'submitted'; break;
+    case '下架': cls = 'cancelled'; break;
+    case '草稿': cls = 'initial'; break;
+    default: cls = 'initial';
+  }
+  return '<span class="status-tag ' + cls + '">' + escapeHtml(status) + '</span>';
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// 搜索
+function doSearch() {
+  var platform = document.getElementById('searchPlatform').value;
+  var shopName = document.getElementById('searchShopName').value.trim();
+  var platformProductId = document.getElementById('searchPlatformProductId').value.trim();
+  var status = document.getElementById('searchStatus').value;
+  var productLine = document.getElementById('searchProductLine').value;
+  var filtered = mockData.filter(function(row) {
+    if (platform && row.platformName !== platform) return false;
+    if (shopName && row.shopName.indexOf(shopName) === -1) return false;
+    if (platformProductId && row.platformProductId.indexOf(platformProductId) === -1) return false;
+    if (status && row.status !== status) return false;
+    if (productLine && row.productLine !== productLine) return false;
+    return true;
+  });
+  renderTable(filtered);
+  showSearchTags();
+}
+
+function resetSearch() {
+  document.getElementById('searchPlatform').value = '';
+  document.getElementById('searchShopName').value = '';
+  document.getElementById('searchPlatformProductId').value = '';
+  document.getElementById('searchStatus').value = '';
+  document.getElementById('searchProductLine').value = '';
+  renderTable(mockData);
+  hideSearchTags();
+}
+
+// 搜索条件标签
+function showSearchTags() {
+  var tags = [];
+  var platform = document.getElementById('searchPlatform').value;
+  var shopName = document.getElementById('searchShopName').value.trim();
+  var platformProductId = document.getElementById('searchPlatformProductId').value.trim();
+  var status = document.getElementById('searchStatus').value;
+  var productLine = document.getElementById('searchProductLine').value;
+  if (platform) tags.push({label:'平台名称: '+platform, field:'searchPlatform'});
+  if (shopName) tags.push({label:'店铺名称: '+shopName, field:'searchShopName'});
+  if (platformProductId) tags.push({label:'平台商品ID: '+platformProductId, field:'searchPlatformProductId'});
+  if (status) tags.push({label:'状态: '+status, field:'searchStatus'});
+  if (productLine) tags.push({label:'产品线: '+productLine, field:'searchProductLine'});
+  var container = document.getElementById('searchTags');
+  if (tags.length === 0) { container.style.display = 'none'; return; }
+  container.style.display = '';
+  container.innerHTML = tags.map(function(t) {
+    return '<span class="active-tag" onclick="clearTag(\''+t.field+'\')">'+t.label+' ×</span>';
+  }).join('');
+}
+function hideSearchTags() {
+  document.getElementById('searchTags').style.display = 'none';
+}
+function clearTag(field) {
+  var el = document.getElementById(field);
+  if (el.tagName === 'SELECT') el.value = '';
+  else el.value = '';
+  doSearch();
+}
+
+// 导出（模拟）
+function doExport() {
+  showToast('导出功能开发中，敬请期待', 'info');
+}
+
+// Toast 轻提示
+function showToast(msg, type) {
+  var container = document.getElementById('toastContainer');
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + (type || 'info');
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(function() { toast.classList.add('toast-hide'); }, 2500);
+  setTimeout(function() { toast.remove(); }, 3000);
+}
+
+// 初始化渲染
+renderTable(mockData);
+</script>
+</body>
+</html>

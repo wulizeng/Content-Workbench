@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>直播账号编辑</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+    .page-container { min-height: 100vh; background: #f5f7fb; padding: 24px 28px; }
+    .page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .page-title { font-size: 18px; font-weight: 700; color: var(--text); flex: 1; }
+    .form-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+    .form-card-title { font-size: 15px; font-weight: 700; color: var(--text, #0f172a); margin: 0 0 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border-light); }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; }
+    .form-group { display: flex; flex-direction: column; }
+    .form-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+    .form-label .required { color: #ef4444; margin-left: 2px; }
+    .form-input, .form-select { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 9px; font: inherit; font-size: 13px; outline: none; background: #fafbfd; box-sizing: border-box; transition: border-color .18s; }
+    .form-input:focus, .form-select:focus { border-color: var(--primary); background: #fff; }
+    .field-error { display: none; color: #dc2626; font-size: 12px; margin-top: 5px; }
+    .has-error .form-input, .has-error .form-select { border-color: #ef4444; background: #fef2f2; }
+    .has-error .field-error { display: block; }
+    .form-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 0; }
+    @media (max-width: 640px) {
+      .page-container { padding: 16px; }
+      .form-card { padding: 16px; }
+      .form-grid { grid-template-columns: 1fr; gap: 14px; }
+    }
+  </style>
+</head>
+<body>
+<div class="page-container">
+  <div id="toastContainer" class="toast-container"></div>
+
+  <div class="page-header">
+    <button class="btn" onclick="goBack()" style="display:flex;align-items:center;gap:4px;padding:6px 12px;height:auto;">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      返回
+    </button>
+    <div class="page-title" id="pageTitle">新增直播账号</div>
+  </div>
+
+  <form id="mainForm">
+    <div class="form-card">
+      <h3 class="form-card-title">账号信息</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">申请类型 <span class="required">*</span></label>
+          <select class="form-select" id="applyType">
+            <option value="">请选择申请类型</option>
+            <option value="新增">新增</option>
+            <option value="修改">修改</option>
+            <option value="停用">停用</option>
+            <option value="启用">启用</option>
+          </select>
+          <div class="field-error">申请类型为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">账号所属平台 <span class="required">*</span></label>
+          <select class="form-select" id="platform">
+            <option value="">请选择账号所属平台</option>
+            <option value="抖音">抖音 (Z142)</option>
+            <option value="快手">快手 (Z143)</option>
+            <option value="小红书">小红书 (Z128)</option>
+          </select>
+          <div class="field-error">账号所属平台为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">账号昵称 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="nickname" placeholder="请输入账号昵称" maxlength="50">
+          <div class="field-error">账号昵称为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">账号UID <span class="required">*</span></label>
+          <input type="text" class="form-input" id="uid" placeholder="请输入账号UID" maxlength="50">
+          <div class="field-error">账号UID为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">账号类型 <span class="required">*</span></label>
+          <select class="form-select" id="accountType">
+            <option value="">请选择账号类型</option>
+            <option value="蓝V">蓝V (AT001)</option>
+            <option value="个人号">个人号 (AT002)</option>
+          </select>
+          <div class="field-error">账号类型为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">账号运营模式 <span class="required">*</span></label>
+          <select class="form-select" id="operationMode">
+            <option value="">请选择账号运营模式</option>
+            <option value="自播">自播 (A0001)</option>
+            <option value="达人播">达人播 (A0004)</option>
+            <option value="代播">代播 (A0006)</option>
+            <option value="分销">分销 (A0007)</option>
+            <option value="其他">其他 (A0008)</option>
+            <option value="商品卡">商品卡 (A0015)</option>
+            <option value="分销一组">分销一组 (A0016)</option>
+            <option value="分销二组">分销二组 (A0017)</option>
+            <option value="短视频">短视频 (A0018)</option>
+            <option value="头部达人">头部达人 (A0019)</option>
+            <option value="头达矩阵号">头达矩阵号 (A0020)</option>
+            <option value="新锐达人">新锐达人 (A0021)</option>
+            <option value="达人机构">达人机构 (A0022)</option>
+          </select>
+          <div class="field-error">账号运营模式为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">账号负责人 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="owner" placeholder="请输入账号负责人" maxlength="50">
+          <div class="field-error">账号负责人为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">主销品牌 <span class="required">*</span></label>
+          <select class="form-select" id="brand">
+            <option value="">请选择主销品牌</option>
+            <option value="品牌A">品牌A</option>
+            <option value="品牌B">品牌B</option>
+            <option value="品牌C">品牌C</option>
+          </select>
+          <div class="field-error">主销品牌为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">联系人手机号 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="contactPhone" placeholder="请输入联系人手机号" maxlength="11">
+          <div class="field-error">联系人手机号为必填项</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn" onclick="goBack()">取消</button>
+      <button type="button" class="btn btn-primary" onclick="doSubmit()">保存</button>
+    </div>
+  </form>
+</div>
+
+<script src="../../js/auth.js"></script>
+<script>
+if (!Auth.requireAuth()) {}
+
+var STORAGE_KEY = 'recruit_live_accounts';
+
+if (window.parent) {
+  window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 客户视角 <span>/</span> 直播账号管理 <span>/</span> 编辑'}, '*');
+}
+
+function g(name) { var r = location.search.match(new RegExp('[?&]' + name + '=([^&]*)')); return r ? decodeURIComponent(r[1]) : ''; }
+var mode = g('mode') || 'add';
+var editId = parseInt(g('id')) || 0;
+
+var FIELD_MAP = {
+  applyType: 'apply_type', platform: 'platform', nickname: 'nickname',
+  operationMode: 'operation_mode', uid: 'uid', accountType: 'account_type',
+  owner: 'owner', brand: 'brand', contactPhone: 'contact_phone'
+};
+
+var REQUIRED_FIELDS = ['applyType','platform','nickname','uid','accountType','operationMode','owner','brand','contactPhone'];
+
+function init() {
+  if (mode === 'edit' && editId > 0) {
+    document.getElementById('pageTitle').textContent = '编辑直播账号';
+    var list = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    var record = list.find(function(r) { return r.id === editId; });
+    if (record) {
+      Object.keys(FIELD_MAP).forEach(function(formId) {
+        var el = document.getElementById(formId);
+        if (el) el.value = record[FIELD_MAP[formId]] || '';
+      });
+    } else {
+      showToast('未找到该直播账号', 'error');
+    }
+  }
+}
+
+function clearErrors() { document.querySelectorAll('.form-group').forEach(function(g) { g.classList.remove('has-error'); }); }
+
+function validate() {
+  clearErrors();
+  var ok = true;
+  REQUIRED_FIELDS.forEach(function(fieldId) {
+    var el = document.getElementById(fieldId);
+    if (el && !el.value.trim()) { el.closest('.form-group').classList.add('has-error'); ok = false; }
+  });
+  return ok;
+}
+
+function doSubmit() {
+  if (!validate()) { showToast('请完善必填项', 'error'); return; }
+
+  var list = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  var data = {};
+  Object.keys(FIELD_MAP).forEach(function(formId) {
+    data[FIELD_MAP[formId]] = document.getElementById(formId).value.trim();
+  });
+
+  if (mode === 'edit' && editId > 0) {
+    var idx = list.findIndex(function(r) { return r.id === editId; });
+    if (idx >= 0) {
+      data.id = editId;
+      // 保留原有完整数据（运营视角填写的字段）
+      var existing = list[idx];
+      for (var key in existing) { if (!(key in data)) data[key] = existing[key]; }
+      list[idx] = data;
+    }
+  } else {
+    data.id = list.length > 0 ? Math.max.apply(null, list.map(function(r) { return r.id; })) + 1 : 1;
+    data.creator = currentUser ? currentUser.name : '';
+    data.created_at = now();
+    list.push(data);
+  }
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  showToast(mode === 'edit' ? '保存成功' : '新增成功', 'success');
+  setTimeout(function() { goBack(); }, 400);
+}
+
+function now() { return new Date().toLocaleString('zh-CN', {hour12: false}).replace(/\//g, '-'); }
+function goBack() { location.href = 'live-account-client.html'; }
+
+function showToast(message, type) {
+  type = type || 'info';
+  var c = document.getElementById('toastContainer'); if (!c) return;
+  var t = document.createElement('div'); t.className = 'toast toast-' + type; t.textContent = message; c.appendChild(t);
+  setTimeout(function() { if (t.parentNode) { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 300); } }, 2500);
+}
+
+init();
+</script>
+</body>
+</html>

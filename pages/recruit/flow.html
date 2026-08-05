@@ -95,15 +95,20 @@
   .stage-count { color:var(--muted); font-size:12px; margin-top:2px; }
   .stage-done { color:#94a3b8; font-size:12px; font-weight:700; font-variant-numeric:tabular-nums; }
 
-  .flow-map { position:relative; display:grid; grid-template-columns:repeat(6,minmax(28px,1fr)); grid-auto-rows:minmax(34px,auto); gap:10px 8px; margin-bottom:24px; padding:24px; border:1px solid rgba(37,104,217,.14); border-radius:var(--radius); background:linear-gradient(180deg, rgba(255,255,255,.9), rgba(248,252,255,.82)), linear-gradient(135deg, rgba(5,128,111,.12), rgba(37,104,217,.1), rgba(221,77,59,.08)); box-shadow:0 22px 48px rgba(37,104,217,.12); overflow:hidden; }
-  .flow-map::after { content:""; position:absolute; inset:44px 48px; border:2px dashed rgba(37,104,217,.18); border-radius:var(--radius); pointer-events:none; }
-  .maze-link { position:relative; z-index:1; pointer-events:none; }
-  .maze-link::before { content:""; position:absolute; background:repeating-linear-gradient(90deg, rgba(255,255,255,.48) 0 8px, transparent 8px 17px), linear-gradient(90deg, color-mix(in srgb, var(--link-color,var(--primary)) 58%, #bfe8ff), color-mix(in srgb, var(--link-color,var(--primary)) 30%, #ffe0f2)); border-radius:999px; box-shadow:0 0 0 4px rgba(255,255,255,.76), 0 8px 18px color-mix(in srgb, var(--link-color,var(--primary)) 16%, transparent); }
-  .maze-link.h::before { left:-22px; right:-22px; top:50%; height:6px; transform:translateY(-50%); }
-  .maze-link.v::before { top:-18px; bottom:-18px; left:50%; width:6px; transform:translateX(-50%); }
+  .flow-map { position:relative; display:flex; flex-direction:column; gap:30px; margin-bottom:24px; padding:24px; border:1px solid rgba(37,104,217,.14); border-radius:var(--radius); background:linear-gradient(180deg, rgba(255,255,255,.9), rgba(248,252,255,.82)), linear-gradient(135deg, rgba(5,128,111,.12), rgba(37,104,217,.1), rgba(221,77,59,.08)); box-shadow:0 22px 48px rgba(37,104,217,.12); overflow:hidden; }
+  .flow-map::after { content:""; position:absolute; inset:16px 20px; border:2px dashed rgba(37,104,217,.18); border-radius:var(--radius); pointer-events:none; }
+  .maze-row { position:relative; display:flex; align-items:stretch; gap:22px; }
+  .maze-row.reverse { flex-direction:row-reverse; }
+  .maze-arrow { flex:0 0 auto; align-self:center; width:20px; height:20px; display:grid; place-items:center; color:var(--link-color,var(--primary)); opacity:.55; }
+  .maze-arrow svg { width:16px; height:16px; }
+  .maze-row.reverse .maze-arrow svg { transform:scaleX(-1); }
+  .maze-turn { position:absolute; top:100%; margin-top:5px; width:26px; height:20px; display:grid; place-items:center; color:var(--link-color,var(--primary)); opacity:.55; }
+  .maze-turn.right { right:6px; }
+  .maze-turn.left { left:6px; }
+  .maze-turn svg { width:16px; height:16px; }
 
   .flow-node {
-    position:relative; z-index:2; border:2px solid color-mix(in srgb, var(--stage-color,var(--primary)) 26%, #ffffff);
+    position:relative; z-index:2; flex:1 1 0; min-width:0; border:2px solid color-mix(in srgb, var(--stage-color,var(--primary)) 26%, #ffffff);
     background:
       radial-gradient(circle at 18% 18%, rgba(255,255,255,.96), transparent 27%),
       linear-gradient(145deg, rgba(255,255,255,.98), color-mix(in srgb, var(--stage-soft,var(--primary-soft)) 78%, #ffffff)),
@@ -119,7 +124,7 @@
   .flow-node h3 { font-size:13px; line-height:1.3; margin-bottom:3px; color:#243044; font-weight:800; }
   .flow-node p { width:fit-content; min-height:20px; padding:2px 7px; border-radius:999px; color:color-mix(in srgb, var(--stage-color,var(--primary)) 62%, #374151); background:color-mix(in srgb, var(--stage-color,var(--primary)) 10%, #ffffff); font-size:11px; line-height:1.5; font-weight:700; }
 
-  .content-grid { display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:24px; align-items:start; margin-bottom:24px; }
+  .content-grid { display:grid; grid-template-columns:minmax(0,1fr); gap:24px; align-items:start; margin-bottom:24px; }
   .stage-panel, .detail-panel { border:1px solid var(--line); border-radius:var(--radius); background:rgba(255,255,255,.92); box-shadow:0 18px 42px rgba(17,24,39,.1); }
   .panel-head { padding:20px; border-bottom:1px solid var(--line); background:linear-gradient(90deg, rgba(255,255,255,.92), rgba(248,251,255,.92)), linear-gradient(135deg, var(--active-soft,var(--primary-soft)), transparent); display:flex; justify-content:space-between; align-items:flex-start; gap:16px; }
   .panel-head h3 { font-size:20px; line-height:1.25; }
@@ -138,7 +143,24 @@
   .step-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:9px; }
   .tag { display:inline-flex; align-items:center; min-height:24px; padding:3px 8px; border-radius:999px; color:color-mix(in srgb, var(--stage-color,var(--primary)) 52%, #243247); background:color-mix(in srgb, var(--stage-color,var(--primary)) 10%, #eef3f8); font-size:11px; font-weight:650; }
 
-  .detail-panel { position:sticky; top:20px; overflow:hidden; }
+  .detail-panel {
+    position:fixed; top:0; right:0; height:100dvh; width:400px; max-width:92vw;
+    border-radius:0; border-left:1px solid var(--line); border-top:none; border-right:none; border-bottom:none;
+    box-shadow:-24px 0 48px rgba(17,24,39,.18); z-index:60; overflow-y:auto;
+    transform:translateX(100%); transition:transform .28s ease;
+  }
+  .detail-panel.open { transform:translateX(0); }
+  .detail-overlay {
+    position:fixed; inset:0; background:rgba(15,23,42,.38); z-index:59;
+    opacity:0; pointer-events:none; transition:opacity .28s ease;
+  }
+  .detail-overlay.open { opacity:1; pointer-events:auto; }
+  .detail-close {
+    position:absolute; top:16px; right:16px; z-index:2; width:32px; height:32px; border-radius:999px;
+    border:none; background:rgba(15,23,42,.06); color:var(--muted); font-size:18px; line-height:1;
+    display:grid; place-items:center; transition:background .15s ease;
+  }
+  .detail-close:hover { background:rgba(15,23,42,.12); }
   .detail-accent { height:8px; background:var(--primary); }
   .detail-body { padding:20px; background:linear-gradient(180deg, rgba(255,255,255,.96), rgba(249,251,255,.94)), linear-gradient(135deg, var(--detail-soft,var(--primary-soft)), transparent); }
   .detail-kicker { color:var(--muted); font-size:12px; font-weight:700; margin-bottom:8px; }
@@ -161,14 +183,13 @@
 
   @media (max-width:1100px) {
     .stage-nav { grid-template-columns:1fr; }
-    .content-grid { grid-template-columns:1fr; }
-    .detail-panel { position:static; }
   }
   @media (max-width:760px) {
     main { padding:16px; }
-    .flow-map { grid-template-columns:1fr; grid-auto-rows:auto; padding:16px; }
-    .flow-map::after, .maze-link { display:none; }
-    .flow-node { grid-column:1 !important; grid-row:auto !important; }
+    .flow-map { padding:16px; gap:36px; }
+    .maze-row, .maze-row.reverse { flex-direction:column; gap:24px; }
+    .maze-arrow { display:none; }
+    .maze-turn { display:none; }
   }
 </style>
 </head>
@@ -176,7 +197,7 @@
 
 <script>
   if (window.parent) {
-    window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 招商入驻流程'}, '*');
+    window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 入驻流程'}, '*');
   }
 </script>
 
@@ -241,7 +262,8 @@
       <div class="steps" id="steps"></div>
     </article>
 
-    <aside class="detail-panel" aria-label="流程节点说明">
+    <aside class="detail-panel" id="detailPanel" aria-label="流程节点说明">
+      <button class="detail-close" type="button" id="detailCloseBtn" aria-label="关闭">&times;</button>
       <div class="detail-accent" id="detailAccent"></div>
       <div class="detail-body">
         <div class="detail-kicker" id="detailKicker">步骤 1</div>
@@ -251,6 +273,9 @@
       </div>
     </aside>
   </section>
+
+  <div class="detail-overlay" id="detailOverlay"></div>
+
 
   <section class="compare-panel">
     <div class="panel-head">
@@ -370,7 +395,9 @@
   const detailDescription = document.getElementById("detailDescription");
   const detailList = document.getElementById("detailList");
   const stagePanelEl = document.querySelector(".stage-panel");
-  const detailPanelEl = document.querySelector(".detail-panel");
+  const detailPanelEl = document.getElementById("detailPanel");
+  const detailOverlayEl = document.getElementById("detailOverlay");
+  const detailCloseBtn = document.getElementById("detailCloseBtn");
 
   function key(stageIndex, stepIndex) { return stageIndex + "-" + stepIndex; }
 
@@ -382,10 +409,18 @@
     return stages.flatMap((stage, stageIndex) => stage.steps.map((step, stepIndex) => ({ stage, stageIndex, step, stepIndex })));
   }
 
-  function mazePosition(index) {
-    const rowBlock = Math.floor(index / 4);
-    const offset = index % 4;
-    return { row: rowBlock * 2 + 1, col: rowBlock % 2 === 0 ? offset * 2 + 1 : 7 - offset * 2 };
+  const NODES_PER_ROW = 4;
+
+  function mazeRowCount(total) {
+    return Math.ceil(total / NODES_PER_ROW);
+  }
+
+  function iconArrow() {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  }
+
+  function iconTurn() {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4v8a4 4 0 0 0 4 4h8m0 0-4-4m4 4-4 4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   }
 
   function currentFlatIndex() {
@@ -429,29 +464,36 @@
     const stage = stages[activeStage];
     flowMap.style.setProperty("--stage-color", stage.color);
 
-    const nodeMarkup = nodes.map((step, index) => {
-      const pos = mazePosition(index);
-      return `
-        <button class="flow-node ${step.skip ? "skip" : ""}" type="button" data-step="${index}" style="--stage-color:${stage.color}; --stage-soft:${stage.soft}; grid-column:${pos.col}; grid-row:${pos.row}">
-          <span class="flow-node-head">${step.skip ? "⏭" : index + 1}</span>
-          <span>
-            <h3>${step.title}</h3>
-            <p>${stage.short}</p>
-          </span>
-        </button>
-      `;
-    }).join("");
+    const rowCount = mazeRowCount(nodes.length);
+    let rowsHtml = "";
+    for (let r = 0; r < rowCount; r++) {
+      const isReverse = r % 2 === 1;
+      const start = r * NODES_PER_ROW;
+      const rowNodes = nodes.slice(start, start + NODES_PER_ROW);
 
-    const links = nodes.slice(0, -1).map((item, index) => {
-      const current = mazePosition(index);
-      const next = mazePosition(index + 1);
-      const klass = current.row === next.row ? "h" : "v";
-      const row = current.row === next.row ? current.row : Math.min(current.row, next.row) + 1;
-      const col = current.row === next.row ? Math.min(current.col, next.col) + 1 : current.col;
-      return `<span class="maze-link ${klass}" style="--link-color:${stage.color}; grid-column:${col}; grid-row:${row}"></span>`;
-    }).join("");
+      const nodeMarkup = rowNodes.map((step, i) => {
+        const index = start + i;
+        const arrow = (i < rowNodes.length - 1) ? `<span class="maze-arrow" style="--link-color:${stage.color}">${iconArrow()}</span>` : "";
+        return `
+          <button class="flow-node ${step.skip ? "skip" : ""}" type="button" data-step="${index}" style="--stage-color:${stage.color}; --stage-soft:${stage.soft}">
+            <span class="flow-node-head">${step.skip ? "⏭" : index + 1}</span>
+            <span>
+              <h3>${step.title}</h3>
+              <p>${stage.short}</p>
+            </span>
+          </button>
+          ${arrow}
+        `;
+      }).join("");
 
-    flowMap.innerHTML = links + nodeMarkup;
+      const hasNextRow = r < rowCount - 1;
+      const turnSide = isReverse ? "left" : "right";
+      const turn = hasNextRow ? `<span class="maze-turn ${turnSide}" style="--link-color:${stage.color}">${iconTurn()}</span>` : "";
+
+      rowsHtml += `<div class="maze-row ${isReverse ? "reverse" : ""}">${nodeMarkup}${turn}</div>`;
+    }
+
+    flowMap.innerHTML = rowsHtml;
 
     flowMap.querySelectorAll(".flow-node").forEach(button => {
       button.addEventListener("click", () => {
@@ -459,11 +501,26 @@
         renderDetail();
         renderSteps();
         updateFlowMapState();
+        openDetailPanel();
       });
     });
 
     updateFlowMapState();
   }
+
+  function openDetailPanel() {
+    detailPanelEl.classList.add("open");
+    detailOverlayEl.classList.add("open");
+  }
+
+  function closeDetailPanel() {
+    detailPanelEl.classList.remove("open");
+    detailOverlayEl.classList.remove("open");
+  }
+
+  detailCloseBtn.addEventListener("click", closeDetailPanel);
+  detailOverlayEl.addEventListener("click", closeDetailPanel);
+
 
   function updateFlowMapState() {
     flowMap.querySelectorAll(".flow-node").forEach(button => {
@@ -493,6 +550,7 @@
         renderDetail();
         renderSteps();
         updateFlowMapState();
+        openDetailPanel();
       });
     });
   }

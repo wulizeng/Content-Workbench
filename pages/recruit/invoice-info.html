@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>开票信息录入 - 列表</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    /* 桌面端：操作列图标+文字链接 */
+    .link-action-icon { display: inline-flex; align-items: center; gap: 4px; }
+    .link-action-icon svg { flex-shrink: 0; }
+    /* 主表字段较多：单元格统一不换行，横向滚动查看 */
+    #dataTable th, #dataTable td { white-space: nowrap; }
+    /* 操作列固定在右侧 */
+    #dataTable thead th:last-child,
+    #dataTable td.col-actions { position: sticky; right: 0; z-index: 2; }
+    #dataTable td.col-actions {
+      background: #fff;
+      box-shadow: inset 1px 0 0 var(--border-light);
+    }
+    #dataTable tbody tr:hover td.col-actions { background: var(--primary-50); }
+    /* 纳税人类别灰色标签 */
+    .type-tag {
+      display: inline-flex; align-items: center; padding: 1px 9px; border-radius: 10px;
+      background: #f1f5f9; color: var(--text-secondary); font-size: 12px; font-weight: 600;
+      line-height: 1.6; white-space: nowrap;
+    }
+    /* 移动端（<1024px）：卡片流替代宽表格 */
+    .card-list { display: none; }
+    @media (max-width: 1023px) {
+      .table-area .table-scroll, .table-area .pagination { display: none; }
+      .card-list { display: block; }
+      .invoice-card {
+        background: #fff; border: 1px solid var(--border); border-radius: 12px;
+        padding: 14px 16px; margin-bottom: 12px;
+      }
+      .invoice-card-head {
+        display: flex; justify-content: space-between; align-items: center;
+        gap: 10px; margin-bottom: 10px;
+      }
+      .invoice-card-head .name { font-size: 15px; font-weight: 700; color: var(--text); }
+      .invoice-card-body { font-size: 13px; color: var(--text-secondary); line-height: 1.9; }
+      .invoice-card-foot {
+        display: flex; justify-content: flex-end;
+        margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-light);
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page-container">
+
+  <!-- Toast 轻提示容器 -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="../../js/auth.js"></script>
+  <script>
+    // 权限检查
+    if (!Auth.requireAuth()) {
+      // 已在 requireAuth 中跳转到登录页
+    }
+
+    var currentUser = Auth.getCurrentUser();
+
+    if (window.parent) {
+      window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 客户视角 <span>/</span> 开票信息录入'}, '*');
+    }
+  </script>
+
+  <div class="page-title" style="display:flex;align-items:center;gap:12px;">
+    <span>开票信息录入列表</span>
+    <a class="btn btn-primary" style="margin-left:auto;padding:6px 16px;font-size:13px;" href="invoice-info-edit.html?mode=add">新增</a>
+  </div>
+
+  <div class="search-area">
+    <div class="search-row">
+      <div class="search-item">
+        <label>开票抬头：</label>
+        <input type="text" id="sFullName" placeholder="请输入开票抬头">
+      </div>
+      <div class="search-item">
+        <label>纳税人识别号：</label>
+        <input type="text" id="sTaxRegNo" placeholder="请输入纳税人识别号">
+      </div>
+      <div class="search-item">
+        <label>银行名称：</label>
+        <input type="text" id="sBankName" placeholder="请输入银行名称">
+      </div>
+      <div class="search-item">
+        <label>开户省：</label>
+        <input type="text" id="sBankProvince" placeholder="请输入开户省">
+      </div>
+      <div class="search-item">
+        <label>纳税人类别：</label>
+        <select id="sTaxpayerType">
+          <option value="">全部</option>
+          <option value="一般纳税人">一般纳税人</option>
+          <option value="小规模纳税人">小规模纳税人</option>
+          <option value="其他">其他</option>
+        </select>
+      </div>
+    </div>
+    <div class="search-actions">
+      <button class="btn btn-primary" onclick="doSearch()">查询</button>
+      <button class="btn" onclick="resetSearch()">重置</button>
+    </div>
+    <div class="search-active-tags" id="searchTags" style="display:none;"></div>
+  </div>
+
+  <div class="card-list" id="cardList"></div>
+
+  <div class="table-area">
+    <div class="table-scroll">
+      <table class="data-table" id="dataTable">
+        <thead>
+          <tr>
+            <th>序号</th>
+            <th>开票抬头</th>
+            <th>注册地址</th>
+            <th>纳税人识别号</th>
+            <th>开户行</th>
+            <th>银行代码</th>
+            <th>银行名称</th>
+            <th>银行账户名称</th>
+            <th>银行联行号</th>
+            <th>开户省</th>
+            <th>开户市</th>
+            <th>纳税人类别</th>
+            <th>银行账号</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <span class="page-info">共 <strong id="totalCount">0</strong> 条</span>
+      <span class="page-btn disabled">&laquo;</span>
+      <span class="page-btn active">1</span>
+      <span class="page-btn">&raquo;</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+var STORAGE_KEY = 'recruit_supplier_applications';
+
+var mockData = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+
+// 无值字段统一显示为空
+function esc(s) {
+  if (s === null || s === undefined || s === '') return '';
+  var d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function renderTable(data) {
+  var tbody = document.getElementById('tableBody');
+  var html = '';
+  if (data.length === 0) {
+    html = '<tr><td colspan="14" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无数据</div><div class="empty-hint">暂无符合条件的开票信息</div></td></tr>';
+  } else {
+    data.forEach(function(row, index) {
+      html += '<tr>';
+      html += '<td>' + (index + 1) + '</td>';
+      html += '<td>' + esc(row.supplier_full_name) + '</td>';
+      html += '<td>' + esc(row.street_address) + '</td>';
+      html += '<td>' + esc(row.tax_reg_no) + '</td>';
+      html += '<td>' + esc(row.bank_branch) + '</td>';
+      html += '<td>' + esc(row.bank_code) + '</td>';
+      html += '<td>' + esc(row.bank_name) + '</td>';
+      html += '<td>' + esc(row.account_holder) + '</td>';
+      html += '<td>' + esc(row.bank_cnaps_no) + '</td>';
+      html += '<td>' + esc(row.bank_province) + '</td>';
+      html += '<td>' + esc(row.bank_city) + '</td>';
+      html += '<td>' + (row.taxpayer_type ? '<span class="type-tag">' + esc(row.taxpayer_type) + '</span>' : '') + '</td>';
+      html += '<td>' + esc(row.payee_account) + '</td>';
+      html += '<td class="col-actions">';
+      html += '<a class="link-action link-action-icon" title="编辑" href="invoice-info-edit.html?mode=edit&id=' + row.id + '"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>编辑</a>';
+      html += '<a class="link-action link-action-icon" title="查看详情" href="invoice-info-detail.html?id=' + row.id + '" style="margin-left:8px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>查看</a>';
+      html += '</td></tr>';
+    });
+  }
+  tbody.innerHTML = html;
+  document.getElementById('totalCount').textContent = data.length;
+}
+
+function renderCards(data) {
+  var list = document.getElementById('cardList');
+  var html = '';
+  if (data.length === 0) {
+    html = '<div class="invoice-card"><div class="invoice-card-body">暂无符合条件的开票信息</div></div>';
+  } else {
+    data.forEach(function(row) {
+      html += '<div class="invoice-card">';
+      html += '<div class="invoice-card-head"><span class="name">' + esc(row.supplier_full_name) + '</span>' +
+        (row.taxpayer_type ? '<span class="type-tag">' + esc(row.taxpayer_type) + '</span>' : '') + '</div>';
+      html += '<div class="invoice-card-body">';
+      html += '<div>纳税人识别号：' + esc(row.tax_reg_no) + '</div>';
+      html += '<div>银行名称：' + esc(row.bank_name) + '</div>';
+      html += '<div>银行账号：' + esc(row.payee_account) + '</div>';
+      html += '</div>';
+      html += '<div class="invoice-card-foot">' +
+        '<a class="btn" style="height:48px;line-height:48px;padding:0 16px;margin-right:8px;" href="invoice-info-edit.html?mode=edit&id=' + row.id + '">编辑</a>' +
+        '<a class="btn btn-primary" style="height:48px;line-height:48px;padding:0 16px;" href="invoice-info-detail.html?id=' + row.id + '">查看详情</a>' +
+        '</div>';
+      html += '</div>';
+    });
+  }
+  list.innerHTML = html;
+}
+
+var currentFiltered = mockData.slice();
+
+function isMobileView() {
+  return window.matchMedia('(max-width: 1023px)').matches;
+}
+
+function renderView(data) {
+  currentFiltered = data;
+  if (isMobileView()) renderCards(data);
+  else renderTable(data);
+}
+
+function filterData() {
+  var full = document.getElementById('sFullName').value.trim();
+  var tax = document.getElementById('sTaxRegNo').value.trim();
+  var bank = document.getElementById('sBankName').value.trim();
+  var province = document.getElementById('sBankProvince').value.trim();
+  var type = document.getElementById('sTaxpayerType').value;
+  return mockData.filter(function(x) {
+    if (full && (x.supplier_full_name || '').indexOf(full) < 0) return false;
+    if (tax && (x.tax_reg_no || '').indexOf(tax) < 0) return false;
+    if (bank && (x.bank_name || '').indexOf(bank) < 0) return false;
+    if (province && (x.bank_province || '').indexOf(province) < 0) return false;
+    if (type && x.taxpayer_type !== type) return false;
+    return true;
+  });
+}
+
+function doSearch() {
+  renderView(filterData());
+  showSearchTags();
+}
+
+function resetSearch() {
+  ['sFullName', 'sTaxRegNo', 'sBankName', 'sBankProvince', 'sTaxpayerType'].forEach(function(id) {
+    document.getElementById(id).value = '';
+  });
+  renderView(mockData);
+  showSearchTags();
+}
+
+function showSearchTags() {
+  var map = {
+    sFullName: '开票抬头', sTaxRegNo: '纳税人识别号',
+    sBankName: '银行名称', sBankProvince: '开户省', sTaxpayerType: '纳税人类别'
+  };
+  var tags = [];
+  Object.keys(map).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el && el.value) tags.push({ name: map[id], value: el.value, id: id });
+  });
+  var container = document.getElementById('searchTags');
+  if (!container) return;
+  if (tags.length === 0) { container.style.display = 'none'; container.innerHTML = ''; return; }
+  var html = '';
+  tags.forEach(function(t) {
+    html += '<span class="search-active-tag">' + t.name + '：' + esc(t.value) + '<span class="tag-remove" onclick="clearSearchTag(\'' + t.id + '\')">&times;</span></span>';
+  });
+  container.style.display = '';
+  container.innerHTML = html;
+}
+
+function clearSearchTag(id) {
+  document.getElementById(id).value = '';
+  doSearch();
+}
+
+// Toast 轻提示
+function showToast(message, type) {
+  type = type || 'info';
+  var container = document.getElementById('toastContainer');
+  if (!container) return;
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(function() {
+    if (toast.parentNode) {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s';
+      setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+    }
+  }, 2500);
+}
+
+window.addEventListener('resize', function() { renderView(currentFiltered); });
+
+// 从编辑页返回时自动刷新数据
+window.addEventListener('pageshow', function() {
+  mockData = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  renderView(mockData);
+});
+
+renderView(mockData);
+</script>
+</body>
+</html>

@@ -355,6 +355,7 @@
             <th style="width:60px;text-align:center;">异常</th>
             <th style="width:60px;text-align:center;">检查失败</th>
             <th style="width:70px;text-align:center;">属性已上传</th>
+            <th style="width:70px;text-align:center;">上传中</th>
             <th style="width:70px;text-align:center;">属性未上传</th>
             <th style="width:60px;text-align:center;">上传失败</th>
             <th style="width:80px;">创建人</th>
@@ -482,6 +483,7 @@
           <select id="aAttrStatus">
             <option value="">全部</option>
             <option value="未上传">未上传</option>
+            <option value="上传中">上传中</option>
             <option value="已上传">已上传</option>
             <option value="上传失败">上传失败</option>
           </select>
@@ -780,12 +782,13 @@ function renderTable(data) {
       var checkFailCount = rows.filter(function(r) { return r.checkStatus === '检查失败'; }).length;
 
       // 属性级上传状态计数（遍历每个商品的属性）
-      var attrUploaded = 0, attrNotUploaded = 0, attrUploadFail = 0;
+      var attrUploaded = 0, attrUploading = 0, attrNotUploaded = 0, attrUploadFail = 0;
       rows.forEach(function(r) {
         var attrs = mockRequiredAttrs[r.productId] || [];
         attrs.forEach(function(attr) {
           var us = attr.uploadStatus || '未上传';
           if (us === '已上传') attrUploaded++;
+          else if (us === '上传中') attrUploading++;
           else if (us === '上传失败') attrUploadFail++;
           else attrNotUploaded++;
         });
@@ -812,6 +815,7 @@ function renderTable(data) {
       html += '<td style="text-align:center;color:#ef4444;font-weight:600;">' + abnormalCount + '</td>';
       html += '<td style="text-align:center;color:#f59e0b;">' + checkFailCount + '</td>';
       html += '<td style="text-align:center;color:#10b981;">' + attrUploaded + '</td>';
+      html += '<td style="text-align:center;color:#0284c7;">' + attrUploading + '</td>';
       html += '<td style="text-align:center;color:#94a3b8;">' + attrNotUploaded + '</td>';
       html += '<td style="text-align:center;color:#ef4444;">' + attrUploadFail + '</td>';
       html += '<td>' + esc(creator || '—') + '</td>';
@@ -837,6 +841,7 @@ function stCheck(s) {
 
 function stUpload(s) {
   if (s === '已上传') return '<span class="status-tag submitted">已上传</span>';
+  if (s === '上传中') return '<span class="status-tag" style="background:rgba(14,165,233,0.1);color:#0284c7;border:1px solid rgba(14,165,233,0.2);">⏳ 上传中</span>';
   if (s === '上传失败') return '<span class="status-tag rejected">上传失败</span>';
   return '<span class="status-tag initial">未上传</span>';
 }
@@ -1322,12 +1327,31 @@ function doUploadSubmit() {
     return;
   }
 
-  showToast('正在调用平台编辑接口更新属性…', 'info');
+  closeUploadModal();
+  showToast('正在上传属性到平台…', 'info');
 
+  // 第一步：将涉及的属性状态设为「上传中」
+  var affectedProductIds = [];
+  uploadExcelData.forEach(function(row) {
+    if (affectedProductIds.indexOf(row.productId) === -1) affectedProductIds.push(row.productId);
+    var attrs = mockRequiredAttrs[row.productId] || [];
+    attrs.forEach(function(attr) {
+      if (row.attrs && row.attrs[attr.name]) {
+        attr.uploadStatus = '上传中';
+        attr.failReason = '';
+      }
+    });
+  });
+  // 刷新当前视图
+  renderAttrView();
+  renderTable(mockData);
+
+  // 第二步：模拟异步上传，1.5秒后更新最终状态
   setTimeout(function() {
     var nowStr = now();
     var currentBatchNo = generateBatchNo();
     var updatedCount = 0;
+    var failedCount = 0;
     var notFoundCount = 0;
 
     uploadExcelData.forEach(function(row) {
@@ -1336,8 +1360,26 @@ function doUploadSubmit() {
         notFoundCount++;
         return;
       }
-      // 增量合并：更新状态、批次号和时间，保留原有属性值
-      item.uploadStatus = '已完成';
+      // 增量合并：更新属性级别状态
+      var attrs = mockRequiredAttrs[row.productId] || [];
+      attrs.forEach(function(attr) {
+        if (row.attrs && row.attrs[attr.name]) {
+          // 模拟 10% 概率上传失败
+          if (Math.random() < 0.1) {
+            attr.uploadStatus = '上传失败';
+            attr.failReason = '平台接口超时';
+            failedCount++;
+          } else {
+            attr.uploadStatus = '已上传';
+            attr.value = row.attrs[attr.name];
+            attr.failReason = '';
+          }
+          attr.updateTime = nowStr;
+          attr.updater = '当前用户';
+        }
+      });
+      // 更新记录级别状态
+      item.uploadStatus = '已上传';
       item.uploadTime = nowStr;
       item.checkStatus = item.emptyAttrs && item.emptyAttrs.length > 0 ? '异常' : '无异常';
       item.batchNo = currentBatchNo;
@@ -1347,14 +1389,15 @@ function doUploadSubmit() {
     });
 
     localStorage.setItem('package_optimizeList', JSON.stringify(mockData));
+    renderAttrView();
     renderTable(mockData);
-    closeUploadModal();
 
     // 汇总提示
-    var msg = '上传完成：更新 ' + updatedCount + ' 条（批次号：' + currentBatchNo + '）';
+    var msg = '上传完成：成功 ' + updatedCount + ' 条（批次号：' + currentBatchNo + '）';
+    if (failedCount > 0) msg += '，' + failedCount + ' 个属性上传失败';
     if (notFoundCount > 0) msg += '，未找到 ' + notFoundCount + ' 条';
     showToast(msg, updatedCount > 0 ? 'success' : 'info');
-  }, 1000);
+  }, 1500);
 }
 
 // ===== 行操作（批次级别） =====

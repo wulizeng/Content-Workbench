@@ -459,6 +459,16 @@ body {
   padding-left: 36px !important;
 }
 
+/* --- 侧边栏三级菜单（二级菜单项下缩进展示，不折行） --- */
+.sidebar-grandchild {
+  padding-left: 46px !important;
+  padding-right: 10px !important;
+  font-size: 13px;
+}
+.sidebar-grandchild span {
+  white-space: nowrap;
+}
+
 /* iframe 淡入动画 */
 .fade-in {
   animation: fadeIn 0.25s ease both;
@@ -1068,6 +1078,30 @@ select {
   color: #dc2626;
 }
 .status-tag.cancelled::before {
+  background: #ef4444;
+}
+
+.status-tag.reviewing {
+  background: #fffbeb;
+  color: #d97706;
+}
+.status-tag.reviewing::before {
+  background: #f59e0b;
+}
+
+.status-tag.approved {
+  background: #ecfdf5;
+  color: #059669;
+}
+.status-tag.approved::before {
+  background: #10b981;
+}
+
+.status-tag.rejected {
+  background: #fef2f2;
+  color: #dc2626;
+}
+.status-tag.rejected::before {
   background: #ef4444;
 }
 

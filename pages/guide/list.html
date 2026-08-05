@@ -404,10 +404,9 @@
 
     .flow-map {
       position: relative;
-      display: grid;
-      grid-template-columns: repeat(7, minmax(28px, 1fr));
-      grid-auto-rows: minmax(34px, auto);
-      gap: 10px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
       margin-bottom: 24px;
       padding: 24px;
       border: 1px solid rgba(37, 104, 217, .14);
@@ -435,50 +434,76 @@
     .flow-map::after {
       content: "";
       position: absolute;
-      inset: 44px 48px;
+      inset: 16px 20px;
       border: 2px dashed rgba(37, 104, 217, .18);
       border-radius: var(--radius);
       pointer-events: none;
     }
 
-    .maze-link {
+    .maze-row {
       position: relative;
-      z-index: 1;
+      z-index: 2;
+      display: flex;
+      align-items: stretch;
+      gap: 22px;
+    }
+
+    .maze-row.reverse {
+      flex-direction: row-reverse;
+    }
+
+    .maze-arrow {
+      flex: 0 0 auto;
+      align-self: center;
+      width: 20px;
+      height: 20px;
+      display: grid;
+      place-items: center;
+      color: var(--link-color, var(--primary));
+      opacity: .55;
       pointer-events: none;
     }
 
-    .maze-link::before,
-    .maze-link::after {
-      content: "";
+    .maze-arrow svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .maze-row.reverse .maze-arrow svg {
+      transform: scaleX(-1);
+    }
+
+    .maze-turn {
       position: absolute;
-      background:
-        repeating-linear-gradient(90deg, rgba(255, 255, 255, .48) 0 8px, transparent 8px 17px),
-        linear-gradient(90deg, color-mix(in srgb, var(--link-color, var(--primary)) 58%, #bfe8ff), color-mix(in srgb, var(--link-color, var(--primary)) 30%, #ffe0f2));
-      border-radius: 999px;
-      box-shadow:
-        0 0 0 4px rgba(255, 255, 255, .76),
-        0 8px 18px color-mix(in srgb, var(--link-color, var(--primary)) 16%, transparent);
+      top: 100%;
+      margin-top: 5px;
+      width: 26px;
+      height: 20px;
+      display: grid;
+      place-items: center;
+      color: var(--link-color, var(--primary));
+      opacity: .55;
+      pointer-events: none;
     }
 
-    .maze-link.h::before {
-      left: -22px;
-      right: -22px;
-      top: 50%;
-      height: 6px;
-      transform: translateY(-50%);
+    .maze-turn.right {
+      right: 6px;
     }
 
-    .maze-link.v::before {
-      top: -18px;
-      bottom: -18px;
-      left: 50%;
-      width: 6px;
-      transform: translateX(-50%);
+    .maze-turn.left {
+      left: 6px;
+    }
+
+    .maze-turn svg {
+      width: 16px;
+      height: 16px;
     }
 
     .flow-node {
       position: relative;
       z-index: 2;
+      flex: 1 1 0;
+      min-width: 0;
       border: 2px solid color-mix(in srgb, var(--stage-color, var(--primary)) 26%, #ffffff);
       background:
         radial-gradient(circle at 18% 18%, rgba(255, 255, 255, .96), transparent 27%),
@@ -679,7 +704,7 @@
 
     .content-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 340px;
+      grid-template-columns: minmax(0, 1fr);
       gap: 24px;
       align-items: start;
     }
@@ -870,9 +895,63 @@
     }
 
     .detail-panel {
-      position: sticky;
-      top: 24px;
-      overflow: hidden;
+      position: fixed;
+      top: 0;
+      right: 0;
+      z-index: 60;
+      width: 400px;
+      max-width: 92vw;
+      height: 100dvh;
+      overflow-y: auto;
+      border-radius: 0;
+      border-top: none;
+      border-right: none;
+      border-bottom: none;
+      border-left: 1px solid var(--line);
+      box-shadow: -24px 0 48px rgba(17, 24, 39, .18);
+      transform: translateX(100%);
+      transition: transform .28s ease;
+    }
+
+    .detail-panel.open {
+      transform: translateX(0);
+    }
+
+    .detail-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 59;
+      background: rgba(15, 23, 42, .38);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .28s ease;
+    }
+
+    .detail-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .detail-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 2;
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, .06);
+      color: var(--muted);
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      line-height: 1;
+      transition: background .15s ease;
+    }
+
+    .detail-close:hover {
+      background: rgba(15, 23, 42, .12);
     }
 
     .detail-accent {
@@ -956,13 +1035,8 @@
         padding: 24px;
       }
 
-      .hero,
-      .content-grid {
+      .hero {
         grid-template-columns: 1fr;
-      }
-
-      .detail-panel {
-        position: static;
       }
     }
 
@@ -995,23 +1069,18 @@
       }
 
       .flow-map {
-        grid-template-columns: 1fr;
-        grid-auto-rows: auto;
         padding: 16px;
-        gap: 12px;
+        gap: 36px;
       }
 
-      .flow-map::after,
-      .maze-link {
-        display: none;
+      .maze-row,
+      .maze-row.reverse {
+        flex-direction: column;
+        gap: 24px;
       }
 
-      .flow-node {
-        grid-column: 1 !important;
-        grid-row: auto !important;
-      }
-
-      .maze-runner {
+      .maze-arrow,
+      .maze-turn {
         display: none;
       }
 
@@ -1115,7 +1184,8 @@
           </div>
         </article>
 
-        <aside class="detail-panel" aria-label="步骤详情">
+        <aside class="detail-panel" id="detailPanel" aria-label="步骤详情">
+          <button class="detail-close" type="button" id="detailCloseBtn" aria-label="关闭">&times;</button>
           <div class="detail-accent" id="detailAccent"></div>
           <div class="detail-body">
             <div class="detail-kicker" id="detailKicker">步骤 1</div>
@@ -1125,6 +1195,8 @@
           </div>
         </aside>
       </section>
+
+      <div class="detail-overlay" id="detailOverlay"></div>
     </main>
   </div>
 
@@ -1272,7 +1344,9 @@
     const searchInput = document.getElementById("searchInput");
     const playIcon = document.getElementById("playIcon");
     const stagePanelEl = document.querySelector(".stage-panel");
-    const detailPanelEl = document.querySelector(".detail-panel");
+    const detailPanelEl = document.getElementById("detailPanel");
+    const detailOverlayEl = document.getElementById("detailOverlay");
+    const detailCloseBtn = document.getElementById("detailCloseBtn");
 
     function key(stageIndex, stepIndex) {
       return `${stageIndex}-${stepIndex}`;
@@ -1301,30 +1375,43 @@
       })));
     }
 
-    function mazePosition(index) {
-      const rowBlock = Math.floor(index / 4);
-      const offset = index % 4;
+    const NODES_PER_ROW = 4;
+
+    function mazeRowCount(total) {
+      return Math.ceil(total / NODES_PER_ROW);
+    }
+
+    function iconArrow() {
+      return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    }
+
+    function iconTurn() {
+      return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4v8a4 4 0 0 0 4 4h8m0 0-4-4m4 4-4 4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    }
+
+    function mazePosition(index, total) {
+      const row = Math.floor(index / NODES_PER_ROW);
+      const offset = index % NODES_PER_ROW;
+      const rowStart = row * NODES_PER_ROW;
+      const rowLength = Math.min(NODES_PER_ROW, total - rowStart);
+      const visualOffset = row % 2 === 0 ? offset : rowLength - offset - 1;
+      return { row, offset: visualOffset, rowLength };
+    }
+
+    function runnerCoordinates(pos, total) {
+      const rows = mazeRowCount(total);
       return {
-        row: rowBlock * 2 + 1,
-        col: rowBlock % 2 === 0 ? offset * 2 + 1 : 7 - offset * 2
+        left: `${((pos.offset + .5) / pos.rowLength) * 100}%`,
+        top: `${((pos.row + .5) / rows) * 100}%`
       };
     }
 
-    function runnerCoordinates(pos) {
-      return {
-        left: `${((pos.col - 0.5) / 7) * 100}%`,
-        top: `${((pos.row - 0.05) / 7) * 100}%`
-      };
-    }
-
-    function runnerFacesRight(index, nodes) {
-      const current = mazePosition(index);
-      const nextIndex = index < nodes.length - 1 ? index + 1 : index - 1;
-      const next = mazePosition(Math.max(0, nextIndex));
-      if (next.col !== current.col) return next.col > current.col;
-      const lookIndex = nextIndex < nodes.length - 1 ? nextIndex + 1 : nextIndex - 1;
-      const look = mazePosition(Math.max(0, lookIndex));
-      return look.col > next.col;
+    function runnerFacesRight(index, total) {
+      const row = Math.floor(index / NODES_PER_ROW);
+      const nextIndex = index < total - 1 ? index + 1 : index - 1;
+      const nextRow = Math.floor(Math.max(0, nextIndex) / NODES_PER_ROW);
+      if (nextRow !== row) return row % 2 === 0;
+      return row % 2 === 0;
     }
 
     function currentFlatIndex() {
@@ -1366,29 +1453,32 @@
     function renderFlowMap() {
       const nodes = flatSteps();
       if (!flowMap.dataset.ready) {
-        const nodeMarkup = nodes.map(({ stage, stageIndex, step, stepIndex }, index) => {
-          const pos = mazePosition(index);
-          const tilt = [-1.4, 1.1, -.7, 1.5, .8, -1.2, 1.3, -.9, 1.6, -.6, 1, -1.5, .7][index % 13];
-          return `
-            <button class="flow-node" type="button" data-flat="${index}" data-stage="${stageIndex}" data-step="${stepIndex}" style="--stage-color:${stage.color}; --stage-soft:${stage.soft}; --tilt:${tilt}deg; grid-column:${pos.col}; grid-row:${pos.row}">
-              <span class="flow-node-head">${index + 1}</span>
-              <span>
-                <h3>${step.title}</h3>
-                <p>${stage.short}</p>
-              </span>
-            </button>
-          `;
-        }).join("");
+        const rows = [];
+        for (let rowIndex = 0; rowIndex < mazeRowCount(nodes.length); rowIndex++) {
+          const isReverse = rowIndex % 2 === 1;
+          const start = rowIndex * NODES_PER_ROW;
+          const rowNodes = nodes.slice(start, start + NODES_PER_ROW);
+          const nodeMarkup = rowNodes.map(({ stage, stageIndex, step, stepIndex }, rowOffset) => {
+            const index = start + rowOffset;
+            const tilt = [-1.4, 1.1, -.7, 1.5, .8, -1.2, 1.3, -.9, 1.6, -.6, 1, -1.5, .7][index % 13];
+            const arrow = rowOffset < rowNodes.length - 1 ? `<span class="maze-arrow" style="--link-color:${stage.color}">${iconArrow()}</span>` : "";
+            return `
+              <button class="flow-node" type="button" data-flat="${index}" data-stage="${stageIndex}" data-step="${stepIndex}" style="--stage-color:${stage.color}; --stage-soft:${stage.soft}; --tilt:${tilt}deg">
+                <span class="flow-node-head">${index + 1}</span>
+                <span>
+                  <h3>${step.title}</h3>
+                  <p>${stage.short}</p>
+                </span>
+              </button>
+              ${arrow}
+            `;
+          }).join("");
 
-        const links = nodes.slice(0, -1).map((item, index) => {
-          const current = mazePosition(index);
-          const next = mazePosition(index + 1);
-          const stage = item.stage;
-          const klass = current.row === next.row ? "h" : "v";
-          const row = current.row === next.row ? current.row : Math.min(current.row, next.row) + 1;
-          const col = current.row === next.row ? Math.min(current.col, next.col) + 1 : current.col;
-          return `<span class="maze-link ${klass}" style="--link-color:${stage.color}; grid-column:${col}; grid-row:${row}"></span>`;
-        }).join("");
+          const hasNextRow = rowIndex < mazeRowCount(nodes.length) - 1;
+          const turnSide = isReverse ? "left" : "right";
+          const turn = hasNextRow ? `<span class="maze-turn ${turnSide}" style="--link-color:${rowNodes[rowNodes.length - 1].stage.color}">${iconTurn()}</span>` : "";
+          rows.push(`<div class="maze-row ${isReverse ? "reverse" : ""}">${nodeMarkup}${turn}</div>`);
+        }
 
         const runner = `
           <span class="maze-runner" aria-hidden="true">
@@ -1436,7 +1526,7 @@
           </span>
         `;
 
-        flowMap.innerHTML = links + nodeMarkup + runner;
+        flowMap.innerHTML = rows.join("") + runner;
         flowMap.dataset.ready = "true";
 
         flowMap.querySelectorAll("button").forEach(button => {
@@ -1444,6 +1534,7 @@
             activeStage = Number(button.dataset.stage);
             activeStep = Number(button.dataset.step);
             render();
+            openDetailPanel();
           });
         });
       }
@@ -1460,10 +1551,10 @@
       });
 
       const runnerIndex = Math.max(0, currentFlatIndex());
-      const runnerPos = mazePosition(runnerIndex);
+      const runnerPos = mazePosition(runnerIndex, nodes.length);
       const runnerStage = nodes[runnerIndex].stage;
-      const facingRight = runnerFacesRight(runnerIndex, nodes);
-      const coords = runnerCoordinates(runnerPos);
+      const facingRight = runnerFacesRight(runnerIndex, nodes.length);
+      const coords = runnerCoordinates(runnerPos, nodes.length);
       const runner = flowMap.querySelector(".maze-runner");
       const sprite = flowMap.querySelector(".person-sprite");
       runner.style.setProperty("--runner-left", coords.left);
@@ -1513,6 +1604,7 @@
           activeStep = Number(card.dataset.step);
           renderDetail();
           renderSteps();
+          openDetailPanel();
         });
       });
 
@@ -1529,6 +1621,19 @@
         });
       });
     }
+
+    function openDetailPanel() {
+      detailPanelEl.classList.add("open");
+      detailOverlayEl.classList.add("open");
+    }
+
+    function closeDetailPanel() {
+      detailPanelEl.classList.remove("open");
+      detailOverlayEl.classList.remove("open");
+    }
+
+    detailCloseBtn.addEventListener("click", closeDetailPanel);
+    detailOverlayEl.addEventListener("click", closeDetailPanel);
 
     function renderDetail() {
       const stage = stages[activeStage];

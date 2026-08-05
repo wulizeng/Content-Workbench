@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>直播账号详情</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+    .page-container { min-height: 100vh; background: #f5f7fb; padding: 24px 28px; }
+    .page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .page-title { font-size: 18px; font-weight: 700; color: var(--text); flex: 1; }
+    .detail-card { background:#fff; border:1px solid var(--border); border-radius:12px; padding:24px; margin-bottom:16px; }
+    .detail-card-title { font-size:15px; font-weight:700; color:var(--text,#0f172a); margin:0 0 18px; padding-bottom:12px; border-bottom:1px solid var(--border-light); }
+    .detail-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:16px 24px; }
+    .detail-item .k { font-size:12px; color:var(--text-tertiary,#94a3b8); margin-bottom:4px; }
+    .detail-item .v { font-size:14px; color:var(--text,#0f172a); font-weight:500; min-height:22px; word-break:break-all; }
+    .detail-item.span-2 { grid-column: span 2; }
+    .detail-item.span-4 { grid-column: span 4; }
+    .type-tag { display:inline-flex; align-items:center; padding:1px 9px; border-radius:10px; background:#f1f5f9; color:var(--text-secondary); font-size:12px; font-weight:600; line-height:1.6; }
+    .doc-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .form-actions { display:flex; justify-content:flex-end; gap:10px; padding:16px 0; }
+    @media (max-width: 640px) {
+      .page-container { padding: 16px; }
+      .detail-card { padding: 16px; }
+      .detail-grid { grid-template-columns: 1fr; gap: 12px; }
+      .detail-item.span-2 { grid-column: span 1; }
+    }
+  </style>
+</head>
+<body>
+<div class="page-container">
+  <div id="toastContainer" class="toast-container"></div>
+
+  <div class="page-header">
+    <button class="btn" onclick="goBack()" style="display:flex;align-items:center;gap:4px;padding:6px 12px;height:auto;">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      返回
+    </button>
+    <div class="page-title">直播账号详情</div>
+  </div>
+
+  <div class="detail-card">
+    <h3 class="detail-card-title">基本信息</h3>
+    <div class="detail-grid">
+      <div class="detail-item"><div class="k">申请类型</div><div class="v" id="dApplyType"></div></div>
+      <div class="detail-item"><div class="k">是否内部公司主体</div><div class="v" id="dIsInternal"></div></div>
+      <div class="detail-item"><div class="k">账号注册主体</div><div class="v" id="dRegisterEntity"></div></div>
+      <div class="detail-item"><div class="k">主销品牌</div><div class="v" id="dBrand"></div></div>
+    </div>
+  </div>
+
+  <div class="detail-card">
+    <h3 class="detail-card-title">平台与账号信息</h3>
+    <div class="detail-grid">
+      <div class="detail-item"><div class="k">账号所属平台</div><div class="v" id="dPlatform"></div></div>
+      <div class="detail-item"><div class="k">账号昵称</div><div class="v" id="dNickname"></div></div>
+      <div class="detail-item"><div class="k">账号UID</div><div class="v" id="dUid"></div></div>
+      <div class="detail-item"><div class="k">平台ID</div><div class="v" id="dPlatformId"></div></div>
+      <div class="detail-item"><div class="k">账号类型</div><div class="v" id="dAccountType"></div></div>
+      <div class="detail-item"><div class="k">账号属性</div><div class="v" id="dAccountAttr"></div></div>
+      <div class="detail-item"><div class="k">账号绑定手机号</div><div class="v" id="dBindphone"></div></div>
+      <div class="detail-item"><div class="k">账号运营模式</div><div class="v" id="dOperationMode"></div></div>
+      <div class="detail-item span-2"><div class="k">账号定位</div><div class="v" id="dPositioning"></div></div>
+    </div>
+  </div>
+
+  <div class="detail-card">
+    <h3 class="detail-card-title">运营与联系信息</h3>
+    <div class="detail-grid">
+      <div class="detail-item"><div class="k">账号负责人</div><div class="v" id="dOwner"></div></div>
+      <div class="detail-item"><div class="k">考核项目组</div><div class="v" id="dProjectGroup"></div></div>
+      <div class="detail-item"><div class="k">是否纳入年框</div><div class="v" id="dAnnualFrame"></div></div>
+      <div class="detail-item"><div class="k">是否需要绑定云图账号</div><div class="v" id="dNeedYuntu"></div></div>
+      <div class="detail-item"><div class="k">联系人姓名</div><div class="v" id="dContactName"></div></div>
+      <div class="detail-item"><div class="k">联系人手机号</div><div class="v" id="dContactPhone"></div></div>
+    </div>
+  </div>
+
+  <div class="detail-card">
+    <h3 class="detail-card-title">资料信息</h3>
+    <div class="detail-grid">
+      <div class="detail-item span-2"><div class="k">所需复印件资料类型</div><div class="v"><div class="doc-tags" id="dDocTypes"></div></div></div>
+      <div class="detail-item"><div class="k">以上资料是否需要盖章</div><div class="v" id="dNeedSeal"></div></div>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button class="btn" onclick="goBack()">返回</button>
+    <button class="btn btn-primary" onclick="goEdit()">编辑</button>
+  </div>
+</div>
+
+<script src="../../js/auth.js"></script>
+<script>
+if (!Auth.requireAuth()) {}
+
+var STORAGE_KEY = 'recruit_live_accounts';
+
+if (window.parent) {
+  window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 直播账号管理 <span>/</span> 详情'}, '*');
+}
+
+function g(name) { var r = location.search.match(new RegExp('[?&]' + name + '=([^&]*)')); return r ? decodeURIComponent(r[1]) : ''; }
+var recordId = parseInt(g('id')) || 0;
+var currentRecord = null;
+
+function val(v) { return (v === null || v === undefined) ? '' : String(v); }
+
+function init() {
+  var list = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  currentRecord = list.find(function(r) { return r.id === recordId; });
+  if (!currentRecord) { showToast('未找到该直播账号', 'error'); return; }
+
+  var map = {
+    dApplyType: currentRecord.apply_type, dPlatform: currentRecord.platform,
+    dNickname: currentRecord.nickname, dOperationMode: currentRecord.operation_mode,
+    dUid: currentRecord.uid, dPlatformId: currentRecord.platform_id,
+    dAccountType: currentRecord.account_type, dOwner: currentRecord.owner,
+    dProjectGroup: currentRecord.project_group, dIsInternal: currentRecord.is_internal,
+    dBindphone: currentRecord.bindphone, dBrand: currentRecord.brand,
+    dAccountAttr: currentRecord.account_attr, dPositioning: currentRecord.positioning,
+    dAnnualFrame: currentRecord.annual_frame, dContactName: currentRecord.contact_name,
+    dContactPhone: currentRecord.contact_phone, dRegisterEntity: currentRecord.register_entity,
+    dNeedYuntu: currentRecord.need_yuntu, dNeedSeal: currentRecord.need_seal
+  };
+  Object.keys(map).forEach(function(id) {
+    document.getElementById(id).textContent = val(map[id]);
+  });
+
+  // 资料类型标签
+  var docTypes = currentRecord.doc_types || [];
+  var docHtml = docTypes.length > 0
+    ? docTypes.map(function(d) { return '<span class="type-tag">' + esc(d) + '</span>'; }).join('')
+    : '-';
+  document.getElementById('dDocTypes').innerHTML = docHtml;
+}
+
+function esc(s) {
+  if (s === null || s === undefined || s === '') return '';
+  var d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function goBack() { location.href = 'live-account.html'; }
+function goEdit() { location.href = 'live-account-edit.html?mode=edit&id=' + recordId; }
+
+function showToast(message, type) {
+  type = type || 'info';
+  var container = document.getElementById('toastContainer');
+  if (!container) return;
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(function() {
+    if (toast.parentNode) {
+      toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s';
+      setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+    }
+  }, 2500);
+}
+
+init();
+window.addEventListener('pageshow', function() { init(); });
+</script>
+</body>
+</html>

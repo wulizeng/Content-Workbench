@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>供应商申请入驻 - 列表</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    /* 桌面端：操作列图标+文字链接 */
+    .link-action-icon { display: inline-flex; align-items: center; gap: 4px; }
+    .link-action-icon svg { flex-shrink: 0; }
+    /* 主表字段较多：单元格统一不换行，横向滚动查看 */
+    #dataTable th, #dataTable td { white-space: nowrap; }
+    /* 操作列固定在右侧，表头与数据列同步吸附以保持对齐 */
+    #dataTable thead th:last-child,
+    #dataTable td.col-actions { position: sticky; right: 0; z-index: 2; }
+    #dataTable td.col-actions {
+      background: #fff;
+      box-shadow: inset 1px 0 0 var(--border-light);
+    }
+    #dataTable tbody tr:hover td.col-actions { background: var(--primary-50); }
+    /* 纳税人类别灰色标签 */
+    .type-tag {
+      display: inline-flex; align-items: center; padding: 1px 9px; border-radius: 10px;
+      background: #f1f5f9; color: var(--text-secondary); font-size: 12px; font-weight: 600;
+      line-height: 1.6; white-space: nowrap;
+    }
+    /* 移动端（<1024px）：卡片流替代宽表格 */
+    .card-list { display: none; }
+    @media (max-width: 1023px) {
+      .table-area .table-scroll, .table-area .pagination { display: none; }
+      .card-list { display: block; }
+      .supplier-card {
+        background: #fff; border: 1px solid var(--border); border-radius: 12px;
+        padding: 14px 16px; margin-bottom: 12px;
+      }
+      .supplier-card-head {
+        display: flex; justify-content: space-between; align-items: center;
+        gap: 10px; margin-bottom: 10px;
+      }
+      .supplier-card-head .name { font-size: 15px; font-weight: 700; color: var(--text); }
+      .supplier-card-body { font-size: 13px; color: var(--text-secondary); line-height: 1.9; }
+      .supplier-card-foot {
+        display: flex; justify-content: flex-end;
+        margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-light);
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page-container">
+
+  <!-- Toast 轻提示容器 -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="../../js/auth.js"></script>
+  <script>
+    // 权限检查
+    if (!Auth.requireAuth()) {
+      // 已在 requireAuth 中跳转到登录页
+    }
+
+    var currentUser = Auth.getCurrentUser();
+
+    if (window.parent) {
+      window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 入驻意向审核 <span>/</span> 供应商申请入驻'}, '*');
+    }
+  </script>
+
+  <div class="page-title">供应商申请入驻列表</div>
+
+  <div class="search-area">
+    <div class="search-row">
+      <div class="search-item">
+        <label>供应商全称：</label>
+        <input type="text" id="sFullName" placeholder="请输入供应商全称">
+      </div>
+      <div class="search-item">
+        <label>税务登记号：</label>
+        <input type="text" id="sTaxRegNo" placeholder="请输入税务登记号/身份证号">
+      </div>
+      <div class="search-item">
+        <label>银行名称：</label>
+        <input type="text" id="sBankName" placeholder="请输入银行名称">
+      </div>
+      <div class="search-item">
+        <label>开户省：</label>
+        <input type="text" id="sBankProvince" placeholder="请输入开户省">
+      </div>
+      <div class="search-item">
+        <label>纳税人类别：</label>
+        <select id="sTaxpayerType">
+          <option value="">全部</option>
+          <option value="一般纳税人">一般纳税人</option>
+          <option value="小规模纳税人">小规模纳税人</option>
+          <option value="其他">其他</option>
+        </select>
+      </div>
+    </div>
+    <div class="search-actions">
+      <button class="btn btn-primary" onclick="doSearch()">查询</button>
+      <button class="btn" onclick="resetSearch()">重置</button>
+    </div>
+    <div class="search-active-tags" id="searchTags" style="display:none;"></div>
+  </div>
+
+  <div class="card-list" id="cardList"></div>
+
+  <div class="table-area">
+    <div class="table-toolbar">
+      <button class="btn btn-primary" onclick="addNew()">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        新增
+      </button>
+      <button class="btn" onclick="importData()">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        导入
+      </button>
+      <button class="btn btn-primary" onclick="syncBPM()">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        同步BPM
+      </button>
+    </div>
+    <div class="table-scroll">
+      <table class="data-table" id="dataTable">
+        <thead>
+          <tr>
+            <th style="width:40px;"><input type="checkbox" id="checkAll" onclick="toggleCheckAll(this)"></th>
+            <th>序号</th>
+            <th>供应商全称/银行账户持有人</th>
+            <th>注册地址</th>
+            <th>税务登记号</th>
+            <th>开户行</th>
+            <th>银行代码</th>
+            <th>银行名称</th>
+            <th>银行账户持有人</th>
+            <th>银行联行号</th>
+            <th>开户省</th>
+            <th>开户市</th>
+            <th>纳税人类别</th>
+            <th>收款账号</th>
+            <th>BPM流程编号</th>
+            <th>BPM审批状态</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <span class="page-info">共 <strong id="totalCount">0</strong> 条</span>
+      <span class="page-btn disabled">&laquo;</span>
+      <span class="page-btn active">1</span>
+      <span class="page-btn">&raquo;</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+var STORAGE_KEY = 'recruit_supplier_applications';
+
+var defaultData = [
+  {
+    id: 1,
+    supplier_full_name: '杭州星辰供应链管理有限公司',
+    street_address: '浙江省杭州市余杭区文一西路 1188 号 3 幢 502 室',
+    tax_reg_no: '91330110MA2AB1XY4C',
+    bank_name: '中国工商银行',
+    bank_province: '浙江省',
+    bank_branch: '中国工商银行杭州余杭支行',
+    account_holder: '杭州星辰供应链管理有限公司',
+    bank_cnaps_no: '102331000188',
+    bank_code: 'ICBKCNBJ',
+    bank_city: '杭州市',
+    taxpayer_type: '一般纳税人',
+    payee_account: '1202028109300512345',
+    bpm_process_no: 'BPM-20260726-001',
+    bpm_approval_status: '已通过',
+    creator: '运营-李婷',
+    created_at: '2026-07-26 10:12:00'
+  },
+  {
+    id: 2,
+    supplier_full_name: '广州锦华日用品有限公司',
+    street_address: '广东省广州市白云区机场路 862 号 A 栋 12 层',
+    tax_reg_no: '91440101MA5CD2QT7H',
+    bank_name: '招商银行',
+    bank_province: '广东省',
+    bank_branch: '招商银行广州白云支行',
+    account_holder: '广州锦华日用品有限公司',
+    bank_cnaps_no: '308581000013',
+    bank_code: 'CMBCCNBS',
+    bank_city: '广州市',
+    taxpayer_type: '小规模纳税人',
+    payee_account: '120906133210801',
+    bpm_process_no: 'BPM-20260727-002',
+    bpm_approval_status: '审批中',
+    creator: '运营-王强',
+    created_at: '2026-07-27 14:05:00'
+  },
+  {
+    id: 3,
+    supplier_full_name: '林晓鹿',
+    street_address: '',
+    tax_reg_no: '330106199205124517',
+    bank_name: '中国建设银行',
+    bank_province: '浙江省',
+    bank_branch: '中国建设银行杭州西湖支行',
+    account_holder: '林晓鹿',
+    bank_cnaps_no: '105331000015',
+    bank_code: 'PCBCCNBJ',
+    bank_city: '杭州市',
+    taxpayer_type: '其他',
+    payee_account: '6217000123456789012',
+    bpm_process_no: '',
+    bpm_approval_status: '待提交',
+    creator: '运营-李婷',
+    created_at: '2026-07-28 09:30:00'
+  },
+  {
+    id: 4,
+    supplier_full_name: 'SUNRISE TRADING CO., LIMITED',
+    street_address: 'Unit 1203, 12/F, Kowloon Centre, 29 Ashley Road, Tsim Sha Tsui, Hong Kong',
+    tax_reg_no: 'HK-71234567-000',
+    bank_name: 'HSBC',
+    bank_province: '',
+    bank_branch: 'HSBC Tsim Sha Tsui Branch',
+    account_holder: 'SUNRISE TRADING CO., LIMITED',
+    bank_cnaps_no: '',
+    bank_code: 'HSBCHKHHHKH',
+    bank_city: '香港',
+    taxpayer_type: '其他',
+    payee_account: '004-808-123456-838',
+    bpm_process_no: 'BPM-20260729-004',
+    bpm_approval_status: '已驳回',
+    creator: '运营-陈静',
+    created_at: '2026-07-29 16:48:00'
+  }
+];
+
+var mockData = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') || defaultData;
+if (!localStorage.getItem(STORAGE_KEY)) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(mockData));
+}
+
+// 无值字段统一显示为空
+function esc(s) {
+  if (s === null || s === undefined || s === '') return '';
+  var d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function renderTable(data) {
+  var tbody = document.getElementById('tableBody');
+  var html = '';
+  if (data.length === 0) {
+    html = '<tr><td colspan="17" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无数据</div><div class="empty-hint">暂无符合条件的供应商入驻申请</div></td></tr>';
+  } else {
+    data.forEach(function(row, index) {
+      html += '<tr>';
+      html += '<td><input type="checkbox" class="row-check" data-id="' + row.id + '"></td>';
+      html += '<td>' + (index + 1) + '</td>';
+      html += '<td>' + esc(row.supplier_full_name) + '</td>';
+      html += '<td>' + esc(row.street_address) + '</td>';
+      html += '<td>' + esc(row.tax_reg_no) + '</td>';
+      html += '<td>' + esc(row.bank_branch) + '</td>';
+      html += '<td>' + esc(row.bank_code) + '</td>';
+      html += '<td>' + esc(row.bank_name) + '</td>';
+      html += '<td>' + esc(row.account_holder) + '</td>';
+      html += '<td>' + esc(row.bank_cnaps_no) + '</td>';
+      html += '<td>' + esc(row.bank_province) + '</td>';
+      html += '<td>' + esc(row.bank_city) + '</td>';
+      html += '<td>' + (row.taxpayer_type ? '<span class="type-tag">' + esc(row.taxpayer_type) + '</span>' : '') + '</td>';
+      html += '<td>' + esc(row.payee_account) + '</td>';
+      html += '<td>' + esc(row.bpm_process_no) + '</td>';
+      html += '<td>' + bpmStatus(row.bpm_approval_status) + '</td>';
+      html += '<td class="col-actions">';
+      html += '<a class="link-action link-action-icon" title="编辑" href="supplier-edit.html?id=' + row.id + '"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>编辑</a> ';
+      html += '<a class="link-action link-action-icon" title="查看详情" href="supplier-detail.html?id=' + row.id + '"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>查看</a>';
+      html += '</td></tr>';
+    });
+  }
+  tbody.innerHTML = html;
+  document.getElementById('totalCount').textContent = data.length;
+}
+function bpmStatus(s) {
+  if (!s) return '';
+  var m = { '待提交': 'initial', '审批中': 'reviewing', '已通过': 'approved', '已驳回': 'rejected' };
+  return '<span class="status-tag ' + (m[s] || '') + '">' + s + '</span>';
+}
+function toggleCheckAll(el) {
+  document.querySelectorAll('.row-check').forEach(function(cb) { cb.checked = el.checked; });
+}
+function syncBPM() {
+  var checked = document.querySelectorAll('.row-check:checked');
+  if (checked.length === 0) { showToast('请先勾选需要同步的记录', 'warning'); return; }
+  var ids = [].map.call(checked, function(cb) { return cb.getAttribute('data-id'); });
+  showToast('已同步 ' + ids.length + ' 条记录到BPM', 'success');
+}
+
+function addNew() {
+  location.href = 'supplier-edit.html';
+}
+
+function importData() {
+  showToast('导入功能开发中', 'info');
+}
+
+function renderCards(data) {
+  var list = document.getElementById('cardList');
+  var html = '';
+  if (data.length === 0) {
+    html = '<div class="supplier-card"><div class="supplier-card-body">暂无符合条件的供应商入驻申请</div></div>';
+  } else {
+    data.forEach(function(row) {
+      html += '<div class="supplier-card">';
+      html += '<div class="supplier-card-head"><span class="name">' + esc(row.supplier_full_name) + '</span>' +
+        (row.taxpayer_type ? '<span class="type-tag">' + esc(row.taxpayer_type) + '</span>' : '') + '</div>';
+      html += '<div class="supplier-card-body">';
+      html += '<div>税务登记号：' + esc(row.tax_reg_no) + '</div>';
+      html += '<div>银行名称：' + esc(row.bank_name) + '</div>';
+      html += '<div>收款账号：' + esc(row.payee_account) + '</div>';
+      html += '</div>';
+      html += '<div class="supplier-card-foot"><a class="btn btn-primary" style="height:48px;line-height:48px;padding:0 16px;" href="supplier-detail.html?id=' + row.id + '">查看详情</a></div>';
+      html += '</div>';
+    });
+  }
+  list.innerHTML = html;
+}
+
+var currentFiltered = mockData.slice();
+
+function isMobileView() {
+  return window.matchMedia('(max-width: 1023px)').matches;
+}
+
+function renderView(data) {
+  currentFiltered = data;
+  if (isMobileView()) renderCards(data);
+  else renderTable(data);
+}
+
+function filterData() {
+  var full = document.getElementById('sFullName').value.trim();
+  var tax = document.getElementById('sTaxRegNo').value.trim();
+  var bank = document.getElementById('sBankName').value.trim();
+  var province = document.getElementById('sBankProvince').value.trim();
+  var type = document.getElementById('sTaxpayerType').value;
+  return mockData.filter(function(x) {
+    if (full && (x.supplier_full_name || '').indexOf(full) < 0) return false;
+    if (tax && (x.tax_reg_no || '').indexOf(tax) < 0) return false;
+    if (bank && (x.bank_name || '').indexOf(bank) < 0) return false;
+    if (province && (x.bank_province || '').indexOf(province) < 0) return false;
+    if (type && x.taxpayer_type !== type) return false;
+    return true;
+  });
+}
+
+function doSearch() {
+  renderView(filterData());
+  showSearchTags();
+}
+
+function resetSearch() {
+  ['sFullName', 'sTaxRegNo', 'sBankName', 'sBankProvince', 'sTaxpayerType'].forEach(function(id) {
+    document.getElementById(id).value = '';
+  });
+  renderView(mockData);
+  showSearchTags();
+}
+
+function showSearchTags() {
+  var map = {
+    sFullName: '供应商全称', sTaxRegNo: '税务登记号',
+    sBankName: '银行名称', sBankProvince: '开户省', sTaxpayerType: '纳税人类别'
+  };
+  var tags = [];
+  Object.keys(map).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el && el.value) tags.push({ name: map[id], value: el.value, id: id });
+  });
+  var container = document.getElementById('searchTags');
+  if (!container) return;
+  if (tags.length === 0) { container.style.display = 'none'; container.innerHTML = ''; return; }
+  var html = '';
+  tags.forEach(function(t) {
+    html += '<span class="search-active-tag">' + t.name + '：' + esc(t.value) + '<span class="tag-remove" onclick="clearSearchTag(\'' + t.id + '\')">&times;</span></span>';
+  });
+  container.style.display = '';
+  container.innerHTML = html;
+}
+
+function clearSearchTag(id) {
+  document.getElementById(id).value = '';
+  doSearch();
+}
+
+// Toast 轻提示
+function showToast(message, type) {
+  type = type || 'info';
+  var container = document.getElementById('toastContainer');
+  if (!container) return;
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(function() {
+    if (toast.parentNode) {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s';
+      setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+    }
+  }, 2500);
+}
+
+window.addEventListener('resize', function() { renderView(currentFiltered); });
+
+renderView(mockData);
+</script>
+</body>
+</html>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>客户合同详情</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+    .page-container { min-height: 100vh; background: #f5f7fb; padding: 24px 28px; }
+    .page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .page-title { font-size: 18px; font-weight: 700; color: var(--text); flex: 1; }
+
+    .detail-card {
+      background:#fff; border:1px solid var(--border); border-radius:12px;
+      padding:24px; margin-bottom:16px;
+    }
+    .detail-card-title {
+      font-size:15px; font-weight:700; color:var(--text,#0f172a);
+      margin:0 0 18px; padding-bottom:12px; border-bottom:1px solid var(--border-light);
+    }
+    .detail-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:16px 24px; }
+    .detail-item .k { font-size:12px; color:var(--text-tertiary,#94a3b8); margin-bottom:4px; }
+    .detail-item .v { font-size:14px; color:var(--text,#0f172a); font-weight:500; min-height:22px; word-break:break-all; }
+    .detail-item.span-2 { grid-column: span 2; }
+    .detail-item.span-4 { grid-column: span 4; }
+    .type-tag {
+      display:inline-flex; align-items:center; padding:1px 9px; border-radius:10px;
+      background:#f1f5f9; color:var(--text-secondary); font-size:12px; font-weight:600; line-height:1.6;
+    }
+    .form-actions { display:flex; justify-content:flex-end; gap:10px; padding:16px 0; }
+
+    @media (max-width: 640px) {
+      .page-container { padding: 16px; }
+      .detail-card { padding: 16px; }
+      .detail-grid { grid-template-columns: 1fr; gap: 12px; }
+      .detail-item.span-2, .detail-item.span-4 { grid-column: span 1; }
+    }
+  </style>
+</head>
+<body>
+<div class="page-container">
+
+  <div class="page-header">
+    <button class="btn" onclick="goBack()" style="display:flex;align-items:center;gap:4px;padding:6px 12px;height:auto;">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      返回
+    </button>
+    <div class="page-title">客户合同详情</div>
+  </div>
+
+  <div class="detail-card">
+    <h3 class="detail-card-title">合同基本信息</h3>
+    <div class="detail-grid">
+      <div class="detail-item"><div class="k">境内/境外合同</div><div class="v" id="dContractRegion"></div></div>
+      <div class="detail-item"><div class="k">合同类型</div><div class="v" id="dContractType"></div></div>
+      <div class="detail-item span-2"><div class="k">合同名称</div><div class="v" id="dContractName"></div></div>
+      <div class="detail-item span-2"><div class="k">合同主体</div><div class="v" id="dContractEntity"></div></div>
+      <div class="detail-item span-2"><div class="k">供应商</div><div class="v" id="dSupplier"></div></div>
+    </div>
+  </div>
+
+  <div class="detail-card">
+    <h3 class="detail-card-title">合同执行信息</h3>
+    <div class="detail-grid">
+      <div class="detail-item"><div class="k">合同履约人</div><div class="v" id="dContractExecutor"></div></div>
+      <div class="detail-item"><div class="k">费用归属部门负责人</div><div class="v" id="dDeptHead"></div></div>
+      <div class="detail-item"><div class="k">合同开始日期</div><div class="v" id="dStartDate"></div></div>
+      <div class="detail-item"><div class="k">合同结束日期</div><div class="v" id="dEndDate"></div></div>
+      <div class="detail-item"><div class="k">合同币种</div><div class="v" id="dCurrency"></div></div>
+      <div class="detail-item"><div class="k">合同金额（元）</div><div class="v" id="dContractAmount"></div></div>
+      <div class="detail-item"><div class="k">不含税金额</div><div class="v" id="dTaxExcludedAmount"></div></div>
+      <div class="detail-item"><div class="k">归属利润中心</div><div class="v" id="dProfitCenter"></div></div>
+    </div>
+  </div>
+
+  <div class="detail-card">
+    <h3 class="detail-card-title">印章与审批信息</h3>
+    <div class="detail-grid">
+      <div class="detail-item"><div class="k">是否传法大大盖电子章</div><div class="v" id="dESealFadada"></div></div>
+      <div class="detail-item"><div class="k">是否加盖法人章</div><div class="v" id="dLegalSeal"></div></div>
+      <div class="detail-item"><div class="k">印章</div><div class="v" id="dSealEntity"></div></div>
+      <div class="detail-item"><div class="k">普通用印次数</div><div class="v" id="dSealCount"></div></div>
+      <div class="detail-item span-2"><div class="k">待审合同（附件）</div><div class="v" id="dPendingAttachment"></div></div>
+      <div class="detail-item"><div class="k">印花税合同类型</div><div class="v" id="dStampTaxType"></div></div>
+      <div class="detail-item"><div class="k">BPM流程编号</div><div class="v" id="dBpmProcessNo"></div></div>
+      <div class="detail-item"><div class="k">BPM审批状态</div><div class="v" id="dBpmApprovalStatus"></div></div>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button class="btn" onclick="goBack()">返回</button>
+    <button class="btn btn-primary" onclick="goEdit()">编辑</button>
+  </div>
+
+</div>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<script src="../../js/auth.js"></script>
+<script>
+// 权限检查
+if (!Auth.requireAuth()) {
+  // 已在 requireAuth 中跳转到登录页
+}
+
+var STORAGE_KEY = 'recruit_contract_management';
+
+if (window.parent) {
+  window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 客户合同管理 <span>/</span> 详情'}, '*');
+}
+
+function g(name) { var r = location.search.match(new RegExp('[?&]' + name + '=([^&]*)')); return r ? decodeURIComponent(r[1]) : ''; }
+var recordId = parseInt(g('id')) || 0;
+
+// 无值字段统一显示为空
+function val(v) { return (v === null || v === undefined) ? '' : String(v); }
+
+function formatAmount(n) {
+  if (n === null || n === undefined || n === '') return '';
+  return Number(n).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function init() {
+  var list = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  var record = list.find(function(r) { return r.id === recordId; });
+  if (!record) { showToast('未找到该客户合同', 'error'); return; }
+
+  var map = {
+    dContractRegion: record.contract_region,
+    dContractType: record.contract_type,
+    dContractName: record.contract_name,
+    dContractEntity: record.contract_entity,
+    dSupplier: record.supplier,
+    dContractExecutor: record.contract_executor,
+    dDeptHead: record.dept_head,
+    dStartDate: record.start_date,
+    dEndDate: record.end_date,
+    dCurrency: record.currency,
+    dContractAmount: formatAmount(record.contract_amount),
+    dTaxExcludedAmount: formatAmount(record.tax_excluded_amount),
+    dProfitCenter: record.profit_center,
+    dESealFadada: record.e_seal_fadada,
+    dLegalSeal: record.legal_seal,
+    dSealEntity: record.seal_entity,
+    dSealCount: record.seal_count,
+    dPendingAttachment: record.pending_attachment,
+    dStampTaxType: record.stamp_tax_type,
+    dBpmProcessNo: record.bpm_process_no
+  };
+  Object.keys(map).forEach(function(id) {
+    document.getElementById(id).textContent = val(map[id]);
+  });
+  document.getElementById('dBpmApprovalStatus').innerHTML = bpmStatus(record.bpm_approval_status);
+}
+
+function bpmStatus(s) {
+  if (!s) return '';
+  var m = { '待提交': 'initial', '审批中': 'reviewing', '已通过': 'approved', '已驳回': 'rejected' };
+  return '<span class="status-tag ' + (m[s] || '') + '">' + esc(s) + '</span>';
+}
+
+function esc(s) {
+  if (s === null || s === undefined || s === '') return '';
+  var d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function goBack() { location.href = 'contract.html'; }
+function goEdit() { location.href = 'contract-edit.html?id=' + recordId; }
+
+// Toast 轻提示
+function showToast(message, type) {
+  type = type || 'info';
+  var container = document.getElementById('toastContainer');
+  if (!container) return;
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(function() {
+    if (toast.parentNode) {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s';
+      setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+    }
+  }, 2500);
+}
+
+init();
+</script>
+</body>
+</html>

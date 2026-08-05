@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>店铺入驻</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+  .data-table thead th,
+  .data-table tbody td {
+    text-align: center;
+    white-space: nowrap;
+  }
+  .data-table .col-actions {
+    text-align: center;
+  }
+  </style>
+</head>
+<body>
+<div class="page-container">
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script>
+    if (window.parent) {
+      window.parent.postMessage({type:'breadcrumb', text:'店铺管理 <span>/</span> 店铺入驻'}, '*');
+    }
+  </script>
+
+  <div class="page-title">店铺入驻</div>
+
+  <!-- 搜索区域 -->
+  <div class="search-area">
+    <div class="search-row">
+      <div class="search-item">
+        <label>店铺名称：</label>
+        <input type="text" id="searchShopName" placeholder="请输入店铺名称">
+      </div>
+      <div class="search-item">
+        <label>平台名称：</label>
+        <select id="searchPlatform">
+          <option value="">全部</option>
+          <option value="抖音">抖音</option>
+          <option value="快手">快手</option>
+          <option value="小红书">小红书</option>
+          <option value="淘宝">淘宝</option>
+          <option value="京东">京东</option>
+        </select>
+      </div>
+      <div class="search-item">
+        <label>状态：</label>
+        <select id="searchStatus">
+          <option value="">全部</option>
+          <option value="待审核">待审核</option>
+          <option value="已通过">已通过</option>
+          <option value="已驳回">已驳回</option>
+        </select>
+      </div>
+    </div>
+    <div class="search-actions">
+      <button class="btn btn-primary" onclick="doSearch()">查询</button>
+      <button class="btn" onclick="resetSearch()">重置</button>
+    </div>
+    <div class="search-active-tags" id="searchTags" style="display:none;"></div>
+  </div>
+
+  <!-- 表格区域 -->
+  <div class="table-area">
+    <div class="table-toolbar">
+      <button class="btn btn-primary" onclick="goAdd()">+ 新增入驻</button>
+    </div>
+
+    <div class="table-scroll">
+      <table class="data-table" id="dataTable">
+        <thead>
+          <tr>
+            <th style="width:40px;"><input type="checkbox" id="checkAll" onclick="toggleAll(this)"></th>
+            <th style="width:50px;">序号</th>
+            <th style="width:100px;">店铺编码</th>
+            <th style="width:130px;">店铺名称</th>
+            <th style="width:90px;">平台名称</th>
+            <th style="width:110px;">平台店铺ID</th>
+            <th style="width:100px;">联系人</th>
+            <th style="width:120px;">联系电话</th>
+            <th style="width:80px;">状态</th>
+            <th style="width:130px;">创建时间</th>
+            <th style="width:130px;">更新时间</th>
+            <th style="width:100px;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- 分页 -->
+    <div class="pagination" id="pagination">
+      <span class="page-info">共 <strong id="totalCount">0</strong> 条</span>
+      <span class="page-btn disabled">&laquo;</span>
+      <span class="page-btn active">1</span>
+      <span class="page-btn">2</span>
+      <span class="page-btn">&raquo;</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// 模拟数据
+var mockData = [
+  { id:1, shopCode:'SHOP-DY-001', shopName:'潮流男装旗舰店', platformName:'抖音', platformShopId:'DShop_88231', contact:'张三', phone:'13800138001', status:'已通过', createTime:'2026-03-10 09:00:00', updateTime:'2026-07-20 14:30:00' },
+  { id:2, shopCode:'SHOP-KS-002', shopName:'时尚女装专营店', platformName:'快手', platformShopId:'KShop_55102', contact:'李四', phone:'13900139002', status:'已通过', createTime:'2026-04-05 10:30:00', updateTime:'2026-07-18 11:20:00' },
+  { id:3, shopCode:'SHOP-XHS-003', shopName:'童装优选店', platformName:'小红书', platformShopId:'XShop_77321', contact:'王五', phone:'13700137003', status:'待审核', createTime:'2026-07-01 14:45:00', updateTime:'2026-07-25 09:10:00' },
+  { id:4, shopCode:'SHOP-TB-004', shopName:'运动户外专营店', platformName:'淘宝', platformShopId:'TShop_99012', contact:'赵六', phone:'13600136004', status:'已驳回', createTime:'2026-06-20 08:30:00', updateTime:'2026-07-22 16:45:00' },
+  { id:5, shopCode:'SHOP-JD-005', shopName:'品质男装官方旗舰店', platformName:'京东', platformShopId:'JShop_33456', contact:'孙七', phone:'13500135005', status:'待审核', createTime:'2026-07-15 11:00:00', updateTime:'2026-07-28 10:00:00' }
+];
+
+// 渲染表格
+function renderTable(data) {
+  var tbody = document.getElementById('tableBody');
+  var html = '';
+  if (data.length === 0) {
+    html = '<tr><td colspan="12" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无数据</div><div class="empty-hint">点击「+ 新增入驻」创建记录</div></td></tr>';
+  } else {
+    data.forEach(function(row, index) {
+      html += '<tr class="' + (row._checked ? 'row-selected' : '') + '">';
+      html += '<td><input type="checkbox" class="row-check" value="' + row.id + '" ' + (row._checked ? 'checked' : '') + ' onclick="toggleRow(this,' + row.id + ')"></td>';
+      html += '<td>' + (index + 1) + '</td>';
+      html += '<td>' + escapeHtml(row.shopCode) + '</td>';
+      html += '<td>' + escapeHtml(row.shopName) + '</td>';
+      html += '<td>' + escapeHtml(row.platformName) + '</td>';
+      html += '<td>' + escapeHtml(row.platformShopId) + '</td>';
+      html += '<td>' + escapeHtml(row.contact) + '</td>';
+      html += '<td>' + escapeHtml(row.phone) + '</td>';
+      html += '<td>' + getStatusTag(row.status) + '</td>';
+      html += '<td>' + escapeHtml(row.createTime) + '</td>';
+      html += '<td>' + escapeHtml(row.updateTime) + '</td>';
+      html += '<td class="col-actions">';
+      html += '<a class="link-action" href="javascript:void(0)" onclick="doEdit(' + row.id + ')">编辑</a>';
+      html += '<a class="link-action" href="javascript:void(0)" onclick="doView(' + row.id + ')">查看</a>';
+      html += '</td>';
+      html += '</tr>';
+    });
+  }
+  tbody.innerHTML = html;
+  document.getElementById('totalCount').textContent = data.length;
+  document.getElementById('checkAll').checked = false;
+}
+
+// 全选/取消全选
+function toggleAll(el) {
+  var checks = document.querySelectorAll('.row-check');
+  checks.forEach(function(c) {
+    c.checked = el.checked;
+    var tr = c.closest('tr');
+    if (tr) tr.classList.toggle('row-selected', el.checked);
+  });
+}
+function toggleRow(el, id) {
+  var tr = el.closest('tr');
+  if (tr) tr.classList.toggle('row-selected', el.checked);
+  updateCheckAll();
+}
+function updateCheckAll() {
+  var all = document.querySelectorAll('.row-check');
+  var checked = document.querySelectorAll('.row-check:checked');
+  document.getElementById('checkAll').checked = all.length > 0 && all.length === checked.length;
+}
+
+// 状态标签
+function getStatusTag(status) {
+  var cls = '';
+  switch(status) {
+    case '已通过': cls = 'submitted'; break;
+    case '已驳回': cls = 'cancelled'; break;
+    case '待审核': cls = 'initial'; break;
+    default: cls = 'initial';
+  }
+  return '<span class="status-tag ' + cls + '">' + escapeHtml(status) + '</span>';
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// 搜索
+function doSearch() {
+  var shopName = document.getElementById('searchShopName').value.trim();
+  var platform = document.getElementById('searchPlatform').value;
+  var status = document.getElementById('searchStatus').value;
+  var filtered = mockData.filter(function(row) {
+    if (shopName && row.shopName.indexOf(shopName) === -1) return false;
+    if (platform && row.platformName !== platform) return false;
+    if (status && row.status !== status) return false;
+    return true;
+  });
+  renderTable(filtered);
+  showSearchTags();
+}
+
+function resetSearch() {
+  document.getElementById('searchShopName').value = '';
+  document.getElementById('searchPlatform').value = '';
+  document.getElementById('searchStatus').value = '';
+  renderTable(mockData);
+  hideSearchTags();
+}
+
+// 搜索条件标签
+function showSearchTags() {
+  var tags = [];
+  var shopName = document.getElementById('searchShopName').value.trim();
+  var platform = document.getElementById('searchPlatform').value;
+  var status = document.getElementById('searchStatus').value;
+  if (shopName) tags.push({label:'店铺名称: '+shopName, field:'searchShopName'});
+  if (platform) tags.push({label:'平台名称: '+platform, field:'searchPlatform'});
+  if (status) tags.push({label:'状态: '+status, field:'searchStatus'});
+  var container = document.getElementById('searchTags');
+  if (tags.length === 0) { container.style.display = 'none'; return; }
+  container.style.display = '';
+  container.innerHTML = tags.map(function(t) {
+    return '<span class="active-tag" onclick="clearTag(\''+t.field+'\')">'+t.label+' ×</span>';
+  }).join('');
+}
+function hideSearchTags() {
+  document.getElementById('searchTags').style.display = 'none';
+}
+function clearTag(field) {
+  var el = document.getElementById(field);
+  if (el.tagName === 'SELECT') el.value = '';
+  else el.value = '';
+  doSearch();
+}
+
+function goAdd() {
+  showToast('新增入驻功能开发中', 'info');
+}
+function doEdit(id) {
+  showToast('编辑功能开发中', 'info');
+}
+function doView(id) {
+  showToast('查看详情功能开发中', 'info');
+}
+
+// Toast 轻提示
+function showToast(msg, type) {
+  var container = document.getElementById('toastContainer');
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + (type || 'info');
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(function() { toast.classList.add('toast-hide'); }, 2500);
+  setTimeout(function() { toast.remove(); }, 3000);
+}
+
+// 初始化渲染
+renderTable(mockData);
+</script>
+</body>
+</html>
