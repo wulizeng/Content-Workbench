@@ -101,6 +101,99 @@
     border-radius: 10px;
     white-space: nowrap;
   }
+
+  /* ===== 弹窗 ===== */
+  .modal-overlay {
+    position:fixed; top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,.45); z-index:9999;
+    display:flex; align-items:center; justify-content:center;
+    animation:modalFadeIn .25s ease;
+  }
+  @keyframes modalFadeIn { from{opacity:0} to{opacity:1} }
+  .modal {
+    background:#fff; border-radius:12px; width:640px; max-width:92vw;
+    max-height:90vh; box-shadow:0 24px 60px rgba(0,0,0,.2);
+    display:flex; flex-direction:column; animation:modalSlideIn .3s ease;
+  }
+  @keyframes modalSlideIn { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+  .modal-head {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:14px 18px 10px; border-bottom:1px solid #e4e9f1;
+  }
+  .modal-head h3 { margin:0; font-size:15px; font-weight:700; color:#0f172a; }
+  .modal-close {
+    width:28px; height:28px; border:none; background:transparent;
+    border-radius:6px; cursor:pointer; display:grid; place-items:center;
+    color:#647084; font-size:18px; transition:background .15s;
+  }
+  .modal-close:hover { background:#f0f2f5; }
+  .modal-body { padding:12px 18px; overflow-y:auto; flex:1; min-height:0; }
+  .modal-foot {
+    display:flex; justify-content:flex-end; gap:10px;
+    padding:10px 18px 14px; border-top:1px solid #e4e9f1;
+  }
+  .modal-foot .btn { min-width:80px; }
+
+  /* ===== 表单 ===== */
+  .form-grid {
+    display:grid; grid-template-columns:1fr 1fr; gap:10px 16px;
+  }
+  .form-item { display:flex; flex-direction:row; align-items:center; gap:8px; }
+  .form-item label { font-size:12px; font-weight:600; color:var(--text-secondary); white-space:nowrap; flex-shrink:0; width:80px; text-align:right; }
+  .form-item input, .form-item select, .form-item textarea {
+    width:100%; box-sizing:border-box; flex:1; min-width:0;
+    padding:6px 10px; border:1px solid var(--border); border-radius:6px;
+    font:inherit; font-size:13px; outline:none; background:var(--bg-secondary,#f8fafc);
+    transition:border-color .18s;
+  }
+  .form-item input:focus, .form-item select:focus, .form-item textarea:focus {
+    border-color:var(--primary); background:#fff;
+  }
+  .form-item textarea { resize:vertical; min-height:60px; }
+  .form-item.full { grid-column: 1 / -1; }
+
+  /* ===== 查看弹窗只读字段 ===== */
+  .view-grid {
+    display:grid; grid-template-columns:1fr 1fr; gap:8px 16px;
+  }
+  .view-item { display:flex; align-items:center; gap:6px; }
+  .view-item .view-label {
+    font-size:12px; font-weight:600; color:var(--text-muted); white-space:nowrap; width:72px; text-align:right; flex-shrink:0;
+  }
+  .view-item .view-value {
+    font-size:13px; color:var(--text); flex:1; min-width:0;
+  }
+  .view-item.full { grid-column: 1 / -1; }
+  .view-item .view-value.desc {
+    line-height:1.6; white-space:normal;
+  }
+
+  /* ===== 查看弹窗权限只读 ===== */
+  .view-perm-section {
+    margin-top:14px; padding-top:12px; border-top:1px solid var(--border-light);
+  }
+  .view-perm-title {
+    font-size:13px; font-weight:700; color:var(--text); margin-bottom:10px;
+    display:flex; align-items:center; gap:6px;
+  }
+  .view-perm-row {
+    display:flex; align-items:flex-start; padding:8px 0;
+    border-bottom:1px solid var(--border-light);
+  }
+  .view-perm-row:last-child { border-bottom:none; }
+  .view-perm-cat {
+    width:80px; flex-shrink:0; font-size:13px; font-weight:600; color:var(--text);
+  }
+  .view-perm-tags {
+    flex:1; display:flex; flex-wrap:wrap; gap:5px;
+  }
+  .view-perm-tag {
+    font-size:11px; padding:2px 8px; border-radius:10px;
+    background:var(--primary-light); color:var(--primary); white-space:nowrap;
+  }
+  .view-perm-empty {
+    font-size:12px; color:var(--text-muted); font-style:italic;
+  }
   </style>
 </head>
 <body>
@@ -182,6 +275,75 @@
       <span class="page-btn active">1</span>
       <span class="page-btn">2</span>
       <span class="page-btn">&raquo;</span>
+    </div>
+  </div>
+
+  <!-- ===== 编辑弹窗 ===== -->
+  <div id="editModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeEditModal()">
+    <div class="modal">
+      <div class="modal-head">
+        <h3 id="editModalTitle">编辑岗位</h3>
+        <button class="modal-close" onclick="closeEditModal()" title="关闭">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-item">
+            <label>平台名称：</label>
+            <select id="editPlatform">
+              <option value="抖音">抖音</option>
+            </select>
+          </div>
+          <div class="form-item">
+            <label>岗位名称：</label>
+            <input type="text" id="editPositionName" placeholder="请输入岗位名称">
+          </div>
+          <div class="form-item">
+            <label>状态：</label>
+            <select id="editStatus">
+              <option value="启用">启用</option>
+              <option value="未启用">未启用</option>
+              <option value="删除">删除</option>
+            </select>
+          </div>
+          <div class="form-item">
+            <label>创建人：</label>
+            <input type="text" id="editCreator" readonly style="background:#f1f5f9;color:var(--text-muted);">
+          </div>
+          <div class="form-item full">
+            <label>岗位描述：</label>
+            <textarea id="editPositionDesc" placeholder="请输入岗位描述" rows="2"></textarea>
+          </div>
+        </div>
+        <!-- 权限配置区 -->
+        <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border-light);">
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            权限配置
+          </div>
+          <div id="editPermContainer"></div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn" onclick="closeEditModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveEdit()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 查看弹窗 ===== -->
+  <div id="viewModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeViewModal()">
+    <div class="modal" style="width:680px;">
+      <div class="modal-head">
+        <h3>岗位详情</h3>
+        <button class="modal-close" onclick="closeViewModal()" title="关闭">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="view-grid" id="viewInfoGrid"></div>
+        <div class="view-perm-section" id="viewPermSection"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn" onclick="closeViewModal()">关闭</button>
+      </div>
     </div>
   </div>
 
@@ -527,10 +689,141 @@ function clearTag(field) {
   doSearch();
 }
 
+// ===== 编辑弹窗 =====
+var editingId = null;
+
+function doEdit(id) {
+  var row = null;
+  for (var i = 0; i < mockData.length; i++) { if (mockData[i].id === id) { row = mockData[i]; break; } }
+  if (!row) return;
+  editingId = id;
+  document.getElementById('editModalTitle').textContent = '编辑岗位';
+  document.getElementById('editPlatform').value = row.platformName;
+  document.getElementById('editPositionName').value = row.positionName;
+  document.getElementById('editPositionDesc').value = row.positionDesc;
+  document.getElementById('editStatus').value = row.status;
+  document.getElementById('editCreator').value = row.creator;
+  // 渲染权限复选框
+  renderEditPermissions(row);
+  document.getElementById('editModal').style.display = '';
+}
+
+function renderEditPermissions(row) {
+  var container = document.getElementById('editPermContainer');
+  var html = '';
+  permissionCategories.forEach(function(cat) {
+    var checkedItems = (row.permissions && row.permissions[cat.name]) || [];
+    var allChecked = checkedItems.length === cat.children.length;
+    html += '<div class="perm-category">';
+    html += '<div class="perm-category-name">';
+    html += '<input type="checkbox" ' + (allChecked ? 'checked' : '') + ' onchange="toggleEditCategory(this,\'' + cat.name + '\')">';
+    html += '<span>' + cat.name + '</span>';
+    html += '</div>';
+    html += '<div class="perm-items">';
+    cat.children.forEach(function(item) {
+      var isChecked = checkedItems.indexOf(item) > -1;
+      html += '<label class="perm-item">';
+      html += '<input type="checkbox" ' + (isChecked ? 'checked' : '') + ' data-edit-category="' + cat.name + '" data-edit-item="' + item + '" onchange="onEditPermChange()">';
+      html += '<span>' + item + '</span>';
+      html += '</label>';
+    });
+    html += '</div>';
+    html += '</div>';
+  });
+  container.innerHTML = html;
+}
+
+function toggleEditCategory(el, catName) {
+  var checked = el.checked;
+  var checkboxes = document.querySelectorAll('#editPermContainer input[data-edit-category="' + catName + '"]');
+  checkboxes.forEach(function(cb) { cb.checked = checked; });
+}
+
+function onEditPermChange() {
+  permissionCategories.forEach(function(cat) {
+    var allCbs = document.querySelectorAll('#editPermContainer input[data-edit-category="' + cat.name + '"]');
+    var checkedCbs = document.querySelectorAll('#editPermContainer input[data-edit-category="' + cat.name + '"]:checked');
+    var categoryCb = allCbs[0] ? allCbs[0].closest('.perm-category').querySelector('.perm-category-name input[type="checkbox"]') : null;
+    if (categoryCb) {
+      categoryCb.checked = allCbs.length > 0 && allCbs.length === checkedCbs.length;
+    }
+  });
+}
+
+function saveEdit() {
+  var row = null;
+  for (var i = 0; i < mockData.length; i++) { if (mockData[i].id === editingId) { row = mockData[i]; break; } }
+  if (!row) return;
+  var positionName = document.getElementById('editPositionName').value.trim();
+  if (!positionName) { showToast('请输入岗位名称', 'warning'); return; }
+  row.platformName = document.getElementById('editPlatform').value;
+  row.positionName = positionName;
+  row.positionDesc = document.getElementById('editPositionDesc').value.trim();
+  row.status = document.getElementById('editStatus').value;
+  // 收集权限
+  row.permissions = {};
+  permissionCategories.forEach(function(cat) {
+    var cbs = document.querySelectorAll('#editPermContainer input[data-edit-category="' + cat.name + '"]:checked');
+    var items = [];
+    cbs.forEach(function(cb) { items.push(cb.getAttribute('data-edit-item')); });
+    row.permissions[cat.name] = items;
+  });
+  row.updateTime = new Date().toLocaleString('zh-CN', {hour12: false}).replace(/\//g, '-');
+  row.updater = currentUser || '系统管理员';
+  closeEditModal();
+  renderTable(mockData);
+  showToast('保存成功', 'success');
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').style.display = 'none';
+  editingId = null;
+}
+
+// ===== 查看弹窗 =====
+function doView(id) {
+  var row = null;
+  for (var i = 0; i < mockData.length; i++) { if (mockData[i].id === id) { row = mockData[i]; break; } }
+  if (!row) return;
+  // 基本信息
+  var infoHtml = '';
+  infoHtml += '<div class="view-item"><span class="view-label">平台名称：</span><span class="view-value">' + escapeHtml(row.platformName) + '</span></div>';
+  infoHtml += '<div class="view-item"><span class="view-label">岗位名称：</span><span class="view-value">' + escapeHtml(row.positionName) + '</span></div>';
+  infoHtml += '<div class="view-item"><span class="view-label">状态：</span><span class="view-value">' + getStatusTag(row.status) + '</span></div>';
+  infoHtml += '<div class="view-item"><span class="view-label">创建人：</span><span class="view-value">' + escapeHtml(row.creator) + '</span></div>';
+  infoHtml += '<div class="view-item"><span class="view-label">创建时间：</span><span class="view-value">' + escapeHtml(row.createTime) + '</span></div>';
+  infoHtml += '<div class="view-item"><span class="view-label">更新人：</span><span class="view-value">' + escapeHtml(row.updater) + '</span></div>';
+  infoHtml += '<div class="view-item full"><span class="view-label">岗位描述：</span><span class="view-value desc">' + escapeHtml(row.positionDesc) + '</span></div>';
+  infoHtml += '<div class="view-item"><span class="view-label">更新时间：</span><span class="view-value">' + escapeHtml(row.updateTime) + '</span></div>';
+  document.getElementById('viewInfoGrid').innerHTML = infoHtml;
+  // 权限明细
+  var permHtml = '<div class="view-perm-title"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> 权限明细</div>';
+  permissionCategories.forEach(function(cat) {
+    var checkedItems = (row.permissions && row.permissions[cat.name]) || [];
+    permHtml += '<div class="view-perm-row">';
+    permHtml += '<div class="view-perm-cat">' + cat.name + '</div>';
+    permHtml += '<div class="view-perm-tags">';
+    if (checkedItems.length === 0) {
+      permHtml += '<span class="view-perm-empty">暂无权限</span>';
+    } else {
+      checkedItems.forEach(function(item) {
+        permHtml += '<span class="view-perm-tag">' + escapeHtml(item) + '</span>';
+      });
+    }
+    permHtml += '</div>';
+    permHtml += '</div>';
+  });
+  document.getElementById('viewPermSection').innerHTML = permHtml;
+  document.getElementById('viewModal').style.display = '';
+}
+
+function closeViewModal() {
+  document.getElementById('viewModal').style.display = 'none';
+}
+
 // ===== 操作按钮 =====
+var currentUser = '系统管理员';
 function goAdd() { showToast('新增岗位功能开发中', 'info'); }
-function doEdit(id) { showToast('编辑功能开发中', 'info'); }
-function doView(id) { showToast('查看详情功能开发中', 'info'); }
 function doDelete(id) {
   if (confirm('确定要删除该岗位吗？')) {
     var idx = -1;
