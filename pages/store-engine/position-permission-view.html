@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>岗位详情</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+  .page-header {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+  }
+  .page-header h2 {
+    margin: 0; font-size: 18px; font-weight: 700; color: var(--text);
+  }
+
+  /* ===== 信息卡片 ===== */
+  .info-card {
+    background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 20px 24px; margin-bottom: 16px;
+  }
+  .info-card-title {
+    font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 14px;
+    display: flex; align-items: center; gap: 6px;
+    padding-bottom: 10px; border-bottom: 1px solid var(--border-light);
+  }
+  .view-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px;
+  }
+  .view-item { display: flex; align-items: center; gap: 6px; }
+  .view-item .view-label {
+    font-size: 13px; font-weight: 600; color: var(--text-muted);
+    white-space: nowrap; width: 72px; text-align: right; flex-shrink: 0;
+  }
+  .view-item .view-value {
+    font-size: 13px; color: var(--text); flex: 1; min-width: 0;
+  }
+  .view-item.full { grid-column: 1 / -1; }
+  .view-item .view-value.desc {
+    line-height: 1.6; white-space: normal;
+  }
+
+  /* ===== 三级权限只读展示 ===== */
+  /* 一级分类行 — 带左侧色条 + 浅底 */
+  .perm-l1-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px; margin-top: 12px;
+    background: linear-gradient(135deg, #f0f4ff 0%, #f8f9fc 100%);
+    border-left: 3px solid var(--primary);
+    border-radius: 0 6px 6px 0;
+  }
+  .perm-l1-row:first-of-type { margin-top: 4px; }
+  .perm-l1-label {
+    font-size: 14px; font-weight: 700; color: var(--text);
+    letter-spacing: 0.5px;
+  }
+  .perm-l1-badge {
+    font-size: 11px; color: var(--primary); background: var(--primary-light);
+    padding: 1px 8px; border-radius: 10px; margin-left: 4px; font-weight: 500;
+  }
+
+  /* 二级分类行 — 竖线引导 + 缩进 */
+  .perm-l2-row {
+    display: flex; align-items: flex-start;
+    padding: 10px 0 10px 40px;
+    margin-left: 14px;
+    border-left: 2px solid #dce1ea;
+    position: relative;
+  }
+  .perm-l2-row::before {
+    content: ''; position: absolute; left: -2px; top: 18px;
+    width: 12px; height: 0; border-top: 2px solid #dce1ea;
+  }
+  .perm-l2-row:last-child { border-left-color: transparent; }
+  .perm-l2-row:last-child::before { display: none; }
+  .perm-l2-label {
+    width: 105px; flex-shrink: 0;
+    font-size: 13px; font-weight: 600; color: var(--text);
+    background: #edf0f7; padding: 4px 10px; border-radius: 5px;
+    border: 1px solid #dfe3ec;
+  }
+  .perm-tags {
+    flex: 1; display: flex; flex-wrap: wrap; gap: 4px 8px;
+    padding: 4px 8px;
+    background: #f8f9fc;
+    border: 1px solid #eef0f5;
+    border-radius: 6px;
+    min-height: 32px;
+  }
+  .perm-tag {
+    font-size: 11px; padding: 3px 8px; border-radius: 4px;
+    background: #fff; border: 1px solid #e0e3ea;
+    color: var(--primary); white-space: nowrap;
+  }
+  .perm-empty {
+    font-size: 12px; color: var(--text-muted); font-style: italic;
+  }
+
+  /* ===== 底部操作栏 ===== */
+  .form-actions {
+    display: flex; justify-content: flex-end; gap: 10px;
+    padding: 16px 0;
+  }
+  </style>
+</head>
+<body>
+<div class="page-container">
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script>
+    if (window.parent) {
+      window.parent.postMessage({type:'breadcrumb', text:'店铺管理 <span>/</span> 平台岗位权限 <span>/</span> 岗位详情'}, '*');
+    }
+  </script>
+
+  <div class="page-header">
+    <button class="btn" onclick="goBack()" style="display:flex;align-items:center;gap:4px;padding:6px 12px;height:auto;">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      返回
+    </button>
+    <h2>岗位详情</h2>
+  </div>
+
+  <!-- 基本信息 -->
+  <div class="info-card">
+    <div class="info-card-title">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      基本信息
+    </div>
+    <div class="view-grid" id="infoGrid"></div>
+  </div>
+
+  <!-- 权限明细 -->
+  <div class="info-card">
+    <div class="info-card-title">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      权限明细
+    </div>
+    <div id="permSection"></div>
+  </div>
+
+  <!-- 操作按钮 -->
+  <div class="form-actions">
+    <button class="btn" onclick="goBack()">返回</button>
+    <button class="btn btn-primary" id="btnEdit" onclick="goEdit()">编辑</button>
+  </div>
+
+</div>
+
+<script>
+// ===== 权限分类数据（三级结构） =====
+var permissionCategories = [
+  {
+    name: '流量',
+    children: [
+      { name: '营销工具', children: ['达人专属营销','搭配购','直播间福利任务','惊喜好礼','超级福袋','分期免息','评价有礼','顺手买一件','国家补贴-商补','商品抽签购','小刀优惠','教育优惠','购物红包','定时开售','拼团','定金预售','裂变营销','拍卖','多件优惠','抽签购','赠品活动','单单返券','以旧换新补贴','历史营销中心跳转页面','满减','新人礼金','惊喜券','多单立减'] },
+      { name: '推广工具', children: ['商品推广','直播间推广','短视频推广','搜索推广','信息流广告','品牌广告','达人合作','活动引流'] }
+    ]
+  },
+  { name: '商品', children: [{ name: '商品管理', children: ['商品管理','价格管理','库存管理','商品上架','商品下架','商品编辑','商品删除','商品审核','类目管理','品牌管理'] }] },
+  { name: '订单', children: [{ name: '订单管理', children: ['订单查看','订单处理','发货管理','退款管理','售后管理','订单导出','订单统计','物流管理'] }] },
+  { name: '数据', children: [{ name: '数据分析', children: ['销售数据','流量数据','转化数据','用户画像','商品分析','直播数据','短视频数据','数据导出','数据看板'] }] },
+  { name: '客服', children: [{ name: '客服管理', children: ['客服接待','客服管理','快捷回复','自动回复','客服数据','工单管理','评价管理'] }] }
+];
+
+var STORAGE_KEY = 'position_permission_data';
+var recordId = null;
+var currentRow = null;
+
+function loadData() {
+  var params = new URLSearchParams(window.location.search);
+  recordId = parseInt(params.get('id'));
+  if (!recordId) { showToast('缺少记录ID', 'warning'); return; }
+  var list = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  // 旧数据迁移
+  if (list.length > 0 && list[0].permissions && list[0].permissions['流量'] !== undefined) {
+    var defaultData = [
+      { id:1, platformName:'抖音', positionName:'运营主管', positionDesc:'负责店铺整体运营策略制定与执行', status:'启用', creator:'系统管理员', createTime:'2026-07-01 09:00:00', updater:'系统管理员', updateTime:'2026-08-01 14:30:00', permissions:{ '营销工具':['达人专属营销','搭配购','直播间福利任务','惊喜好礼','超级福袋','分期免息','评价有礼','顺手买一件','国家补贴-商补','商品抽签购','小刀优惠','教育优惠','购物红包','定时开售','拼团','定金预售','裂变营销','拍卖','多件优惠','抽签购','赠品活动','单单返券','以旧换新补贴','历史营销中心跳转页面','满减','新人礼金','惊喜券','多单立减'], '推广工具':['商品推广','直播间推广','短视频推广','搜索推广','信息流广告','品牌广告','达人合作','活动引流'], '商品管理':['商品管理','价格管理','库存管理','商品上架','商品下架','商品编辑','商品删除','商品审核','类目管理','品牌管理'], '订单管理':['订单查看','订单处理','发货管理','退款管理','售后管理','订单导出','订单统计','物流管理'], '数据分析':['销售数据','流量数据','转化数据','用户画像','商品分析','直播数据','短视频数据','数据导出','数据看板'], '客服管理':['客服接待','客服管理','快捷回复','自动回复','客服数据','工单管理','评价管理'] } },
+      { id:2, platformName:'抖音', positionName:'商品运营', positionDesc:'负责商品上架、价格调整与库存管理', status:'启用', creator:'系统管理员', createTime:'2026-07-05 10:30:00', updater:'张运营', updateTime:'2026-08-03 11:20:00', permissions:{ '营销工具':['搭配购','拼团','满减','多件优惠','赠品活动'], '推广工具':['商品推广','短视频推广'], '商品管理':['商品管理','价格管理','库存管理','商品上架','商品下架','商品编辑','商品审核'], '订单管理':['订单查看','订单处理','发货管理'], '数据分析':['销售数据','商品分析','数据看板'], '客服管理':['客服接待','快捷回复'] } },
+      { id:3, platformName:'抖音', positionName:'客服专员', positionDesc:'负责日常客服接待与售后处理', status:'未启用', creator:'张运营', createTime:'2026-07-10 14:00:00', updater:'张运营', updateTime:'2026-07-28 16:45:00', permissions:{ '营销工具':[], '推广工具':[], '商品管理':['商品管理'], '订单管理':['订单查看','退款管理','售后管理'], '数据分析':[], '客服管理':['客服接待','客服管理','快捷回复','自动回复','客服数据','工单管理','评价管理'] } },
+      { id:4, platformName:'抖音', positionName:'数据分析师', positionDesc:'负责店铺数据分析与报表输出', status:'启用', creator:'系统管理员', createTime:'2026-07-15 09:30:00', updater:'系统管理员', updateTime:'2026-08-05 10:00:00', permissions:{ '营销工具':[], '推广工具':[], '商品管理':[], '订单管理':['订单查看','订单统计'], '数据分析':['销售数据','流量数据','转化数据','用户画像','商品分析','直播数据','短视频数据','数据导出','数据看板'], '客服管理':[] } },
+      { id:5, platformName:'抖音', positionName:'直播运营', positionDesc:'负责直播间运营与流量投放', status:'删除', creator:'张运营', createTime:'2026-06-20 11:00:00', updater:'张运营', updateTime:'2026-07-30 09:15:00', permissions:{ '营销工具':['直播间福利任务','惊喜好礼','超级福袋','拼团','满减'], '推广工具':['直播间推广','短视频推广','搜索推广','达人合作','活动引流'], '商品管理':['商品管理','商品上架','商品下架'], '订单管理':['订单查看','订单处理'], '数据分析':['销售数据','流量数据','直播数据','数据看板'], '客服管理':['客服接待','快捷回复'] } }
+    ];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData));
+    list = defaultData;
+  }
+  for (var i = 0; i < list.length; i++) { if (list[i].id === recordId) { currentRow = list[i]; break; } }
+  if (!currentRow) { showToast('记录不存在', 'warning'); setTimeout(goBack, 1500); return; }
+  renderInfo();
+  renderPermissions();
+}
+
+function renderInfo() {
+  var row = currentRow;
+  var html = '';
+  html += '<div class="view-item"><span class="view-label">平台名称：</span><span class="view-value">' + escapeHtml(row.platformName) + '</span></div>';
+  html += '<div class="view-item"><span class="view-label">岗位名称：</span><span class="view-value">' + escapeHtml(row.positionName) + '</span></div>';
+  html += '<div class="view-item"><span class="view-label">状态：</span><span class="view-value">' + getStatusTag(row.status) + '</span></div>';
+  html += '<div class="view-item"><span class="view-label">创建人：</span><span class="view-value">' + escapeHtml(row.creator) + '</span></div>';
+  html += '<div class="view-item"><span class="view-label">创建时间：</span><span class="view-value">' + escapeHtml(row.createTime) + '</span></div>';
+  html += '<div class="view-item"><span class="view-label">更新人：</span><span class="view-value">' + escapeHtml(row.updater) + '</span></div>';
+  html += '<div class="view-item full"><span class="view-label">岗位描述：</span><span class="view-value desc">' + escapeHtml(row.positionDesc) + '</span></div>';
+  html += '<div class="view-item"><span class="view-label">更新时间：</span><span class="view-value">' + escapeHtml(row.updateTime) + '</span></div>';
+  document.getElementById('infoGrid').innerHTML = html;
+}
+
+function renderPermissions() {
+  var row = currentRow;
+  var html = '';
+  permissionCategories.forEach(function(l1) {
+    var l1Total = 0, l1Checked = 0;
+    l1.children.forEach(function(l2) { l1Total += l2.children.length; });
+    l1.children.forEach(function(l2) { l1Checked += ((currentRow.permissions && currentRow.permissions[l2.name]) || []).length; });
+    html += '<div class="perm-l1-row">';
+    html += '<div class="perm-l1-label">' + l1.name + '</div>';
+    html += '<span class="perm-l1-badge">' + l1Checked + '/' + l1Total + '</span>';
+    html += '</div>';
+    l1.children.forEach(function(l2) {
+      var checkedItems = (row.permissions && row.permissions[l2.name]) || [];
+      html += '<div class="perm-l2-row">';
+      html += '<div class="perm-l2-label">' + l2.name + '</div>';
+      html += '<div class="perm-tags">';
+      if (checkedItems.length === 0) {
+        html += '<span class="perm-empty">暂无权限</span>';
+      } else {
+        checkedItems.forEach(function(item) {
+          html += '<span class="perm-tag">' + escapeHtml(item) + '</span>';
+        });
+      }
+      html += '</div>';
+      html += '</div>';
+    });
+  });
+  document.getElementById('permSection').innerHTML = html;
+}
+
+function getStatusTag(status) {
+  var cls = '';
+  switch(status) {
+    case '启用': cls = 'submitted'; break;
+    case '未启用': cls = 'initial'; break;
+    case '删除': cls = 'cancelled'; break;
+    default: cls = 'initial';
+  }
+  return '<span class="status-tag ' + cls + '">' + escapeHtml(status) + '</span>';
+}
+
+function goBack() {
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type: 'closeTab' }, '*');
+  } else {
+    window.close();
+  }
+}
+
+function goEdit() {
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({
+      type: 'openTab',
+      page: 'pages/store-engine/position-permission-edit.html?id=' + recordId,
+      title: '编辑岗位'
+    }, '*');
+  }
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function showToast(msg, type) {
+  var container = document.getElementById('toastContainer');
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + (type || 'info');
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(function() { toast.classList.add('toast-hide'); }, 2500);
+  setTimeout(function() { toast.remove(); }, 3000);
+}
+
+// 初始化
+loadData();
+</script>
+</body>
+</html>
