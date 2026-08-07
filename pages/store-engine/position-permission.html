@@ -36,43 +36,70 @@
   }
   .expand-title svg { flex-shrink: 0; }
 
-  /* 权限分类行 */
-  .perm-category {
-    display: flex;
-    align-items: flex-start;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--border-light);
+  /* 一级分类行 — 带左侧色条 + 浅底 */
+  .perm-l1 {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px; margin-top: 12px;
+    background: linear-gradient(135deg, #f0f4ff 0%, #f8f9fc 100%);
+    border-left: 3px solid var(--primary);
+    border-radius: 0 6px 6px 0;
   }
-  .perm-category:last-child { border-bottom: none; }
-  .perm-category-name {
-    width: 100px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text);
+  .perm-l1:first-of-type { margin-top: 4px; }
+  .perm-l1-name {
+    font-size: 14px; font-weight: 700; color: var(--text);
+    display: flex; align-items: center; gap: 6px;
+    letter-spacing: 0.5px;
   }
-  .perm-category-name input[type="checkbox"] {
+  .perm-l1-name input[type="checkbox"] {
     width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer;
   }
+  .perm-l1-badge {
+    font-size: 11px; color: var(--primary); background: var(--primary-light);
+    padding: 1px 8px; border-radius: 10px; margin-left: 4px; font-weight: 500;
+  }
+
+  /* 二级分类行 — 竖线引导 + 缩进 */
+  .perm-l2 {
+    display: flex; align-items: flex-start;
+    padding: 10px 0 10px 40px;
+    margin-left: 14px;
+    border-left: 2px solid #dce1ea;
+    position: relative;
+  }
+  .perm-l2::before {
+    content: ''; position: absolute; left: -2px; top: 18px;
+    width: 12px; height: 0; border-top: 2px solid #dce1ea;
+  }
+  .perm-l2:last-child { border-left-color: transparent; }
+  .perm-l2:last-child::before { display: none; }
+  .perm-l2-name {
+    width: 105px; flex-shrink: 0;
+    display: flex; align-items: center; gap: 5px;
+    font-size: 13px; font-weight: 600; color: var(--text);
+    background: #edf0f7; padding: 4px 10px; border-radius: 5px;
+    border: 1px solid #dfe3ec;
+  }
+  .perm-l2-name input[type="checkbox"] {
+    width: 15px; height: 15px; accent-color: var(--primary); cursor: pointer;
+  }
   .perm-items {
-    flex: 1;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px 20px;
+    flex: 1; display: flex; flex-wrap: wrap; gap: 4px 10px;
+    padding: 4px 8px;
+    background: #f8f9fc;
+    border: 1px solid #eef0f5;
+    border-radius: 6px;
+    min-height: 32px;
   }
   .perm-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 13px;
-    color: var(--text-secondary);
-    white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 12px; color: var(--text-secondary); white-space: nowrap;
+    padding: 3px 8px; border-radius: 4px;
+    background: #fff; border: 1px solid #e8eaef;
+    transition: all .15s;
   }
+  .perm-item:hover { background: #f0f4ff; border-color: var(--primary); color: var(--primary); }
   .perm-item input[type="checkbox"] {
-    width: 14px; height: 14px; accent-color: var(--primary); cursor: pointer;
+    width: 13px; height: 13px; accent-color: var(--primary); cursor: pointer;
   }
 
   /* 展开按钮 */
@@ -100,99 +127,6 @@
     padding: 2px 8px;
     border-radius: 10px;
     white-space: nowrap;
-  }
-
-  /* ===== 弹窗 ===== */
-  .modal-overlay {
-    position:fixed; top:0; left:0; right:0; bottom:0;
-    background:rgba(0,0,0,.45); z-index:9999;
-    display:flex; align-items:center; justify-content:center;
-    animation:modalFadeIn .25s ease;
-  }
-  @keyframes modalFadeIn { from{opacity:0} to{opacity:1} }
-  .modal {
-    background:#fff; border-radius:12px; width:640px; max-width:92vw;
-    max-height:90vh; box-shadow:0 24px 60px rgba(0,0,0,.2);
-    display:flex; flex-direction:column; animation:modalSlideIn .3s ease;
-  }
-  @keyframes modalSlideIn { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
-  .modal-head {
-    display:flex; justify-content:space-between; align-items:center;
-    padding:14px 18px 10px; border-bottom:1px solid #e4e9f1;
-  }
-  .modal-head h3 { margin:0; font-size:15px; font-weight:700; color:#0f172a; }
-  .modal-close {
-    width:28px; height:28px; border:none; background:transparent;
-    border-radius:6px; cursor:pointer; display:grid; place-items:center;
-    color:#647084; font-size:18px; transition:background .15s;
-  }
-  .modal-close:hover { background:#f0f2f5; }
-  .modal-body { padding:12px 18px; overflow-y:auto; flex:1; min-height:0; }
-  .modal-foot {
-    display:flex; justify-content:flex-end; gap:10px;
-    padding:10px 18px 14px; border-top:1px solid #e4e9f1;
-  }
-  .modal-foot .btn { min-width:80px; }
-
-  /* ===== 表单 ===== */
-  .form-grid {
-    display:grid; grid-template-columns:1fr 1fr; gap:10px 16px;
-  }
-  .form-item { display:flex; flex-direction:row; align-items:center; gap:8px; }
-  .form-item label { font-size:12px; font-weight:600; color:var(--text-secondary); white-space:nowrap; flex-shrink:0; width:80px; text-align:right; }
-  .form-item input, .form-item select, .form-item textarea {
-    width:100%; box-sizing:border-box; flex:1; min-width:0;
-    padding:6px 10px; border:1px solid var(--border); border-radius:6px;
-    font:inherit; font-size:13px; outline:none; background:var(--bg-secondary,#f8fafc);
-    transition:border-color .18s;
-  }
-  .form-item input:focus, .form-item select:focus, .form-item textarea:focus {
-    border-color:var(--primary); background:#fff;
-  }
-  .form-item textarea { resize:vertical; min-height:60px; }
-  .form-item.full { grid-column: 1 / -1; }
-
-  /* ===== 查看弹窗只读字段 ===== */
-  .view-grid {
-    display:grid; grid-template-columns:1fr 1fr; gap:8px 16px;
-  }
-  .view-item { display:flex; align-items:center; gap:6px; }
-  .view-item .view-label {
-    font-size:12px; font-weight:600; color:var(--text-muted); white-space:nowrap; width:72px; text-align:right; flex-shrink:0;
-  }
-  .view-item .view-value {
-    font-size:13px; color:var(--text); flex:1; min-width:0;
-  }
-  .view-item.full { grid-column: 1 / -1; }
-  .view-item .view-value.desc {
-    line-height:1.6; white-space:normal;
-  }
-
-  /* ===== 查看弹窗权限只读 ===== */
-  .view-perm-section {
-    margin-top:14px; padding-top:12px; border-top:1px solid var(--border-light);
-  }
-  .view-perm-title {
-    font-size:13px; font-weight:700; color:var(--text); margin-bottom:10px;
-    display:flex; align-items:center; gap:6px;
-  }
-  .view-perm-row {
-    display:flex; align-items:flex-start; padding:8px 0;
-    border-bottom:1px solid var(--border-light);
-  }
-  .view-perm-row:last-child { border-bottom:none; }
-  .view-perm-cat {
-    width:80px; flex-shrink:0; font-size:13px; font-weight:600; color:var(--text);
-  }
-  .view-perm-tags {
-    flex:1; display:flex; flex-wrap:wrap; gap:5px;
-  }
-  .view-perm-tag {
-    font-size:11px; padding:2px 8px; border-radius:10px;
-    background:var(--primary-light); color:var(--primary); white-space:nowrap;
-  }
-  .view-perm-empty {
-    font-size:12px; color:var(--text-muted); font-style:italic;
   }
   </style>
 </head>
@@ -278,124 +212,80 @@
     </div>
   </div>
 
-  <!-- ===== 编辑弹窗 ===== -->
-  <div id="editModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeEditModal()">
-    <div class="modal">
-      <div class="modal-head">
-        <h3 id="editModalTitle">编辑岗位</h3>
-        <button class="modal-close" onclick="closeEditModal()" title="关闭">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-grid">
-          <div class="form-item">
-            <label>平台名称：</label>
-            <select id="editPlatform">
-              <option value="抖音">抖音</option>
-            </select>
-          </div>
-          <div class="form-item">
-            <label>岗位名称：</label>
-            <input type="text" id="editPositionName" placeholder="请输入岗位名称">
-          </div>
-          <div class="form-item">
-            <label>状态：</label>
-            <select id="editStatus">
-              <option value="启用">启用</option>
-              <option value="未启用">未启用</option>
-              <option value="删除">删除</option>
-            </select>
-          </div>
-          <div class="form-item">
-            <label>创建人：</label>
-            <input type="text" id="editCreator" readonly style="background:#f1f5f9;color:var(--text-muted);">
-          </div>
-          <div class="form-item full">
-            <label>岗位描述：</label>
-            <textarea id="editPositionDesc" placeholder="请输入岗位描述" rows="2"></textarea>
-          </div>
-        </div>
-        <!-- 权限配置区 -->
-        <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border-light);">
-          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:6px;">
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            权限配置
-          </div>
-          <div id="editPermContainer"></div>
-        </div>
-      </div>
-      <div class="modal-foot">
-        <button class="btn" onclick="closeEditModal()">取消</button>
-        <button class="btn btn-primary" onclick="saveEdit()">保存</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== 查看弹窗 ===== -->
-  <div id="viewModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeViewModal()">
-    <div class="modal" style="width:680px;">
-      <div class="modal-head">
-        <h3>岗位详情</h3>
-        <button class="modal-close" onclick="closeViewModal()" title="关闭">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="view-grid" id="viewInfoGrid"></div>
-        <div class="view-perm-section" id="viewPermSection"></div>
-      </div>
-      <div class="modal-foot">
-        <button class="btn" onclick="closeViewModal()">关闭</button>
-      </div>
-    </div>
-  </div>
-
 </div>
 
 <script>
-// ===== 权限分类数据（模拟数据库动态获取） =====
+// ===== 权限分类数据（三级结构：一级分类 → 二级分类 → 三级权限项） =====
 var permissionCategories = [
-  {
-    name: '营销工具',
-    children: [
-      '达人专属营销', '搭配购', '直播间福利任务', '惊喜好礼', '超级福袋',
-      '分期免息', '评价有礼', '顺手买一件', '国家补贴-商补', '商品抽签购',
-      '小刀优惠', '教育优惠', '购物红包', '定时开售', '拼团',
-      '定金预售', '裂变营销', '拍卖', '多件优惠', '抽签购',
-      '赠品活动', '单单返券', '以旧换新补贴', '历史营销中心跳转页面', '满减',
-      '新人礼金', '惊喜券', '多单立减'
-    ]
-  },
   {
     name: '流量',
     children: [
-      '营销工具', '商品推广', '直播间推广', '短视频推广', '搜索推广',
-      '信息流广告', '品牌广告', '达人合作', '活动引流'
+      {
+        name: '营销工具',
+        children: [
+          '达人专属营销', '搭配购', '直播间福利任务', '惊喜好礼', '超级福袋',
+          '分期免息', '评价有礼', '顺手买一件', '国家补贴-商补', '商品抽签购',
+          '小刀优惠', '教育优惠', '购物红包', '定时开售', '拼团',
+          '定金预售', '裂变营销', '拍卖', '多件优惠', '抽签购',
+          '赠品活动', '单单返券', '以旧换新补贴', '历史营销中心跳转页面', '满减',
+          '新人礼金', '惊喜券', '多单立减'
+        ]
+      },
+      {
+        name: '推广工具',
+        children: [
+          '商品推广', '直播间推广', '短视频推广', '搜索推广',
+          '信息流广告', '品牌广告', '达人合作', '活动引流'
+        ]
+      }
     ]
   },
   {
     name: '商品',
     children: [
-      '商品管理', '价格管理', '库存管理', '商品上架', '商品下架',
-      '商品编辑', '商品删除', '商品审核', '类目管理', '品牌管理'
+      {
+        name: '商品管理',
+        children: [
+          '商品管理', '价格管理', '库存管理', '商品上架', '商品下架',
+          '商品编辑', '商品删除', '商品审核', '类目管理', '品牌管理'
+        ]
+      }
     ]
   },
   {
     name: '订单',
     children: [
-      '订单查看', '订单处理', '发货管理', '退款管理', '售后管理',
-      '订单导出', '订单统计', '物流管理'
+      {
+        name: '订单管理',
+        children: [
+          '订单查看', '订单处理', '发货管理', '退款管理', '售后管理',
+          '订单导出', '订单统计', '物流管理'
+        ]
+      }
     ]
   },
   {
     name: '数据',
     children: [
-      '销售数据', '流量数据', '转化数据', '用户画像', '商品分析',
-      '直播数据', '短视频数据', '数据导出', '数据看板'
+      {
+        name: '数据分析',
+        children: [
+          '销售数据', '流量数据', '转化数据', '用户画像', '商品分析',
+          '直播数据', '短视频数据', '数据导出', '数据看板'
+        ]
+      }
     ]
   },
   {
     name: '客服',
     children: [
-      '客服接待', '客服管理', '快捷回复', '自动回复', '客服数据',
-      '工单管理', '评价管理'
+      {
+        name: '客服管理',
+        children: [
+          '客服接待', '客服管理', '快捷回复', '自动回复', '客服数据',
+          '工单管理', '评价管理'
+        ]
+      }
     ]
   }
 ];
@@ -409,11 +299,11 @@ var mockData = [
     updater: '系统管理员', updateTime: '2026-08-01 14:30:00',
     permissions: {
       '营销工具': ['达人专属营销','搭配购','直播间福利任务','惊喜好礼','超级福袋','分期免息','评价有礼','顺手买一件','国家补贴-商补','商品抽签购','小刀优惠','教育优惠','购物红包','定时开售','拼团','定金预售','裂变营销','拍卖','多件优惠','抽签购','赠品活动','单单返券','以旧换新补贴','历史营销中心跳转页面','满减','新人礼金','惊喜券','多单立减'],
-      '流量': ['营销工具','商品推广','直播间推广','短视频推广','搜索推广','信息流广告','品牌广告','达人合作','活动引流'],
-      '商品': ['商品管理','价格管理','库存管理','商品上架','商品下架','商品编辑','商品删除','商品审核','类目管理','品牌管理'],
-      '订单': ['订单查看','订单处理','发货管理','退款管理','售后管理','订单导出','订单统计','物流管理'],
-      '数据': ['销售数据','流量数据','转化数据','用户画像','商品分析','直播数据','短视频数据','数据导出','数据看板'],
-      '客服': ['客服接待','客服管理','快捷回复','自动回复','客服数据','工单管理','评价管理']
+      '推广工具': ['商品推广','直播间推广','短视频推广','搜索推广','信息流广告','品牌广告','达人合作','活动引流'],
+      '商品管理': ['商品管理','价格管理','库存管理','商品上架','商品下架','商品编辑','商品删除','商品审核','类目管理','品牌管理'],
+      '订单管理': ['订单查看','订单处理','发货管理','退款管理','售后管理','订单导出','订单统计','物流管理'],
+      '数据分析': ['销售数据','流量数据','转化数据','用户画像','商品分析','直播数据','短视频数据','数据导出','数据看板'],
+      '客服管理': ['客服接待','客服管理','快捷回复','自动回复','客服数据','工单管理','评价管理']
     }
   },
   {
@@ -423,11 +313,11 @@ var mockData = [
     updater: '张运营', updateTime: '2026-08-03 11:20:00',
     permissions: {
       '营销工具': ['搭配购','拼团','满减','多件优惠','赠品活动'],
-      '流量': ['商品推广','短视频推广'],
-      '商品': ['商品管理','价格管理','库存管理','商品上架','商品下架','商品编辑','商品审核'],
-      '订单': ['订单查看','订单处理','发货管理'],
-      '数据': ['销售数据','商品分析','数据看板'],
-      '客服': ['客服接待','快捷回复']
+      '推广工具': ['商品推广','短视频推广'],
+      '商品管理': ['商品管理','价格管理','库存管理','商品上架','商品下架','商品编辑','商品审核'],
+      '订单管理': ['订单查看','订单处理','发货管理'],
+      '数据分析': ['销售数据','商品分析','数据看板'],
+      '客服管理': ['客服接待','快捷回复']
     }
   },
   {
@@ -437,11 +327,11 @@ var mockData = [
     updater: '张运营', updateTime: '2026-07-28 16:45:00',
     permissions: {
       '营销工具': [],
-      '流量': [],
-      '商品': ['商品管理'],
-      '订单': ['订单查看','退款管理','售后管理'],
-      '数据': [],
-      '客服': ['客服接待','客服管理','快捷回复','自动回复','客服数据','工单管理','评价管理']
+      '推广工具': [],
+      '商品管理': ['商品管理'],
+      '订单管理': ['订单查看','退款管理','售后管理'],
+      '数据分析': [],
+      '客服管理': ['客服接待','客服管理','快捷回复','自动回复','客服数据','工单管理','评价管理']
     }
   },
   {
@@ -451,11 +341,11 @@ var mockData = [
     updater: '系统管理员', updateTime: '2026-08-05 10:00:00',
     permissions: {
       '营销工具': [],
-      '流量': [],
-      '商品': [],
-      '订单': ['订单查看','订单统计'],
-      '数据': ['销售数据','流量数据','转化数据','用户画像','商品分析','直播数据','短视频数据','数据导出','数据看板'],
-      '客服': []
+      '推广工具': [],
+      '商品管理': [],
+      '订单管理': ['订单查看','订单统计'],
+      '数据分析': ['销售数据','流量数据','转化数据','用户画像','商品分析','直播数据','短视频数据','数据导出','数据看板'],
+      '客服管理': []
     }
   },
   {
@@ -465,11 +355,11 @@ var mockData = [
     updater: '张运营', updateTime: '2026-07-30 09:15:00',
     permissions: {
       '营销工具': ['直播间福利任务','惊喜好礼','超级福袋','拼团','满减'],
-      '流量': ['直播间推广','短视频推广','搜索推广','达人合作','活动引流'],
-      '商品': ['商品管理','商品上架','商品下架'],
-      '订单': ['订单查看','订单处理'],
-      '数据': ['销售数据','流量数据','直播数据','数据看板'],
-      '客服': ['客服接待','快捷回复']
+      '推广工具': ['直播间推广','短视频推广','搜索推广','达人合作','活动引流'],
+      '商品管理': ['商品管理','商品上架','商品下架'],
+      '订单管理': ['订单查看','订单处理'],
+      '数据分析': ['销售数据','流量数据','直播数据','数据看板'],
+      '客服管理': ['客服接待','快捷回复']
     }
   }
 ];
@@ -516,29 +406,45 @@ function renderTable(data) {
   document.getElementById('checkAll').checked = false;
 }
 
-// ===== 构建权限树 HTML =====
+// ===== 构建权限树 HTML（三级结构） =====
 function buildPermissionTree(row) {
   var html = '<div class="expand-content">';
   html += '<div class="expand-title"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> 权限明细配置</div>';
-  permissionCategories.forEach(function(cat) {
-    var checkedItems = (row.permissions && row.permissions[cat.name]) || [];
-    var allChecked = checkedItems.length === cat.children.length;
-    var html2 = '<div class="perm-category">';
-    html2 += '<div class="perm-category-name">';
-    html2 += '<input type="checkbox" ' + (allChecked ? 'checked' : '') + ' onchange="toggleCategory(this,\'' + cat.name + '\',' + row.id + ')">';
-    html2 += '<span>' + cat.name + '</span>';
-    html2 += '</div>';
-    html2 += '<div class="perm-items">';
-    cat.children.forEach(function(item) {
-      var isChecked = checkedItems.indexOf(item) > -1;
-      html2 += '<label class="perm-item">';
-      html2 += '<input type="checkbox" ' + (isChecked ? 'checked' : '') + ' data-category="' + cat.name + '" data-item="' + item + '" onchange="onPermChange(' + row.id + ')">';
-      html2 += '<span>' + item + '</span>';
-      html2 += '</label>';
+  permissionCategories.forEach(function(l1) {
+    // 一级分类
+    var l1Total = 0, l1Checked = 0;
+    l1.children.forEach(function(l2) { l1Total += l2.children.length; });
+    l1.children.forEach(function(l2) {
+      var items = (row.permissions && row.permissions[l2.name]) || [];
+      l1Checked += items.length;
     });
-    html2 += '</div>';
-    html2 += '</div>';
-    html += html2;
+    var l1AllChecked = l1Total > 0 && l1Checked === l1Total;
+    html += '<div class="perm-l1">';
+    html += '<div class="perm-l1-name">';
+    html += '<input type="checkbox" data-l1-name="' + l1.name + '" ' + (l1AllChecked ? 'checked' : '') + ' onchange="toggleL1(this,\'' + l1.name + '\',' + row.id + ')">';
+    html += '<span>' + l1.name + '</span>';
+    html += '</div>';
+    html += '<span class="perm-l1-badge">' + l1Checked + '/' + l1Total + '</span>';
+    html += '</div>';
+    // 二级分类 + 三级权限项
+    l1.children.forEach(function(l2) {
+      var checkedItems = (row.permissions && row.permissions[l2.name]) || [];
+      var l2AllChecked = checkedItems.length === l2.children.length;
+      html += '<div class="perm-l2">';
+      html += '<div class="perm-l2-name">';
+      html += '<input type="checkbox" data-l2-name="' + l2.name + '" data-l1-name="' + l1.name + '" ' + (l2AllChecked ? 'checked' : '') + ' onchange="toggleL2(this,\'' + l2.name + '\',' + row.id + ')">';
+      html += '<span>' + l2.name + '</span>';
+      html += '</div>';
+      html += '<div class="perm-items">';
+      l2.children.forEach(function(item) {
+        var isChecked = checkedItems.indexOf(item) > -1;
+        html += '<label class="perm-item">';
+        html += '<input type="checkbox" ' + (isChecked ? 'checked' : '') + ' data-l2="' + l2.name + '" data-l1="' + l1.name + '" data-item="' + item + '" onchange="onPermChange(' + row.id + ')">';
+        html += '<span>' + item + '</span>';
+        html += '</label>';
+      });
+      html += '</div></div>';
+    });
   });
   html += '<div style="text-align:right;margin-top:12px;">';
   html += '<button class="btn btn-primary" onclick="savePermissions(' + row.id + ')">保存权限</button>';
@@ -553,47 +459,120 @@ function toggleExpand(btn, id) {
   var row = document.getElementById('expandRow_' + id);
   if (!row) return;
   var isOpen = row.classList.contains('show');
-  // 先关闭所有展开行
   document.querySelectorAll('.expand-row.show').forEach(function(r) { r.classList.remove('show'); });
   document.querySelectorAll('.expand-btn.open').forEach(function(b) { b.classList.remove('open'); });
   if (!isOpen) {
     row.classList.add('show');
     btn.classList.add('open');
+    syncRowIndeterminate(id);
   }
 }
 
-// ===== 分类全选/取消 =====
-function toggleCategory(el, catName, rowId) {
-  var checked = el.checked;
-  var checkboxes = document.querySelectorAll('#expandRow_' + rowId + ' input[data-category="' + catName + '"]');
-  checkboxes.forEach(function(cb) { cb.checked = checked; });
-}
-
-// ===== 单个权限变更时联动分类勾选框 =====
-function onPermChange(rowId) {
-  permissionCategories.forEach(function(cat) {
-    var allCbs = document.querySelectorAll('#expandRow_' + rowId + ' input[data-category="' + cat.name + '"]');
-    var checkedCbs = document.querySelectorAll('#expandRow_' + rowId + ' input[data-category="' + cat.name + '"]:checked');
-    var categoryCb = allCbs[0] ? allCbs[0].closest('.perm-category').querySelector('.perm-category-name input[type="checkbox"]') : null;
-    if (categoryCb) {
-      categoryCb.checked = allCbs.length > 0 && allCbs.length === checkedCbs.length;
+// ===== 同步某行所有父级复选框的 indeterminate 状态 =====
+function syncRowIndeterminate(rowId) {
+  permissionCategories.forEach(function(l1) {
+    // 同步二级 indeterminate
+    l1.children.forEach(function(l2) {
+      var allCbs = document.querySelectorAll('#expandRow_' + rowId + ' input[data-l2="' + l2.name + '"]');
+      var checkedCbs = document.querySelectorAll('#expandRow_' + rowId + ' input[data-l2="' + l2.name + '"]:checked');
+      var l2Cb = document.querySelector('#expandRow_' + rowId + ' input[data-l2-name="' + l2.name + '"]');
+      if (l2Cb) {
+        var n = allCbs.length, c = checkedCbs.length;
+        l2Cb.checked = c > 0;
+        l2Cb.indeterminate = c > 0 && c < n;
+      }
+    });
+    // 同步一级 indeterminate
+    var l1Cb = document.querySelector('#expandRow_' + rowId + ' input[data-l1-name="' + l1.name + '"]');
+    if (l1Cb) {
+      var total = 0, checked = 0;
+      l1.children.forEach(function(l2) {
+        var a = document.querySelectorAll('#expandRow_' + rowId + ' input[data-l2="' + l2.name + '"]');
+        var ck = document.querySelectorAll('#expandRow_' + rowId + ' input[data-l2="' + l2.name + '"]:checked');
+        total += a.length; checked += ck.length;
+      });
+      l1Cb.checked = checked > 0;
+      l1Cb.indeterminate = checked > 0 && checked < total;
     }
   });
 }
 
-// ===== 保存权限 =====
+// ===== 一级分类全选/取消：勾选→全选所有二三级，取消→清空所有二三级 =====
+function toggleL1(el, l1Name, rowId) {
+  // indeterminate 状态下浏览器会设 checked=true，此时应视为“全选”
+  var checked = el.checked;
+  el.indeterminate = false;
+  var l1 = permissionCategories.find(function(c) { return c.name === l1Name; });
+  if (!l1) return;
+  l1.children.forEach(function(l2) {
+    var itemCbs = document.querySelectorAll('#expandRow_' + rowId + ' input[data-l2="' + l2.name + '"]');
+    itemCbs.forEach(function(cb) { cb.checked = checked; });
+    var l2Cb = document.querySelector('#expandRow_' + rowId + ' input[data-l2-name="' + l2.name + '"]');
+    if (l2Cb) { l2Cb.checked = checked; l2Cb.indeterminate = false; }
+  });
+}
+
+// ===== 二级分类全选/取消：勾选→全选所有三级项，取消→清空所有三级项 =====
+function toggleL2(el, l2Name, rowId) {
+  var checked = el.checked;
+  el.indeterminate = false;
+  var itemCbs = document.querySelectorAll('#expandRow_' + rowId + ' input[data-l2="' + l2Name + '"]');
+  itemCbs.forEach(function(cb) { cb.checked = checked; });
+  syncL1FromItems(rowId);
+}
+
+// ===== 三级权限项变更时：自动联动二级和一级三态 =====
+function onPermChange(rowId) {
+  // 联动二级三态
+  permissionCategories.forEach(function(l1) {
+    l1.children.forEach(function(l2) {
+      var allCbs = document.querySelectorAll('#expandRow_' + rowId + ' input[data-l2="' + l2.name + '"]');
+      var checkedCbs = document.querySelectorAll('#expandRow_' + rowId + ' input[data-l2="' + l2.name + '"]:checked');
+      var l2Cb = document.querySelector('#expandRow_' + rowId + ' input[data-l2-name="' + l2.name + '"]');
+      if (l2Cb) {
+        var n = allCbs.length, c = checkedCbs.length;
+        l2Cb.checked = c > 0;
+        l2Cb.indeterminate = c > 0 && c < n;
+      }
+    });
+  });
+  // 联动一级三态
+  syncL1FromItems(rowId);
+}
+
+// ===== 从三级项同步一级复选框三态：全选=✓，部分=–，无=空 =====
+function syncL1FromItems(rowId) {
+  permissionCategories.forEach(function(l1) {
+    var l1Cb = document.querySelector('#expandRow_' + rowId + ' input[data-l1-name="' + l1.name + '"]');
+    if (!l1Cb) return;
+    var total = 0, checked = 0;
+    l1.children.forEach(function(l2) {
+      var allCbs = document.querySelectorAll('#expandRow_' + rowId + ' input[data-l2="' + l2.name + '"]');
+      var checkedCbs = document.querySelectorAll('#expandRow_' + rowId + ' input[data-l2="' + l2.name + '"]:checked');
+      total += allCbs.length;
+      checked += checkedCbs.length;
+    });
+    l1Cb.checked = checked > 0;
+    l1Cb.indeterminate = checked > 0 && checked < total;
+  });
+}
+
+// ===== 保存权限（三级结构） =====
 function savePermissions(id) {
   var row = null;
   for (var i = 0; i < mockData.length; i++) { if (mockData[i].id === id) { row = mockData[i]; break; } }
   if (!row) return;
   row.permissions = {};
-  permissionCategories.forEach(function(cat) {
-    var cbs = document.querySelectorAll('#expandRow_' + id + ' input[data-category="' + cat.name + '"]:checked');
-    var items = [];
-    cbs.forEach(function(cb) { items.push(cb.getAttribute('data-item')); });
-    row.permissions[cat.name] = items;
+  permissionCategories.forEach(function(l1) {
+    l1.children.forEach(function(l2) {
+      var cbs = document.querySelectorAll('#expandRow_' + id + ' input[data-l2="' + l2.name + '"]:checked');
+      var items = [];
+      cbs.forEach(function(cb) { items.push(cb.getAttribute('data-item')); });
+      row.permissions[l2.name] = items;
+    });
   });
   row.updateTime = new Date().toLocaleString('zh-CN', {hour12: false}).replace(/\//g, '-');
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(mockData));
   showToast('权限保存成功', 'success');
   renderTable(mockData);
 }
@@ -689,146 +668,60 @@ function clearTag(field) {
   doSearch();
 }
 
-// ===== 编辑弹窗 =====
-var editingId = null;
+// ===== 操作按钮 =====
+var STORAGE_KEY = 'position_permission_data';
+var currentUser = '系统管理员';
+
+// 初始化时将 mockData 同步到 localStorage（首次或旧数据迁移）
+(function syncToStorage() {
+  var stored = localStorage.getItem(STORAGE_KEY);
+  if (!stored) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(mockData));
+  } else {
+    var parsed = JSON.parse(stored);
+    // 检测旧数据结构（权限 key 为一级分类名），自动迁移
+    var hasOldKeys = parsed.length > 0 && parsed[0].permissions && parsed[0].permissions['流量'] !== undefined;
+    if (hasOldKeys) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(mockData));
+      mockData = JSON.parse(JSON.stringify(mockData));
+    } else {
+      mockData = parsed;
+    }
+  }
+})();
+
+function goAdd() { showToast('新增岗位功能开发中', 'info'); }
 
 function doEdit(id) {
-  var row = null;
-  for (var i = 0; i < mockData.length; i++) { if (mockData[i].id === id) { row = mockData[i]; break; } }
-  if (!row) return;
-  editingId = id;
-  document.getElementById('editModalTitle').textContent = '编辑岗位';
-  document.getElementById('editPlatform').value = row.platformName;
-  document.getElementById('editPositionName').value = row.positionName;
-  document.getElementById('editPositionDesc').value = row.positionDesc;
-  document.getElementById('editStatus').value = row.status;
-  document.getElementById('editCreator').value = row.creator;
-  // 渲染权限复选框
-  renderEditPermissions(row);
-  document.getElementById('editModal').style.display = '';
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({
+      type: 'openTab',
+      page: 'pages/store-engine/position-permission-edit.html?id=' + id,
+      title: '编辑岗位'
+    }, '*');
+  }
 }
 
-function renderEditPermissions(row) {
-  var container = document.getElementById('editPermContainer');
-  var html = '';
-  permissionCategories.forEach(function(cat) {
-    var checkedItems = (row.permissions && row.permissions[cat.name]) || [];
-    var allChecked = checkedItems.length === cat.children.length;
-    html += '<div class="perm-category">';
-    html += '<div class="perm-category-name">';
-    html += '<input type="checkbox" ' + (allChecked ? 'checked' : '') + ' onchange="toggleEditCategory(this,\'' + cat.name + '\')">';
-    html += '<span>' + cat.name + '</span>';
-    html += '</div>';
-    html += '<div class="perm-items">';
-    cat.children.forEach(function(item) {
-      var isChecked = checkedItems.indexOf(item) > -1;
-      html += '<label class="perm-item">';
-      html += '<input type="checkbox" ' + (isChecked ? 'checked' : '') + ' data-edit-category="' + cat.name + '" data-edit-item="' + item + '" onchange="onEditPermChange()">';
-      html += '<span>' + item + '</span>';
-      html += '</label>';
-    });
-    html += '</div>';
-    html += '</div>';
-  });
-  container.innerHTML = html;
-}
-
-function toggleEditCategory(el, catName) {
-  var checked = el.checked;
-  var checkboxes = document.querySelectorAll('#editPermContainer input[data-edit-category="' + catName + '"]');
-  checkboxes.forEach(function(cb) { cb.checked = checked; });
-}
-
-function onEditPermChange() {
-  permissionCategories.forEach(function(cat) {
-    var allCbs = document.querySelectorAll('#editPermContainer input[data-edit-category="' + cat.name + '"]');
-    var checkedCbs = document.querySelectorAll('#editPermContainer input[data-edit-category="' + cat.name + '"]:checked');
-    var categoryCb = allCbs[0] ? allCbs[0].closest('.perm-category').querySelector('.perm-category-name input[type="checkbox"]') : null;
-    if (categoryCb) {
-      categoryCb.checked = allCbs.length > 0 && allCbs.length === checkedCbs.length;
-    }
-  });
-}
-
-function saveEdit() {
-  var row = null;
-  for (var i = 0; i < mockData.length; i++) { if (mockData[i].id === editingId) { row = mockData[i]; break; } }
-  if (!row) return;
-  var positionName = document.getElementById('editPositionName').value.trim();
-  if (!positionName) { showToast('请输入岗位名称', 'warning'); return; }
-  row.platformName = document.getElementById('editPlatform').value;
-  row.positionName = positionName;
-  row.positionDesc = document.getElementById('editPositionDesc').value.trim();
-  row.status = document.getElementById('editStatus').value;
-  // 收集权限
-  row.permissions = {};
-  permissionCategories.forEach(function(cat) {
-    var cbs = document.querySelectorAll('#editPermContainer input[data-edit-category="' + cat.name + '"]:checked');
-    var items = [];
-    cbs.forEach(function(cb) { items.push(cb.getAttribute('data-edit-item')); });
-    row.permissions[cat.name] = items;
-  });
-  row.updateTime = new Date().toLocaleString('zh-CN', {hour12: false}).replace(/\//g, '-');
-  row.updater = currentUser || '系统管理员';
-  closeEditModal();
-  renderTable(mockData);
-  showToast('保存成功', 'success');
-}
-
-function closeEditModal() {
-  document.getElementById('editModal').style.display = 'none';
-  editingId = null;
-}
-
-// ===== 查看弹窗 =====
 function doView(id) {
-  var row = null;
-  for (var i = 0; i < mockData.length; i++) { if (mockData[i].id === id) { row = mockData[i]; break; } }
-  if (!row) return;
-  // 基本信息
-  var infoHtml = '';
-  infoHtml += '<div class="view-item"><span class="view-label">平台名称：</span><span class="view-value">' + escapeHtml(row.platformName) + '</span></div>';
-  infoHtml += '<div class="view-item"><span class="view-label">岗位名称：</span><span class="view-value">' + escapeHtml(row.positionName) + '</span></div>';
-  infoHtml += '<div class="view-item"><span class="view-label">状态：</span><span class="view-value">' + getStatusTag(row.status) + '</span></div>';
-  infoHtml += '<div class="view-item"><span class="view-label">创建人：</span><span class="view-value">' + escapeHtml(row.creator) + '</span></div>';
-  infoHtml += '<div class="view-item"><span class="view-label">创建时间：</span><span class="view-value">' + escapeHtml(row.createTime) + '</span></div>';
-  infoHtml += '<div class="view-item"><span class="view-label">更新人：</span><span class="view-value">' + escapeHtml(row.updater) + '</span></div>';
-  infoHtml += '<div class="view-item full"><span class="view-label">岗位描述：</span><span class="view-value desc">' + escapeHtml(row.positionDesc) + '</span></div>';
-  infoHtml += '<div class="view-item"><span class="view-label">更新时间：</span><span class="view-value">' + escapeHtml(row.updateTime) + '</span></div>';
-  document.getElementById('viewInfoGrid').innerHTML = infoHtml;
-  // 权限明细
-  var permHtml = '<div class="view-perm-title"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> 权限明细</div>';
-  permissionCategories.forEach(function(cat) {
-    var checkedItems = (row.permissions && row.permissions[cat.name]) || [];
-    permHtml += '<div class="view-perm-row">';
-    permHtml += '<div class="view-perm-cat">' + cat.name + '</div>';
-    permHtml += '<div class="view-perm-tags">';
-    if (checkedItems.length === 0) {
-      permHtml += '<span class="view-perm-empty">暂无权限</span>';
-    } else {
-      checkedItems.forEach(function(item) {
-        permHtml += '<span class="view-perm-tag">' + escapeHtml(item) + '</span>';
-      });
-    }
-    permHtml += '</div>';
-    permHtml += '</div>';
-  });
-  document.getElementById('viewPermSection').innerHTML = permHtml;
-  document.getElementById('viewModal').style.display = '';
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({
+      type: 'openTab',
+      page: 'pages/store-engine/position-permission-view.html?id=' + id,
+      title: '岗位详情'
+    }, '*');
+  }
 }
 
-function closeViewModal() {
-  document.getElementById('viewModal').style.display = 'none';
-}
-
-// ===== 操作按钮 =====
-var currentUser = '系统管理员';
-function goAdd() { showToast('新增岗位功能开发中', 'info'); }
 function doDelete(id) {
   if (confirm('确定要删除该岗位吗？')) {
     var idx = -1;
     for (var i = 0; i < mockData.length; i++) { if (mockData[i].id === id) { idx = i; break; } }
-    if (idx > -1) { mockData.splice(idx, 1); renderTable(mockData); showToast('删除成功', 'success'); }
+    if (idx > -1) {
+      mockData.splice(idx, 1);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(mockData));
+      renderTable(mockData);
+      showToast('删除成功', 'success');
+    }
   }
 }
 

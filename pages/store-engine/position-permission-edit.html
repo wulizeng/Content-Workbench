@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>编辑岗位</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+  .page-header {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+  }
+  .page-header h2 {
+    margin: 0; font-size: 18px; font-weight: 700; color: var(--text);
+  }
+
+  /* ===== 表单 ===== */
+  .form-card {
+    background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 20px 24px; margin-bottom: 16px;
+  }
+  .form-card-title {
+    font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 14px;
+    display: flex; align-items: center; gap: 6px;
+    padding-bottom: 10px; border-bottom: 1px solid var(--border-light);
+  }
+  .form-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px;
+  }
+  .form-item { display: flex; flex-direction: row; align-items: center; gap: 8px; }
+  .form-item label {
+    font-size: 13px; font-weight: 600; color: var(--text-secondary);
+    white-space: nowrap; flex-shrink: 0; width: 80px; text-align: right;
+  }
+  .form-item input, .form-item select, .form-item textarea {
+    width: 100%; box-sizing: border-box; flex: 1; min-width: 0;
+    padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px;
+    font: inherit; font-size: 13px; outline: none; background: #f8fafc;
+    transition: border-color .18s;
+  }
+  .form-item input:focus, .form-item select:focus, .form-item textarea:focus {
+    border-color: var(--primary); background: #fff;
+  }
+  .form-item textarea { resize: vertical; min-height: 60px; }
+  .form-item.full { grid-column: 1 / -1; }
+  .form-item input[readonly] { background: #f1f5f9; color: var(--text-muted); cursor: default; }
+
+  /* ===== 三级权限复选框 ===== */
+  /* 一级分类行 — 带左侧色条 + 浅底 */
+  .perm-l1 {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px; margin-top: 12px;
+    background: linear-gradient(135deg, #f0f4ff 0%, #f8f9fc 100%);
+    border-left: 3px solid var(--primary);
+    border-radius: 0 6px 6px 0;
+  }
+  .perm-l1:first-of-type { margin-top: 4px; }
+  .perm-l1-name {
+    font-size: 14px; font-weight: 700; color: var(--text);
+    display: flex; align-items: center; gap: 6px;
+    letter-spacing: 0.5px;
+  }
+  .perm-l1-name input[type="checkbox"] {
+    width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer;
+  }
+  .perm-l1-badge {
+    font-size: 11px; color: var(--primary); background: var(--primary-light);
+    padding: 1px 8px; border-radius: 10px; margin-left: 4px; font-weight: 500;
+  }
+
+  /* 二级分类行 — 竖线引导 + 缩进 */
+  .perm-l2 {
+    display: flex; align-items: flex-start;
+    padding: 10px 0 10px 40px;
+    margin-left: 14px;
+    border-left: 2px solid #dce1ea;
+    position: relative;
+  }
+  .perm-l2::before {
+    content: ''; position: absolute; left: -2px; top: 18px;
+    width: 12px; height: 0; border-top: 2px solid #dce1ea;
+  }
+  .perm-l2:last-child { border-left-color: transparent; }
+  .perm-l2:last-child::before { display: none; }
+  .perm-l2-name {
+    width: 105px; flex-shrink: 0;
+    display: flex; align-items: center; gap: 5px;
+    font-size: 13px; font-weight: 600; color: var(--text);
+    background: #edf0f7; padding: 4px 10px; border-radius: 5px;
+    border: 1px solid #dfe3ec;
+  }
+  .perm-l2-name input[type="checkbox"] {
+    width: 15px; height: 15px; accent-color: var(--primary); cursor: pointer;
+  }
+  .perm-items {
+    flex: 1; display: flex; flex-wrap: wrap; gap: 4px 10px;
+    padding: 4px 8px;
+    background: #f8f9fc;
+    border: 1px solid #eef0f5;
+    border-radius: 6px;
+    min-height: 32px;
+  }
+  .perm-item {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 12px; color: var(--text-secondary); white-space: nowrap;
+    padding: 3px 8px; border-radius: 4px;
+    background: #fff; border: 1px solid #e8eaef;
+    transition: all .15s;
+  }
+  .perm-item:hover { background: #f0f4ff; border-color: var(--primary); color: var(--primary); }
+  .perm-item input[type="checkbox"] {
+    width: 13px; height: 13px; accent-color: var(--primary); cursor: pointer;
+  }
+
+  /* ===== 底部操作栏 ===== */
+  .form-actions {
+    display: flex; justify-content: flex-end; gap: 10px;
+    padding: 16px 0;
+  }
+  </style>
+</head>
+<body>
+<div class="page-container">
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script>
+    if (window.parent) {
+      window.parent.postMessage({type:'breadcrumb', text:'店铺管理 <span>/</span> 平台岗位权限 <span>/</span> 编辑岗位'}, '*');
+    }
+  </script>
+
+  <div class="page-header">
+    <button class="btn" onclick="goBack()" style="display:flex;align-items:center;gap:4px;padding:6px 12px;height:auto;">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      返回
+    </button>
+    <h2>编辑岗位</h2>
+  </div>
+
+  <!-- 基本信息 -->
+  <div class="form-card">
+    <div class="form-card-title">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      基本信息
+    </div>
+    <div class="form-grid">
+      <div class="form-item">
+        <label>平台名称：</label>
+        <select id="editPlatform">
+          <option value="抖音">抖音</option>
+        </select>
+      </div>
+      <div class="form-item">
+        <label>岗位名称：</label>
+        <input type="text" id="editPositionName" placeholder="请输入岗位名称">
+      </div>
+      <div class="form-item">
+        <label>状态：</label>
+        <select id="editStatus">
+          <option value="启用">启用</option>
+          <option value="未启用">未启用</option>
+          <option value="删除">删除</option>
+        </select>
+      </div>
+      <div class="form-item">
+        <label>创建人：</label>
+        <input type="text" id="editCreator" readonly>
+      </div>
+      <div class="form-item">
+        <label>创建时间：</label>
+        <input type="text" id="editCreateTime" readonly>
+      </div>
+      <div class="form-item">
+        <label>更新人：</label>
+        <input type="text" id="editUpdater" readonly>
+      </div>
+      <div class="form-item full">
+        <label>岗位描述：</label>
+        <textarea id="editPositionDesc" placeholder="请输入岗位描述" rows="2"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- 权限配置 -->
+  <div class="form-card">
+    <div class="form-card-title">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      权限配置
+    </div>
+    <div id="permContainer"></div>
+  </div>
+
+  <!-- 操作按钮 -->
+  <div class="form-actions">
+    <button class="btn" onclick="goBack()">取消</button>
+    <button class="btn btn-primary" onclick="doSave()">保存</button>
+  </div>
+
+</div>
+
+<script>
+// ===== 权限分类数据（三级结构） =====
+var permissionCategories = [
+  {
+    name: '流量',
+    children: [
+      { name: '营销工具', children: ['达人专属营销','搭配购','直播间福利任务','惊喜好礼','超级福袋','分期免息','评价有礼','顺手买一件','国家补贴-商补','商品抽签购','小刀优惠','教育优惠','购物红包','定时开售','拼团','定金预售','裂变营销','拍卖','多件优惠','抽签购','赠品活动','单单返券','以旧换新补贴','历史营销中心跳转页面','满减','新人礼金','惊喜券','多单立减'] },
+      { name: '推广工具', children: ['商品推广','直播间推广','短视频推广','搜索推广','信息流广告','品牌广告','达人合作','活动引流'] }
+    ]
+  },
+  { name: '商品', children: [{ name: '商品管理', children: ['商品管理','价格管理','库存管理','商品上架','商品下架','商品编辑','商品删除','商品审核','类目管理','品牌管理'] }] },
+  { name: '订单', children: [{ name: '订单管理', children: ['订单查看','订单处理','发货管理','退款管理','售后管理','订单导出','订单统计','物流管理'] }] },
+  { name: '数据', children: [{ name: '数据分析', children: ['销售数据','流量数据','转化数据','用户画像','商品分析','直播数据','短视频数据','数据导出','数据看板'] }] },
+  { name: '客服', children: [{ name: '客服管理', children: ['客服接待','客服管理','快捷回复','自动回复','客服数据','工单管理','评价管理'] }] }
+];
+
+// ===== 从 localStorage 读取数据 =====
+var STORAGE_KEY = 'position_permission_data';
+var recordId = null;
+var currentUser = '系统管理员';
+
+function loadData() {
+  var params = new URLSearchParams(window.location.search);
+  recordId = parseInt(params.get('id'));
+  if (!recordId) { showToast('缺少记录ID', 'warning'); return; }
+  var list = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  // 旧数据迁移：检测权限 key 是否为旧结构
+  if (list.length > 0 && list[0].permissions && list[0].permissions['流量'] !== undefined) {
+    // 旧数据，重置为默认
+    var defaultData = [
+      { id:1, platformName:'抖音', positionName:'运营主管', positionDesc:'负责店铺整体运营策略制定与执行', status:'启用', creator:'系统管理员', createTime:'2026-07-01 09:00:00', updater:'系统管理员', updateTime:'2026-08-01 14:30:00', permissions:{ '营销工具':['达人专属营销','搭配购','直播间福利任务','惊喜好礼','超级福袋','分期免息','评价有礼','顺手买一件','国家补贴-商补','商品抽签购','小刀优惠','教育优惠','购物红包','定时开售','拼团','定金预售','裂变营销','拍卖','多件优惠','抽签购','赠品活动','单单返券','以旧换新补贴','历史营销中心跳转页面','满减','新人礼金','惊喜券','多单立减'], '推广工具':['商品推广','直播间推广','短视频推广','搜索推广','信息流广告','品牌广告','达人合作','活动引流'], '商品管理':['商品管理','价格管理','库存管理','商品上架','商品下架','商品编辑','商品删除','商品审核','类目管理','品牌管理'], '订单管理':['订单查看','订单处理','发货管理','退款管理','售后管理','订单导出','订单统计','物流管理'], '数据分析':['销售数据','流量数据','转化数据','用户画像','商品分析','直播数据','短视频数据','数据导出','数据看板'], '客服管理':['客服接待','客服管理','快捷回复','自动回复','客服数据','工单管理','评价管理'] } },
+      { id:2, platformName:'抖音', positionName:'商品运营', positionDesc:'负责商品上架、价格调整与库存管理', status:'启用', creator:'系统管理员', createTime:'2026-07-05 10:30:00', updater:'张运营', updateTime:'2026-08-03 11:20:00', permissions:{ '营销工具':['搭配购','拼团','满减','多件优惠','赠品活动'], '推广工具':['商品推广','短视频推广'], '商品管理':['商品管理','价格管理','库存管理','商品上架','商品下架','商品编辑','商品审核'], '订单管理':['订单查看','订单处理','发货管理'], '数据分析':['销售数据','商品分析','数据看板'], '客服管理':['客服接待','快捷回复'] } },
+      { id:3, platformName:'抖音', positionName:'客服专员', positionDesc:'负责日常客服接待与售后处理', status:'未启用', creator:'张运营', createTime:'2026-07-10 14:00:00', updater:'张运营', updateTime:'2026-07-28 16:45:00', permissions:{ '营销工具':[], '推广工具':[], '商品管理':['商品管理'], '订单管理':['订单查看','退款管理','售后管理'], '数据分析':[], '客服管理':['客服接待','客服管理','快捷回复','自动回复','客服数据','工单管理','评价管理'] } },
+      { id:4, platformName:'抖音', positionName:'数据分析师', positionDesc:'负责店铺数据分析与报表输出', status:'启用', creator:'系统管理员', createTime:'2026-07-15 09:30:00', updater:'系统管理员', updateTime:'2026-08-05 10:00:00', permissions:{ '营销工具':[], '推广工具':[], '商品管理':[], '订单管理':['订单查看','订单统计'], '数据分析':['销售数据','流量数据','转化数据','用户画像','商品分析','直播数据','短视频数据','数据导出','数据看板'], '客服管理':[] } },
+      { id:5, platformName:'抖音', positionName:'直播运营', positionDesc:'负责直播间运营与流量投放', status:'删除', creator:'张运营', createTime:'2026-06-20 11:00:00', updater:'张运营', updateTime:'2026-07-30 09:15:00', permissions:{ '营销工具':['直播间福利任务','惊喜好礼','超级福袋','拼团','满减'], '推广工具':['直播间推广','短视频推广','搜索推广','达人合作','活动引流'], '商品管理':['商品管理','商品上架','商品下架'], '订单管理':['订单查看','订单处理'], '数据分析':['销售数据','流量数据','直播数据','数据看板'], '客服管理':['客服接待','快捷回复'] } }
+    ];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData));
+    list = defaultData;
+  }
+  var row = null;
+  for (var i = 0; i < list.length; i++) { if (list[i].id === recordId) { row = list[i]; break; } }
+  if (!row) { showToast('记录不存在', 'warning'); setTimeout(goBack, 1500); return; }
+
+  document.getElementById('editPlatform').value = row.platformName;
+  document.getElementById('editPositionName').value = row.positionName;
+  document.getElementById('editPositionDesc').value = row.positionDesc;
+  document.getElementById('editStatus').value = row.status;
+  document.getElementById('editCreator').value = row.creator;
+  document.getElementById('editCreateTime').value = row.createTime;
+  document.getElementById('editUpdater').value = row.updater;
+
+  renderPermissions(row);
+}
+
+function renderPermissions(row) {
+  var container = document.getElementById('permContainer');
+  var html = '';
+  permissionCategories.forEach(function(l1) {
+    // 一级
+    var l1Total = 0, l1Checked = 0;
+    l1.children.forEach(function(l2) { l1Total += l2.children.length; });
+    l1.children.forEach(function(l2) { l1Checked += ((row.permissions && row.permissions[l2.name]) || []).length; });
+    var l1AllChecked = l1Total > 0 && l1Checked === l1Total;
+    html += '<div class="perm-l1">';
+    html += '<div class="perm-l1-name">';
+    html += '<input type="checkbox" data-l1-name="' + l1.name + '" ' + (l1AllChecked ? 'checked' : '') + ' onchange="toggleEditL1(this,\'' + l1.name + '\')">';
+    html += '<span>' + l1.name + '</span>';
+    html += '</div>';
+    html += '<span class="perm-l1-badge">' + l1Checked + '/' + l1Total + '</span>';
+    html += '</div>';
+    // 二级 + 三级
+    l1.children.forEach(function(l2) {
+      var checkedItems = (row.permissions && row.permissions[l2.name]) || [];
+      var l2AllChecked = checkedItems.length === l2.children.length;
+      html += '<div class="perm-l2">';
+      html += '<div class="perm-l2-name">';
+      html += '<input type="checkbox" data-l2-name="' + l2.name + '" data-l1-name="' + l1.name + '" ' + (l2AllChecked ? 'checked' : '') + ' onchange="toggleEditL2(this,\'' + l2.name + '\')">';
+      html += '<span>' + l2.name + '</span>';
+      html += '</div>';
+      html += '<div class="perm-items">';
+      l2.children.forEach(function(item) {
+        var isChecked = checkedItems.indexOf(item) > -1;
+        html += '<label class="perm-item">';
+        html += '<input type="checkbox" ' + (isChecked ? 'checked' : '') + ' data-l2="' + l2.name + '" data-l1="' + l1.name + '" data-item="' + item + '" onchange="onEditPermChange()">';
+        html += '<span>' + item + '</span>';
+        html += '</label>';
+      });
+      html += '</div></div>';
+    });
+  });
+  container.innerHTML = html;
+  syncEditIndeterminate();
+}
+
+// ===== 同步编辑页所有父级复选框的 indeterminate 状态 =====
+function syncEditIndeterminate() {
+  permissionCategories.forEach(function(l1) {
+    l1.children.forEach(function(l2) {
+      var allCbs = document.querySelectorAll('#permContainer input[data-l2="' + l2.name + '"]');
+      var checkedCbs = document.querySelectorAll('#permContainer input[data-l2="' + l2.name + '"]:checked');
+      var l2Cb = document.querySelector('#permContainer input[data-l2-name="' + l2.name + '"]');
+      if (l2Cb) {
+        var n = allCbs.length, c = checkedCbs.length;
+        l2Cb.checked = c > 0;
+        l2Cb.indeterminate = c > 0 && c < n;
+      }
+    });
+    var l1Cb = document.querySelector('#permContainer input[data-l1-name="' + l1.name + '"]');
+    if (l1Cb) {
+      var total = 0, checked = 0;
+      l1.children.forEach(function(l2) {
+        var a = document.querySelectorAll('#permContainer input[data-l2="' + l2.name + '"]');
+        var ck = document.querySelectorAll('#permContainer input[data-l2="' + l2.name + '"]:checked');
+        total += a.length; checked += ck.length;
+      });
+      l1Cb.checked = checked > 0;
+      l1Cb.indeterminate = checked > 0 && checked < total;
+    }
+  });
+}
+
+// ===== 一级分类全选/取消：勾选→全选所有二三级，取消→清空所有二三级 =====
+function toggleEditL1(el, l1Name) {
+  var checked = el.checked;
+  el.indeterminate = false;
+  var l1 = permissionCategories.find(function(c) { return c.name === l1Name; });
+  if (!l1) return;
+  l1.children.forEach(function(l2) {
+    var itemCbs = document.querySelectorAll('#permContainer input[data-l2="' + l2.name + '"]');
+    itemCbs.forEach(function(cb) { cb.checked = checked; });
+    var l2Cb = document.querySelector('#permContainer input[data-l2-name="' + l2.name + '"]');
+    if (l2Cb) { l2Cb.checked = checked; l2Cb.indeterminate = false; }
+  });
+}
+
+// ===== 二级分类全选/取消：勾选→全选所有三级项，取消→清空所有三级项 =====
+function toggleEditL2(el, l2Name) {
+  var checked = el.checked;
+  el.indeterminate = false;
+  var itemCbs = document.querySelectorAll('#permContainer input[data-l2="' + l2Name + '"]');
+  itemCbs.forEach(function(cb) { cb.checked = checked; });
+  syncEditL1FromItems();
+}
+
+// ===== 三级权限项变更时：自动联动二级和一级三态 =====
+function onEditPermChange() {
+  // 联动二级三态
+  permissionCategories.forEach(function(l1) {
+    l1.children.forEach(function(l2) {
+      var allCbs = document.querySelectorAll('#permContainer input[data-l2="' + l2.name + '"]');
+      var checkedCbs = document.querySelectorAll('#permContainer input[data-l2="' + l2.name + '"]:checked');
+      var l2Cb = document.querySelector('#permContainer input[data-l2-name="' + l2.name + '"]');
+      if (l2Cb) {
+        var n = allCbs.length, c = checkedCbs.length;
+        l2Cb.checked = c > 0;
+        l2Cb.indeterminate = c > 0 && c < n;
+      }
+    });
+  });
+  // 联动一级三态
+  syncEditL1FromItems();
+}
+
+// ===== 从三级项同步一级复选框三态：全选=✓，部分=–，无=空 =====
+function syncEditL1FromItems() {
+  permissionCategories.forEach(function(l1) {
+    var l1Cb = document.querySelector('#permContainer input[data-l1-name="' + l1.name + '"]');
+    if (!l1Cb) return;
+    var total = 0, checked = 0;
+    l1.children.forEach(function(l2) {
+      var allCbs = document.querySelectorAll('#permContainer input[data-l2="' + l2.name + '"]');
+      var checkedCbs = document.querySelectorAll('#permContainer input[data-l2="' + l2.name + '"]:checked');
+      total += allCbs.length;
+      checked += checkedCbs.length;
+    });
+    l1Cb.checked = checked > 0;
+    l1Cb.indeterminate = checked > 0 && checked < total;
+  });
+}
+
+function doSave() {
+  var positionName = document.getElementById('editPositionName').value.trim();
+  if (!positionName) { showToast('请输入岗位名称', 'warning'); return; }
+
+  var list = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  var row = null;
+  for (var i = 0; i < list.length; i++) { if (list[i].id === recordId) { row = list[i]; break; } }
+  if (!row) { showToast('记录不存在', 'warning'); return; }
+
+  row.platformName = document.getElementById('editPlatform').value;
+  row.positionName = positionName;
+  row.positionDesc = document.getElementById('editPositionDesc').value.trim();
+  row.status = document.getElementById('editStatus').value;
+  row.permissions = {};
+  permissionCategories.forEach(function(l1) {
+    l1.children.forEach(function(l2) {
+      var cbs = document.querySelectorAll('#permContainer input[data-l2="' + l2.name + '"]:checked');
+      var items = [];
+      cbs.forEach(function(cb) { items.push(cb.getAttribute('data-item')); });
+      row.permissions[l2.name] = items;
+    });
+  });
+  row.updateTime = new Date().toLocaleString('zh-CN', {hour12: false}).replace(/\//g, '-');
+  row.updater = currentUser;
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  showToast('保存成功', 'success');
+  setTimeout(goBack, 500);
+}
+
+function goBack() {
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type: 'closeTab' }, '*');
+  } else {
+    window.close();
+  }
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function showToast(msg, type) {
+  var container = document.getElementById('toastContainer');
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + (type || 'info');
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(function() { toast.classList.add('toast-hide'); }, 2500);
+  setTimeout(function() { toast.remove(); }, 3000);
+}
+
+// 初始化
+loadData();
+</script>
+</body>
+</html>
