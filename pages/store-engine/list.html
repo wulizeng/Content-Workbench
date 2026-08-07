@@ -66,6 +66,14 @@
         <input type="text" id="searchPlatformProductId" placeholder="请输入平台商品ID">
       </div>
       <div class="search-item">
+        <label>SKU编码：</label>
+        <input type="text" id="searchSkuCode" placeholder="请输入SKU编码">
+      </div>
+      <div class="search-item">
+        <label>平台SKUID：</label>
+        <input type="text" id="searchPlatformSkuId" placeholder="请输入平台SKUID">
+      </div>
+      <div class="search-item">
         <label>状态：</label>
         <select id="searchStatus">
           <option value="">全部</option>
@@ -238,12 +246,16 @@ function doSearch() {
   var platform = document.getElementById('searchPlatform').value;
   var shopName = document.getElementById('searchShopName').value.trim();
   var platformProductId = document.getElementById('searchPlatformProductId').value.trim();
+  var skuCode = document.getElementById('searchSkuCode').value.trim();
+  var platformSkuId = document.getElementById('searchPlatformSkuId').value.trim();
   var status = document.getElementById('searchStatus').value;
   var productLine = document.getElementById('searchProductLine').value;
   var filtered = mockData.filter(function(row) {
     if (platform && row.platformName !== platform) return false;
     if (shopName && row.shopName.indexOf(shopName) === -1) return false;
     if (platformProductId && row.platformProductId.indexOf(platformProductId) === -1) return false;
+    if (skuCode && row.skuCode.indexOf(skuCode) === -1) return false;
+    if (platformSkuId && row.platformSkuId.indexOf(platformSkuId) === -1) return false;
     if (status && row.status !== status) return false;
     if (productLine && row.productLine !== productLine) return false;
     return true;
@@ -256,6 +268,8 @@ function resetSearch() {
   document.getElementById('searchPlatform').value = '';
   document.getElementById('searchShopName').value = '';
   document.getElementById('searchPlatformProductId').value = '';
+  document.getElementById('searchSkuCode').value = '';
+  document.getElementById('searchPlatformSkuId').value = '';
   document.getElementById('searchStatus').value = '';
   document.getElementById('searchProductLine').value = '';
   renderTable(mockData);
@@ -268,11 +282,15 @@ function showSearchTags() {
   var platform = document.getElementById('searchPlatform').value;
   var shopName = document.getElementById('searchShopName').value.trim();
   var platformProductId = document.getElementById('searchPlatformProductId').value.trim();
+  var skuCode = document.getElementById('searchSkuCode').value.trim();
+  var platformSkuId = document.getElementById('searchPlatformSkuId').value.trim();
   var status = document.getElementById('searchStatus').value;
   var productLine = document.getElementById('searchProductLine').value;
   if (platform) tags.push({label:'平台名称: '+platform, field:'searchPlatform'});
   if (shopName) tags.push({label:'店铺名称: '+shopName, field:'searchShopName'});
   if (platformProductId) tags.push({label:'平台商品ID: '+platformProductId, field:'searchPlatformProductId'});
+  if (skuCode) tags.push({label:'SKU编码: '+skuCode, field:'searchSkuCode'});
+  if (platformSkuId) tags.push({label:'平台SKUID: '+platformSkuId, field:'searchPlatformSkuId'});
   if (status) tags.push({label:'状态: '+status, field:'searchStatus'});
   if (productLine) tags.push({label:'产品线: '+productLine, field:'searchProductLine'});
   var container = document.getElementById('searchTags');
