@@ -226,15 +226,6 @@
         </select>
       </div>
       <div class="search-item">
-        <label>状态：</label>
-        <select id="searchStatus">
-          <option value="">全部</option>
-          <option value="未提交">未提交</option>
-          <option value="已提交">已提交</option>
-          <option value="已删除">已删除</option>
-        </select>
-      </div>
-      <div class="search-item">
         <label>创建人：</label>
         <input type="text" id="searchCreator" placeholder="请输入创建人">
       </div>
@@ -482,12 +473,10 @@ function escapeHtml(str) {
 function doSearch() {
   var itemNo = document.getElementById('searchItemNo').value.trim();
   var exclusive = document.getElementById('searchExclusive').value;
-  var status = document.getElementById('searchStatus').value;
   var creator = document.getElementById('searchCreator').value.trim();
   var filtered = mockData.filter(function(r) {
     if (itemNo && r.itemNo.indexOf(itemNo) === -1) return false;
     if (exclusive && r.exclusive !== exclusive) return false;
-    if (status && r.status !== status) return false;
     if (creator && r.creator.indexOf(creator) === -1) return false;
     return true;
   });
@@ -498,7 +487,6 @@ function doSearch() {
 function resetSearch() {
   document.getElementById('searchItemNo').value = '';
   document.getElementById('searchExclusive').value = '';
-  document.getElementById('searchStatus').value = '';
   document.getElementById('searchCreator').value = '';
   document.getElementById('sCreateTimeStart').value = '';
   document.getElementById('sCreateTimeEnd').value = '';
@@ -513,8 +501,6 @@ function showSearchTags() {
   var creator = document.getElementById('searchCreator').value.trim();
   if (itemNo) tags.push({label:'商品款号: '+itemNo, field:'searchItemNo'});
   if (exclusive) tags.push({label:'独享款: '+exclusive, field:'searchExclusive'});
-  var status = document.getElementById('searchStatus').value;
-  if (status) tags.push({label:'状态: '+status, field:'searchStatus'});
   if (creator) tags.push({label:'创建人: '+creator, field:'searchCreator'});
   var container = document.getElementById('searchTags');
   if (tags.length === 0) { container.style.display = 'none'; return; }
