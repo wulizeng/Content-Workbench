@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>岗位权限同步</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+  /* ===== 面板区 ===== */
+  .sync-panel {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .panel-title {
+    font-size: 15px; font-weight: 600; color: var(--text);
+    margin-bottom: 18px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .panel-title svg { color: var(--primary); flex-shrink: 0; }
+
+  /* ===== 店铺筛选栏 ===== */
+  .store-filter-bar {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 14px; padding: 10px 14px;
+    background: #f8fafc; border: 1px solid #eef0f5; border-radius: 8px;
+  }
+  .store-filter-bar .filter-icon { color: var(--text-tertiary); flex-shrink: 0; }
+  .store-filter-bar input {
+    flex: 1; border: none; background: transparent;
+    font-size: 13px; color: var(--text); outline: none;
+  }
+  .store-filter-bar input::placeholder { color: var(--text-tertiary); }
+  .store-filter-bar .filter-count {
+    font-size: 12px; color: var(--text-tertiary); white-space: nowrap;
+  }
+  .store-filter-bar .filter-clear {
+    font-size: 12px; color: var(--primary); cursor: pointer;
+    white-space: nowrap; display: none;
+  }
+  .store-filter-bar .filter-clear:hover { text-decoration: underline; }
+  .store-no-match {
+    text-align: center; padding: 32px 16px;
+    color: var(--text-tertiary); font-size: 13px; grid-column: 1 / -1;
+  }
+
+  /* ===== 店铺卡片 ===== */
+  .store-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .store-card {
+    padding: 14px 16px; border: 2px solid #e8eaef; border-radius: 10px;
+    cursor: pointer; transition: all .18s; background: #fff;
+  }
+  .store-card:hover { border-color: var(--primary); background: #fafbff; }
+  .store-card.selected {
+    border-color: var(--primary); background: var(--primary-light);
+    box-shadow: 0 2px 8px rgba(91,108,245,.12);
+  }
+  .store-card .store-name { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .store-card .store-platform {
+    font-size: 12px; color: var(--text-tertiary);
+    display: flex; align-items: center; gap: 4px;
+  }
+  .store-card .store-platform .platform-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--primary);
+  }
+
+  /* ===== 岗位选择卡片（单选） ===== */
+  .position-list { display: flex; flex-direction: column; gap: 8px; }
+  .position-card {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px; border: 2px solid #e8eaef; border-radius: 8px;
+    cursor: pointer; transition: all .15s; background: #fff;
+  }
+  .position-card:hover { border-color: var(--primary); background: #fafbff; }
+  .position-card.selected {
+    border-color: var(--primary); background: var(--primary-light);
+  }
+  .position-info { flex: 1; min-width: 0; }
+  .position-name { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+  .position-desc {
+    font-size: 12px; color: var(--text-tertiary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .position-perm-count {
+    font-size: 12px; color: var(--primary); background: var(--primary-light);
+    padding: 2px 10px; border-radius: 10px; white-space: nowrap; flex-shrink: 0;
+  }
+
+  /* ===== 占位提示 ===== */
+  .placeholder-hint { text-align: center; padding: 36px 20px; color: var(--text-tertiary); }
+  .placeholder-hint .ph-icon { font-size: 36px; margin-bottom: 8px; opacity: 0.5; }
+  .placeholder-hint .ph-text { font-size: 13px; }
+
+  /* ===== 权限对比预览 ===== */
+  .compare-section {
+    background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+    overflow: hidden; margin-bottom: 20px;
+  }
+  .compare-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 14px 18px; border-bottom: 1px solid #f0f2f5;
+    font-size: 15px; font-weight: 600; color: var(--text);
+  }
+  .compare-header svg { color: var(--primary); flex-shrink: 0; }
+  .compare-body { padding: 0; }
+  .compare-table { width: 100%; border-collapse: collapse; }
+  .compare-table th {
+    padding: 10px 16px; text-align: left; font-size: 12px;
+    font-weight: 600; color: var(--text-tertiary); text-transform: uppercase;
+    background: #f8fafc; border-bottom: 1px solid #eef0f5;
+  }
+  .compare-table td {
+    padding: 10px 16px; font-size: 13px; color: var(--text);
+    border-bottom: 1px solid #f5f6f8;
+  }
+  .compare-table tr:last-child td { border-bottom: none; }
+  .compare-table .cat-name { font-weight: 600; color: var(--text); width: 120px; }
+  .perm-tag {
+    display: inline-block; font-size: 11px; padding: 1px 7px;
+    border-radius: 6px; margin: 2px 3px; white-space: nowrap;
+  }
+  .perm-tag.same { background: #f1f5f9; color: #64748b; }
+  .perm-tag.add { background: #dcfce7; color: #16a34a; }
+  .perm-tag.remove { background: #fee2e2; color: #dc2626; text-decoration: line-through; }
+
+  .compare-summary {
+    display: flex; gap: 20px; padding: 14px 18px;
+    background: #f8fafc; border-top: 1px solid #eef0f5;
+  }
+  .compare-stat {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 500;
+  }
+  .compare-stat .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+  .compare-stat .dot.green { background: #16a34a; }
+  .compare-stat .dot.red { background: #dc2626; }
+  .compare-stat .dot.gray { background: #94a3b8; }
+
+  /* ===== 确认栏 ===== */
+  .confirm-bar {
+    background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 24px; margin-bottom: 20px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  }
+  .confirm-summary-inline {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    font-size: 13px; color: var(--text);
+  }
+  .confirm-summary-inline .cs-item { display: flex; align-items: center; gap: 4px; }
+  .confirm-summary-inline .cs-label { color: var(--text-tertiary); }
+  .confirm-summary-inline .cs-value { font-weight: 600; color: var(--primary); }
+
+  /* ===== 结果页 ===== */
+  .result-box { text-align: center; padding: 48px 24px; }
+  .result-icon {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: #ecfdf5; display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+  }
+  .result-icon svg { color: #10b981; }
+  .result-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .result-desc { font-size: 13px; color: var(--text-tertiary); margin-bottom: 24px; }
+  .result-detail {
+    display: inline-block; text-align: left;
+    background: #f8fafc; border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 24px; margin-bottom: 24px;
+  }
+  .result-detail .detail-item { font-size: 13px; color: var(--text); padding: 4px 0; }
+  .result-detail .detail-item span { color: var(--primary); font-weight: 600; }
+  </style>
+</head>
+<body>
+<div class="page-container">
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script>
+    if (window.parent) {
+      window.parent.postMessage({type:'breadcrumb', text:'店铺管理 <span>/</span> 岗位权限同步'}, '*');
+    }
+  </script>
+
+  <div class="page-title">岗位权限同步</div>
+
+  <!-- ===== 单页四区域选择 ===== -->
+  <div id="selectionArea">
+
+  <!-- 区域1：选择源店铺 -->
+  <div class="sync-panel">
+    <div class="panel-title">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      第一步：选择权限模板的源店铺
+    </div>
+    <div class="store-filter-bar">
+      <svg class="filter-icon" viewBox="0 0 24 24" width="15" height="15"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="sourceFilterInput" placeholder="输入店铺名称或店铺ID搜索..." oninput="filterSourceStores()">
+      <span class="filter-count" id="sourceFilterCount"></span>
+      <span class="filter-clear" id="sourceFilterClear" onclick="clearSourceFilter()">清除</span>
+    </div>
+    <div id="sourceStoreArea">
+      <div class="placeholder-hint">
+        <div class="ph-icon">&#128269;</div>
+        <div class="ph-text">请输入店铺名称或店铺ID搜索选择源店铺</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 区域2：选择源岗位 -->
+  <div class="sync-panel" id="sourcePosPanel">
+    <div class="panel-title">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      第二步：选择源岗位（权限模板）
+      <span id="sourcePosHint" style="font-size:12px;color:var(--text-tertiary);font-weight:400;margin-left:auto;">请先选择源店铺</span>
+    </div>
+    <div id="sourcePosListArea">
+      <div class="placeholder-hint">
+        <div class="ph-icon">&#128203;</div>
+        <div class="ph-text">请先在上方选择源店铺，系统将自动加载该店铺所有岗位</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 区域3：选择目标店铺+目标岗位 -->
+  <div class="sync-panel" id="targetPanel">
+    <div class="panel-title">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+      第三步：选择要修改权限的目标店铺与岗位
+      <span id="targetPanelHint" style="font-size:12px;color:var(--text-tertiary);font-weight:400;margin-left:auto;">请先选择源岗位</span>
+    </div>
+    <div id="targetArea">
+      <div class="placeholder-hint">
+        <div class="ph-icon">&#127970;</div>
+        <div class="ph-text">请先选择源岗位后，再选择目标店铺</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 确认操作栏 -->
+  <div class="confirm-bar" id="confirmBar" style="display:none;">
+    <div class="confirm-summary-inline" id="confirmSummaryInline"></div>
+    <button class="btn btn-primary" id="btnExecute" onclick="executeSync()" disabled>确认执行同步</button>
+  </div>
+
+  </div><!-- /selectionArea -->
+
+  <!-- 权限对比预览 -->
+  <div id="compareSection" style="display:none;">
+    <div class="compare-section">
+      <div class="compare-header">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5"/><path d="M8 3H3v5"/><path d="M21 3l-7 7"/><path d="M3 3l7 7"/><path d="M16 21h5v-5"/><path d="M8 21H3v-5"/><path d="M21 21l-7-7"/><path d="M3 21l7-7"/></svg>
+        权限对比预览
+      </div>
+      <div class="compare-body" id="compareBody"></div>
+    </div>
+    <div style="text-align:center;padding:12px 0 24px;">
+      <button class="btn btn-primary" onclick="confirmSync()">确认同步</button>
+      <button class="btn" onclick="backToSelection()" style="margin-left:8px;">返回修改</button>
+    </div>
+  </div>
+
+  <!-- 结果页 -->
+  <div class="sync-panel" id="resultPanel" style="display:none;">
+    <div class="result-box">
+      <div class="result-icon">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="result-title">岗位权限同步成功</div>
+      <div class="result-desc">已将源岗位权限配置同步到目标岗位，后台更新完成</div>
+      <div class="result-detail" id="resultDetail"></div>
+      <br>
+      <button class="btn btn-primary" onclick="resetSync()">继续同步</button>
+      <button class="btn" onclick="goBack()" style="margin-left:8px;">返回列表</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ===== Mock 店铺数据 =====
+var mockStores = [
+  { id: 'S001', name: '旗舰店A', platform: '抖音', shopId: 'dy_100231' },
+  { id: 'S002', name: '专营店B', platform: '抖音', shopId: 'dy_100456' },
+  { id: 'S003', name: '旗舰店C', platform: '抖音', shopId: 'dy_100789' },
+  { id: 'S004', name: '奥莱店D', platform: '抖音', shopId: 'dy_101012' },
+  { id: 'S005', name: '海外旗舰店E', platform: '抖音', shopId: 'dy_101345' },
+  { id: 'S006', name: '旗舰店F', platform: '快手', shopId: 'ks_200001' },
+  { id: 'S007', name: '工厂店G', platform: '快手', shopId: 'ks_200002' },
+  { id: 'S008', name: '折扣店H', platform: '快手', shopId: 'ks_200003' },
+  { id: 'S009', name: '旗舰店I', platform: '小红书', shopId: 'xhs_300001' },
+  { id: 'S010', name: '专营店J', platform: '小红书', shopId: 'xhs_300002' }
+];
+
+// ===== Mock 各店铺岗位数据 =====
+var mockPositionsByStore = {
+  'S001': [
+    { id: 'P001', name: '运营主管', desc: '负责店铺整体运营策略制定与执行', permCount: 68, permissions: { '营销工具': ['达人专属营销','搭配购','满减','拼团','多件优惠'], '推广工具': ['商品推广','直播间推广','短视频推广'], '商品管理': ['商品管理','价格管理','库存管理','商品上架','商品下架'], '订单管理': ['订单查看','订单处理','发货管理','退款管理'], '数据分析': ['销售数据','流量数据','转化数据','数据看板'], '客服管理': ['客服接待','客服管理','快捷回复'] } },
+    { id: 'P002', name: '商品运营', desc: '负责商品上架、价格调整与库存管理', permCount: 28, permissions: { '营销工具': ['搭配购','拼团','满减'], '推广工具': ['商品推广','短视频推广'], '商品管理': ['商品管理','价格管理','库存管理','商品上架','商品下架','商品编辑'], '订单管理': ['订单查看','订单处理'], '数据分析': ['销售数据','商品分析'], '客服管理': ['客服接待'] } },
+    { id: 'P003', name: '客服专员', desc: '负责日常客服接待与售后处理', permCount: 12, permissions: { '营销工具': [], '推广工具': [], '商品管理': ['商品管理'], '订单管理': ['订单查看','退款管理','售后管理'], '数据分析': [], '客服管理': ['客服接待','客服管理','快捷回复','自动回复','客服数据','工单管理','评价管理'] } },
+    { id: 'P004', name: '数据分析师', desc: '负责店铺数据分析与报表输出', permCount: 11, permissions: { '营销工具': [], '推广工具': [], '商品管理': [], '订单管理': ['订单查看','订单统计'], '数据分析': ['销售数据','流量数据','转化数据','用户画像','商品分析','直播数据','短视频数据','数据导出','数据看板'], '客服管理': [] } }
+  ],
+  'S002': [
+    { id: 'P005', name: '店长', desc: '全面负责店铺运营管理', permCount: 45, permissions: { '营销工具': ['达人专属营销','搭配购','满减','拼团'], '推广工具': ['商品推广','搜索推广','信息流广告'], '商品管理': ['商品管理','价格管理','库存管理','商品上架','商品下架','商品编辑','商品审核','类目管理'], '订单管理': ['订单查看','订单处理','发货管理','退款管理','售后管理','订单导出'], '数据分析': ['销售数据','流量数据','转化数据','数据看板'], '客服管理': ['客服接待','客服管理','快捷回复'] } },
+    { id: 'P006', name: '推广专员', desc: '负责商品推广与广告投放', permCount: 15, permissions: { '营销工具': [], '推广工具': ['商品推广','直播间推广','短视频推广','搜索推广','信息流广告','品牌广告','达人合作','活动引流'], '商品管理': [], '订单管理': ['订单查看'], '数据分析': ['流量数据','转化数据'], '客服管理': [] } }
+  ],
+  'S003': [
+    { id: 'P007', name: '直播运营', desc: '负责直播间运营与流量投放', permCount: 30, permissions: { '营销工具': ['直播间福利任务','惊喜好礼','超级福袋','拼团','满减'], '推广工具': ['直播间推广','短视频推广','搜索推广','达人合作','活动引流'], '商品管理': ['商品管理','商品上架','商品下架'], '订单管理': ['订单查看','订单处理'], '数据分析': ['销售数据','流量数据','直播数据','数据看板'], '客服管理': ['客服接待','快捷回复'] } },
+    { id: 'P008', name: '商品编辑', desc: '负责商品信息编辑与上架', permCount: 10, permissions: { '营销工具': [], '推广工具': [], '商品管理': ['商品管理','商品编辑','商品上架','商品下架','价格管理','库存管理'], '订单管理': ['订单查看'], '数据分析': [], '客服管理': [] } },
+    { id: 'P009', name: '售后客服', desc: '负责售后问题处理与退款管理', permCount: 8, permissions: { '营销工具': [], '推广工具': [], '商品管理': [], '订单管理': ['订单查看','退款管理','售后管理'], '数据分析': [], '客服管理': ['客服接待','快捷回复','自动回复','工单管理','评价管理'] } }
+  ],
+  'S004': [
+    { id: 'P010', name: '运营主管', desc: '负责店铺整体运营', permCount: 52, permissions: { '营销工具': ['达人专属营销','搭配购','满减','拼团','多件优惠','赠品活动'], '推广工具': ['商品推广','短视频推广','搜索推广'], '商品管理': ['商品管理','价格管理','库存管理','商品上架','商品下架','商品编辑','商品审核'], '订单管理': ['订单查看','订单处理','发货管理','退款管理','售后管理','订单导出','订单统计'], '数据分析': ['销售数据','流量数据','转化数据','数据看板'], '客服管理': ['客服接待','客服管理','快捷回复'] } }
+  ],
+  'S005': [
+    { id: 'P011', name: '全栈运营', desc: '负责店铺全链路运营', permCount: 60, permissions: { '营销工具': ['达人专属营销','搭配购','直播间福利任务','惊喜好礼','超级福袋','分期免息','评价有礼','顺手买一件','满减','新人礼金'], '推广工具': ['商品推广','直播间推广','短视频推广','搜索推广','信息流广告'], '商品管理': ['商品管理','价格管理','库存管理','商品上架','商品下架','商品编辑','商品审核','类目管理','品牌管理'], '订单管理': ['订单查看','订单处理','发货管理','退款管理','售后管理','订单导出','订单统计','物流管理'], '数据分析': ['销售数据','流量数据','转化数据','用户画像','商品分析','直播数据','短视频数据','数据导出','数据看板'], '客服管理': ['客服接待','客服管理','快捷回复','自动回复','客服数据','工单管理','评价管理'] } }
+  ],
+  'S006': [
+    { id: 'P012', name: '运营主管', desc: '负责店铺日常运营管理', permCount: 35, permissions: { '营销工具': ['搭配购','满减','拼团'], '推广工具': ['商品推广','搜索推广'], '商品管理': ['商品管理','价格管理','库存管理','商品上架','商品下架'], '订单管理': ['订单查看','订单处理','发货管理','退款管理'], '数据分析': ['销售数据','流量数据','数据看板'], '客服管理': ['客服接待','快捷回复'] } },
+    { id: 'P013', name: '推广专员', desc: '负责店铺推广与流量获取', permCount: 18, permissions: { '营销工具': [], '推广工具': ['商品推广','直播间推广','短视频推广','搜索推广','信息流广告','品牌广告'], '商品管理': [], '订单管理': ['订单查看'], '数据分析': ['流量数据','转化数据'], '客服管理': [] } }
+  ],
+  'S007': [
+    { id: 'P014', name: '仓库管理员', desc: '负责库存管理与发货调度', permCount: 8, permissions: { '营销工具': [], '推广工具': [], '商品管理': ['库存管理'], '订单管理': ['订单查看','订单处理','发货管理','物流管理'], '数据分析': [], '客服管理': [] } }
+  ],
+  'S008': [
+    { id: 'P015', name: '折扣运营', desc: '负责折扣商品管理与促销', permCount: 22, permissions: { '营销工具': ['小刀优惠','拼团','满减','多件优惠','赠品活动'], '推广工具': ['商品推广','短视频推广'], '商品管理': ['商品管理','价格管理','库存管理','商品上架','商品下架'], '订单管理': ['订单查看','订单处理','发货管理'], '数据分析': ['销售数据'], '客服管理': ['客服接待'] } },
+    { id: 'P016', name: '客服专员', desc: '负责折扣店客服接待', permCount: 10, permissions: { '营销工具': [], '推广工具': [], '商品管理': [], '订单管理': ['订单查看','退款管理','售后管理'], '数据分析': [], '客服管理': ['客服接待','客服管理','快捷回复','自动回复','工单管理','评价管理'] } }
+  ]
+};
+
+// ===== 状态 =====
+var selectedSourceStore = null;
+var selectedSourcePosition = null;
+var selectedTargetStore = null;
+var selectedTargetPosition = null;
+
+// ===== 工具函数 =====
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function showToast(msg, type) {
+  var c = document.getElementById('toastContainer');
+  var t = document.createElement('div');
+  t.className = 'toast toast-' + (type || 'info');
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(function() { t.remove(); }, 3000);
+}
+
+// ===== 渲染源店铺 =====
+function renderSourceStores(filterText) {
+  var area = document.getElementById('sourceStoreArea');
+  var keyword = (filterText || '').trim().toLowerCase();
+  if (!keyword) {
+    area.innerHTML = '<div class="placeholder-hint"><div class="ph-icon">&#128269;</div><div class="ph-text">请输入店铺名称或店铺ID搜索选择源店铺</div></div>';
+    var countEl = document.getElementById('sourceFilterCount');
+    if (countEl) countEl.textContent = '';
+    return;
+  }
+  var filtered = mockStores.filter(function(store) {
+    return store.name.toLowerCase().indexOf(keyword) > -1 ||
+           store.shopId.toLowerCase().indexOf(keyword) > -1 ||
+           store.platform.toLowerCase().indexOf(keyword) > -1;
+  });
+  var html = '<div class="store-grid">';
+  if (filtered.length === 0) {
+    html += '<div class="store-no-match">未找到匹配的店铺</div>';
+  } else {
+    filtered.forEach(function(store) {
+      var posCount = (mockPositionsByStore[store.id] || []).length;
+      var isSelected = selectedSourceStore === store.id;
+      html += '<div class="store-card' + (isSelected ? ' selected' : '') + '" data-id="' + store.id + '" onclick="selectSourceStore(this, \'' + store.id + '\')">';
+      html += '<div class="store-name">' + escapeHtml(store.name) + '</div>';
+      html += '<div class="store-platform"><span class="platform-dot"></span> 店铺编码：' + escapeHtml(store.shopId) + '</div>';
+      html += '<div style="margin-top:6px;font-size:12px;color:var(--text-tertiary);">' + posCount + ' 个岗位</div>';
+      html += '</div>';
+    });
+  }
+  html += '</div>';
+  area.innerHTML = html;
+  var countEl = document.getElementById('sourceFilterCount');
+  var clearEl = document.getElementById('sourceFilterClear');
+  if (countEl) countEl.textContent = filtered.length + ' / ' + mockStores.length + ' 个店铺';
+  if (clearEl) clearEl.style.display = keyword ? '' : 'none';
+}
+
+function filterSourceStores() {
+  renderSourceStores(document.getElementById('sourceFilterInput').value);
+}
+
+function clearSourceFilter() {
+  document.getElementById('sourceFilterInput').value = '';
+  renderSourceStores('');
+  selectedSourceStore = null;
+  selectedSourcePosition = null;
+  selectedTargetStore = null;
+  selectedTargetPosition = null;
+  document.getElementById('sourcePosHint').textContent = '请先选择源店铺';
+  document.getElementById('targetPanelHint').textContent = '请先选择源岗位';
+  document.getElementById('sourcePosListArea').innerHTML = '<div class="placeholder-hint"><div class="ph-icon">&#128203;</div><div class="ph-text">请先在上方选择源店铺，系统将自动加载该店铺所有岗位</div></div>';
+  document.getElementById('targetArea').innerHTML = '<div class="placeholder-hint"><div class="ph-icon">&#127970;</div><div class="ph-text">请先选择源岗位后，再选择目标店铺</div></div>';
+  document.getElementById('confirmBar').style.display = 'none';
+}
+
+// ===== 选择源店铺 =====
+function selectSourceStore(el, id) {
+  document.querySelectorAll('#sourceStoreArea .store-card').forEach(function(c) { c.classList.remove('selected'); });
+  el.classList.add('selected');
+  selectedSourceStore = id;
+  selectedSourcePosition = null;
+  selectedTargetStore = null;
+  selectedTargetPosition = null;
+  renderSourcePositionList();
+  document.getElementById('targetArea').innerHTML = '<div class="placeholder-hint"><div class="ph-icon">&#127970;</div><div class="ph-text">请先选择源岗位后，再选择目标店铺</div></div>';
+  document.getElementById('targetPanelHint').textContent = '请先选择源岗位';
+  document.getElementById('confirmBar').style.display = 'none';
+  var store = mockStores.find(function(s) { return s.id === id; });
+  document.getElementById('sourcePosHint').textContent = '已加载「' + store.name + '」的岗位';
+}
+
+// ===== 渲染源岗位列表（单选） =====
+function renderSourcePositionList() {
+  var area = document.getElementById('sourcePosListArea');
+  var positions = mockPositionsByStore[selectedSourceStore] || [];
+  if (positions.length === 0) {
+    area.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--text-tertiary);">该店铺暂无岗位</div>';
+    return;
+  }
+  var html = '<div class="position-list">';
+  positions.forEach(function(pos) {
+    html += '<div class="position-card" data-id="' + pos.id + '" onclick="selectSourcePosition(this, \'' + pos.id + '\')">';
+    html += '<div class="position-info">';
+    html += '<div class="position-name">' + escapeHtml(pos.name) + '</div>';
+    html += '<div class="position-desc">' + escapeHtml(pos.desc) + '</div>';
+    html += '</div>';
+    html += '<div class="position-perm-count">' + pos.permCount + ' 项权限</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+  area.innerHTML = html;
+}
+
+// ===== 选择源岗位 =====
+function selectSourcePosition(el, id) {
+  document.querySelectorAll('#sourcePosListArea .position-card').forEach(function(c) { c.classList.remove('selected'); });
+  el.classList.add('selected');
+  selectedSourcePosition = id;
+  selectedTargetStore = null;
+  selectedTargetPosition = null;
+  renderTargetStoresAndPositions();
+  var store = mockStores.find(function(s) { return s.id === selectedSourceStore; });
+  document.getElementById('targetPanelHint').textContent = '同平台（' + store.platform + '）可选';
+  document.getElementById('confirmBar').style.display = 'none';
+}
+
+// ===== 渲染目标店铺+目标岗位（联动） =====
+function renderTargetStoresAndPositions() {
+  var area = document.getElementById('targetArea');
+  var sourcePlatform = '';
+  if (selectedSourceStore) {
+    var src = mockStores.find(function(s) { return s.id === selectedSourceStore; });
+    if (src) sourcePlatform = src.platform;
+  }
+  var available = mockStores.filter(function(s) {
+    return s.id !== selectedSourceStore && s.platform === sourcePlatform;
+  });
+  var html = '';
+  // 目标店铺选择
+  html += '<div style="margin-bottom:16px;">';
+  html += '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px;">选择目标店铺 <span style="font-weight:400;color:var(--text-tertiary);">（' + escapeHtml(sourcePlatform) + ' 平台，单选）</span></div>';
+  html += '<div class="store-grid">';
+  if (available.length === 0) {
+    html += '<div class="store-no-match">当前平台无其他可选店铺</div>';
+  } else {
+    available.forEach(function(store) {
+      var isSelected = selectedTargetStore === store.id;
+      html += '<div class="store-card' + (isSelected ? ' selected' : '') + '" onclick="selectTargetStore(\'' + store.id + '\')">';
+      html += '<div class="store-name">' + escapeHtml(store.name) + '</div>';
+      html += '<div class="store-platform"><span class="platform-dot"></span> 店铺编码：' + escapeHtml(store.shopId) + '</div>';
+      html += '</div>';
+    });
+  }
+  html += '</div></div>';
+  // 目标岗位区域
+  html += '<div id="targetPositionArea">';
+  if (!selectedTargetStore) {
+    html += '<div class="placeholder-hint"><div class="ph-icon">&#128203;</div><div class="ph-text">请先选择目标店铺，系统将自动加载该店铺已有岗位</div></div>';
+  }
+  html += '</div>';
+  area.innerHTML = html;
+}
+
+// ===== 选择目标店铺 =====
+function selectTargetStore(id) {
+  selectedTargetStore = id;
+  selectedTargetPosition = null;
+  renderTargetStoresAndPositions();
+  // 重新标记选中
+  document.querySelectorAll('#targetArea .store-card').forEach(function(c) {
+    c.classList.remove('selected');
+  });
+  // 找到被点击的卡片重新标记（通过重新渲染后标记）
+  var cards = document.querySelectorAll('#targetArea .store-card');
+  cards.forEach(function(c) {
+    if (c.onclick && c.onclick.toString().indexOf(id) > -1) {
+      c.classList.add('selected');
+    }
+  });
+  renderTargetPositionList();
+  document.getElementById('confirmBar').style.display = 'none';
+}
+
+// ===== 渲染目标岗位列表（单选） =====
+function renderTargetPositionList() {
+  var area = document.getElementById('targetPositionArea');
+  if (!selectedTargetStore) {
+    area.innerHTML = '<div class="placeholder-hint"><div class="ph-icon">&#128203;</div><div class="ph-text">请先选择目标店铺</div></div>';
+    return;
+  }
+  var positions = mockPositionsByStore[selectedTargetStore] || [];
+  if (positions.length === 0) {
+    area.innerHTML = '<div style="text-align:center;padding:30px 20px;color:var(--text-tertiary);font-size:13px;">该店铺暂无岗位，无法进行权限同步<br><span style="font-size:12px;">请先使用「店铺岗位克隆」功能创建岗位</span></div>';
+    return;
+  }
+  var store = mockStores.find(function(s) { return s.id === selectedTargetStore; });
+  var html = '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px;margin-top:8px;">选择要修改的目标岗位 <span style="font-weight:400;color:var(--text-tertiary);">（「' + escapeHtml(store.name) + '」已有 ' + positions.length + ' 个岗位）</span></div>';
+  html += '<div class="position-list">';
+  positions.forEach(function(pos) {
+    html += '<div class="position-card" data-id="' + pos.id + '" onclick="selectTargetPosition(this, \'' + pos.id + '\')">';
+    html += '<div class="position-info">';
+    html += '<div class="position-name">' + escapeHtml(pos.name) + '</div>';
+    html += '<div class="position-desc">' + escapeHtml(pos.desc) + '</div>';
+    html += '</div>';
+    html += '<div class="position-perm-count">' + pos.permCount + ' 项权限</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+  area.innerHTML = html;
+}
+
+// ===== 选择目标岗位 =====
+function selectTargetPosition(el, id) {
+  document.querySelectorAll('#targetPositionArea .position-card').forEach(function(c) { c.classList.remove('selected'); });
+  el.classList.add('selected');
+  selectedTargetPosition = id;
+  updateConfirmBar();
+}
+
+// ===== 更新确认栏 =====
+function updateConfirmBar() {
+  var bar = document.getElementById('confirmBar');
+  var summary = document.getElementById('confirmSummaryInline');
+  var btn = document.getElementById('btnExecute');
+  if (!selectedSourceStore || !selectedSourcePosition || !selectedTargetStore || !selectedTargetPosition) {
+    bar.style.display = 'none';
+    return;
+  }
+  var srcStore = mockStores.find(function(s) { return s.id === selectedSourceStore; });
+  var srcPos = (mockPositionsByStore[selectedSourceStore] || []).find(function(p) { return p.id === selectedSourcePosition; });
+  var tgtStore = mockStores.find(function(s) { return s.id === selectedTargetStore; });
+  var tgtPos = (mockPositionsByStore[selectedTargetStore] || []).find(function(p) { return p.id === selectedTargetPosition; });
+  bar.style.display = '';
+  summary.innerHTML =
+    '<div class="cs-item"><span class="cs-label">源：</span><span class="cs-value">' + escapeHtml(srcStore.name) + ' · ' + escapeHtml(srcPos.name) + '</span></div>' +
+    '<div class="cs-item" style="color:var(--text-tertiary);">→</div>' +
+    '<div class="cs-item"><span class="cs-label">目标：</span><span class="cs-value">' + escapeHtml(tgtStore.name) + ' · ' + escapeHtml(tgtPos.name) + '</span></div>';
+  btn.disabled = false;
+}
+
+// ===== 执行同步（显示对比预览） =====
+function executeSync() {
+  var srcPos = (mockPositionsByStore[selectedSourceStore] || []).find(function(p) { return p.id === selectedSourcePosition; });
+  var tgtPos = (mockPositionsByStore[selectedTargetStore] || []).find(function(p) { return p.id === selectedTargetPosition; });
+  if (!srcPos || !tgtPos) return;
+  renderCompareView(srcPos, tgtPos);
+  document.getElementById('selectionArea').style.display = 'none';
+  document.getElementById('compareSection').style.display = '';
+}
+
+// ===== 渲染权限对比预览 =====
+function renderCompareView(srcPos, tgtPos) {
+  var srcPerms = srcPos.permissions || {};
+  var tgtPerms = tgtPos.permissions || {};
+  // 收集所有分类
+  var allCats = {};
+  Object.keys(srcPerms).forEach(function(c) { allCats[c] = true; });
+  Object.keys(tgtPerms).forEach(function(c) { allCats[c] = true; });
+  var cats = Object.keys(allCats);
+  var addCount = 0, removeCount = 0, sameCount = 0;
+  var html = '<table class="compare-table">';
+  html += '<thead><tr><th>权限分类</th><th>源岗位（' + escapeHtml(srcPos.name) + '）</th><th>目标岗位（' + escapeHtml(tgtPos.name) + '）</th></tr></thead>';
+  html += '<tbody>';
+  cats.forEach(function(cat) {
+    var srcItems = srcPerms[cat] || [];
+    var tgtItems = tgtPerms[cat] || [];
+    var allItems = {};
+    srcItems.forEach(function(p) { allItems[p] = 'src'; });
+    tgtItems.forEach(function(p) {
+      if (allItems[p] === 'src') { allItems[p] = 'same'; }
+      else { allItems[p] = 'tgt'; }
+    });
+    var srcTags = '', tgtTags = '';
+    srcItems.forEach(function(p) {
+      if (tgtItems.indexOf(p) > -1) {
+        srcTags += '<span class="perm-tag same">' + escapeHtml(p) + '</span>';
+      } else {
+        srcTags += '<span class="perm-tag add">' + escapeHtml(p) + '</span>';
+        addCount++;
+      }
+    });
+    tgtItems.forEach(function(p) {
+      if (srcItems.indexOf(p) > -1) {
+        tgtTags += '<span class="perm-tag same">' + escapeHtml(p) + '</span>';
+        sameCount++;
+      } else {
+        tgtTags += '<span class="perm-tag remove">' + escapeHtml(p) + '</span>';
+        removeCount++;
+      }
+    });
+    if (!srcTags && !tgtTags) {
+      srcTags = '<span style="color:var(--text-tertiary);font-size:12px;">无</span>';
+      tgtTags = '<span style="color:var(--text-tertiary);font-size:12px;">无</span>';
+    }
+    html += '<tr><td class="cat-name">' + escapeHtml(cat) + '</td><td>' + srcTags + '</td><td>' + tgtTags + '</td></tr>';
+  });
+  html += '</tbody></table>';
+  html += '<div class="compare-summary">';
+  html += '<div class="compare-stat"><span class="dot green"></span> 将新增：' + addCount + ' 项</div>';
+  html += '<div class="compare-stat"><span class="dot red"></span> 将移除：' + removeCount + ' 项</div>';
+  html += '<div class="compare-stat"><span class="dot gray"></span> 不变：' + sameCount + ' 项</div>';
+  html += '</div>';
+  document.getElementById('compareBody').innerHTML = html;
+}
+
+// ===== 返回选择区 =====
+function backToSelection() {
+  document.getElementById('selectionArea').style.display = '';
+  document.getElementById('compareSection').style.display = 'none';
+}
+
+// ===== 确认同步 =====
+function confirmSync() {
+  var srcStore = mockStores.find(function(s) { return s.id === selectedSourceStore; });
+  var srcPos = (mockPositionsByStore[selectedSourceStore] || []).find(function(p) { return p.id === selectedSourcePosition; });
+  var tgtStore = mockStores.find(function(s) { return s.id === selectedTargetStore; });
+  var tgtPos = (mockPositionsByStore[selectedTargetStore] || []).find(function(p) { return p.id === selectedTargetPosition; });
+  // 保存同步记录
+  var now = new Date().toLocaleString('zh-CN', {hour12: false}).replace(/\//g, '-');
+  var syncId = 'SY' + now.replace(/[-\s:]/g, '').substring(0, 14);
+  var records = JSON.parse(localStorage.getItem('position_sync_records') || '[]');
+  // 计算变更
+  var srcPerms = srcPos.permissions || {};
+  var tgtPerms = tgtPos.permissions || {};
+  var addCount = 0, removeCount = 0;
+  var allCats = {};
+  Object.keys(srcPerms).forEach(function(c) { allCats[c] = true; });
+  Object.keys(tgtPerms).forEach(function(c) { allCats[c] = true; });
+  Object.keys(allCats).forEach(function(cat) {
+    var s = srcPerms[cat] || [], t = tgtPerms[cat] || [];
+    s.forEach(function(p) { if (t.indexOf(p) === -1) addCount++; });
+    t.forEach(function(p) { if (s.indexOf(p) === -1) removeCount++; });
+  });
+  var record = {
+    id: syncId,
+    platform: srcStore.platform,
+    sourceStore: srcStore.name,
+    sourceStoreId: srcStore.id,
+    sourceShopId: srcStore.shopId,
+    sourcePosition: srcPos.name,
+    sourcePositionId: srcPos.id,
+    targetStore: tgtStore.name,
+    targetStoreId: tgtStore.id,
+    targetShopId: tgtStore.shopId,
+    targetPosition: tgtPos.name,
+    targetPositionId: tgtPos.id,
+    addCount: addCount,
+    removeCount: removeCount,
+    status: '全部成功',
+    operator: '系统管理员',
+    createTime: now,
+    logs: [
+      { time: now, action: '创建同步任务', detail: '源：' + srcStore.name + ' · ' + srcPos.name + ' → 目标：' + tgtStore.name + ' · ' + tgtPos.name },
+      { time: now, action: '开始执行同步', detail: '正在同步岗位权限配置' },
+      { time: now, action: '同步完成', detail: '新增 ' + addCount + ' 项权限，移除 ' + removeCount + ' 项权限' },
+      { time: now, action: '后台更新完成', detail: '目标岗位权限配置已更新' }
+    ]
+  };
+  records.unshift(record);
+  localStorage.setItem('position_sync_records', JSON.stringify(records));
+  // 显示结果
+  document.getElementById('compareSection').style.display = 'none';
+  document.getElementById('resultPanel').style.display = '';
+  var detail = document.getElementById('resultDetail');
+  detail.innerHTML =
+    '<div class="detail-item">源店铺：<span>' + escapeHtml(srcStore.name) + '（' + escapeHtml(srcStore.shopId) + '）</span></div>' +
+    '<div class="detail-item">源岗位：<span>' + escapeHtml(srcPos.name) + '（' + srcPos.permCount + '项权限）</span></div>' +
+    '<div class="detail-item">目标店铺：<span>' + escapeHtml(tgtStore.name) + '（' + escapeHtml(tgtStore.shopId) + '）</span></div>' +
+    '<div class="detail-item">目标岗位：<span>' + escapeHtml(tgtPos.name) + '</span></div>' +
+    '<div class="detail-item">变更：<span>新增 ' + addCount + ' 项，移除 ' + removeCount + ' 项</span></div>';
+}
+
+// ===== 重置 =====
+function resetSync() {
+  selectedSourceStore = null;
+  selectedSourcePosition = null;
+  selectedTargetStore = null;
+  selectedTargetPosition = null;
+  document.getElementById('selectionArea').style.display = '';
+  document.getElementById('compareSection').style.display = 'none';
+  document.getElementById('resultPanel').style.display = 'none';
+  document.getElementById('sourceFilterInput').value = '';
+  renderSourceStores('');
+  document.getElementById('sourcePosHint').textContent = '请先选择源店铺';
+  document.getElementById('targetPanelHint').textContent = '请先选择源岗位';
+  document.getElementById('sourcePosListArea').innerHTML = '<div class="placeholder-hint"><div class="ph-icon">&#128203;</div><div class="ph-text">请先在上方选择源店铺，系统将自动加载该店铺所有岗位</div></div>';
+  document.getElementById('targetArea').innerHTML = '<div class="placeholder-hint"><div class="ph-icon">&#127970;</div><div class="ph-text">请先选择源岗位后，再选择目标店铺</div></div>';
+  document.getElementById('confirmBar').style.display = 'none';
+}
+
+// ===== 返回列表 =====
+function goBack() {
+  if (window.parent) {
+    window.parent.postMessage({
+      type: 'openTab',
+      url: 'pages/store-engine/position-clone-list.html',
+      title: '店铺岗位克隆',
+      from: 'position-sync'
+    }, '*');
+  }
+}
+
+// ===== 初始化 =====
+init();
+</script>
+</body>
+</html>

@@ -279,7 +279,6 @@
             <th style="width:88px;">快手上市日期</th>
             <th style="width:55px;">独享款</th>
             <th style="width:55px;">佣金比例</th>
-            <th style="width:55px;">状态</th>
             <th style="width:55px;">创建人</th>
             <th style="width:100px;">创建时间</th>
             <th style="width:100px;">更新时间</th>
@@ -414,7 +413,7 @@ function renderTable(data) {
   var tbody = document.getElementById('tableBody');
   var html = '';
   if (data.length === 0) {
-    html = '<tr><td colspan="15" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无数据</div><div class="empty-hint">点击「+ 新增」创建记录</div></td></tr>';
+    html = '<tr><td colspan="14" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无数据</div><div class="empty-hint">点击「+ 新增」创建记录</div></td></tr>';
   } else {
     data.forEach(function(row, index) {
       html += '<tr>';
@@ -427,7 +426,6 @@ function renderTable(data) {
       html += '<td>' + formatTime(row.kuaishouTime) + '</td>';
       html += '<td>' + (row.exclusive === '是' ? '<span class="tag-yes">是</span>' : '<span class="tag-no">否</span>') + '</td>';
       html += '<td>' + (row.commission !== undefined ? row.commission + '%' : '-') + '</td>';
-      html += '<td>' + renderStatus(row.status) + '</td>';
       html += '<td>' + escapeHtml(row.creator) + '</td>';
       html += '<td>' + escapeHtml(row.createTime).substring(0,10) + '</td>';
       html += '<td>' + escapeHtml(row.updateTime).substring(0,10) + '</td>';
@@ -570,6 +568,9 @@ function closeModal() {
 function savePlan() {
   var itemNo = document.getElementById('formItemNo').value.trim();
   if (!itemNo) { showToast('请输入商品款号', 'error'); return; }
+  // 校验商品款号唯一性
+  var duplicate = mockData.find(function(r) { return r.itemNo === itemNo && r.id !== editingId; });
+  if (duplicate) { showToast('该商品款号已存在，不允许重复！', 'error'); return; }
   var now = new Date().toLocaleString('zh-CN', {hour12:false}).replace(/\//g, '-');
   if (editingId) {
     var row = mockData.find(function(r) { return r.id === editingId; });
@@ -732,6 +733,25 @@ function renderPreview(data) {
 
 function confirmImport() {
   if (importParsedData.length === 0) return;
+  // 校验导入数据内部是否有重复款号
+  var seen = {};
+  var internalDup = [];
+  importParsedData.forEach(function(r) {
+    if (seen[r.itemNo]) { internalDup.push(r.itemNo); }
+    seen[r.itemNo] = true;
+  });
+  if (internalDup.length > 0) {
+    showToast('不允许重复导入同一款号！重复款号：' + internalDup.join('、'), 'error');
+    return;
+  }
+  // 校验与已有数据是否重复
+  var existingNos = {};
+  mockData.forEach(function(r) { existingNos[r.itemNo] = true; });
+  var conflictNos = importParsedData.filter(function(r) { return existingNos[r.itemNo]; }).map(function(r) { return r.itemNo; });
+  if (conflictNos.length > 0) {
+    showToast('不允许重复导入同一款号！已存在款号：' + conflictNos.join('、'), 'error');
+    return;
+  }
   var now = new Date().toLocaleString('zh-CN', {hour12:false}).replace(/\//g, '-');
   var count = 0;
   importParsedData.forEach(function(r) {

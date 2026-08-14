@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>店铺岗位管理</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+  .data-table thead th,
+  .data-table tbody td {
+    text-align: center;
+    white-space: nowrap;
+  }
+  .data-table .col-actions { text-align: center; }
+
+  /* 状态标签 */
+  .status-tag.pending   { background: #fef3c7; color: #d97706; }
+  .status-tag.running   { background: #dbeafe; color: #2563eb; }
+  .status-tag.done      { background: #d1fae5; color: #059669; }
+  .status-tag.partial   { background: #ffedd5; color: #ea580c; }
+  .status-tag.fail      { background: #fee2e2; color: #dc2626; }
+
+  /* 克隆岗位标签组 */
+  .pos-tags { display: inline-flex; flex-wrap: wrap; gap: 4px; max-width: 220px; }
+  .pos-tag {
+    font-size: 11px; color: var(--primary); background: var(--primary-light);
+    padding: 1px 7px; border-radius: 8px; white-space: nowrap;
+  }
+
+  /* 目标店铺标签组 */
+  .store-tags { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+  .store-tag {
+    font-size: 11px; color: #059669; background: #ecfdf5;
+    padding: 1px 7px; border-radius: 8px; white-space: nowrap;
+  }
+
+  /* 平台标签 */
+  .platform-tag {
+    font-size: 11px; color: #7c3aed; background: #f3e8ff;
+    padding: 2px 8px; border-radius: 10px; white-space: nowrap;
+  }
+
+  /* 类型标签 */
+  .type-tag { font-size:11px; padding:2px 8px; border-radius:10px; white-space:nowrap; font-weight:500; }
+  .type-tag.clone { background:#eff6ff; color:#2563eb; }
+  .type-tag.sync { background:#fef3c7; color:#d97706; }
+
+  /* 新建下拉 */
+  .dropdown-wrap { position:relative; display:inline-block; }
+  .dropdown-menu {
+    display:none; position:absolute; top:calc(100% + 4px); left:0; z-index:100;
+    background:#fff; border:1px solid var(--border); border-radius:8px;
+    box-shadow:0 4px 16px rgba(0,0,0,.1); min-width:160px; overflow:hidden;
+  }
+  .dropdown-menu.show { display:block; }
+  .dropdown-item {
+    display:flex; align-items:center; gap:8px;
+    padding:10px 16px; font-size:13px; color:var(--text);
+    cursor:pointer; transition:background .15s; border:none; background:none; width:100%; text-align:left;
+  }
+  .dropdown-item:hover { background:#f8fafc; }
+  .dropdown-item .dd-icon { font-size:16px; }
+
+  /* ===== 流程说明 ===== */
+  .flow-section {
+    background: linear-gradient(135deg, #eef0ff 0%, #f8f9ff 100%);
+    border: 1px solid #dce0f8;
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 12px;
+  }
+  .flow-header { display:flex; align-items:center; gap:6px; margin-bottom:10px; }
+  .flow-header svg { color:var(--primary); }
+  .flow-header h3 { margin:0; font-size:14px; font-weight:700; color:var(--ink); }
+  .flow-steps { display:flex; align-items:center; gap:0; }
+  .flow-step {
+    display:flex; align-items:center; gap:8px;
+    padding:8px 14px; background:#fff; border-radius:6px;
+    border:1px solid #e4e9f1; flex:1; transition:all .2s;
+  }
+  .flow-step:hover { border-color:var(--primary); box-shadow:0 2px 8px rgba(91,108,245,.12); }
+  .flow-step-icon {
+    width:28px; height:28px; border-radius:6px;
+    display:grid; place-items:center; font-size:14px;
+    flex-shrink:0; background:var(--primary-50); color:var(--primary);
+  }
+  .flow-step-info { flex:1; min-width:0; }
+  .flow-step-title { font-size:12px; font-weight:650; color:var(--ink); }
+  .flow-step-desc { font-size:11px; color:var(--text-tertiary); margin-top:1px; }
+  .flow-arrow { flex-shrink:0; color:#cbd5e1; padding:0 4px; display:flex; align-items:center; }
+  </style>
+</head>
+<body>
+<div class="page-container">
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script>
+    if (window.parent) {
+      window.parent.postMessage({type:'breadcrumb', text:'店铺管理 <span>/</span> 店铺岗位管理'}, '*');
+    }
+  </script>
+
+  <div class="page-title">店铺岗位管理</div>
+
+  <!-- ===== 流程说明 ===== -->
+  <div class="flow-section">
+    <div class="flow-header">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+        <line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/>
+      </svg>
+      <h3>流程说明</h3>
+    </div>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="flow-step-icon">🏪</div>
+        <div class="flow-step-info">
+          <div class="flow-step-title">选择源店铺</div>
+          <div class="flow-step-desc">选择要克隆的源店铺，自动获取所有岗位</div>
+        </div>
+      </div>
+      <div class="flow-arrow"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="flow-step">
+        <div class="flow-step-icon">📋</div>
+        <div class="flow-step-info">
+          <div class="flow-step-title">选择克隆岗位</div>
+          <div class="flow-step-desc">选择需要克隆复制的岗位</div>
+        </div>
+      </div>
+      <div class="flow-arrow"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="flow-step">
+        <div class="flow-step-icon">🏬</div>
+        <div class="flow-step-info">
+          <div class="flow-step-title">选择目标店铺</div>
+          <div class="flow-step-desc">选择需要克隆到的目标店铺</div>
+        </div>
+      </div>
+      <div class="flow-arrow"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="flow-step">
+        <div class="flow-step-icon">⚡</div>
+        <div class="flow-step-info">
+          <div class="flow-step-title">确认执行</div>
+          <div class="flow-step-desc">确认克隆信息后执行克隆</div>
+        </div>
+      </div>
+      <div class="flow-arrow"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="flow-step">
+        <div class="flow-step-icon">✅</div>
+        <div class="flow-step-info">
+          <div class="flow-step-title">后台检查结果</div>
+          <div class="flow-step-desc">店铺后台自动检查克隆结果</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 搜索区域 -->
+  <div class="search-area">
+    <div class="search-row">
+      <div class="search-item">
+        <label>源店铺：</label>
+        <select id="searchSource">
+          <option value="">全部</option>
+          <option value="旗舰店A">旗舰店A</option>
+          <option value="专营店B">专营店B</option>
+          <option value="旗舰店C">旗舰店C</option>
+          <option value="奥莱店D">奥莱店D</option>
+          <option value="海外旗舰店E">海外旗舰店E</option>
+        </select>
+      </div>
+      <div class="search-item">
+        <label>目标店铺：</label>
+        <select id="searchTarget">
+          <option value="">全部</option>
+          <option value="旗舰店A">旗舰店A</option>
+          <option value="专营店B">专营店B</option>
+          <option value="旗舰店C">旗舰店C</option>
+          <option value="奥莱店D">奥莱店D</option>
+          <option value="海外旗舰店E">海外旗舰店E</option>
+        </select>
+      </div>
+      <div class="search-item">
+        <label>状态：</label>
+        <select id="searchStatus">
+          <option value="">全部</option>
+          <option value="待执行">待执行</option>
+          <option value="执行中">执行中</option>
+          <option value="全部成功">全部成功</option>
+          <option value="部分成功">部分成功</option>
+          <option value="全部失败">全部失败</option>
+        </select>
+      </div>
+      <div class="search-item">
+        <label>创建时间：</label>
+        <input type="date" id="searchDateFrom"> <span style="margin:0 4px;color:var(--text-tertiary);">至</span> <input type="date" id="searchDateTo">
+      </div>
+    </div>
+    <div class="search-actions">
+      <button class="btn btn-primary" onclick="doSearch()">查询</button>
+      <button class="btn" onclick="resetSearch()">重置</button>
+    </div>
+    <div class="search-active-tags" id="searchTags" style="display:none;"></div>
+  </div>
+
+  <!-- 表格区域 -->
+  <div class="table-area">
+    <div class="table-toolbar">
+      <div class="dropdown-wrap">
+        <button class="btn btn-primary" onclick="toggleDropdown()">+ 新建 ▾</button>
+        <div class="dropdown-menu" id="newDropdown">
+          <button class="dropdown-item" onclick="goClone()"><span class="dd-icon">📋</span> 新增</button>
+          <button class="dropdown-item" onclick="goSync()"><span class="dd-icon">🔄</span> 修改</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-scroll">
+      <table class="data-table" id="dataTable">
+        <thead>
+          <tr>
+            <th style="width:50px;">序号</th>
+            <th style="width:70px;">类型</th>
+            <th style="width:130px;">编号</th>
+            <th style="width:80px;">平台</th>
+            <th style="width:110px;">源店铺编码</th>
+            <th style="width:110px;">源店铺名称</th>
+            <th style="width:120px;">源岗位</th>
+            <th style="width:120px;">目标岗位</th>
+            <th style="width:140px;">目标店铺</th>
+            <th style="width:70px;">岗位数</th>
+            <th style="width:80px;">权限总数</th>
+            <th style="width:80px;">状态</th>
+            <th style="width:90px;">创建人</th>
+            <th style="width:150px;">创建时间</th>
+            <th style="width:120px;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- 分页 -->
+    <div class="pagination" id="pagination">
+      <span class="page-info">共 <strong id="totalCount">0</strong> 条</span>
+      <span class="page-btn disabled">&laquo;</span>
+      <span class="page-btn active">1</span>
+      <span class="page-btn">2</span>
+      <span class="page-btn">&raquo;</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+var STORAGE_KEY = 'position_clone_records';
+
+// ===== Mock 克隆记录 =====
+var mockRecords = [
+  {
+    id: 'CL20260801001', type: 'clone', platform: '抖音', sourceStore: '旗舰店A', sourceStoreId: 'S001', sourceShopId: 'dy_100231',
+    positions: [
+      { name: '运营主管', permCount: 68 },
+      { name: '商品运营', permCount: 28 }
+    ],
+    targetStores: [
+      { name: '专营店B', id: 'S002', shopId: 'dy_100456' },
+      { name: '旗舰店C', id: 'S003', shopId: 'dy_100789' }
+    ],
+    totalPositions: 2, totalPerms: 96,
+    status: '全部成功', operator: '系统管理员', createTime: '2026-08-01 10:30:00',
+    logs: [
+      { time: '2026-08-01 10:30:00', action: '创建克隆任务', detail: '选择源店铺「旗舰店A」，2个岗位，目标店铺2个' },
+      { time: '2026-08-01 10:30:01', action: '开始执行克隆', detail: '正在克隆岗位权限到目标店铺' },
+      { time: '2026-08-01 10:30:02', action: '克隆完成', detail: '成功克隆2个岗位、96项权限到2个目标店铺' }
+    ]
+  },
+  {
+    id: 'CL20260805001', type: 'clone', platform: '抖音', sourceStore: '旗舰店C', sourceStoreId: 'S003', sourceShopId: 'dy_100789',
+    positions: [
+      { name: '直播运营', permCount: 30 },
+      { name: '商品编辑', permCount: 10 },
+      { name: '售后客服', permCount: 8 }
+    ],
+    targetStores: [
+      { name: '奥莱店D', id: 'S004', shopId: 'dy_101012' }
+    ],
+    totalPositions: 3, totalPerms: 48,
+    status: '全部成功', operator: '张运营', createTime: '2026-08-05 14:20:00',
+    logs: [
+      { time: '2026-08-05 14:20:00', action: '创建克隆任务', detail: '选择源店铺「旗舰店C」，3个岗位，目标店铺1个' },
+      { time: '2026-08-05 14:20:01', action: '开始执行克隆', detail: '正在克隆岗位权限到目标店铺' },
+      { time: '2026-08-05 14:20:02', action: '克隆完成', detail: '成功克隆3个岗位、48项权限到1个目标店铺' }
+    ]
+  },
+  {
+    id: 'CL20260808001', type: 'clone', platform: '抖音', sourceStore: '专营店B', sourceStoreId: 'S002', sourceShopId: 'dy_100456',
+    positions: [
+      { name: '店长', permCount: 45 },
+      { name: '推广专员', permCount: 15 }
+    ],
+    targetStores: [
+      { name: '旗舰店A', id: 'S001', shopId: 'dy_100231' },
+      { name: '海外旗舰店E', id: 'S005', shopId: 'dy_101345' }
+    ],
+    totalPositions: 2, totalPerms: 60,
+    status: '部分成功', operator: '系统管理员', createTime: '2026-08-08 09:15:00',
+    logs: [
+      { time: '2026-08-08 09:15:00', action: '创建克隆任务', detail: '选择源店铺「专营店B」，2个岗位，目标店铺2个' },
+      { time: '2026-08-08 09:15:01', action: '开始执行克隆', detail: '正在克隆岗位权限到目标店铺' },
+      { time: '2026-08-08 09:15:02', action: '部分完成', detail: '旗舰店A克隆成功；海外旗舰店E部分权限冲突，已跳过3项' }
+    ]
+  },
+  {
+    id: 'CL20260810001', type: 'clone', platform: '抖音', sourceStore: '海外旗舰店E', sourceStoreId: 'S005', sourceShopId: 'dy_101345',
+    positions: [
+      { name: '全栈运营', permCount: 60 }
+    ],
+    targetStores: [
+      { name: '旗舰店A', id: 'S001', shopId: 'dy_100231' },
+      { name: '专营店B', id: 'S002', shopId: 'dy_100456' },
+      { name: '旗舰店C', id: 'S003', shopId: 'dy_100789' }
+    ],
+    totalPositions: 1, totalPerms: 60,
+    status: '全部成功', operator: '张运营', createTime: '2026-08-10 16:45:00',
+    logs: [
+      { time: '2026-08-10 16:45:00', action: '创建克隆任务', detail: '选择源店铺「海外旗舰店E」，1个岗位，目标店铺3个' },
+      { time: '2026-08-10 16:45:01', action: '开始执行克隆', detail: '正在克隆岗位权限到目标店铺' },
+      { time: '2026-08-10 16:45:03', action: '克隆完成', detail: '成功克隆1个岗位、60项权限到3个目标店铺' }
+    ]
+  },
+  {
+    id: 'CL20260812001', type: 'clone', platform: '抖音', sourceStore: '奥莱店D', sourceStoreId: 'S004', sourceShopId: 'dy_101012',
+    positions: [
+      { name: '运营主管', permCount: 52 }
+    ],
+    targetStores: [
+      { name: '旗舰店C', id: 'S003', shopId: 'dy_100789' }
+    ],
+    totalPositions: 1, totalPerms: 52,
+    status: '全部失败', operator: '系统管理员', createTime: '2026-08-12 08:30:00',
+    logs: [
+      { time: '2026-08-12 08:30:00', action: '创建克隆任务', detail: '选择源店铺「奥莱店D」，1个岗位，目标店铺1个' },
+      { time: '2026-08-12 08:30:01', action: '开始执行克隆', detail: '正在克隆岗位权限到目标店铺' },
+      { time: '2026-08-12 08:30:02', action: '克隆失败', detail: '目标店铺「旗舰店C」存在同名岗位「运营主管」，冲突终止' }
+    ]
+  }
+];
+
+// ===== Mock 同步记录 =====
+var mockSyncRecords = [
+  {
+    id: 'SY20260810001', type: 'sync', platform: '抖音',
+    sourceStore: '旗舰店A', sourceStoreId: 'S001', sourceShopId: 'dy_100231',
+    sourcePosition: '运营主管', targetStore: '奥莱店D', targetStoreId: 'S004', targetShopId: 'dy_101012', targetPosition: '运营主管',
+    addCount: 3, removeCount: 1, totalPositions: 1, totalPerms: 68,
+    status: '全部成功', operator: '系统管理员', createTime: '2026-08-10 11:20:00'
+  },
+  {
+    id: 'SY20260811001', type: 'sync', platform: '抖音',
+    sourceStore: '海外旗舰店E', sourceStoreId: 'S005', sourceShopId: 'dy_101345',
+    sourcePosition: '全栈运营', targetStore: '专营店B', targetStoreId: 'S002', targetShopId: 'dy_100456', targetPosition: '店长',
+    addCount: 8, removeCount: 2, totalPositions: 1, totalPerms: 60,
+    status: '全部成功', operator: '张运营', createTime: '2026-08-11 14:30:00'
+  },
+  {
+    id: 'SY20260812001', type: 'sync', platform: '快手',
+    sourceStore: '旗舰店F', sourceStoreId: 'S006', sourceShopId: 'ks_200001',
+    sourcePosition: '运营主管', targetStore: '工厂店G', targetStoreId: 'S007', targetShopId: 'ks_200002', targetPosition: '仓库管理员',
+    addCount: 15, removeCount: 0, totalPositions: 1, totalPerms: 35,
+    status: '全部成功', operator: '系统管理员', createTime: '2026-08-12 09:00:00'
+  }
+];
+
+// ===== 合并记录 =====
+var allRecords = mockSyncRecords.concat(mockRecords);
+allRecords.sort(function(a, b) { return b.createTime.localeCompare(a.createTime); });
+
+// ===== 初始化 localStorage =====
+(function syncToStorage() {
+  var stored = localStorage.getItem(STORAGE_KEY);
+  if (!stored) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(mockRecords));
+  } else {
+    mockRecords = JSON.parse(stored);
+  }
+})();
+
+// ===== 渲染表格 =====
+function renderTable(data) {
+  var tbody = document.getElementById('tableBody');
+  var html = '';
+  if (data.length === 0) {
+    html = '<tr><td colspan="15" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无记录</div><div class="empty-hint">点击「+ 新建」创建记录</div></td></tr>';
+  } else {
+    data.forEach(function(row, index) {
+      var isSync = row.type === 'sync';
+      html += '<tr>';
+      html += '<td>' + (index + 1) + '</td>';
+      html += '<td><span class="type-tag ' + (isSync ? 'sync' : 'clone') + '">' + (isSync ? '修改' : '新增') + '</span></td>';
+      html += '<td style="font-family:monospace;font-size:12px;color:var(--primary);">' + escapeHtml(row.id) + '</td>';
+      html += '<td><span class="platform-tag">' + escapeHtml(row.platform || '抖音') + '</span></td>';
+      html += '<td><span class="store-id">' + escapeHtml(row.sourceShopId || row.sourceStoreId) + '</span></td>';
+      html += '<td>' + escapeHtml(row.sourceStore) + '</td>';
+      // 源岗位列
+      if (isSync) {
+        html += '<td style="font-size:12px;">' + escapeHtml(row.sourcePosition) + '</td>';
+      } else {
+        html += '<td><div class="pos-tags">';
+        (row.positions || []).forEach(function(p) {
+          html += '<span class="pos-tag">' + escapeHtml(p.name) + '</span>';
+        });
+        html += '</div></td>';
+      }
+      // 目标岗位列
+      if (isSync) {
+        html += '<td style="font-size:12px;">' + escapeHtml(row.targetPosition) + '</td>';
+      } else {
+        html += '<td><div class="pos-tags">';
+        (row.positions || []).forEach(function(p) {
+          html += '<span class="pos-tag">' + escapeHtml(p.name) + '</span>';
+        });
+        html += '</div></td>';
+      }
+      // 目标店铺列
+      if (isSync) {
+        html += '<td><span class="store-tag" title="' + escapeHtml(row.targetShopId || row.targetStoreId) + '">' + escapeHtml(row.targetStore) + '</span></td>';
+      } else {
+        html += '<td><div class="store-tags">';
+        (row.targetStores || []).forEach(function(s) {
+          html += '<span class="store-tag" title="' + escapeHtml(s.shopId || s.id) + '">' + escapeHtml(s.name) + '</span>';
+        });
+        html += '</div></td>';
+      }
+      html += '<td>' + (row.totalPositions || 1) + '</td>';
+      html += '<td>' + (row.totalPerms || 0) + '</td>';
+      html += '<td>' + getStatusTag(row.status) + '</td>';
+      html += '<td>' + escapeHtml(row.operator) + '</td>';
+      html += '<td>' + escapeHtml(row.createTime) + '</td>';
+      html += '<td class="col-actions">';
+      html += '<a class="link-action" href="javascript:void(0)" onclick="goDetail(\'' + row.id + '\',\'' + (isSync ? 'sync' : 'clone') + '\')">\u67e5看详情</a>';
+      html += '<a class="link-action" href="javascript:void(0)" onclick="doDelete(\'' + row.id + '\')">\u5220除</a>';
+      html += '</td>';
+      html += '</tr>';
+    });
+  }
+  tbody.innerHTML = html;
+  document.getElementById('totalCount').textContent = data.length;
+}
+
+// ===== 状态标签 =====
+function getStatusTag(status) {
+  var cls = '';
+  switch(status) {
+    case '全部成功': cls = 'done'; break;
+    case '部分成功': cls = 'partial'; break;
+    case '全部失败': cls = 'fail'; break;
+    case '执行中': cls = 'running'; break;
+    case '待执行': cls = 'pending'; break;
+    default: cls = 'pending';
+  }
+  return '<span class="status-tag ' + cls + '">' + escapeHtml(status) + '</span>';
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ===== 搜索 =====
+function doSearch() {
+  var source = document.getElementById('searchSource').value;
+  var target = document.getElementById('searchTarget').value;
+  var status = document.getElementById('searchStatus').value;
+  var dateFrom = document.getElementById('searchDateFrom').value;
+  var dateTo = document.getElementById('searchDateTo').value;
+
+  var filtered = allRecords.filter(function(row) {
+    if (source && row.sourceStore !== source) return false;
+    if (target) {
+      if (row.type === 'sync') {
+        if (row.targetStore !== target) return false;
+      } else {
+        var hasTarget = (row.targetStores || []).some(function(s) { return s.name === target; });
+        if (!hasTarget) return false;
+      }
+    }
+    if (status && row.status !== status) return false;
+    if (dateFrom && row.createTime < dateFrom) return false;
+    if (dateTo && row.createTime > dateTo + ' 23:59:59') return false;
+    return true;
+  });
+  renderTable(filtered);
+  showSearchTags();
+}
+
+function resetSearch() {
+  document.getElementById('searchSource').value = '';
+  document.getElementById('searchTarget').value = '';
+  document.getElementById('searchStatus').value = '';
+  document.getElementById('searchDateFrom').value = '';
+  document.getElementById('searchDateTo').value = '';
+  renderTable(allRecords);
+  hideSearchTags();
+}
+
+function showSearchTags() {
+  var tags = [];
+  var source = document.getElementById('searchSource').value;
+  var target = document.getElementById('searchTarget').value;
+  var status = document.getElementById('searchStatus').value;
+  var dateFrom = document.getElementById('searchDateFrom').value;
+  var dateTo = document.getElementById('searchDateTo').value;
+  if (source) tags.push({label:'源店铺: '+source, field:'searchSource'});
+  if (target) tags.push({label:'目标店铺: '+target, field:'searchTarget'});
+  if (status) tags.push({label:'状态: '+status, field:'searchStatus'});
+  if (dateFrom) tags.push({label:'开始日期: '+dateFrom, field:'searchDateFrom'});
+  if (dateTo) tags.push({label:'结束日期: '+dateTo, field:'searchDateTo'});
+  var container = document.getElementById('searchTags');
+  if (tags.length === 0) { container.style.display = 'none'; return; }
+  container.style.display = '';
+  container.innerHTML = tags.map(function(t) {
+    return '<span class="active-tag" onclick="clearTag(\''+t.field+'\')">'+t.label+' ×</span>';
+  }).join('');
+}
+function hideSearchTags() { document.getElementById('searchTags').style.display = 'none'; }
+function clearTag(field) {
+  var el = document.getElementById(field);
+  el.value = '';
+  doSearch();
+}
+
+// ===== 操作 =====
+function goClone() {
+  closeDropdown();
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({
+      type: 'openTab',
+      page: 'pages/store-engine/position-clone.html',
+      title: '新建岗位克隆'
+    }, '*');
+  }
+}
+
+function goSync() {
+  closeDropdown();
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({
+      type: 'openTab',
+      page: 'pages/store-engine/position-sync.html',
+      title: '新建岗位权限同步'
+    }, '*');
+  }
+}
+
+function toggleDropdown() {
+  var menu = document.getElementById('newDropdown');
+  menu.classList.toggle('show');
+}
+function closeDropdown() {
+  var m = document.getElementById('newDropdown');
+  if (m) m.classList.remove('show');
+}
+document.addEventListener('click', function(e) {
+  var wrap = document.querySelector('.dropdown-wrap');
+  if (wrap && !wrap.contains(e.target)) closeDropdown();
+});
+
+function goDetail(id, type) {
+  if (window.parent && window.parent !== window) {
+    var page = type === 'sync'
+      ? 'pages/store-engine/position-sync-detail.html?id=' + id
+      : 'pages/store-engine/position-clone-detail.html?id=' + id;
+    var title = type === 'sync' ? '同步详情 - ' + id : '克隆详情 - ' + id;
+    window.parent.postMessage({
+      type: 'openTab',
+      page: page,
+      title: title
+    }, '*');
+  }
+}
+
+function doDelete(id) {
+  if (confirm('确定要删除该记录吗？')) {
+    var idx = -1;
+    for (var i = 0; i < allRecords.length; i++) {
+      if (allRecords[i].id === id) { idx = i; break; }
+    }
+    if (idx > -1) {
+      allRecords.splice(idx, 1);
+      renderTable(allRecords);
+      showToast('删除成功', 'success');
+    }
+  }
+}
+
+// ===== Toast =====
+function showToast(msg, type) {
+  var container = document.getElementById('toastContainer');
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + (type || 'info');
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(function() { toast.classList.add('toast-hide'); }, 2500);
+  setTimeout(function() { toast.remove(); }, 3000);
+}
+
+// 初始化渲染
+renderTable(allRecords);
+</script>
+</body>
+</html>
