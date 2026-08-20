@@ -417,6 +417,31 @@ body {
   border-radius: 0 3px 3px 0;
 }
 
+/* --- 侧边栏分组标题（横线分隔 + 强调色区分） --- */
+.sidebar-section-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 20px 6px;
+  margin: 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+  letter-spacing: 0.5px;
+  user-select: none;
+  opacity: 0.75;
+}
+.sidebar-section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--primary-light), transparent);
+}
+.sidebar-section-label svg {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
 /* --- 侧边栏可展开父菜单 --- */
 .sidebar-parent {
   display: flex;
@@ -435,6 +460,11 @@ body {
 .sidebar-parent:hover {
   color: var(--primary);
   background: var(--primary-50);
+}
+.sidebar-parent.active {
+  color: var(--primary);
+  background: linear-gradient(90deg, var(--primary-50), rgba(91,108,245,0.04));
+  font-weight: 600;
 }
 .sidebar-parent .arrow {
   margin-left: auto;

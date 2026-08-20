@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>分销全景工作流</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    :root {
+      --panorama-ink: #172033;
+      --panorama-line: #dfe4ee;
+      --panorama-accent: #5b6cf5;
+    }
+
+    body {
+      min-width: 0;
+      margin: 0;
+      color: var(--panorama-ink);
+      background:
+        radial-gradient(circle at 83% 3%, rgba(91, 108, 245, .08), transparent 23rem),
+        linear-gradient(180deg, #f9fbff 0, #f5f7fb 21rem, #f4f6fa 100%);
+    }
+
+    button { font: inherit; }
+
+    .page-wrap {
+      width: 100%;
+      max-width: 1600px;
+      min-height: 100%;
+      margin: 0 auto;
+      padding: 24px 28px 48px;
+    }
+
+    .hero {
+      position: relative;
+      min-height: 136px;
+      margin-bottom: 18px;
+      padding: 26px 300px 26px 28px;
+      overflow: hidden;
+      border: 1px solid rgba(91, 108, 245, .11);
+      border-radius: 18px;
+      background:
+        linear-gradient(110deg, rgba(255, 255, 255, .98) 0 54%, rgba(244, 247, 255, .88) 100%),
+        #fff;
+      box-shadow: 0 10px 30px rgba(52, 65, 112, .06);
+    }
+
+    .hero::before,
+    .hero::after {
+      content: "";
+      position: absolute;
+      pointer-events: none;
+    }
+
+    .hero::before {
+      top: -82px;
+      right: 12px;
+      width: 350px;
+      height: 210px;
+      border: 1px solid rgba(91, 108, 245, .12);
+      border-radius: 50%;
+      transform: rotate(17deg);
+    }
+
+    .hero::after {
+      right: 86px;
+      bottom: -88px;
+      width: 250px;
+      height: 190px;
+      border-radius: 48%;
+      background: linear-gradient(145deg, rgba(91, 108, 245, .12), rgba(32, 169, 223, .025));
+      transform: rotate(-12deg);
+    }
+
+    .hero-copy { position: relative; z-index: 2; max-width: 760px; }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 8px;
+      color: var(--panorama-accent);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .08em;
+    }
+    .eyebrow::before { content: ""; width: 18px; height: 2px; border-radius: 99px; background: currentColor; }
+    .hero h1 { margin: 0 0 7px; color: #121a2b; font-size: 24px; line-height: 1.3; font-weight: 800; letter-spacing: -.02em; }
+    .hero p { max-width: 680px; margin: 0; color: #596579; font-size: 13px; line-height: 1.75; }
+
+    .hero-guide {
+      position: absolute;
+      z-index: 3;
+      top: 18px;
+      right: 22px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 40px;
+      padding: 0 12px;
+      border: 0;
+      border-radius: 10px;
+      color: var(--panorama-accent);
+      background: rgba(255, 255, 255, .72);
+      cursor: pointer;
+      transition: background .2s ease, box-shadow .2s ease;
+    }
+    .hero-guide:hover { background: #fff; box-shadow: 0 6px 18px rgba(91, 108, 245, .12); }
+    .hero-guide svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+
+    .hero-art {
+      position: absolute;
+      z-index: 2;
+      right: 92px;
+      bottom: 17px;
+      width: 162px;
+      height: 86px;
+      opacity: .95;
+    }
+    .hero-art .sheet {
+      position: absolute;
+      left: 35px;
+      top: 13px;
+      width: 102px;
+      height: 62px;
+      border: 1px solid rgba(255, 255, 255, .85);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, .72);
+      box-shadow: 0 14px 28px rgba(68, 82, 154, .09);
+      transform: rotate(12deg);
+    }
+    .hero-art .sheet::before,
+    .hero-art .sheet::after { content: ""; position: absolute; left: 20px; height: 5px; border-radius: 99px; background: #e6eaf4; }
+    .hero-art .sheet::before { top: 20px; width: 54px; }
+    .hero-art .sheet::after { top: 34px; width: 40px; }
+    .art-node {
+      position: absolute;
+      display: grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      color: #fff;
+      box-shadow: 0 10px 20px rgba(91, 108, 245, .18);
+    }
+    .art-node svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+    .art-node.start { left: 8px; bottom: 8px; background: linear-gradient(145deg, #91cffd, #6bb6f2); }
+    .art-node.end { right: 0; top: 0; background: linear-gradient(145deg, #c4a7f9, #9b7de8); }
+
+    .workflow {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 38px minmax(0, 1fr) 38px minmax(0, 1fr);
+      align-items: stretch;
+    }
+
+    .stage-card {
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid var(--panorama-line);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, .96);
+      box-shadow: 0 8px 24px rgba(29, 43, 84, .045);
+      animation: stage-in .38s ease-out both;
+    }
+    .stage-card:nth-of-type(3) { animation-delay: .05s; }
+    .stage-card:nth-of-type(5) { animation-delay: .1s; }
+
+    .stage-head {
+      position: relative;
+      display: grid;
+      grid-template-columns: 30px minmax(0, 1fr) auto;
+      gap: 10px;
+      min-height: 74px;
+      padding: 12px 14px 12px 16px;
+      border-bottom: 1px solid #edf0f5;
+      background: linear-gradient(90deg, #fff, #fbfcff);
+    }
+    .stage-head::after { content: ""; position: absolute; inset: 0 0 auto; height: 3px; background: var(--stage-color); opacity: .86; }
+    .stage-number {
+      display: grid;
+      place-items: center;
+      width: 26px;
+      height: 26px;
+      margin-top: 2px;
+      border-radius: 8px;
+      color: var(--stage-color);
+      background: var(--stage-soft);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .stage-title { min-width: 0; }
+    .stage-title h2 { margin: 0 0 3px; color: #1d2638; font-size: 15px; line-height: 1.4; font-weight: 750; }
+    .stage-title p { margin: 0; color: #7a8598; font-size: 11px; line-height: 1.45; }
+    .stage-tag {
+      align-self: start;
+      min-width: 58px;
+      margin: -12px -14px 0 0;
+      padding: 8px 10px 7px;
+      border-radius: 0 0 0 10px;
+      color: #4d5870;
+      background: var(--stage-soft);
+      font-size: 11px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .stage-body { padding: 14px 14px 16px; }
+    .function-group + .function-group { margin-top: 16px; }
+    .group-title {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin: 0 0 8px;
+      color: #384255;
+      font-size: 12px;
+      line-height: 1.4;
+      font-weight: 750;
+    }
+    .group-icon {
+      display: grid;
+      place-items: center;
+      width: 18px;
+      height: 18px;
+      flex: 0 0 auto;
+      border-radius: 6px;
+      color: var(--group-color);
+      background: color-mix(in srgb, var(--group-color) 11%, #fff);
+    }
+    .group-icon svg { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 2; }
+
+    .action-list { display: grid; gap: 7px; padding-left: 12px; border-left: 1px dashed #e4e8f1; }
+    .action-item {
+      position: relative;
+      display: flex;
+      align-items: center;
+      width: 100%;
+      min-height: 42px;
+      padding: 8px 11px;
+      border: 1px solid transparent;
+      border-radius: 9px;
+      color: #30394c;
+      background: linear-gradient(100deg, #f7f8fb, #f5f6fa);
+      font-size: 12px;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: border-color .2s ease, background .2s ease, color .2s ease, box-shadow .2s ease;
+    }
+    .action-item::before { content: ""; width: 5px; height: 5px; margin-right: 9px; flex: 0 0 auto; border-radius: 50%; background: var(--group-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--group-color) 9%, transparent); }
+    .action-item .action-arrow { width: 15px; height: 15px; margin-left: auto; opacity: .5; fill: none; stroke: currentColor; stroke-width: 1.8; transition: transform .2s ease, opacity .2s ease; }
+    .action-item:hover { border-color: color-mix(in srgb, var(--group-color) 26%, #dfe4ee); color: #202a40; background: color-mix(in srgb, var(--group-color) 6%, #fff); box-shadow: 0 5px 14px rgba(39, 51, 91, .06); }
+    .action-item:hover .action-arrow { opacity: .85; transform: translateX(2px); }
+    .action-item:active { background: color-mix(in srgb, var(--group-color) 10%, #fff); }
+    .action-item:focus-visible, .hero-guide:focus-visible { outline: 3px solid rgba(91, 108, 245, .28); outline-offset: 2px; }
+
+    .flow-connector { position: relative; align-self: start; height: 74px; }
+    .flow-connector::before { content: ""; position: absolute; top: 50%; left: 2px; right: 2px; border-top: 1px dashed #9fb0ff; }
+    .connector-dot { position: absolute; top: calc(50% - 7px); left: calc(50% - 7px); display: grid; place-items: center; width: 14px; height: 14px; border: 1px solid #7f94ff; border-radius: 50%; color: #647af2; background: #f7f8ff; box-shadow: 0 0 0 4px #f5f7fb; }
+    .connector-dot svg { width: 8px; height: 8px; fill: none; stroke: currentColor; stroke-width: 2; }
+
+    .stage-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 10px; padding-left: 12px; }
+    .metric { padding: 9px 10px; border: 1px solid #e6ebf2; border-radius: 9px; background: #fbfcfe; }
+    .metric strong { display: block; color: #27324a; font-size: 18px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+    .metric span { color: #7b8799; font-size: 10px; }
+
+    @keyframes stage-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 1180px) {
+      .page-wrap { padding: 20px 20px 40px; }
+      .workflow { grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr) 28px minmax(0, 1fr); }
+      .hero { padding-right: 250px; }
+      .hero-art { right: 58px; }
+      .stage-head { grid-template-columns: 28px minmax(0, 1fr); }
+      .stage-tag { display: none; }
+    }
+
+    @media (max-width: 900px) {
+      .hero { padding-right: 190px; }
+      .hero-art { right: 24px; transform: scale(.82); transform-origin: right bottom; }
+      .workflow { grid-template-columns: 1fr; }
+      .flow-connector { width: 100%; height: 32px; }
+      .flow-connector::before { top: 2px; bottom: 2px; left: 50%; right: auto; border-top: 0; border-left: 1px dashed #9fb0ff; }
+      .connector-dot { top: calc(50% - 7px); }
+      .stage-head { grid-template-columns: 30px minmax(0, 1fr) auto; }
+      .stage-tag { display: block; }
+    }
+
+    @media (max-width: 600px) {
+      body { background: #f5f7fb; }
+      .page-wrap { padding: 12px 12px 28px; }
+      .hero { min-height: 0; margin-bottom: 12px; padding: 20px 18px; border-radius: 14px; }
+      .hero h1 { padding-right: 32px; font-size: 20px; }
+      .hero p { font-size: 12px; }
+      .hero-guide { top: 12px; right: 10px; width: 40px; padding: 0; justify-content: center; background: transparent; }
+      .hero-guide span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+      .hero-art { display: none; }
+      .stage-card { border-radius: 13px; }
+      .stage-head { min-height: 78px; padding: 13px 12px; }
+      .stage-tag { margin: -13px -12px 0 0; }
+      .stage-body { padding: 13px 12px 15px; }
+      .action-item { min-height: 46px; font-size: 13px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+<main class="page-wrap">
+  <script src="../../js/auth.js"></script>
+  <script>
+    if (!Auth.requireAuth()) {}
+    if (window.parent) {
+      window.parent.postMessage({type:'breadcrumb', text:'分销全景工作流'}, '*');
+    }
+  </script>
+
+  <section class="hero" aria-labelledby="pageTitle">
+    <div class="hero-copy">
+      <div class="eyebrow">DISTRIBUTION HUB</div>
+      <h1 id="pageTitle">分销全景工作流</h1>
+      <p>从客户接入、合作签约到经营协作与档案沉淀，串联分销业务关键节点。点击任一功能即可快速进入对应工作台。</p>
+    </div>
+    <button class="hero-guide" type="button" onclick="openPage('pages/recruit/flow.html', '入驻流程')" aria-label="查看入驻流程指南">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.7 9a2.4 2.4 0 1 1 3.6 2.1c-.8.5-1.3 1-1.3 2.1"/><path d="M12 17h.01"/></svg>
+      <span>流程指南</span>
+    </button>
+    <div class="hero-art" aria-hidden="true">
+      <div class="sheet"></div>
+      <span class="art-node start"><svg viewBox="0 0 24 24"><path d="m4 12 15-7-4.5 14-3-5-7.5-2Z"/><path d="m11.5 14 3.5-4"/></svg></span>
+      <span class="art-node end"><svg viewBox="0 0 24 24"><circle cx="6" cy="7" r="2.5"/><circle cx="18" cy="17" r="2.5"/><path d="m8 8.5 8 7M15.5 4 8 16.5"/></svg></span>
+    </div>
+  </section>
+
+  <section class="workflow" aria-label="分销枢纽三阶段工作流">
+    <article class="stage-card" style="--stage-color:#5b6cf5;--stage-soft:#eef0ff;">
+      <header class="stage-head">
+        <span class="stage-number">1</span>
+        <div class="stage-title">
+          <h2>合作接入与意向审核</h2>
+          <p>建立合作意向，完成入驻资料提交与内部审核</p>
+        </div>
+        <span class="stage-tag">合作前</span>
+      </header>
+      <div class="stage-body">
+        <section class="function-group" style="--group-color:#ff7849;">
+          <h3 class="group-title"><span class="group-icon"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/></svg></span>接入发起</h3>
+          <div class="action-list">
+            <button class="action-item" type="button" onclick="openRegisterPage()">客户注册<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+            <button class="action-item" type="button" onclick="openPage('pages/recruit/mine.html', '客户入驻申请')">客户入驻申请<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+          </div>
+        </section>
+        <section class="function-group" style="--group-color:#3b82f6;">
+          <h3 class="group-title"><span class="group-icon"><svg viewBox="0 0 24 24"><path d="M9 11.5 11 14l4.5-5"/><path d="M12 3 5 6v5c0 4.6 2.9 8.2 7 10 4.1-1.8 7-5.4 7-10V6l-7-3Z"/></svg></span>意向审核</h3>
+          <div class="action-list">
+            <button class="action-item" type="button" onclick="openPage('pages/recruit/list.html', '客户合作管理')">客户合作管理<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+            <button class="action-item" type="button" onclick="openPage('pages/recruit/flow.html', '入驻流程')">招商入驻协同流程<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+          </div>
+        </section>
+      </div>
+    </article>
+
+    <div class="flow-connector" aria-hidden="true"><span class="connector-dot"><svg viewBox="0 0 12 12"><path d="m4 2 4 4-4 4"/></svg></span></div>
+
+    <article class="stage-card" style="--stage-color:#8b6be8;--stage-soft:#f2edff;">
+      <header class="stage-head">
+        <span class="stage-number">2</span>
+        <div class="stage-title">
+          <h2>签约与入驻协同</h2>
+          <p>围绕合同、保证金、授权及账号权限完成入驻</p>
+        </div>
+        <span class="stage-tag">合作中</span>
+      </header>
+      <div class="stage-body">
+        <section class="function-group" style="--group-color:#8b6be8;">
+          <h3 class="group-title"><span class="group-icon"><svg viewBox="0 0 24 24"><path d="M6 3h9l3 3v15H6z"/><path d="M14 3v4h4M9 12h6M9 16h4"/></svg></span>签约管理</h3>
+          <div class="action-list">
+            <button class="action-item" type="button" onclick="openPage('pages/recruit/cooperation-sign-list.html', '客户合作签约')">客户合作签约<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+            <button class="action-item" type="button" onclick="openPage('pages/recruit/contract-sign.html', '签署合同')">签署合同<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+          </div>
+        </section>
+        <section class="function-group" style="--group-color:#20a9df;">
+          <h3 class="group-title"><span class="group-icon"><svg viewBox="0 0 24 24"><path d="M12 3v18M7 7.5C7 5.6 9.2 4 12 4s5 1.6 5 3.5-2.2 3.3-5 3.3-5 1.5-5 3.4S9.2 18 12 18s5-1.7 5-3.8"/></svg></span>入驻准备</h3>
+          <div class="action-list">
+            <button class="action-item" type="button" onclick="openPage('pages/recruit/deposit-pay.html', '缴纳保证金')">缴纳保证金<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+            <button class="action-item" type="button" onclick="openPage('pages/recruit/auth-letter.html', '开具授权书')">开具授权书<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+            <button class="action-item" type="button" onclick="openPage('pages/recruit/account-info.html', '录入账号信息')">录入账号信息<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+            <button class="action-item" type="button" onclick="openPage('pages/recruit/account-apply.html', '申请账号与权限')">申请账号与权限<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+            <button class="action-item" type="button" onclick="openPage('pages/recruit/rules-briefing.html', '宣导规则')">宣导规则<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+          </div>
+          <div class="stage-metrics" aria-label="签约统计">
+            <div class="metric"><strong id="signCount">0</strong><span>签约记录</span></div>
+            <div class="metric"><strong id="doneCount">0</strong><span>已完成签约</span></div>
+          </div>
+        </section>
+      </div>
+    </article>
+
+    <div class="flow-connector" aria-hidden="true"><span class="connector-dot"><svg viewBox="0 0 12 12"><path d="m4 2 4 4-4 4"/></svg></span></div>
+
+    <article class="stage-card" style="--stage-color:#20a9df;--stage-soft:#eaf8fd;">
+      <header class="stage-head">
+        <span class="stage-number">3</span>
+        <div class="stage-title">
+          <h2>经营协作与档案沉淀</h2>
+          <p>统一管理合作主体、经营账号与全周期业务档案</p>
+        </div>
+        <span class="stage-tag">合作后</span>
+      </header>
+      <div class="stage-body">
+        <section class="function-group" style="--group-color:#ff7849;">
+          <h3 class="group-title"><span class="group-icon"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0M14 15a4.5 4.5 0 0 1 6.5 4"/></svg></span>合作管理</h3>
+          <div class="action-list">
+            <button class="action-item" type="button" onclick="openPage('pages/recruit/list.html', '客户合作管理')">客户合作管理<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+            <button class="action-item" type="button" onclick="openPage('pages/recruit/supplier.html', '供应商管理')">供应商管理<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+          </div>
+        </section>
+        <section class="function-group" style="--group-color:#10a7d8;">
+          <h3 class="group-title"><span class="group-icon"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3Z"/></svg></span>账号经营</h3>
+          <div class="action-list">
+            <button class="action-item" type="button" onclick="openPage('pages/recruit/live-account.html', '直播账号管理')">直播账号管理<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+          </div>
+        </section>
+        <section class="function-group" style="--group-color:#8b6be8;">
+          <h3 class="group-title"><span class="group-icon"><svg viewBox="0 0 24 24"><path d="M4 7h6l2 2h8v11H4z"/><path d="M4 7V4h7l2 3"/></svg></span>合作档案</h3>
+          <div class="action-list">
+            <button class="action-item" type="button" onclick="openPage('pages/recruit/contract.html', '客户合同管理')">客户合同管理<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+            <button class="action-item" type="button" onclick="openPage('pages/recruit/invoice-info.html', '开票信息录入')">开票信息录入<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+            <button class="action-item" type="button" onclick="openPage('pages/recruit/deposit-flow.html', '保证金流水')">保证金流水<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+          </div>
+        </section>
+      </div>
+    </article>
+  </section>
+</main>
+
+<script>
+  function openPage(page, title) {
+    if (window.parent) {
+      window.parent.postMessage({ type: 'openTab', page: page, title: title }, '*');
+    }
+  }
+
+  function openRegisterPage() {
+    window.open('login.html?mode=register', '_blank', 'noopener');
+  }
+
+  (function updateSignMetrics() {
+    var list = [];
+    try {
+      list = JSON.parse(localStorage.getItem('recruit_cooperation_list') || '[]');
+      if (!Array.isArray(list)) list = [];
+    } catch (error) {
+      list = [];
+    }
+
+    var requiredKeys = ['contract', 'deposit', 'auth_letter', 'account_info', 'account_apply', 'rules'];
+    var completed = list.filter(function(record) {
+      var nodes = record && record.nodes ? record.nodes : {};
+      return requiredKeys.every(function(key) { return nodes[key] === 'completed'; });
+    }).length;
+
+    document.getElementById('signCount').textContent = list.length;
+    document.getElementById('doneCount').textContent = completed;
+  })();
+</script>
+</body>
+</html>

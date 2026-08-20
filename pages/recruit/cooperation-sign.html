@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>客户合作签约</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f7fb; }
+
+    .page-wrap { width: 100%; padding: 24px 28px 48px; box-sizing: border-box; }
+
+    /* 页头 */
+    .page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+    .page-head h1 { margin: 0 0 4px; font-size: 20px; font-weight: 700; color: var(--text); }
+    .ph-sub { font-size: 12.5px; color: var(--text-tertiary); }
+    /* 返回按钮 */
+    .ph-back { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--primary); cursor: pointer; border: none; background: none; font-weight: 600; padding: 0; margin-bottom: 16px; }
+    .ph-back:hover { opacity: 0.7; }
+
+    /* 签约信息摘要 */
+    .sign-summary {
+      display: flex; gap: 24px; padding: 16px 20px; margin-bottom: 20px;
+      background: #fff; border: 1px solid var(--border); border-radius: 12px;
+      box-shadow: var(--shadow-sm);
+    }
+    .sign-summary .field { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+    .sign-summary .field label { color: var(--text-tertiary); }
+    .sign-summary .field span { color: var(--text); font-weight: 600; }
+
+    /* 流程进度条 */
+    .progress-bar-wrap {
+      display: flex; align-items: center; gap: 12px; padding: 14px 20px; margin-bottom: 24px;
+      background: #fff; border: 1px solid var(--border); border-radius: 12px;
+      box-shadow: var(--shadow-sm);
+    }
+    .progress-bar-wrap .label { font-size: 13px; color: var(--text-secondary); white-space: nowrap; }
+    .progress-track { flex: 1; height: 8px; background: #f1f5f9; border-radius: 999px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #5b6cf5, #818cf8, #a78bfa); transition: width .4s ease; }
+    .progress-num { font-size: 13px; font-weight: 700; color: var(--primary); min-width: 40px; text-align: right; font-variant-numeric: tabular-nums; }
+
+    /* 节点卡片网格 */
+    .node-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    @media (max-width: 1024px) { .node-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 640px) { .node-grid { grid-template-columns: 1fr; } }
+
+    /* 节点卡片 */
+    .node-card {
+      background: #fff; border: 1px solid var(--border); border-radius: 14px;
+      padding: 20px; box-shadow: var(--shadow-sm);
+      transition: box-shadow .18s, transform .18s, border-color .18s;
+      cursor: pointer; position: relative; overflow: hidden;
+    }
+    .node-card:hover { box-shadow: 0 6px 18px rgba(15,23,42,.08); transform: translateY(-2px); }
+    .node-card.disabled { opacity: 0.5; cursor: not-allowed; }
+    .node-card.disabled:hover { box-shadow: var(--shadow-sm); transform: none; }
+    .node-card.active-card { border-color: var(--primary); box-shadow: 0 4px 16px rgba(91,108,245,.15); }
+
+    /* 卡片顶部色带 */
+    .node-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: #e2e8f0; border-radius: 14px 14px 0 0;
+    }
+    .node-card.status-completed::before { background: var(--ok, #10b981); }
+    .node-card.status-pending::before { background: var(--primary); }
+    .node-card.status-waiting::before { background: #e2e8f0; }
+    .node-card.status-rejected::before { background: #ef4444; }
+
+    .node-card-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .node-index {
+      width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 800; color: #fff; flex-shrink: 0;
+      background: #cbd5e1;
+    }
+    .status-completed .node-index { background: var(--ok, #10b981); }
+    .status-pending .node-index { background: var(--primary); }
+    .status-waiting .node-index { background: #cbd5e1; }
+    .status-rejected .node-index { background: #ef4444; }
+
+    .node-title { font-size: 15px; font-weight: 700; color: var(--text); }
+    .node-desc { font-size: 12.5px; color: var(--text-tertiary); margin-bottom: 14px; line-height: 1.6; }
+
+    .node-card-foot { display: flex; align-items: center; justify-content: space-between; }
+    .status-tag {
+      display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 10px;
+      font-size: 12px; font-weight: 600; line-height: 1.6;
+    }
+    .status-tag.completed { background: #ecfdf5; color: #059669; }
+    .status-tag.pending { background: var(--primary-50, #eef0ff); color: var(--primary); }
+    .status-tag.waiting { background: #f1f5f9; color: #94a3b8; }
+    .status-tag.rejected { background: #fef2f2; color: #dc2626; }
+
+    .node-action {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 12.5px; font-weight: 600; color: var(--primary); cursor: pointer;
+      border: none; background: none; padding: 4px 0; transition: opacity .15s;
+    }
+    .node-action:hover { opacity: 0.7; }
+    .node-action svg { flex-shrink: 0; }
+
+    /* 空状态 */
+    .empty-state {
+      text-align: center; padding: 80px 20px; color: var(--text-tertiary);
+      background: #fff; border: 1px dashed var(--border); border-radius: 14px;
+    }
+    .empty-state svg { margin-bottom: 16px; color: #cbd5e1; }
+    .empty-state p { font-size: 14px; margin: 0 0 20px; }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="../../js/auth.js"></script>
+  <script>
+    if (!Auth.requireAuth()) {}
+    var currentUser = Auth.getCurrentUser();
+    if (window.parent) {
+      window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 客户视角 <span>/</span> 客户合作签约'}, '*');
+    }
+  </script>
+
+  <button class="ph-back" onclick="goBack()">
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+    返回签约列表
+  </button>
+
+  <div class="page-head">
+    <div>
+      <h1>签约详情</h1>
+      <div class="ph-sub" id="signTitle">管理签约流程各节点的操作与状态</div>
+    </div>
+  </div>
+
+  <div id="signContent"></div>
+
+</div>
+
+<script>
+  // ===== 节点定义 =====
+  var NODES = [
+    { key: 'contract',    name: '签署合同',       desc: '确认合作条款，签署电子合同协议',           page: 'contract-sign.html' },
+    { key: 'deposit',     name: '缴纳保证金',     desc: '按合同要求缴纳合作保证金',               page: 'deposit-pay.html' },
+    { key: 'auth_letter', name: '开具授权书',     desc: '生成并签署平台店铺授权书',               page: 'auth-letter.html' },
+    { key: 'account_info',name: '录入账号信息',   desc: '填写直播账号、结算账号等基础信息',       page: 'account-info.html' },
+    { key: 'account_apply',name: '申请账号与权限', desc: '提交账号开通申请并配置岗位权限',         page: 'account-apply.html' },
+    { key: 'rules',       name: '宣导规则',       desc: '学习平台规则并完成宣导确认',             page: 'rules-briefing.html' },
+    { key: 'done',        name: '入驻完毕',       desc: '全部签约流程已完成，入驻成功',             page: 'onboarding-complete.html' }
+  ];
+
+  var STATUS_MAP = {
+    completed: { label: '已完成', cls: 'completed' },
+    pending:   { label: '进行中', cls: 'pending' },
+    waiting:   { label: '待操作', cls: 'waiting' },
+    rejected:  { label: '已驳回', cls: 'rejected' }
+  };
+
+  // ===== 数据存储（从列表按ID读取） =====
+  var LIST_KEY = 'recruit_cooperation_list';
+  var CURRENT_KEY = 'recruit_cooperation_current';
+
+  function getList() { return JSON.parse(localStorage.getItem(LIST_KEY) || '[]'); }
+  function saveList(list) { localStorage.setItem(LIST_KEY, JSON.stringify(list)); }
+
+  function getCurrentId() { return localStorage.getItem(CURRENT_KEY) || ''; }
+
+  function getSignData() {
+    var list = getList();
+    var id = getCurrentId();
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === id) return list[i];
+    }
+    return list.length > 0 ? list[0] : null;
+  }
+
+  function saveSignData(data) {
+    var list = getList();
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === data.id) { list[i] = data; break; }
+    }
+    saveList(list);
+  }
+
+  // ===== 前两个节点严格顺序，后续节点并行 =====
+  // 节点0(contract) → 节点1(deposit) → 节点2-5并行 → 节点6(done)自动完成
+  var PARALLEL_KEYS = ['auth_letter', 'account_info', 'account_apply', 'rules'];
+
+  // ===== 获取节点实际状态（done节点动态计算） =====
+  function getNodeStatus(data, key) {
+    if (key === 'done') {
+      // 前6个节点全部完成时，done自动完成
+      var allDone = true;
+      for (var i = 0; i < 6; i++) {
+        if (data.nodes[NODES[i].key] !== 'completed') { allDone = false; break; }
+      }
+      if (allDone) return 'completed';
+      // 前两个完成但还有未完成的并行节点
+      if (data.nodes['contract'] === 'completed' && data.nodes['deposit'] === 'completed') return 'pending';
+      return 'waiting';
+    }
+    return data.nodes[key] || 'waiting';
+  }
+
+  // ===== 计算当前进度 =====
+  function calcProgress(data) {
+    var done = 0;
+    NODES.forEach(function(n) { if (getNodeStatus(data, n.key) === 'completed') done++; });
+    return { done: done, total: NODES.length, pct: Math.round(done / NODES.length * 100) };
+  }
+
+  // ===== 渲染页面 =====
+  function render() {
+    var data = getSignData();
+    if (!data) { goBack(); return; }
+
+    var progress = calcProgress(data);
+    var container = document.getElementById('signContent');
+
+    // 更新页头标题
+    document.getElementById('signTitle').textContent = data.id + ' · ' + data.client_name;
+
+    // 签约摘要
+    var html = '<div class="sign-summary">' +
+      '<div class="field"><label>签约编号：</label><span>' + data.id + '</span></div>' +
+      '<div class="field"><label>客户名称：</label><span>' + data.client_name + '</span></div>' +
+      '<div class="field"><label>创建日期：</label><span>' + data.sign_date + '</span></div>' +
+      '</div>';
+
+    // 进度条
+    html += '<div class="progress-bar-wrap">' +
+      '<span class="label">签约进度</span>' +
+      '<div class="progress-track"><div class="progress-fill" style="width:' + progress.pct + '%"></div></div>' +
+      '<span class="progress-num">' + progress.done + '/' + progress.total + '</span>' +
+      '</div>';
+
+    // 节点卡片
+    html += '<div class="node-grid">';
+    NODES.forEach(function(node, i) {
+      var status = getNodeStatus(data, node.key);
+      var statusInfo = STATUS_MAP[status] || STATUS_MAP.waiting;
+      var isDisabled = status === 'waiting';
+      var cardCls = 'node-card status-' + status + (isDisabled ? ' disabled' : '') + (status === 'pending' ? ' active-card' : '');
+
+      html += '<div class="' + cardCls + '" onclick="' + (isDisabled ? '' : 'openNode(' + i + ')') + '">';
+      html += '<div class="node-card-head">';
+      html += '<div class="node-index">' + (i + 1) + '</div>';
+      html += '<div class="node-title">' + node.name + '</div>';
+      html += '</div>';
+      html += '<div class="node-desc">' + node.desc + '</div>';
+      html += '<div class="node-card-foot">';
+      html += '<span class="status-tag ' + statusInfo.cls + '">' + statusInfo.label + '</span>';
+      if (status === 'completed') {
+        html += '<button class="node-action" onclick="event.stopPropagation(); openNode(' + i + ')">查看详情 <svg viewBox="0 0 24 24" width="14" height="14"><path d="M9 18l6-6-6-6"/></svg></button>';
+      } else if (status === 'pending' || status === 'rejected') {
+        html += '<button class="node-action" onclick="event.stopPropagation(); openNode(' + i + ')">去操作 <svg viewBox="0 0 24 24" width="14" height="14"><path d="M9 18l6-6-6-6"/></svg></button>';
+      } else if (i >= 2 && i <= 5) {
+        html += '<span style="font-size:12px;color:#94a3b8">待合同与保证金完成</span>';
+      } else if (node.key === 'done') {
+        html += '<span style="font-size:12px;color:#94a3b8">待全部节点完成</span>';
+      } else {
+        html += '<span style="font-size:12px;color:#94a3b8">待前置完成</span>';
+      }
+      html += '</div></div>';
+    });
+    html += '</div>';
+
+    container.innerHTML = html;
+  }
+
+  // ===== 打开节点子页 =====
+  function openNode(index) {
+    var node = NODES[index];
+    var data = getSignData();
+    if (!data) return;
+    var status = getNodeStatus(data, node.key);
+    if (status === 'waiting') { showToast('请先完成前置节点', 'warning'); return; }
+    // done节点已完成时直接打开状态页
+    if (window.parent) {
+      window.parent.postMessage({ type: 'openTab', page: 'pages/recruit/' + node.page, title: node.name }, '*');
+    }
+  }
+
+  // ===== 返回列表 =====
+  function goBack() {
+    if (window.parent) {
+      window.parent.postMessage({ type: 'openTab', page: 'pages/recruit/cooperation-sign-list.html', title: '客户合作签约' }, '*');
+    }
+  }
+
+  // ===== Toast 轻提示 =====
+  function showToast(msg, type) {
+    var container = document.getElementById('toastContainer');
+    var toast = document.createElement('div');
+    toast.className = 'toast toast-' + (type || 'info');
+    toast.textContent = msg;
+    container.appendChild(toast);
+    setTimeout(function() { toast.classList.add('show'); }, 10);
+    setTimeout(function() { toast.classList.remove('show'); setTimeout(function() { toast.remove(); }, 300); }, 2500);
+  }
+
+  // ===== 初始化渲染 =====
+  render();
+</script>
+</body>
+</html>

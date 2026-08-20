@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>客户合作签约</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f7fb; }
+    .page-wrap { width: 100%; padding: 24px 28px 48px; box-sizing: border-box; }
+
+    /* 页头 */
+    .page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+    .page-head h1 { margin: 0 0 4px; font-size: 20px; font-weight: 700; color: var(--text); }
+    .ph-sub { font-size: 12.5px; color: var(--text-tertiary); }
+    .ph-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .ph-new-btn {
+      display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px;
+      border: none; border-radius: 10px; background: var(--primary); color: #fff;
+      font-size: 13px; font-weight: 600; cursor: pointer; transition: all .18s;
+      box-shadow: 0 2px 8px rgba(91,108,245,.25);
+    }
+    .ph-new-btn:hover { background: #4a5ae4; box-shadow: 0 4px 12px rgba(91,108,245,.35); }
+
+    /* 筛选区 */
+    .filter-bar {
+      display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+      padding: 14px 18px; margin-bottom: 20px;
+      background: #fff; border: 1px solid var(--border); border-radius: 12px;
+      box-shadow: var(--shadow-sm);
+    }
+    .filter-bar label { font-size: 12.5px; color: var(--text-tertiary); }
+    .filter-bar select, .filter-bar input {
+      padding: 6px 12px; border: 1px solid var(--border); border-radius: 8px;
+      font-size: 13px; color: var(--text); background: #fff; outline: none;
+    }
+    .filter-bar select:focus, .filter-bar input:focus { border-color: var(--primary); }
+    .filter-bar .filter-btn {
+      padding: 6px 16px; border: none; border-radius: 8px; background: var(--primary);
+      color: #fff; font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .filter-bar .filter-btn:hover { background: #4a5ae4; }
+    .filter-bar .filter-reset {
+      padding: 6px 16px; border: 1px solid var(--border); border-radius: 8px;
+      background: #fff; color: var(--text-secondary); font-size: 13px; cursor: pointer;
+    }
+    .filter-bar .filter-reset:hover { border-color: var(--primary); color: var(--primary); }
+
+    /* 表格 */
+    .table-area { background: #fff; border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-sm); overflow: hidden; }
+    .table-scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      padding: 12px 16px; text-align: left; font-size: 12.5px; font-weight: 600;
+      color: var(--text-tertiary); background: #f8fafc; border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    tbody td { padding: 14px 16px; font-size: 13px; color: var(--text); border-bottom: 1px solid var(--border-light, #f1f5f9); white-space: nowrap; }
+    tbody tr:hover { background: var(--primary-50, #f8f9ff); }
+    tbody tr { cursor: pointer; }
+
+    /* 状态标签 */
+    .status-tag {
+      display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 10px;
+      font-size: 12px; font-weight: 600; line-height: 1.6;
+    }
+    .status-tag.in_progress { background: var(--primary-50, #eef0ff); color: var(--primary); }
+    .status-tag.completed { background: #ecfdf5; color: #059669; }
+    .status-tag.terminated { background: #f1f5f9; color: #94a3b8; }
+
+    /* 进度条 */
+    .mini-progress { display: flex; align-items: center; gap: 8px; }
+    .mini-progress .track { width: 60px; height: 5px; background: #f1f5f9; border-radius: 999px; overflow: hidden; }
+    .mini-progress .fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #5b6cf5, #818cf8); transition: width .3s; }
+    .mini-progress .num { font-size: 12px; font-weight: 600; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+
+    /* 操作列 */
+    .row-action {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 12.5px; font-weight: 600; color: var(--primary); cursor: pointer;
+      border: none; background: none; padding: 4px 0; transition: opacity .15s;
+    }
+    .row-action:hover { opacity: 0.7; }
+
+    /* 空状态 */
+    .empty-state {
+      text-align: center; padding: 80px 20px; color: var(--text-tertiary);
+    }
+    .empty-state svg { margin-bottom: 16px; color: #cbd5e1; }
+    .empty-state p { font-size: 14px; margin: 0 0 20px; }
+    .empty-state button {
+      padding: 9px 20px; border: none; border-radius: 10px; background: var(--primary);
+      color: #fff; font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+
+    /* 移动端卡片 */
+    .card-list { display: none; }
+    @media (max-width: 1023px) {
+      .table-scroll { display: none; }
+      .card-list { display: block; padding: 16px; }
+      .sign-card {
+        background: #fff; border: 1px solid var(--border); border-radius: 12px;
+        padding: 16px; margin-bottom: 12px; cursor: pointer;
+        transition: box-shadow .15s;
+      }
+      .sign-card:hover { box-shadow: 0 4px 14px rgba(15,23,42,.08); }
+      .sign-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+      .sign-card-head .id { font-size: 15px; font-weight: 700; color: var(--text); }
+      .sign-card-body { font-size: 13px; color: var(--text-secondary); line-height: 1.9; }
+      .sign-card-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-light, #f1f5f9); }
+    }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="../../js/auth.js"></script>
+  <script>
+    if (!Auth.requireAuth()) {}
+    if (window.parent) {
+      window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 客户视角 <span>/</span> 客户合作签约'}, '*');
+    }
+  </script>
+
+  <div class="page-head">
+    <div>
+      <h1>客户合作签约</h1>
+      <div class="ph-sub">管理所有签约记录，跟踪签约流程进度</div>
+    </div>
+    <div class="ph-right">
+      <button class="ph-new-btn" onclick="createNewSign()">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        新建签约
+      </button>
+    </div>
+  </div>
+
+  <!-- 筛选区 -->
+  <div class="filter-bar">
+    <label>签约编号</label>
+    <input type="text" id="filterId" placeholder="输入编号搜索" style="width:140px;">
+    <label>客户名称</label>
+    <input type="text" id="filterName" placeholder="输入名称搜索" style="width:140px;">
+    <label>状态</label>
+    <select id="filterStatus">
+      <option value="">全部</option>
+      <option value="in_progress">进行中</option>
+      <option value="completed">已完成</option>
+      <option value="terminated">已终止</option>
+    </select>
+    <button class="filter-btn" onclick="doFilter()">查询</button>
+    <button class="filter-reset" onclick="resetFilter()">重置</button>
+  </div>
+
+  <!-- 表格区 -->
+  <div class="table-area">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:60px;">序号</th>
+            <th>签约编号</th>
+            <th>客户名称</th>
+            <th>创建日期</th>
+            <th>签约进度</th>
+            <th>状态</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="dataBody"></tbody>
+      </table>
+    </div>
+    <!-- 移动端卡片 -->
+    <div class="card-list" id="cardList"></div>
+    <!-- 分页 -->
+    <div class="pagination" id="pagination"></div>
+    <!-- 空状态 -->
+    <div class="empty-state" id="emptyState" style="display:none;">
+      <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+      </svg>
+      <p>暂无签约记录</p>
+      <button onclick="createNewSign()">新建签约</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  var LIST_KEY = 'recruit_cooperation_list';
+  var CURRENT_KEY = 'recruit_cooperation_current';
+  var TOTAL_NODES = 7;
+  var PAGE_SIZE = 10;
+  var currentPage = 1;
+
+  // ===== 获取列表 =====
+  function getList() { return JSON.parse(localStorage.getItem(LIST_KEY) || '[]'); }
+  function saveList(list) { localStorage.setItem(LIST_KEY, JSON.stringify(list)); }
+
+  // ===== 计算进度（done节点动态计算） =====
+  function calcProgress(nodes) {
+    var done = 0;
+    var nodeKeys = ['contract', 'deposit', 'auth_letter', 'account_info', 'account_apply', 'rules'];
+    nodeKeys.forEach(function(k) { if (nodes[k] === 'completed') done++; });
+    // done节点：前6个全部完成时自动完成
+    if (done === 6) done++;
+    return { done: done, total: TOTAL_NODES, pct: Math.round(done / TOTAL_NODES * 100) };
+  }
+
+  // ===== 计算整体状态 =====
+  function calcStatus(record) {
+    if (record.status === 'terminated') return 'terminated';
+    var progress = calcProgress(record.nodes);
+    return progress.done === progress.total ? 'completed' : 'in_progress';
+  }
+
+  // ===== 状态映射 =====
+  var STATUS_LABEL = {
+    in_progress: '进行中', completed: '已完成', terminated: '已终止'
+  };
+
+  // ===== 筛选查询（重置页码） =====
+  function doFilter() {
+    currentPage = 1;
+    render();
+  }
+
+  function resetFilter() {
+    document.getElementById('filterId').value = '';
+    document.getElementById('filterName').value = '';
+    document.getElementById('filterStatus').value = '';
+    currentPage = 1;
+    render();
+  }
+
+  // ===== 渲染 =====
+  function render() {
+    var list = getList();
+    var fId = document.getElementById('filterId').value.trim().toLowerCase();
+    var fName = document.getElementById('filterName').value.trim().toLowerCase();
+    var fStatus = document.getElementById('filterStatus').value;
+
+    // 筛选
+    var filtered = list.filter(function(r) {
+      if (fId && r.id.toLowerCase().indexOf(fId) < 0) return false;
+      if (fName && r.client_name.toLowerCase().indexOf(fName) < 0) return false;
+      if (fStatus && calcStatus(r) !== fStatus) return false;
+      return true;
+    });
+
+    // 按创建日期倒序
+    filtered.sort(function(a, b) { return (b.sign_date || '').localeCompare(a.sign_date || ''); });
+
+    var total = filtered.length;
+    var totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    if (currentPage > totalPages) currentPage = totalPages;
+    var start = (currentPage - 1) * PAGE_SIZE;
+    var paged = filtered.slice(start, start + PAGE_SIZE);
+
+    var tbody = document.getElementById('dataBody');
+    var cardList = document.getElementById('cardList');
+    var emptyState = document.getElementById('emptyState');
+    var paginationEl = document.getElementById('pagination');
+
+    if (total === 0) {
+      tbody.innerHTML = '';
+      cardList.innerHTML = '';
+      paginationEl.innerHTML = '';
+      emptyState.style.display = 'block';
+      return;
+    }
+    emptyState.style.display = 'none';
+
+    // 表格
+    var html = '';
+    paged.forEach(function(r, idx) {
+      var progress = calcProgress(r.nodes);
+      var status = calcStatus(r);
+      var seqNo = start + idx + 1;
+      html += '<tr onclick="openSign(\'' + r.id + '\')">';
+      html += '<td style="color:var(--text-tertiary);font-variant-numeric:tabular-nums;">' + seqNo + '</td>';
+      html += '<td style="font-weight:600;color:var(--primary);">' + r.id + '</td>';
+      html += '<td>' + r.client_name + '</td>';
+      html += '<td>' + r.sign_date + '</td>';
+      html += '<td><div class="mini-progress"><div class="track"><div class="fill" style="width:' + progress.pct + '%"></div></div><span class="num">' + progress.done + '/' + progress.total + '</span></div></td>';
+      html += '<td><span class="status-tag ' + status + '">' + STATUS_LABEL[status] + '</span></td>';
+      html += '<td><button class="row-action" onclick="event.stopPropagation(); openSign(\'' + r.id + '\')">查看 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></button></td>';
+      html += '</tr>';
+    });
+    tbody.innerHTML = html;
+
+    // 移动端卡片
+    var cards = '';
+    paged.forEach(function(r, idx) {
+      var progress = calcProgress(r.nodes);
+      var status = calcStatus(r);
+      var seqNo = start + idx + 1;
+      cards += '<div class="sign-card" onclick="openSign(\'' + r.id + '\')">';
+      cards += '<div class="sign-card-head"><span class="id">' + seqNo + '. ' + r.id + '</span><span class="status-tag ' + status + '">' + STATUS_LABEL[status] + '</span></div>';
+      cards += '<div class="sign-card-body">客户：' + r.client_name + '<br>创建：' + r.sign_date + '</div>';
+      cards += '<div class="sign-card-foot"><div class="mini-progress"><div class="track"><div class="fill" style="width:' + progress.pct + '%"></div></div><span class="num">' + progress.done + '/' + progress.total + '</span></div>';
+      cards += '<button class="row-action" onclick="event.stopPropagation(); openSign(\'' + r.id + '\')">查看 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></button></div>';
+      cards += '</div>';
+    });
+    cardList.innerHTML = cards;
+
+    // 分页
+    renderPagination(total, totalPages);
+  }
+
+  // ===== 分页渲染 =====
+  function renderPagination(total, totalPages) {
+    var el = document.getElementById('pagination');
+    if (totalPages <= 1) { el.innerHTML = '<span class="page-info">共 <strong>' + total + '</strong> 条</span>'; return; }
+
+    var html = '<span class="page-info">共 <strong>' + total + '</strong> 条</span>';
+    // 上一页
+    html += '<span class="page-btn' + (currentPage <= 1 ? ' disabled' : '') + '" onclick="goPage(' + (currentPage - 1) + ')">&laquo;</span>';
+
+    // 页码按钮（最多显示5个）
+    var startP = Math.max(1, currentPage - 2);
+    var endP = Math.min(totalPages, startP + 4);
+    if (endP - startP < 4) startP = Math.max(1, endP - 4);
+    for (var p = startP; p <= endP; p++) {
+      html += '<span class="page-btn' + (p === currentPage ? ' active' : '') + '" onclick="goPage(' + p + ')">' + p + '</span>';
+    }
+
+    // 下一页
+    html += '<span class="page-btn' + (currentPage >= totalPages ? ' disabled' : '') + '" onclick="goPage(' + (currentPage + 1) + ')">&raquo;</span>';
+
+    el.innerHTML = html;
+  }
+
+  function goPage(page) {
+    var list = getList();
+    var total = list.length;
+    var totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    if (page < 1 || page > totalPages) return;
+    currentPage = page;
+    render();
+  }
+
+  // ===== 打开签约详情 =====
+  function openSign(id) {
+    localStorage.setItem(CURRENT_KEY, id);
+    if (window.parent) {
+      window.parent.postMessage({ type: 'openTab', page: 'pages/recruit/cooperation-sign.html', title: '签约详情 - ' + id }, '*');
+    }
+  }
+
+  // ===== 新建签约 =====
+  function createNewSign() {
+    var list = getList();
+    var idx = list.length + 1;
+    var id = 'QY-2026-' + (idx < 10 ? '00' + idx : (idx < 100 ? '0' + idx : idx));
+    // 确保ID不重复
+    while (list.some(function(r) { return r.id === id; })) {
+      idx++;
+      id = 'QY-2026-' + (idx < 10 ? '00' + idx : (idx < 100 ? '0' + idx : idx));
+    }
+
+    var nodeKeys = ['contract', 'deposit', 'auth_letter', 'account_info', 'account_apply', 'rules', 'done'];
+    var nodes = {};
+    nodeKeys.forEach(function(k) { nodes[k] = 'waiting'; });
+    nodes['contract'] = 'pending';
+
+    var record = {
+      id: id,
+      client_name: '杭州星辰文化传媒有限公司',
+      sign_date: new Date().toLocaleDateString('zh-CN'),
+      status: 'active',
+      nodes: nodes
+    };
+    list.push(record);
+    saveList(list);
+
+    // 设置为当前查看记录并跳转
+    localStorage.setItem(CURRENT_KEY, id);
+    if (window.parent) {
+      window.parent.postMessage({ type: 'openTab', page: 'pages/recruit/cooperation-sign.html', title: '签约详情 - ' + id }, '*');
+    }
+  }
+
+  // ===== Toast =====
+  function showToast(msg, type) {
+    var c = document.getElementById('toastContainer');
+    var t = document.createElement('div');
+    t.className = 'toast toast-' + (type || 'info');
+    t.textContent = msg;
+    c.appendChild(t);
+    setTimeout(function() { t.classList.add('show'); }, 10);
+    setTimeout(function() { t.classList.remove('show'); setTimeout(function() { t.remove(); }, 300); }, 2500);
+  }
+
+  // ===== 初始化 =====
+  // 如果没有数据，初始化一条示例记录
+  (function init() {
+    var list = getList();
+    if (list.length === 0) {
+      var nodeKeys = ['contract', 'deposit', 'auth_letter', 'account_info', 'account_apply', 'rules', 'done'];
+      var nodes = {};
+      nodeKeys.forEach(function(k) { nodes[k] = 'waiting'; });
+      nodes['contract'] = 'pending';
+      list.push({
+        id: 'QY-2026-001',
+        client_name: '杭州星辰文化传媒有限公司',
+        sign_date: new Date().toLocaleDateString('zh-CN'),
+        status: 'active',
+        nodes: nodes
+      });
+      saveList(list);
+    }
+    render();
+  })();
+</script>
+</body>
+</html>

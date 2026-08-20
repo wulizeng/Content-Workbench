@@ -92,6 +92,8 @@
       font:inherit; font-size:13px; outline:none; resize:vertical; line-height:1.6; box-sizing:border-box;
     }
     .form-textarea:focus { border-color:var(--primary); }
+    .workflow-node-list { display:flex; flex-wrap:wrap; gap:8px; }
+    .workflow-node-chip { padding:6px 10px; border-radius:999px; background:var(--primary-50); border:1px solid var(--primary-100); color:var(--primary); font-size:12px; font-weight:600; }
 
     @media (max-width: 640px) {
       .page-container { padding: 16px; }
@@ -113,6 +115,20 @@
       返回
     </button>
     <div class="page-title">申请详情</div>
+  </div>
+
+  <div class="detail-card" id="dTemplateCard" style="display:none;">
+    <h3 class="detail-card-title">入驻模板</h3>
+    <div class="detail-grid" style="margin-bottom:18px;">
+      <div class="detail-item"><div class="k">业务类型</div><div class="v" id="dBusinessType">-</div></div>
+      <div class="detail-item"><div class="k">模板版本</div><div class="v" id="dTemplateVersion">-</div></div>
+    </div>
+    <div class="workflow-node-list" id="dWorkflowNodes"></div>
+  </div>
+
+  <div class="detail-card" id="dDynamicCard" style="display:none;">
+    <h3 class="detail-card-title">业务与品牌资料</h3>
+    <div class="detail-grid" id="dDynamicFields"></div>
   </div>
 
   <div class="detail-card">
@@ -196,6 +212,7 @@
   </div>
 </div>
 
+<script src="../../js/recruit-application-templates.js"></script>
 <script src="../../js/auth.js"></script>
 <script>
 // 权限检查
@@ -237,6 +254,8 @@ function init() {
   document.getElementById('dCreatedAt').textContent = currentRecord.created_at;
   document.getElementById('dGmv').textContent = '¥' + Number(currentRecord.gmv || 0).toLocaleString('zh-CN');
 
+  renderTemplateDetails();
+
   var paHtml = '';
   (currentRecord.platform_accounts || []).forEach(function(a) {
     paHtml += '<div class="platform-account-row"><span class="plat-tag">' + esc(a.platform) + '</span><span>' + esc(a.account_name) + '</span></div>';
@@ -267,6 +286,28 @@ function init() {
 
   renderPlanCard();
   renderActions();
+}
+
+function renderTemplateDetails() {
+  if (!currentRecord.business_type && !currentRecord.template_key) return;
+  document.getElementById('dTemplateCard').style.display = '';
+  document.getElementById('dBusinessType').textContent = currentRecord.business_type || '-';
+  document.getElementById('dTemplateVersion').textContent = currentRecord.template_version ? ('v' + currentRecord.template_version) : '-';
+  document.getElementById('dWorkflowNodes').innerHTML = (currentRecord.workflow_nodes || []).map(function(node) {
+    return '<span class="workflow-node-chip">' + esc(node.title || node.key) + '</span>';
+  }).join('') || '<span style="color:#94a3b8;font-size:13px;">暂无流程快照</span>';
+
+  var values = currentRecord.dynamic_fields || {};
+  var keys = Object.keys(values);
+  if (!keys.length) return;
+  document.getElementById('dDynamicCard').style.display = '';
+  var labelFor = function(key) {
+    try { return RecruitApplicationTemplates.getFieldLabel(key, currentRecord.business_type, currentRecord.brand); }
+    catch (e) { return key; }
+  };
+  document.getElementById('dDynamicFields').innerHTML = keys.map(function(key) {
+    return '<div class="detail-item"><div class="k">' + esc(labelFor(key)) + '</div><div class="v">' + esc(String(values[key] || '-')) + '</div></div>';
+  }).join('');
 }
 
 var PLAN_VISIBLE_STATUSES = ['待提交项目规划', '规划审核中', '规划已驳回', '已通过'];
@@ -353,6 +394,9 @@ function openApproveModal() {
   if (phase === 'plan') {
     document.getElementById('approveModalTitle').textContent = '确认通过项目规划审核';
     document.getElementById('approveModalDesc').textContent = '通过后该申请状态变为"已通过"（终态），操作不可撤销，确认要通过吗？';
+  } else if (currentRecord.business_type && currentRecord.business_type !== 'DP') {
+    document.getElementById('approveModalTitle').textContent = '确认通过入驻审核';
+    document.getElementById('approveModalDesc').textContent = '该业务类型无需项目规划。通过后将直接进入供应商准入等后续流程，确认要通过吗？';
   } else {
     document.getElementById('approveModalTitle').textContent = '确认通过审核';
     document.getElementById('approveModalDesc').textContent = '通过后该申请状态变为"待提交项目规划"，客户需在线提交项目规划，确认要通过吗？';
@@ -362,7 +406,11 @@ function openApproveModal() {
 function closeApproveModal() { document.getElementById('approveModal').style.display = 'none'; }
 function confirmApprove() {
   var phase = currentPhase();
-  currentRecord.status = phase === 'plan' ? '已通过' : '待提交项目规划';
+  var skipsProjectPlan = currentRecord.business_type && currentRecord.business_type !== 'DP';
+  currentRecord.status = phase === 'plan' || skipsProjectPlan ? '已通过' : '待提交项目规划';
+  (currentRecord.workflow_nodes || []).forEach(function(node) {
+    if ((phase === 'plan' && node.key === 'project_review') || (phase !== 'plan' && node.key === 'application_review')) node.status = 'completed';
+  });
   currentRecord.updated_at = now();
   persist();
   closeApproveModal();

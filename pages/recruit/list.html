@@ -119,12 +119,21 @@
         <input type="text" id="sPhone" placeholder="请输入手机号">
       </div>
       <div class="search-item">
+        <label>业务类型：</label>
+        <select id="sBusinessType"><option value="">全部</option><option value="DP">DP</option><option value="达播达人">达播达人</option><option value="达播机构">达播机构</option><option value="客户KOC">客户 KOC</option><option value="联营KOC">联营 KOC</option><option value="素人KOC">素人 KOC</option></select>
+      </div>
+      <div class="search-item">
+        <label>品牌：</label>
+        <select id="sBrand"><option value="">全部</option><option value="巴拉">巴拉</option><option value="迷你">迷你</option><option value="森马">森马</option></select>
+      </div>
+      <div class="search-item">
         <label>平台：</label>
         <select id="sPlatform">
           <option value="">全部</option>
           <option value="抖音">抖音</option>
           <option value="视频号">视频号</option>
           <option value="快手">快手</option>
+          <option value="小红书">小红书</option>
         </select>
       </div>
       <div class="search-item">
@@ -161,6 +170,8 @@
             <th>序号</th>
             <th>姓名</th>
             <th>申请人手机号</th>
+            <th>业务类型</th>
+            <th>品牌</th>
             <th>平台</th>
             <th>运营账号</th>
             <th>近3个月GMV</th>
@@ -197,8 +208,10 @@
       </div>
       <div class="filter-sheet-body">
         <div class="search-item"><label>申请人手机号：</label><input type="text" id="mSPhone" placeholder="请输入手机号"></div>
+        <div class="search-item"><label>业务类型：</label><select id="mSBusinessType"><option value="">全部</option><option value="DP">DP</option><option value="达播达人">达播达人</option><option value="达播机构">达播机构</option><option value="客户KOC">客户 KOC</option><option value="联营KOC">联营 KOC</option><option value="素人KOC">素人 KOC</option></select></div>
+        <div class="search-item"><label>品牌：</label><select id="mSBrand"><option value="">全部</option><option value="巴拉">巴拉</option><option value="迷你">迷你</option><option value="森马">森马</option></select></div>
         <div class="search-item"><label>平台：</label>
-          <select id="mSPlatform"><option value="">全部</option><option value="抖音">抖音</option><option value="视频号">视频号</option><option value="快手">快手</option></select>
+          <select id="mSPlatform"><option value="">全部</option><option value="抖音">抖音</option><option value="视频号">视频号</option><option value="快手">快手</option><option value="小红书">小红书</option></select>
         </div>
         <div class="search-item"><label>状态：</label>
           <select id="mSStatus"><option value="">全部</option><option value="已提交">已提交</option><option value="审核中">审核中</option><option value="已驳回">已驳回</option><option value="待提交项目规划">待提交项目规划</option><option value="规划审核中">规划审核中</option><option value="规划已驳回">规划已驳回</option><option value="已通过">已通过</option></select>
@@ -266,13 +279,15 @@ function renderTable(data) {
   var tbody = document.getElementById('tableBody');
   var html = '';
   if (data.length === 0) {
-    html = '<tr><td colspan="10" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无数据</div><div class="empty-hint">暂无符合条件的申请</div></td></tr>';
+    html = '<tr><td colspan="12" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无数据</div><div class="empty-hint">暂无符合条件的申请</div></td></tr>';
   } else {
     data.forEach(function(row, index) {
       html += '<tr>';
       html += '<td>' + (index+1) + '</td>';
       html += '<td>' + esc(talentName(row.phone)) + '</td>';
       html += '<td>' + esc(row.phone) + '</td>';
+      html += '<td>' + esc(row.business_type || '-') + '</td>';
+      html += '<td>' + esc(row.brand || '-') + '</td>';
       html += '<td class="col-platform">' + platCells(row.platform_accounts) + '</td>';
       html += '<td class="col-account">' + acctCells(row.platform_accounts) + '</td>';
       html += '<td>&#165;' + Number(row.gmv).toLocaleString('zh-CN') + '</td>';
@@ -305,10 +320,14 @@ function st(s) {
 function esc(s) { if(!s) return ''; var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
 function doSearch() {
   var p = document.getElementById('sPhone').value.trim();
+  var bt = document.getElementById('sBusinessType').value;
+  var brand = document.getElementById('sBrand').value;
   var pf = document.getElementById('sPlatform').value;
   var s = document.getElementById('sStatus').value;
   var f = mockData.filter(function(x) {
     if (p && x.phone.indexOf(p) < 0) return false;
+    if (bt && x.business_type !== bt) return false;
+    if (brand && x.brand !== brand) return false;
     if (pf && !x.platform_accounts.some(function(a){ return a.platform === pf; })) return false;
     if (s && x.status !== s) return false;
     return true;
@@ -318,13 +337,15 @@ function doSearch() {
 }
 function resetSearch() {
   document.getElementById('sPhone').value = '';
+  document.getElementById('sBusinessType').value = '';
+  document.getElementById('sBrand').value = '';
   document.getElementById('sPlatform').value = '';
   document.getElementById('sStatus').value = '';
   renderView(mockData);
   showSearchTags();
 }
 function showSearchTags() {
-  var map = { sPhone:'申请人手机号', sPlatform:'平台', sStatus:'状态' };
+  var map = { sPhone:'申请人手机号', sBusinessType:'业务类型', sBrand:'品牌', sPlatform:'平台', sStatus:'状态' };
   var tags = [];
   Object.keys(map).forEach(function(id) {
     var el = document.getElementById(id);
@@ -374,6 +395,7 @@ function renderCards(data) {
       html += '<div class="recruit-card-head"><span class="name">' + esc(talentName(row.phone)) + '</span>' + st(row.status) + '</div>';
       html += '<div class="recruit-card-body">';
       html += '<div>手机号：' + esc(row.phone) + '</div>';
+      html += '<div>业务类型 / 品牌：' + esc(row.business_type || '-') + ' / ' + esc(row.brand || '-') + '</div>';
       html += '<div>近3个月GMV：&#165;' + Number(row.gmv).toLocaleString('zh-CN') + '</div>';
       html += '<div>运营负责人：' + esc(row.recommender || '-') + '</div>';
       if (chips) html += '<div class="chip-row">' + chips + '</div>';
@@ -409,10 +431,14 @@ function toggleFilterSheet() {
 
 function doMobileSearch() {
   var p = document.getElementById('mSPhone').value.trim();
+  var bt = document.getElementById('mSBusinessType').value;
+  var brand = document.getElementById('mSBrand').value;
   var pf = document.getElementById('mSPlatform').value;
   var s = document.getElementById('mSStatus').value;
   var f = mockData.filter(function(x) {
     if (p && x.phone.indexOf(p) < 0) return false;
+    if (bt && x.business_type !== bt) return false;
+    if (brand && x.brand !== brand) return false;
     if (pf && !x.platform_accounts.some(function(a){ return a.platform === pf; })) return false;
     if (s && x.status !== s) return false;
     return true;
@@ -424,6 +450,8 @@ function doMobileSearch() {
 
 function resetMobileSearch() {
   document.getElementById('mSPhone').value = '';
+  document.getElementById('mSBusinessType').value = '';
+  document.getElementById('mSBrand').value = '';
   document.getElementById('mSPlatform').value = '';
   document.getElementById('mSStatus').value = '';
   mobileShownCount = MOBILE_PAGE_SIZE;

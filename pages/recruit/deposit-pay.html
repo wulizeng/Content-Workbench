@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>缴纳保证金</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f7fb; }
+    .page-wrap { width: 100%; padding: 24px 28px 48px; box-sizing: border-box; }
+    .page-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+    .page-head h1 { margin: 0 0 4px; font-size: 20px; font-weight: 700; color: var(--text); }
+    .ph-back { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--primary); cursor: pointer; border: none; background: none; font-weight: 600; padding: 0; margin-bottom: 6px; }
+    .ph-back:hover { opacity: 0.7; }
+    .ph-sub { font-size: 12.5px; color: var(--text-tertiary); }
+    .form-card { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 24px; box-shadow: var(--shadow-sm); margin-bottom: 20px; }
+    .form-card h3 { font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 18px; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px 24px; }
+    .form-grid .full { grid-column: 1 / -1; }
+    .form-item { display: flex; flex-direction: column; gap: 6px; }
+    .form-item label { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+    .form-item label .req { color: #ef4444; margin-left: 2px; }
+    .form-item input, .form-item select, .form-item textarea { padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; color: var(--text); background: #fff; outline: none; transition: border-color .15s; }
+    .form-item input:focus, .form-item select:focus, .form-item textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(91,108,245,.08); }
+    .form-item textarea { resize: vertical; min-height: 80px; }
+    .file-upload { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border: 1px dashed var(--border); border-radius: 10px; background: #fafbfd; cursor: pointer; transition: border-color .15s; }
+    .file-upload:hover { border-color: var(--primary); }
+    .file-upload span { font-size: 13px; color: var(--text-tertiary); }
+    .form-actions { display: flex; justify-content: flex-end; gap: 12px; padding-top: 8px; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 22px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: #fff; color: var(--text-secondary); transition: all .15s; }
+    .btn:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 2px 8px rgba(91,108,245,.25); }
+    .btn-primary:hover { background: #4a5ae4; box-shadow: 0 4px 12px rgba(91,108,245,.35); }
+    /* 金额高亮 */
+    .amount-highlight { font-size: 24px; font-weight: 800; color: var(--primary); font-variant-numeric: tabular-nums; }
+    .amount-box { display: flex; align-items: center; gap: 12px; padding: 16px 20px; background: var(--primary-50, #eef0ff); border-radius: 10px; margin-bottom: 18px; }
+    .amount-box .label { font-size: 13px; color: var(--text-secondary); }
+    @media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+  <div id="toastContainer" class="toast-container"></div>
+  <script src="../../js/auth.js"></script>
+  <script>
+    if (!Auth.requireAuth()) {}
+    if (window.parent) { window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 客户视角 <span>/</span> 客户合作签约 <span>/</span> 缴纳保证金'}, '*'); }
+  </script>
+
+  <div class="page-head">
+    <div>
+      <button class="ph-back" onclick="goBack()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>返回签约总览</button>
+      <h1>缴纳保证金</h1>
+      <div class="ph-sub">按合同要求缴纳合作保证金</div>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <h3>保证金信息</h3>
+    <div class="amount-box">
+      <span class="label">应缴金额：</span>
+      <span class="amount-highlight">¥ 50,000.00</span>
+    </div>
+    <div class="form-grid">
+      <div class="form-item">
+        <label>实缴金额<span class="req">*</span></label>
+        <input type="number" id="payAmount" placeholder="请输入实缴金额">
+      </div>
+      <div class="form-item">
+        <label>缴纳方式<span class="req">*</span></label>
+        <select id="payMethod">
+          <option value="">请选择</option>
+          <option value="银行转账">银行转账</option>
+          <option value="支付宝">支付宝</option>
+          <option value="微信支付">微信支付</option>
+        </select>
+      </div>
+      <div class="form-item">
+        <label>打款日期<span class="req">*</span></label>
+        <input type="date" id="payDate">
+      </div>
+      <div class="form-item">
+        <label>打款流水号</label>
+        <input type="text" id="payNo" placeholder="请输入银行流水号">
+      </div>
+      <div class="form-item full">
+        <label>打款凭证<span class="req">*</span></label>
+        <div class="file-upload" onclick="showToast('文件上传功能开发中', 'info')">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span>点击上传打款凭证截图</span>
+        </div>
+      </div>
+      <div class="form-item full">
+        <label>备注</label>
+        <textarea id="payRemark" placeholder="如有特殊情况请备注说明"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button class="btn" onclick="saveDraft()">保存草稿</button>
+    <button class="btn btn-primary" onclick="submitNode()">提交并进入下一步 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></button>
+  </div>
+</div>
+
+<script>
+  var LIST_KEY = 'recruit_cooperation_list';
+  var CURRENT_KEY = 'recruit_cooperation_current';
+  var NODE_KEY = 'deposit';
+  function getList() { return JSON.parse(localStorage.getItem(LIST_KEY) || '[]'); }
+  function getSignData() {
+    var list = getList(); var id = localStorage.getItem(CURRENT_KEY) || '';
+    for (var i = 0; i < list.length; i++) { if (list[i].id === id) return list[i]; }
+    return list.length > 0 ? list[0] : null;
+  }
+  function saveSignData(data) {
+    var list = getList();
+    for (var i = 0; i < list.length; i++) { if (list[i].id === data.id) { list[i] = data; break; } }
+    localStorage.setItem(LIST_KEY, JSON.stringify(list));
+  }
+
+  function saveDraft() {
+    var data = getSignData(); if (!data) return;
+    data.nodes[NODE_KEY] = 'pending';
+    data.deposit_amount = document.getElementById('payAmount').value;
+    saveSignData(data);
+    showToast('草稿已保存', 'success');
+  }
+
+  function submitNode() {
+    var amt = document.getElementById('payAmount').value.trim();
+    var method = document.getElementById('payMethod').value;
+    var date = document.getElementById('payDate').value;
+    if (!amt) { showToast('请填写实缴金额', 'warning'); return; }
+    if (!method) { showToast('请选择缴纳方式', 'warning'); return; }
+    if (!date) { showToast('请选择打款日期', 'warning'); return; }
+    var data = getSignData(); if (!data) return;
+    data.nodes[NODE_KEY] = 'completed';
+    data.deposit_amount = amt;
+    // 并行激活后续4个节点
+    var parallelKeys = ['auth_letter', 'account_info', 'account_apply', 'rules'];
+    parallelKeys.forEach(function(k) { if (data.nodes[k] !== 'completed') data.nodes[k] = 'pending'; });
+    saveSignData(data);
+    showToast('保证金已缴纳，后续节点已解锁可并行操作', 'success');
+    setTimeout(function() { goBack(); }, 1200);
+  }
+
+  function goBack() {
+    if (window.parent) { window.parent.postMessage({ type: 'openTab', page: 'pages/recruit/cooperation-sign.html', title: '客户合作签约' }, '*'); }
+  }
+
+  function showToast(msg, type) {
+    var c = document.getElementById('toastContainer');
+    var t = document.createElement('div');
+    t.className = 'toast toast-' + (type || 'info');
+    t.textContent = msg;
+    c.appendChild(t);
+    setTimeout(function() { t.classList.add('show'); }, 10);
+    setTimeout(function() { t.classList.remove('show'); setTimeout(function() { t.remove(); }, 300); }, 2500);
+  }
+</script>
+</body>
+</html>

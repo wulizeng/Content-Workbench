@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>申请账号与权限</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f7fb; }
+    .page-wrap { width: 100%; padding: 24px 28px 48px; box-sizing: border-box; }
+    .page-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .page-head h1 { margin: 0 0 4px; font-size: 20px; font-weight: 700; color: var(--text); }
+    .ph-back { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--primary); cursor: pointer; border: none; background: none; font-weight: 600; padding: 0; margin-bottom: 6px; }
+    .ph-back:hover { opacity: 0.7; }
+    .ph-sub { font-size: 12.5px; color: var(--text-tertiary); }
+    .form-card { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 24px; box-shadow: var(--shadow-sm); margin-bottom: 20px; }
+    .form-card h3 { font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 18px; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px 24px; }
+    .form-grid .full { grid-column: 1 / -1; }
+    .form-item { display: flex; flex-direction: column; gap: 6px; }
+    .form-item label { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+    .form-item label .req { color: #ef4444; margin-left: 2px; }
+    .form-item input, .form-item select, .form-item textarea { padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; color: var(--text); background: #fff; outline: none; transition: border-color .15s; }
+    .form-item input:focus, .form-item select:focus, .form-item textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(91,108,245,.08); }
+    .form-item textarea { resize: vertical; min-height: 80px; }
+    /* 权限复选框 */
+    .perm-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .perm-check { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all .15s; font-size: 13px; color: var(--text-secondary); }
+    .perm-check:hover { border-color: var(--primary); background: var(--primary-50, #eef0ff); }
+    .perm-check input { accent-color: var(--primary); }
+    .perm-check.checked { border-color: var(--primary); background: var(--primary-50, #eef0ff); color: var(--primary); font-weight: 600; }
+    .form-actions { display: flex; justify-content: flex-end; gap: 12px; padding-top: 8px; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 22px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: #fff; color: var(--text-secondary); transition: all .15s; }
+    .btn:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 2px 8px rgba(91,108,245,.25); }
+    .btn-primary:hover { background: #4a5ae4; }
+    @media (max-width: 640px) { .form-grid, .perm-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+  <div id="toastContainer" class="toast-container"></div>
+  <script src="../../js/auth.js"></script>
+  <script>
+    if (!Auth.requireAuth()) {}
+    if (window.parent) { window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 客户视角 <span>/</span> 客户合作签约 <span>/</span> 申请账号与权限'}, '*'); }
+  </script>
+
+  <div class="page-head">
+    <div>
+      <button class="ph-back" onclick="goBack()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>返回签约总览</button>
+      <h1>申请账号与权限</h1>
+      <div class="ph-sub">提交账号开通申请并配置岗位权限</div>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <h3>账号开通申请</h3>
+    <div class="form-grid">
+      <div class="form-item">
+        <label>申请账号类型<span class="req">*</span></label>
+        <select id="accType">
+          <option value="">请选择</option>
+          <option value="店铺运营账号">店铺运营账号</option>
+          <option value="直播账号">直播账号</option>
+          <option value="结算账号">结算账号</option>
+        </select>
+      </div>
+      <div class="form-item">
+        <label>关联店铺名称<span class="req">*</span></label>
+        <input type="text" id="shopName" placeholder="请输入关联店铺名称">
+      </div>
+      <div class="form-item">
+        <label>申请人姓名<span class="req">*</span></label>
+        <input type="text" id="applicant" placeholder="请输入申请人姓名">
+      </div>
+      <div class="form-item">
+        <label>联系电话<span class="req">*</span></label>
+        <input type="text" id="phone" placeholder="请输入联系电话">
+      </div>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <h3>岗位权限配置</h3>
+    <div class="perm-grid" id="permGrid">
+      <label class="perm-check" onclick="togglePerm(this)"><input type="checkbox" value="商品管理"> 商品管理</label>
+      <label class="perm-check" onclick="togglePerm(this)"><input type="checkbox" value="订单管理"> 订单管理</label>
+      <label class="perm-check" onclick="togglePerm(this)"><input type="checkbox" value="直播管理"> 直播管理</label>
+      <label class="perm-check" onclick="togglePerm(this)"><input type="checkbox" value="数据分析"> 数据分析</label>
+      <label class="perm-check" onclick="togglePerm(this)"><input type="checkbox" value="客服管理"> 客服管理</label>
+      <label class="perm-check" onclick="togglePerm(this)"><input type="checkbox" value="财务管理"> 财务管理</label>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <h3>申请说明</h3>
+    <div class="form-grid">
+      <div class="form-item full">
+        <label>申请理由</label>
+        <textarea id="applyReason" placeholder="请说明申请账号与权限的理由"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button class="btn" onclick="saveDraft()">保存草稿</button>
+    <button class="btn btn-primary" onclick="submitNode()">提交并进入下一步 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></button>
+  </div>
+</div>
+
+<script>
+  var LIST_KEY = 'recruit_cooperation_list';
+  var CURRENT_KEY = 'recruit_cooperation_current';
+  var NODE_KEY = 'account_apply';
+  function getList() { return JSON.parse(localStorage.getItem(LIST_KEY) || '[]'); }
+  function getSignData() {
+    var list = getList(); var id = localStorage.getItem(CURRENT_KEY) || '';
+    for (var i = 0; i < list.length; i++) { if (list[i].id === id) return list[i]; }
+    return list.length > 0 ? list[0] : null;
+  }
+  function saveSignData(data) {
+    var list = getList();
+    for (var i = 0; i < list.length; i++) { if (list[i].id === data.id) { list[i] = data; break; } }
+    localStorage.setItem(LIST_KEY, JSON.stringify(list));
+  }
+
+  function togglePerm(el) {
+    setTimeout(function() {
+      var cb = el.querySelector('input');
+      el.classList.toggle('checked', cb.checked);
+    }, 0);
+  }
+
+  function saveDraft() {
+    var data = getSignData(); if (!data) return;
+    data.nodes[NODE_KEY] = 'pending';
+    saveSignData(data);
+    showToast('草稿已保存', 'success');
+  }
+
+  function submitNode() {
+    var accType = document.getElementById('accType').value;
+    var shop = document.getElementById('shopName').value.trim();
+    var applicant = document.getElementById('applicant').value.trim();
+    var phone = document.getElementById('phone').value.trim();
+    if (!accType) { showToast('请选择申请账号类型', 'warning'); return; }
+    if (!shop || !applicant || !phone) { showToast('请填写完整的申请信息', 'warning'); return; }
+    var data = getSignData(); if (!data) return;
+    data.nodes[NODE_KEY] = 'completed';
+    data.acc_type = accType;
+    saveSignData(data);
+    showToast('账号申请已提交', 'success');
+    setTimeout(function() { goBack(); }, 1200);
+  }
+
+  function goBack() {
+    if (window.parent) { window.parent.postMessage({ type: 'openTab', page: 'pages/recruit/cooperation-sign.html', title: '客户合作签约' }, '*'); }
+  }
+
+  function showToast(msg, type) {
+    var c = document.getElementById('toastContainer');
+    var t = document.createElement('div');
+    t.className = 'toast toast-' + (type || 'info');
+    t.textContent = msg;
+    c.appendChild(t);
+    setTimeout(function() { t.classList.add('show'); }, 10);
+    setTimeout(function() { t.classList.remove('show'); setTimeout(function() { t.remove(); }, 300); }, 2500);
+  }
+</script>
+</body>
+</html>

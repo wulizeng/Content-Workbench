@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>入驻完毕</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f7fb; }
+    .page-wrap { width: 100%; padding: 24px 28px 48px; box-sizing: border-box; }
+    .ph-back { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--primary); cursor: pointer; border: none; background: none; font-weight: 600; padding: 0; margin-bottom: 20px; }
+    .ph-back:hover { opacity: 0.7; }
+
+    /* 完成状态卡片 */
+    .complete-card {
+      background: #fff; border: 1px solid var(--border); border-radius: 16px;
+      padding: 48px 32px; box-shadow: var(--shadow-sm); text-align: center;
+      max-width: 600px; margin: 40px auto;
+    }
+    .complete-icon {
+      width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 24px;
+      background: linear-gradient(135deg, #10b981, #34d399);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+    }
+    .complete-icon svg { width: 40px; height: 40px; stroke: #fff; }
+    .complete-title { font-size: 24px; font-weight: 700; color: var(--text); margin: 0 0 8px; }
+    .complete-subtitle { font-size: 14px; color: var(--text-tertiary); margin: 0 0 32px; }
+
+    /* 签约摘要 */
+    .summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; text-align: left; margin-bottom: 32px; }
+    .summary-item { padding: 14px 16px; background: #f8fafc; border-radius: 10px; border: 1px solid var(--border-light, #f1f5f9); }
+    .summary-item .label { font-size: 12px; color: var(--text-tertiary); margin-bottom: 4px; }
+    .summary-item .value { font-size: 14px; font-weight: 600; color: var(--text); }
+
+    /* 完成时间 */
+    .complete-time { font-size: 13px; color: var(--text-tertiary); margin-bottom: 24px; }
+    .complete-time strong { color: var(--ok, #10b981); font-weight: 600; }
+
+    .btn-back {
+      display: inline-flex; align-items: center; gap: 6px; padding: 10px 24px;
+      border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer;
+      border: 1px solid var(--border); background: #fff; color: var(--text-secondary); transition: all .15s;
+    }
+    .btn-back:hover { border-color: var(--primary); color: var(--primary); }
+
+    @media (max-width: 640px) { .summary-grid { grid-template-columns: 1fr; } .complete-card { padding: 32px 20px; } }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="../../js/auth.js"></script>
+  <script>
+    if (!Auth.requireAuth()) {}
+    if (window.parent) { window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 客户视角 <span>/</span> 客户合作签约 <span>/</span> 入驻完毕'}, '*'); }
+  </script>
+
+  <button class="ph-back" onclick="goBack()">
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+    返回签约总览
+  </button>
+
+  <div class="complete-card">
+    <div class="complete-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+    </div>
+    <h1 class="complete-title">入驻完毕</h1>
+    <p class="complete-subtitle">恭喜！全部签约流程已顺利完成</p>
+
+    <div class="complete-time">
+      完成时间：<strong id="completeTime">-</strong>
+    </div>
+
+    <div class="summary-grid" id="summaryGrid">
+      <!-- 动态渲染 -->
+    </div>
+
+    <button class="btn-back" onclick="goBack()">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      返回签约总览
+    </button>
+  </div>
+
+</div>
+
+<script>
+  var LIST_KEY = 'recruit_cooperation_list';
+  var CURRENT_KEY = 'recruit_cooperation_current';
+
+  function getList() { return JSON.parse(localStorage.getItem(LIST_KEY) || '[]'); }
+  function getSignData() {
+    var list = getList(); var id = localStorage.getItem(CURRENT_KEY) || '';
+    for (var i = 0; i < list.length; i++) { if (list[i].id === id) return list[i]; }
+    return list.length > 0 ? list[0] : null;
+  }
+
+  function render() {
+    var data = getSignData();
+    if (!data) { goBack(); return; }
+
+    // 完成时间
+    var now = new Date();
+    document.getElementById('completeTime').textContent = now.toLocaleString('zh-CN', {
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit'
+    });
+
+    // 签约摘要
+    var grid = document.getElementById('summaryGrid');
+    var items = [
+      { label: '签约编号', value: data.id || '-' },
+      { label: '客户名称', value: data.client_name || '-' },
+      { label: '合同编号', value: data.contract_no || '-' },
+      { label: '授权主体', value: data.auth_entity || '-' },
+      { label: '直播平台', value: data.live_platform || '-' },
+      { label: '账号类型', value: data.acc_type || '-' }
+    ];
+
+    var html = '';
+    items.forEach(function(item) {
+      html += '<div class="summary-item">' +
+        '<div class="label">' + item.label + '</div>' +
+        '<div class="value">' + item.value + '</div>' +
+        '</div>';
+    });
+    grid.innerHTML = html;
+  }
+
+  function goBack() {
+    if (window.parent) { window.parent.postMessage({ type: 'openTab', page: 'pages/recruit/cooperation-sign.html', title: '客户合作签约' }, '*'); }
+  }
+
+  render();
+</script>
+</body>
+</html>

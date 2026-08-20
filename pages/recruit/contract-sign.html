@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>签署合同</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f7fb; }
+    .page-wrap { width: 100%; padding: 24px 28px 48px; box-sizing: border-box; }
+    .page-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+    .page-head h1 { margin: 0 0 4px; font-size: 20px; font-weight: 700; color: var(--text); }
+    .ph-back {
+      display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--primary);
+      cursor: pointer; border: none; background: none; font-weight: 600; padding: 0; margin-bottom: 6px;
+    }
+    .ph-back:hover { opacity: 0.7; }
+    .ph-sub { font-size: 12.5px; color: var(--text-tertiary); }
+
+    /* 表单卡片 */
+    .form-card {
+      background: #fff; border: 1px solid var(--border); border-radius: 14px;
+      padding: 24px; box-shadow: var(--shadow-sm); margin-bottom: 20px;
+    }
+    .form-card h3 { font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 18px; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px 24px; }
+    .form-grid .full { grid-column: 1 / -1; }
+    .form-item { display: flex; flex-direction: column; gap: 6px; }
+    .form-item label { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+    .form-item label .req { color: #ef4444; margin-left: 2px; }
+    .form-item input, .form-item select, .form-item textarea {
+      padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px;
+      font-size: 13px; color: var(--text); background: #fff; outline: none; transition: border-color .15s;
+    }
+    .form-item input:focus, .form-item select:focus, .form-item textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(91,108,245,.08); }
+    .form-item textarea { resize: vertical; min-height: 80px; }
+
+    /* 文件上传 */
+    .file-upload {
+      display: flex; align-items: center; gap: 10px; padding: 12px 16px;
+      border: 1px dashed var(--border); border-radius: 10px; background: #fafbfd; cursor: pointer;
+      transition: border-color .15s;
+    }
+    .file-upload:hover { border-color: var(--primary); }
+    .file-upload span { font-size: 13px; color: var(--text-tertiary); }
+
+    /* 底部操作栏 */
+    .form-actions { display: flex; justify-content: flex-end; gap: 12px; padding-top: 8px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px; padding: 9px 22px;
+      border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer;
+      border: 1px solid var(--border); background: #fff; color: var(--text-secondary); transition: all .15s;
+    }
+    .btn:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 2px 8px rgba(91,108,245,.25); }
+    .btn-primary:hover { background: #4a5ae4; box-shadow: 0 4px 12px rgba(91,108,245,.35); }
+
+    @media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="../../js/auth.js"></script>
+  <script>
+    if (!Auth.requireAuth()) {}
+    var currentUser = Auth.getCurrentUser();
+    if (window.parent) {
+      window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 客户视角 <span>/</span> 客户合作签约 <span>/</span> 签署合同'}, '*');
+    }
+  </script>
+
+  <div class="page-head">
+    <div>
+      <button class="ph-back" onclick="goBack()">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        返回签约总览
+      </button>
+      <h1>签署合同</h1>
+      <div class="ph-sub">确认合作条款，签署电子合同协议</div>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <h3>合同基本信息</h3>
+    <div class="form-grid">
+      <div class="form-item">
+        <label>合同名称<span class="req">*</span></label>
+        <input type="text" id="contractName" placeholder="请输入合同名称">
+      </div>
+      <div class="form-item">
+        <label>合同编号</label>
+        <input type="text" id="contractNo" placeholder="系统自动生成" readonly style="background:#f8fafc;">
+      </div>
+      <div class="form-item">
+        <label>合同类型<span class="req">*</span></label>
+        <select id="contractType">
+          <option value="">请选择</option>
+          <option value="达人合作">达人合作协议</option>
+          <option value="直播合作">直播合作协议</option>
+          <option value="供应链合作">供应链合作协议</option>
+        </select>
+      </div>
+      <div class="form-item">
+        <label>合作期限<span class="req">*</span></label>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="date" id="startDate" style="flex:1;">
+          <span style="color:var(--text-tertiary);font-size:13px;">至</span>
+          <input type="date" id="endDate" style="flex:1;">
+        </div>
+      </div>
+      <div class="form-item full">
+        <label>合同备注</label>
+        <textarea id="contractRemark" placeholder="请输入合同相关备注信息"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <h3>合同文件</h3>
+    <div class="form-grid">
+      <div class="form-item full">
+        <label>上传合同文件<span class="req">*</span></label>
+        <div class="file-upload" onclick="showToast('文件上传功能开发中', 'info')">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span>点击上传合同文件（PDF/JPG/PNG）</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button class="btn" onclick="saveDraft()">保存草稿</button>
+    <button class="btn btn-primary" onclick="submitNode()">
+      提交并进入下一步
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+  </div>
+
+</div>
+
+<script>
+  var LIST_KEY = 'recruit_cooperation_list';
+  var CURRENT_KEY = 'recruit_cooperation_current';
+  var NODE_KEY = 'contract';
+
+  function getList() { return JSON.parse(localStorage.getItem(LIST_KEY) || '[]'); }
+  function getSignData() {
+    var list = getList(); var id = localStorage.getItem(CURRENT_KEY) || '';
+    for (var i = 0; i < list.length; i++) { if (list[i].id === id) return list[i]; }
+    return list.length > 0 ? list[0] : null;
+  }
+  function saveSignData(data) {
+    var list = getList();
+    for (var i = 0; i < list.length; i++) { if (list[i].id === data.id) { list[i] = data; break; } }
+    localStorage.setItem(LIST_KEY, JSON.stringify(list));
+  }
+
+  // 自动生成合同编号
+  document.getElementById('contractNo').value = 'HT-' + Date.now().toString().slice(-8);
+
+  function saveDraft() {
+    var data = getSignData();
+    if (!data) return;
+    data.nodes[NODE_KEY] = 'pending';
+    data.contract_name = document.getElementById('contractName').value;
+    data.contract_no = document.getElementById('contractNo').value;
+    saveSignData(data);
+    showToast('草稿已保存', 'success');
+  }
+
+  function submitNode() {
+    var name = document.getElementById('contractName').value.trim();
+    var type = document.getElementById('contractType').value;
+    if (!name) { showToast('请填写合同名称', 'warning'); return; }
+    if (!type) { showToast('请选择合同类型', 'warning'); return; }
+
+    var data = getSignData();
+    if (!data) return;
+    data.nodes[NODE_KEY] = 'completed';
+    data.contract_name = name;
+    data.contract_no = document.getElementById('contractNo').value;
+    // 将下一个节点设为进行中
+    data.nodes['deposit'] = 'pending';
+    saveSignData(data);
+    showToast('合同已提交，进入缴纳保证金环节', 'success');
+    setTimeout(function() { goBack(); }, 1200);
+  }
+
+  function goBack() {
+    if (window.parent) {
+      window.parent.postMessage({ type: 'openTab', page: 'pages/recruit/cooperation-sign.html', title: '客户合作签约' }, '*');
+    }
+  }
+
+  function showToast(msg, type) {
+    var c = document.getElementById('toastContainer');
+    var t = document.createElement('div');
+    t.className = 'toast toast-' + (type || 'info');
+    t.textContent = msg;
+    c.appendChild(t);
+    setTimeout(function() { t.classList.add('show'); }, 10);
+    setTimeout(function() { t.classList.remove('show'); setTimeout(function() { t.remove(); }, 300); }, 2500);
+  }
+</script>
+</body>
+</html>

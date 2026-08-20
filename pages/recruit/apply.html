@@ -99,6 +99,50 @@
       background: #fffbeb; color: #d97706; border-radius: 10px; padding: 12px 16px;
       font-size: 13px; margin-bottom: 16px;
     }
+    .template-selector {
+      background: #fff; border: 1px solid var(--border); border-radius: 18px;
+      padding: 24px; box-shadow: var(--shadow-sm); margin-bottom: 20px;
+    }
+    .template-selector-head h2 { margin: 0 0 6px; font-size: 18px; color: var(--text); }
+    .template-selector-head p { margin: 0 0 22px; font-size: 13px; line-height: 1.7; color: var(--text-tertiary); }
+    .template-choice-title { margin: 18px 0 10px; font-size: 13px; font-weight: 700; color: var(--text-secondary); }
+    .business-type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .template-choice {
+      min-height: 82px; padding: 13px 14px; border: 1px solid var(--border); border-radius: 12px;
+      background: #fafbfd; cursor: pointer; text-align: left; transition: border-color .18s, background .18s, box-shadow .18s;
+    }
+    .template-choice:hover { border-color: var(--primary-200); background: #fff; }
+    .template-choice.selected { border-color: var(--primary); background: var(--primary-50); box-shadow: 0 0 0 2px rgba(91,108,245,.1); }
+    .template-choice strong { display: block; font-size: 13px; color: var(--text); margin-bottom: 5px; }
+    .template-choice span { display: block; font-size: 11.5px; line-height: 1.5; color: var(--text-tertiary); }
+    .brand-choice-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .brand-choice { min-height: 48px; text-align: center; }
+    .brand-choice strong { margin: 0; }
+    .template-preview {
+      margin-top: 18px; padding: 16px; border-radius: 12px; background: #f8fafc;
+      border: 1px solid var(--border-light); display: none;
+    }
+    .template-preview.visible { display: block; }
+    .template-preview-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
+    .workflow-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+    .workflow-chip {
+      display: inline-flex; align-items: center; gap: 5px; padding: 5px 9px; border-radius: 999px;
+      background: #fff; border: 1px solid var(--border); font-size: 11.5px; color: var(--text-secondary);
+    }
+    .workflow-chip::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--primary); }
+    .template-selector-actions { display: flex; justify-content: flex-end; margin-top: 20px; }
+    .template-selector-actions .btn { min-width: 132px; }
+    .template-summary {
+      background: linear-gradient(135deg, #eef0ff, #f8faff); border: 1px solid var(--primary-100);
+      border-radius: 14px; padding: 15px 18px; margin-bottom: 18px;
+    }
+    .template-summary-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+    .template-summary-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .template-badge { padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid var(--primary-100); font-size: 12px; font-weight: 700; color: var(--primary-700); }
+    .template-change { border: none; background: transparent; color: var(--primary); font-size: 12px; font-weight: 600; cursor: pointer; }
+    .dynamic-fields-grid { display: contents; }
+    .dynamic-fields-grid textarea.form-input { min-height: 96px; resize: vertical; }
+    .template-pending #desktopActionBar { display: none !important; }
     @media (max-width: 640px) {
       .apply-shell { padding: 0 0 88px; }
       .apply-header { padding: 16px 20px 0; }
@@ -129,6 +173,11 @@
       .mobile-step-nav .btn { flex: 1; height: 48px; }
       .form-input, .form-select { height: 48px; }
       .upload-zone { min-height: 120px; }
+      .template-selector { margin: 12px 20px 0; padding: 18px 16px; }
+      .business-type-grid { grid-template-columns: repeat(2, 1fr); }
+      .template-choice { min-height: 74px; }
+      .template-summary { margin-left: 20px; margin-right: 20px; }
+      .template-summary-top { align-items: flex-start; }
     }
     @media (min-width: 641px) {
       .mobile-step-bar, .mobile-step-nav { display: none; }
@@ -330,6 +379,34 @@
     <div class="title" id="pageTitle">新建申请</div>
   </div>
 
+  <section class="template-selector" id="templateSelector" style="display:none;">
+    <div class="template-selector-head">
+      <h2>选择入驻申请模板</h2>
+      <p>业务类型和品牌将决定本次需要填写的资料及后续流程。确认后再进入申请编辑。</p>
+    </div>
+    <div class="template-choice-title">1. 选择业务类型</div>
+    <div class="business-type-grid" id="businessTypeChoices"></div>
+    <div class="template-choice-title">2. 选择品牌</div>
+    <div class="brand-choice-grid" id="brandChoices"></div>
+    <div class="template-preview" id="templatePreview"></div>
+    <div class="template-selector-actions">
+      <button type="button" class="btn btn-primary" id="confirmTemplateBtn" onclick="confirmTemplateSelection()" disabled>确认并开始填写</button>
+    </div>
+  </section>
+
+  <div id="applicationEditor" style="display:none;">
+  <div class="template-summary" id="templateSummary">
+    <div class="template-summary-top">
+      <div class="template-summary-meta">
+        <span class="template-badge" id="selectedBusinessType">-</span>
+        <span class="template-badge" id="selectedBrand">-</span>
+        <span class="template-badge" id="selectedTemplateVersion">模板 v1.0</span>
+      </div>
+      <button type="button" class="template-change" id="changeTemplateBtn" onclick="changeTemplateSelection()">重新选择</button>
+    </div>
+    <div class="workflow-chips" id="selectedWorkflowNodes"></div>
+  </div>
+
   <div class="prep-bar" id="prepBar">
     <span class="prep-time">
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -374,16 +451,7 @@
         </div>
         <span class="section-status" id="secStatus1">待填写</span>
       </div>
-      <div class="form-group">
-        <label class="form-label">运营品牌 <span class="required">*</span></label>
-        <select class="form-select" id="brand">
-          <option value="">请选择运营品牌</option>
-          <option value="品牌A">品牌A</option>
-          <option value="品牌B">品牌B</option>
-          <option value="品牌C">品牌C</option>
-        </select>
-        <div class="field-error">运营品牌为必填项</div>
-      </div>
+      <input type="hidden" id="brand">
       <div class="form-group">
         <label class="form-label">主推产品 <span class="required">*</span></label>
         <input type="text" class="form-input" id="mainProduct" placeholder="请输入主推产品">
@@ -393,6 +461,7 @@
         <label class="form-label">推荐人</label>
         <input type="text" class="form-input" id="recommender" placeholder="请输入推荐人">
       </div>
+      <div class="dynamic-fields-grid" id="dynamicFields"></div>
     </div>
 
     <div class="form-card" data-step="2" style="--i:1">
@@ -457,6 +526,7 @@
       <button type="button" class="btn btn-primary" id="stepNextBtn" onclick="stepNext()">下一步</button>
     </div>
   </form>
+  </div>
 
 </div>
 
@@ -479,6 +549,7 @@
 
 <div id="toastContainer" class="toast-container"></div>
 
+<script src="../../js/recruit-application-templates.js"></script>
 <script src="../../js/auth.js"></script>
 <script>
 // 权限检查
@@ -489,7 +560,7 @@ if (!Auth.requireAuth()) {
 var currentUser = Auth.getCurrentUser();
 
 // 登录检查和用户信息初始化（兼容旧系统）
-var phone = localStorage.getItem('recruit_current_phone') || currentUser.phone;
+var phone = localStorage.getItem('recruit_current_phone') || (currentUser && currentUser.phone) || '';
 
 function goBack() {
   location.href = 'mine.html';
@@ -500,9 +571,171 @@ var mode = g('mode') || 'add';
 var editId = parseInt(g('id')) || 0;
 var paSeq = 0;
 var shots = [];
+var templateApi = window.RecruitApplicationTemplates;
+var selectedTemplate = null;
+var selectedBusinessType = '';
+var selectedBrand = '';
+var templateSelectionReady = false;
 
 var TOTAL_STEPS = 3;
 var currentStep = 1;
+
+function templateTypeInfo(type) {
+  return templateApi.BUSINESS_TYPES.filter(function(item) { return item.value === type; })[0] || null;
+}
+
+function templateBrandInfo(brand) {
+  return templateApi.BRANDS.filter(function(item) { return item.value === brand; })[0] || null;
+}
+
+function renderTemplateChoices() {
+  var typeEl = document.getElementById('businessTypeChoices');
+  var brandEl = document.getElementById('brandChoices');
+  if (!typeEl || !brandEl) return;
+  typeEl.innerHTML = templateApi.BUSINESS_TYPES.map(function(item) {
+    var selected = item.value === selectedBusinessType ? ' selected' : '';
+    return '<button type="button" class="template-choice' + selected + '" onclick="selectBusinessType(\'' + esc(item.value) + '\')">' +
+      '<strong>' + esc(item.label) + '</strong><span>' + esc(item.desc) + '</span></button>';
+  }).join('');
+  brandEl.innerHTML = templateApi.BRANDS.map(function(item) {
+    var selected = item.value === selectedBrand ? ' selected' : '';
+    return '<button type="button" class="template-choice brand-choice' + selected + '" onclick="selectTemplateBrand(\'' + esc(item.value) + '\')">' +
+      '<strong>' + esc(item.label) + '</strong></button>';
+  }).join('');
+}
+
+function updateTemplatePreview() {
+  var preview = document.getElementById('templatePreview');
+  var confirmBtn = document.getElementById('confirmTemplateBtn');
+  if (!preview || !confirmBtn) return;
+  renderTemplateChoices();
+  if (!selectedBusinessType || !selectedBrand) {
+    preview.classList.remove('visible');
+    preview.innerHTML = '';
+    confirmBtn.disabled = true;
+    return;
+  }
+  selectedTemplate = templateApi.getTemplate(selectedBusinessType, selectedBrand);
+  preview.classList.add('visible');
+  preview.innerHTML = '<div class="template-preview-title">' + esc(selectedTemplate.businessType) + ' · ' + esc(selectedTemplate.brand) + ' 将包含以下流程节点</div>' +
+    '<div class="workflow-chips">' + selectedTemplate.workflowNodes.map(function(node) {
+      return '<span class="workflow-chip">' + esc(node.title) + '</span>';
+    }).join('') + '</div>';
+  confirmBtn.disabled = false;
+}
+
+function selectBusinessType(type) {
+  if (!templateTypeInfo(type)) return;
+  selectedBusinessType = type;
+  updateTemplatePreview();
+}
+
+function selectTemplateBrand(brand) {
+  if (!templateBrandInfo(brand)) return;
+  selectedBrand = brand;
+  updateTemplatePreview();
+}
+
+function renderDynamicFields(values) {
+  var container = document.getElementById('dynamicFields');
+  if (!container || !selectedTemplate) return;
+  values = values || {};
+  var fields = selectedTemplate.fields.concat(selectedTemplate.brandFields);
+  container.innerHTML = fields.map(function(field) {
+    var value = values[field.key] == null ? '' : values[field.key];
+    var control;
+    if (field.type === 'textarea') {
+      control = '<textarea class="form-input" data-dynamic-input="' + esc(field.key) + '" placeholder="' + esc(field.placeholder || '') + '">' + esc(String(value)) + '</textarea>';
+    } else if (field.type === 'select') {
+      control = '<select class="form-select" data-dynamic-input="' + esc(field.key) + '"><option value="">请选择</option>' +
+        (field.options || []).map(function(option) { return '<option value="' + esc(option) + '"' + (String(option) === String(value) ? ' selected' : '') + '>' + esc(option) + '</option>'; }).join('') + '</select>';
+    } else {
+      control = '<input class="form-input" type="' + esc(field.type || 'text') + '" data-dynamic-input="' + esc(field.key) + '" value="' + esc(String(value)) + '" placeholder="' + esc(field.placeholder || '') + '">';
+    }
+    return '<div class="form-group dynamic-field-group" data-dynamic-key="' + esc(field.key) + '">' +
+      '<label class="form-label">' + esc(field.label) + (field.required ? ' <span class="required">*</span>' : '') + '</label>' + control +
+      '<div class="field-error">' + esc(field.label) + '为必填项</div></div>';
+  }).join('');
+}
+
+function collectDynamicFields() {
+  var values = {};
+  document.querySelectorAll('[data-dynamic-input]').forEach(function(input) {
+    values[input.getAttribute('data-dynamic-input')] = input.value.trim();
+  });
+  return values;
+}
+
+function dynamicFieldsComplete(markErrors) {
+  if (!selectedTemplate) return false;
+  var values = collectDynamicFields();
+  var ok = true;
+  selectedTemplate.fields.concat(selectedTemplate.brandFields).forEach(function(field) {
+    var group = document.querySelector('[data-dynamic-key="' + field.key + '"]');
+    var empty = field.required && !String(values[field.key] || '').trim();
+    if (group && markErrors) group.classList.toggle('has-error', empty);
+    if (empty) ok = false;
+  });
+  return ok;
+}
+
+function applySelectedTemplate(type, brand, values) {
+  selectedBusinessType = type;
+  selectedBrand = brand;
+  selectedTemplate = templateApi.getTemplate(type, brand);
+  document.getElementById('brand').value = brand;
+  renderDynamicFields(values || {});
+  document.getElementById('selectedBusinessType').textContent = type;
+  document.getElementById('selectedBrand').textContent = brand;
+  document.getElementById('selectedTemplateVersion').textContent = '模板 v' + selectedTemplate.version;
+  document.getElementById('selectedWorkflowNodes').innerHTML = selectedTemplate.workflowNodes.map(function(node) {
+    return '<span class="workflow-chip">' + esc(node.title) + '</span>';
+  }).join('');
+  templateSelectionReady = true;
+}
+
+function showTemplateSelector() {
+  document.body.classList.add('template-pending');
+  document.getElementById('templateSelector').style.display = 'block';
+  document.getElementById('applicationEditor').style.display = 'none';
+  renderTemplateChoices();
+  updateTemplatePreview();
+}
+
+function showApplicationEditor() {
+  document.body.classList.remove('template-pending');
+  document.getElementById('templateSelector').style.display = 'none';
+  document.getElementById('applicationEditor').style.display = 'block';
+}
+
+function confirmTemplateSelection() {
+  if (!selectedBusinessType || !selectedBrand) return;
+  applySelectedTemplate(selectedBusinessType, selectedBrand, {});
+  showApplicationEditor();
+  if (!document.getElementById('platformAccountList').children.length) addPlatformAccount();
+  updateStepUI();
+  saveDraft();
+}
+
+function hasFormContent() {
+  var dynamicValues = collectDynamicFields();
+  return !!(document.getElementById('mainProduct').value.trim() || document.getElementById('recommender').value.trim() ||
+    document.getElementById('gmv').value.toString().trim() || shots.length ||
+    collectPlatformAccounts().some(function(item) { return item.account_name; }) ||
+    Object.keys(dynamicValues).some(function(key) { return dynamicValues[key]; }));
+}
+
+function changeTemplateSelection() {
+  if (mode === 'edit') {
+    showToast('驳回重提沿用原入驻模板，不能修改业务类型和品牌', 'error');
+    return;
+  }
+  if (hasFormContent() && !window.confirm('切换模板会清空当前已填写的业务专属字段，确定继续吗？')) return;
+  selectedTemplate = null;
+  templateSelectionReady = false;
+  document.getElementById('dynamicFields').innerHTML = '';
+  showTemplateSelector();
+}
 
 function isMobileStepMode() {
   return window.matchMedia('(max-width: 640px)').matches;
@@ -557,6 +790,12 @@ function saveDraft() {
   if (mode !== 'add') return;
   var draft = {
     currentStep: currentStep,
+    businessType: selectedBusinessType,
+    templateBrand: selectedBrand,
+    templateKey: selectedTemplate ? selectedTemplate.key : '',
+    templateVersion: selectedTemplate ? selectedTemplate.version : '',
+    workflowNodes: selectedTemplate ? selectedTemplate.workflowNodes : [],
+    dynamicFields: collectDynamicFields(),
     brand: document.getElementById('brand').value,
     mainProduct: document.getElementById('mainProduct').value,
     gmv: document.getElementById('gmv').value,
@@ -574,6 +813,10 @@ function restoreDraft() {
   var draft;
   try { draft = JSON.parse(raw); } catch (e) { return false; }
   if (!draft) return false;
+
+  if (!templateTypeInfo(draft.businessType) || !templateBrandInfo(draft.templateBrand)) return false;
+  applySelectedTemplate(draft.businessType, draft.templateBrand, draft.dynamicFields || {});
+  showApplicationEditor();
 
   document.getElementById('brand').value = draft.brand || '';
   document.getElementById('mainProduct').value = draft.mainProduct || '';
@@ -596,7 +839,7 @@ function clearDraft() {
 
 function isStepFilled(step) {
   if (step === 1) {
-    return !!(document.getElementById('brand').value.trim() && document.getElementById('mainProduct').value.trim());
+    return !!(selectedTemplate && document.getElementById('mainProduct').value.trim() && dynamicFieldsComplete(false));
   }
   if (step === 2) {
     var accounts = collectPlatformAccounts();
@@ -615,8 +858,12 @@ window.addEventListener('resize', function() { updateStepUI(); });
 function stepFilledCount(step) {
   if (step === 1) {
     var n = 0;
-    if (document.getElementById('brand').value.trim()) n++;
     if (document.getElementById('mainProduct').value.trim()) n++;
+    if (selectedTemplate) {
+      selectedTemplate.fields.concat(selectedTemplate.brandFields).forEach(function(field) {
+        if (String(collectDynamicFields()[field.key] || '').trim()) n++;
+      });
+    }
     return n;
   }
   if (step === 2) {
@@ -631,6 +878,11 @@ function stepFilledCount(step) {
   return 0;
 }
 
+function stepFieldTotal(step) {
+  if (step === 1) return 1 + (selectedTemplate ? selectedTemplate.fields.length + selectedTemplate.brandFields.length : 0);
+  return 2;
+}
+
 var stepDoneState = {};
 
 function updateDesktopNavUI() {
@@ -643,7 +895,7 @@ function updateDesktopNavUI() {
     if (filled) {
       text = '✓ 已完成'; cls = 'done';
     } else if (n > 0) {
-      text = s === 2 ? ('已填 ' + n + ' 个账号') : ('进行中 ' + n + '/2');
+      text = s === 2 ? ('已填 ' + n + ' 个账号') : ('进行中 ' + n + '/' + stepFieldTotal(s));
       cls = 'partial';
     } else {
       text = '待填写';
@@ -658,7 +910,7 @@ function updateDesktopNavUI() {
   }
 }
 
-var PLATFORM_OPTIONS = ['抖音', '视频号', '快手'];
+var PLATFORM_OPTIONS = ['抖音', '视频号', '快手', '小红书'];
 
 function addPlatformAccount(platform, accountName) {
   paSeq++;
@@ -726,6 +978,11 @@ function init() {
   if (mode === 'edit' && editId > 0) {
     var rec = apps.find(function(a) { return a.id === editId; });
     if (rec) {
+      var recType = templateTypeInfo(rec.business_type) ? rec.business_type : 'DP';
+      var recBrand = templateBrandInfo(rec.brand) ? rec.brand : '巴拉';
+      applySelectedTemplate(recType, recBrand, rec.dynamic_fields || {});
+      showApplicationEditor();
+      document.getElementById('changeTemplateBtn').style.display = 'none';
       if (rec.status !== '已驳回') {
         document.getElementById('pageTitle').textContent = '申请详情';
         document.getElementById('lockedBanner').style.display = 'block';
@@ -749,18 +1006,20 @@ function init() {
         addPlatformAccount(pa.platform, pa.account_name);
       });
       if ((rec.platform_accounts || []).length === 0) addPlatformAccount();
+      if (rec.status !== '已驳回') setReadOnly(true);
       return;
     }
   }
   if (mode === 'add' && restoreDraft()) {
     showToast('已恢复上次填写的草稿', 'info');
+    if ((document.getElementById('platformAccountList').children || []).length === 0) addPlatformAccount();
   } else {
-    addPlatformAccount();
+    showTemplateSelector();
   }
 }
 
 function setReadOnly(v) {
-  document.querySelectorAll('#mainForm input, #mainForm select').forEach(function(el) { el.disabled = v; });
+  document.querySelectorAll('#mainForm input, #mainForm select, #mainForm textarea').forEach(function(el) { el.disabled = v; });
   document.querySelectorAll('.upload-zone, .add-platform-btn, .pa-remove').forEach(function(el) { el.style.pointerEvents = v ? 'none' : ''; el.style.opacity = v ? '.6' : ''; });
 }
 
@@ -782,10 +1041,9 @@ function clearErrors() {
 function validateStep(step) {
   var ok = true;
   if (step === 1) {
-    var brand = document.getElementById('brand');
     var mainProduct = document.getElementById('mainProduct');
-    if (!brand.value.trim()) { brand.closest('.form-group').classList.add('has-error'); ok = false; }
     if (!mainProduct.value.trim()) { mainProduct.closest('.form-group').classList.add('has-error'); ok = false; }
+    if (!dynamicFieldsComplete(true)) ok = false;
   } else if (step === 2) {
     var accounts = collectPlatformAccounts();
     var accountsValid = accounts.length > 0 && accounts.every(function(a) { return a.account_name; });
@@ -818,6 +1076,11 @@ function validate() {
 function doSubmit() {
   var apps = JSON.parse(localStorage.getItem('recruit_applications') || '[]');
 
+  if (!selectedTemplate || !templateSelectionReady) {
+    showToast('请先选择业务类型和品牌', 'error');
+    return;
+  }
+
   // 防御性拦截：与 init() 只读分支相同条件（mode=edit 且记录状态非"已驳回"即为只读/锁定），
   // 禁止提交，避免移动端旧入口把已审核/审核中记录状态回退为"已提交"
   if (mode === 'edit' && editId > 0) {
@@ -841,7 +1104,13 @@ function doSubmit() {
   var accounts = collectPlatformAccounts().map(function(a) { return { platform: a.platform, account_name: a.account_name }; });
   var data = {
     phone: phone,
-    brand: document.getElementById('brand').value.trim(),
+    business_type: selectedBusinessType,
+    template_key: selectedTemplate.key,
+    template_version: selectedTemplate.version,
+    workflow_nodes: selectedTemplate.workflowNodes.map(function(node) { return { key: node.key, title: node.title, owner: node.owner, status: 'pending' }; }),
+    dynamic_fields: collectDynamicFields(),
+    // Always persist the brand used to resolve the template so the snapshot remains internally consistent.
+    brand: selectedBrand,
     main_product: document.getElementById('mainProduct').value.trim(),
     recommender: document.getElementById('recommender').value.trim(),
     platform_accounts: accounts,

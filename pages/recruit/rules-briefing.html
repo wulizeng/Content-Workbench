@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>宣导规则</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f7fb; }
+    .page-wrap { width: 100%; padding: 24px 28px 48px; box-sizing: border-box; }
+    .page-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .page-head h1 { margin: 0 0 4px; font-size: 20px; font-weight: 700; color: var(--text); }
+    .ph-back { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--primary); cursor: pointer; border: none; background: none; font-weight: 600; padding: 0; margin-bottom: 6px; }
+    .ph-back:hover { opacity: 0.7; }
+    .ph-sub { font-size: 12.5px; color: var(--text-tertiary); }
+    .form-card { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 24px; box-shadow: var(--shadow-sm); margin-bottom: 20px; }
+    .form-card h3 { font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 18px; }
+
+    /* 规则列表 */
+    .rule-list { display: flex; flex-direction: column; gap: 12px; }
+    .rule-item {
+      display: flex; align-items: flex-start; gap: 14px; padding: 16px 18px;
+      border: 1px solid var(--border); border-radius: 10px; background: #fafbfd;
+      transition: border-color .15s, background .15s; cursor: pointer;
+    }
+    .rule-item:hover { border-color: var(--primary); background: var(--primary-50, #eef0ff); }
+    .rule-item.read { border-color: #bbf7d0; background: #f0fdf4; }
+    .rule-index {
+      width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 800; color: #fff; background: var(--primary); flex-shrink: 0;
+    }
+    .rule-item.read .rule-index { background: var(--ok, #10b981); }
+    .rule-content { flex: 1; }
+    .rule-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .rule-desc { font-size: 12.5px; color: var(--text-tertiary); line-height: 1.6; }
+    .rule-status { font-size: 12px; font-weight: 600; white-space: nowrap; margin-top: 4px; }
+    .rule-status.unread { color: var(--primary); }
+    .rule-status.done { color: var(--ok, #10b981); }
+
+    /* 确认区 */
+    .confirm-area { display: flex; align-items: center; gap: 10px; padding: 16px 18px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; margin-bottom: 20px; }
+    .confirm-area input { accent-color: var(--primary); width: 18px; height: 18px; }
+    .confirm-area label { font-size: 13px; color: var(--text-secondary); cursor: pointer; }
+
+    .form-actions { display: flex; justify-content: flex-end; gap: 12px; padding-top: 8px; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 22px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: #fff; color: var(--text-secondary); transition: all .15s; }
+    .btn:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 2px 8px rgba(91,108,245,.25); }
+    .btn-primary:hover { background: #4a5ae4; }
+    .btn-success { background: var(--ok, #10b981); color: #fff; border-color: var(--ok, #10b981); box-shadow: 0 2px 8px rgba(16,185,129,.25); }
+    .btn-success:hover { background: #059669; }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+  <div id="toastContainer" class="toast-container"></div>
+  <script src="../../js/auth.js"></script>
+  <script>
+    if (!Auth.requireAuth()) {}
+    if (window.parent) { window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 客户视角 <span>/</span> 客户合作签约 <span>/</span> 宣导规则'}, '*'); }
+  </script>
+
+  <div class="page-head">
+    <div>
+      <button class="ph-back" onclick="goBack()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>返回签约总览</button>
+      <h1>宣导规则</h1>
+      <div class="ph-sub">学习平台规则并完成宣导确认</div>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <h3>平台规则清单（点击标记已阅读）</h3>
+    <div class="rule-list" id="ruleList">
+      <div class="rule-item" onclick="toggleRule(this, 0)">
+        <div class="rule-index">1</div>
+        <div class="rule-content">
+          <div class="rule-title">直播行为规范</div>
+          <div class="rule-desc">直播间禁止虚假宣传、夸大产品功效，需如实描述商品信息，遵守广告法相关规定。</div>
+        </div>
+        <div class="rule-status unread">未阅读</div>
+      </div>
+      <div class="rule-item" onclick="toggleRule(this, 1)">
+        <div class="rule-index">2</div>
+        <div class="rule-content">
+          <div class="rule-title">商品上架规范</div>
+          <div class="rule-desc">商品标题、主图、详情页须真实准确，禁止盗图、虚假标注产地及材质信息。</div>
+        </div>
+        <div class="rule-status unread">未阅读</div>
+      </div>
+      <div class="rule-item" onclick="toggleRule(this, 2)">
+        <div class="rule-index">3</div>
+        <div class="rule-content">
+          <div class="rule-title">售后服务规范</div>
+          <div class="rule-desc">7天无理由退换货、质量问题包退，客服响应时间不超过24小时。</div>
+        </div>
+        <div class="rule-status unread">未阅读</div>
+      </div>
+      <div class="rule-item" onclick="toggleRule(this, 3)">
+        <div class="rule-index">4</div>
+        <div class="rule-content">
+          <div class="rule-title">结算与佣金规则</div>
+          <div class="rule-desc">佣金按比例结算，T+15到账，禁止线下交易或绕过平台结算。</div>
+        </div>
+        <div class="rule-status unread">未阅读</div>
+      </div>
+      <div class="rule-item" onclick="toggleRule(this, 4)">
+        <div class="rule-index">5</div>
+        <div class="rule-content">
+          <div class="rule-title">违规处罚条例</div>
+          <div class="rule-desc">违规行为将视情节轻重给予警告、限流、封号等处罚，严重者追究法律责任。</div>
+        </div>
+        <div class="rule-status unread">未阅读</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="confirm-area">
+    <input type="checkbox" id="confirmCheck" onchange="checkConfirm()">
+    <label for="confirmCheck">我已认真阅读并充分理解以上全部平台规则，承诺严格遵守</label>
+  </div>
+
+  <div class="form-actions">
+    <button class="btn" onclick="saveDraft()">保存草稿</button>
+    <button class="btn btn-success" id="finishBtn" onclick="submitNode()" disabled style="opacity:0.5;cursor:not-allowed;">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      完成全部签约
+    </button>
+  </div>
+</div>
+
+<script>
+  var LIST_KEY = 'recruit_cooperation_list';
+  var CURRENT_KEY = 'recruit_cooperation_current';
+  var NODE_KEY = 'rules';
+  var ruleRead = [false, false, false, false, false];
+
+  function getList() { return JSON.parse(localStorage.getItem(LIST_KEY) || '[]'); }
+  function getSignData() {
+    var list = getList(); var id = localStorage.getItem(CURRENT_KEY) || '';
+    for (var i = 0; i < list.length; i++) { if (list[i].id === id) return list[i]; }
+    return list.length > 0 ? list[0] : null;
+  }
+  function saveSignData(data) {
+    var list = getList();
+    for (var i = 0; i < list.length; i++) { if (list[i].id === data.id) { list[i] = data; break; } }
+    localStorage.setItem(LIST_KEY, JSON.stringify(list));
+  }
+
+  function toggleRule(el, idx) {
+    ruleRead[idx] = !ruleRead[idx];
+    el.classList.toggle('read', ruleRead[idx]);
+    var statusEl = el.querySelector('.rule-status');
+    statusEl.textContent = ruleRead[idx] ? '已阅读' : '未阅读';
+    statusEl.className = 'rule-status ' + (ruleRead[idx] ? 'done' : 'unread');
+    checkAllRead();
+  }
+
+  function checkAllRead() {
+    var allRead = ruleRead.every(function(r) { return r; });
+    var btn = document.getElementById('finishBtn');
+    if (allRead) {
+      btn.disabled = false;
+      btn.style.opacity = '';
+      btn.style.cursor = '';
+    } else {
+      btn.disabled = true;
+      btn.style.opacity = '0.5';
+      btn.style.cursor = 'not-allowed';
+    }
+  }
+
+  function checkConfirm() {
+    var checked = document.getElementById('confirmCheck').checked;
+    var allRead = ruleRead.every(function(r) { return r; });
+    var btn = document.getElementById('finishBtn');
+    btn.disabled = !(checked && allRead);
+    btn.style.opacity = btn.disabled ? '0.5' : '';
+    btn.style.cursor = btn.disabled ? 'not-allowed' : '';
+  }
+
+  function saveDraft() {
+    var data = getSignData(); if (!data) return;
+    data.nodes[NODE_KEY] = 'pending';
+    saveSignData(data);
+    showToast('草稿已保存', 'success');
+  }
+
+  function submitNode() {
+    if (!document.getElementById('confirmCheck').checked) {
+      showToast('请先勾选确认已阅读全部规则', 'warning'); return;
+    }
+    var data = getSignData(); if (!data) return;
+    data.nodes[NODE_KEY] = 'completed';
+    saveSignData(data);
+    showToast('恭喜！全部签约流程已完成', 'success');
+    setTimeout(function() { goBack(); }, 1500);
+  }
+
+  function goBack() {
+    if (window.parent) { window.parent.postMessage({ type: 'openTab', page: 'pages/recruit/cooperation-sign.html', title: '客户合作签约' }, '*'); }
+  }
+
+  function showToast(msg, type) {
+    var c = document.getElementById('toastContainer');
+    var t = document.createElement('div');
+    t.className = 'toast toast-' + (type || 'info');
+    t.textContent = msg;
+    c.appendChild(t);
+    setTimeout(function() { t.classList.add('show'); }, 10);
+    setTimeout(function() { t.classList.remove('show'); setTimeout(function() { t.remove(); }, 300); }, 2500);
+  }
+</script>
+</body>
+</html>

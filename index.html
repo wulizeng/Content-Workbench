@@ -381,8 +381,13 @@
     }
 
     // 切换固定"首页"页签的内容（不新建页签，仅替换首页iframe的地址，页签文字始终显示"首页"）
+    // ===== 清除所有菜单激活态（兼容 guide 侧边栏 + recruit 侧边栏） =====
+    function clearSidebarActive() {
+      document.querySelectorAll('.sidebar-item.active, #sidebarGroup-recruit .sidebar-parent.active').forEach(function(i) { i.classList.remove('active'); });
+    }
+
     function switchToHome(el, page) {
-      document.querySelectorAll('.sidebar-item').forEach(function(i) { i.classList.remove('active'); });
+      clearSidebarActive();
       el.classList.add('active');
       var home = findTab(homeTabId);
       // 客户账号无首页页签，降级为普通页签打开
@@ -422,10 +427,10 @@
 
         var def = topMenuDefaultPage[key];
         if (def) {
-          // 首页型菜单（data-home）优先，其次页签型（data-page），跳过用户注册等外链型菜单项
-          var firstItem = document.querySelector('#sidebarGroup-' + key + ' .sidebar-item[data-home]') ||
-            document.querySelector('#sidebarGroup-' + key + ' .sidebar-item[data-page]') ||
-            document.querySelector('#sidebarGroup-' + key + ' .sidebar-item');
+          // 首页型菜单（data-home）优先，其次页签型（data-page），跳过客户注册等外链型菜单项
+          var firstItem = document.querySelector('#sidebarGroup-' + key + ' [data-home]') ||
+            document.querySelector('#sidebarGroup-' + key + ' [data-page]') ||
+            document.querySelector('#sidebarGroup-' + key + ' .sidebar-parent');
           if (firstItem) firstItem.click();
         }
         return;
@@ -439,7 +444,7 @@
 
     // ===== 左侧菜单切换（以页签方式打开） =====
     function switchSidebar(el) {
-      document.querySelectorAll('.sidebar-item').forEach(function(i) { i.classList.remove('active'); });
+      clearSidebarActive();
       el.classList.add('active');
       var page = el.getAttribute('data-page');
       var title = el.querySelector('span').textContent.trim();
@@ -491,25 +496,30 @@
       var recruitMenu = document.getElementById('sidebarGroup-recruit');
       recruitMenu.innerHTML = '';
 
-      // 二级菜单组（默认展开，复用 sidebar-parent/sidebar-children 模式）
-      function submenuBlock(title, iconSvg, childrenHtml) {
-        return '<div class="sidebar-parent open" onclick="toggleSubmenu(this)">' +
+      // 分组标题（非可点击，仅视觉区分，颜色区别于正常菜单）
+      function sectionLabel(title, iconSvg) {
+        return '<div class="sidebar-section-label">' +
           iconSvg + '<span>' + title + '</span>' +
-          '<svg class="arrow" viewBox="0 0 24 24" width="12" height="12"><path d="m6 9 6 6 6-6"/></svg>' +
-          '</div>' +
-          '<div class="sidebar-children">' + childrenHtml + '</div>';
+          '</div>';
       }
 
-      // 客户视角：达人端全部操作页（用户注册排第一位）
+      // 客户视角菜单项（与分组标题同级，一级菜单样式）
       var clientItems =
-        '<a class="sidebar-item sidebar-child" onclick="openRegisterPage()">' +
+        '<div class="sidebar-parent" onclick="openRegisterPage()">' +
         '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>' +
-        '<span>用户注册</span>' +
-        '</a>' +
-        '<a class="sidebar-item sidebar-child" data-page="pages/recruit/mine.html" onclick="switchSidebar(this)">' +
+        '<span>客户注册</span>' +
+        '</div>' +
+        '<div class="sidebar-parent" data-page="pages/recruit/mine.html" onclick="switchSidebar(this)">' +
         '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' +
-        '<span>我的申请</span>' +
-        '</a>' +
+        '<span>客户入驻申请</span>' +
+        '</div>' +
+        '<div class="sidebar-parent" data-page="pages/recruit/cooperation-sign-list.html" onclick="switchSidebar(this)">' +
+        '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15l2 2 4-4"/></svg>' +
+        '<span>客户合作签约</span>' +
+        '</div>';
+
+      // 草稿：暂不常用的功能菜单
+      var draftItems =
         '<a class="sidebar-item sidebar-child" data-page="pages/recruit/invoice-info.html" onclick="switchSidebar(this)">' +
         '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>' +
         '<span>开票信息录入</span>' +
@@ -523,17 +533,30 @@
         '<span>保证金流水</span>' +
         '</a>';
 
-      // 运营视角：入驻流程（分销枢纽首页） + 申请审核（BD 仅可查看列表） + 供应商申请入驻 + 客户合同管理 + 直播账号管理 + 保证金流水
+      // 分销枢纽全景图（顶部一级菜单，所有角色可见）
+      var panoramaItem =
+        '<div class="sidebar-parent" data-page="pages/recruit/panorama.html" onclick="switchSidebar(this)">' +
+        '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>' +
+        '<span>分销全景工作流</span>' +
+        '</div>';
+
+      // 入驻流程（顶部一级菜单，所有角色可见）
+      var flowItem =
+        '<div class="sidebar-parent" data-home="1" onclick="switchToHome(this, \'pages/recruit/flow.html\')">' +
+        '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>' +
+        '<span>入驻流程</span>' +
+        '</div>';
+
+      // 运营视角菜单项（与分组标题同级，一级菜单样式）
       function operatorItems(label) {
-        return '<a class="sidebar-item sidebar-child" data-home="1" onclick="switchToHome(this, \'pages/recruit/flow.html\')">' +
-          '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>' +
-          '<span>入驻流程</span>' +
-          '</a>' +
-          '<a class="sidebar-item sidebar-child" data-page="pages/recruit/list.html" onclick="switchSidebar(this)">' +
+        return '<div class="sidebar-parent" data-page="pages/recruit/list.html" onclick="switchSidebar(this)">' +
           '<svg viewBox="0 0 24 24" width="17" height="17"><circle cx="9" cy="7" r="4"/><path d="M2.5 21a6.5 6.5 0 0 1 13 0"/><circle cx="18" cy="7.5" r="2.8"/><path d="M16.5 13.2a6.5 6.5 0 0 1 5.5 6.8"/></svg>' +
           '<span>' + label + '</span>' +
-          '</a>' +
-          '<a class="sidebar-item sidebar-child" data-page="pages/recruit/supplier.html" onclick="switchSidebar(this)">' +
+          '</div>';
+      }
+
+      var operatorDraftItems =
+        '<a class="sidebar-item sidebar-child" data-page="pages/recruit/supplier.html" onclick="switchSidebar(this)">' +
           '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>' +
           '<span>供应商申请入驻</span>' +
           '</a>' +
@@ -547,27 +570,38 @@
           '</a>' +
           '<a class="sidebar-item sidebar-child" data-page="pages/recruit/deposit-flow.html" onclick="switchSidebar(this)">' +
           '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3 3 0 0 0 0 6h5a3 3 0 0 1 0 6H6"/></svg>' +
-          '<span>保证金流水</span>' +
+          '<span>保证金流水审核</span>' +
           '</a>';
-      }
 
       var clientIcon = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
       var operatorIcon = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>';
+      var draftIcon = '<svg viewBox="0 0 24 24" width="17" height="17"><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-6l-2-2H5a2 2 0 0 0-2 2z"/><polyline points="9 14 12 17 15 14"/><line x1="12" y1="10" x2="12" y2="17"/></svg>';
+
+      // 草稿区（可展开一级菜单，底部展示）
+      function draftBlock(items) {
+        return '<div class="sidebar-parent" onclick="toggleSubmenu(this)">' +
+          draftIcon + '<span>草稿</span>' +
+          '<svg class="arrow" viewBox="0 0 24 24" width="12" height="12"><path d="m6 9 6 6 6-6"/></svg>' +
+          '</div>' +
+          '<div class="sidebar-children">' + items + '</div>';
+      }
 
       if (role === 'talent') {
-        // 达人：仅客户视角
-        recruitMenu.innerHTML = submenuBlock('客户视角', clientIcon, clientItems);
+        // 达人：入驻流程（顶部） + 客户视角 + 客户菜单 + 草稿
+        recruitMenu.innerHTML = panoramaItem + flowItem + sectionLabel('客户视角', clientIcon) + clientItems + draftBlock(draftItems);
       } else if (role === 'operator') {
-        // 运营：仅运营视角
-        recruitMenu.innerHTML = submenuBlock('运营视角', operatorIcon, operatorItems('入驻意向审核'));
+        // 运营：入驻流程（顶部） + 运营视角 + 运营菜单 + 草稿
+        recruitMenu.innerHTML = panoramaItem + flowItem + sectionLabel('运营视角', operatorIcon) + operatorItems('客户合作管理') + draftBlock(operatorDraftItems);
       } else if (role === 'bd') {
-        // BD：仅运营视角（只读列表）
-        recruitMenu.innerHTML = submenuBlock('运营视角', operatorIcon, operatorItems('申请列表'));
+        // BD：全景图 + 入驻流程（顶部） + 运营视角 + 运营菜单 + 草稿
+        recruitMenu.innerHTML = panoramaItem + flowItem + sectionLabel('运营视角', operatorIcon) + operatorItems('申请列表') + draftBlock(operatorDraftItems);
       } else if (role === 'admin') {
-        // 管理员：客户视角 + 运营视角全量菜单
+        // 管理员：入驻流程（顶部） + 客户视角 + 客户菜单 + 运营视角 + 运营菜单 + 草稿
         recruitMenu.innerHTML =
-          submenuBlock('客户视角', clientIcon, clientItems) +
-          submenuBlock('运营视角', operatorIcon, operatorItems('入驻意向审核'));
+          panoramaItem + flowItem +
+          sectionLabel('客户视角', clientIcon) + clientItems +
+          sectionLabel('运营视角', operatorIcon) + operatorItems('客户合作管理') +
+          draftBlock(operatorDraftItems);
       }
     }
 
@@ -585,7 +619,7 @@
     }
 
     function markSidebarActive(el) {
-      document.querySelectorAll('.sidebar-item').forEach(function(i) { i.classList.remove('active'); });
+      clearSidebarActive();
       el.classList.add('active');
     }
 
@@ -599,15 +633,15 @@
         if (PLAN_STATUSES.indexOf(apps[i].status) > -1) { target = apps[i]; break; }
       }
       if (target) openTab('pages/recruit/project-plan.html?id=' + target.id, '项目规划');
-      else openTab('pages/recruit/mine.html', '我的申请');
+      else openTab('pages/recruit/mine.html', '客户入驻申请');
     }
 
-    // 申请详情：打开最新一条申请的详情，无记录则引导到我的申请
+    // 申请详情：打开最新一条申请的详情，无记录则引导到客户入驻申请
     function openTalentDetail(el) {
       markSidebarActive(el);
       var apps = getTalentApps();
       if (apps.length > 0) openTab('pages/recruit/detail.html?id=' + apps[apps.length - 1].id, '申请详情');
-      else openTab('pages/recruit/mine.html', '我的申请');
+      else openTab('pages/recruit/mine.html', '客户入驻申请');
     }
 
     // ===== 右上角账号切换：客户 / 运营 / 管理员 =====
