@@ -537,7 +537,14 @@
       var panoramaItem =
         '<div class="sidebar-parent" data-page="pages/recruit/panorama.html" onclick="switchSidebar(this)">' +
         '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>' +
-        '<span>分销全景工作流</span>' +
+        '<span>分销管理</span>' +
+        '</div>';
+
+      // 分销全景图（独立菜单，保留原分销管理页面）
+      var customerPanoramaItem =
+        '<div class="sidebar-parent" data-page="pages/recruit/panorama-customer.html" onclick="switchSidebar(this)">' +
+        '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V9"/><path d="M10 19V5"/><path d="M16 19v-7"/><path d="M22 19V3"/><path d="M2 19h22"/></svg>' +
+        '<span>分销全景图</span>' +
         '</div>';
 
       // 入驻流程（顶部一级菜单，所有角色可见）
@@ -588,17 +595,17 @@
 
       if (role === 'talent') {
         // 达人：入驻流程（顶部） + 客户视角 + 客户菜单 + 草稿
-        recruitMenu.innerHTML = panoramaItem + flowItem + sectionLabel('客户视角', clientIcon) + clientItems + draftBlock(draftItems);
+        recruitMenu.innerHTML = panoramaItem + customerPanoramaItem + flowItem + sectionLabel('客户视角', clientIcon) + clientItems + draftBlock(draftItems);
       } else if (role === 'operator') {
         // 运营：入驻流程（顶部） + 运营视角 + 运营菜单 + 草稿
-        recruitMenu.innerHTML = panoramaItem + flowItem + sectionLabel('运营视角', operatorIcon) + operatorItems('客户合作管理') + draftBlock(operatorDraftItems);
+        recruitMenu.innerHTML = panoramaItem + customerPanoramaItem + flowItem + sectionLabel('运营视角', operatorIcon) + operatorItems('客户合作管理') + draftBlock(operatorDraftItems);
       } else if (role === 'bd') {
         // BD：全景图 + 入驻流程（顶部） + 运营视角 + 运营菜单 + 草稿
-        recruitMenu.innerHTML = panoramaItem + flowItem + sectionLabel('运营视角', operatorIcon) + operatorItems('申请列表') + draftBlock(operatorDraftItems);
+        recruitMenu.innerHTML = panoramaItem + customerPanoramaItem + flowItem + sectionLabel('运营视角', operatorIcon) + operatorItems('申请列表') + draftBlock(operatorDraftItems);
       } else if (role === 'admin') {
         // 管理员：入驻流程（顶部） + 客户视角 + 客户菜单 + 运营视角 + 运营菜单 + 草稿
         recruitMenu.innerHTML =
-          panoramaItem + flowItem +
+          panoramaItem + customerPanoramaItem + flowItem +
           sectionLabel('客户视角', clientIcon) + clientItems +
           sectionLabel('运营视角', operatorIcon) + operatorItems('客户合作管理') +
           draftBlock(operatorDraftItems);

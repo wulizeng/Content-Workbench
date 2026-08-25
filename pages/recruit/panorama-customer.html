@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>分销管理</title>
+  <title>分销全景图</title>
   <link rel="stylesheet" href="../../css/style.css">
   <style>
     :root {
@@ -161,8 +161,8 @@
       box-shadow: 0 8px 24px rgba(29, 43, 84, .045);
       animation: stage-in .38s ease-out both;
     }
-    .stage-card:nth-of-type(3) { animation-delay: .05s; }
-    .stage-card:nth-of-type(5) { animation-delay: .1s; }
+    .stage-card:nth-of-type(2) { animation-delay: .05s; }
+    .stage-card:nth-of-type(3) { animation-delay: .1s; }
 
     .stage-head {
       position: relative;
@@ -192,16 +192,32 @@
     .stage-title p { margin: 0; color: #7a8598; font-size: 11px; line-height: 1.45; }
     .stage-tag {
       align-self: start;
-      min-width: 58px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 92px;
       margin: -12px -14px 0 0;
-      padding: 8px 10px 7px;
-      border-radius: 0 0 0 10px;
-      color: #4d5870;
-      background: var(--stage-soft);
-      font-size: 11px;
-      font-weight: 700;
-      text-align: center;
+      padding: 8px 11px 8px 10px;
+      border: 1px solid color-mix(in srgb, var(--stage-color) 16%, transparent);
+      border-top: 0;
+      border-right: 0;
+      border-radius: 0 0 0 12px;
+      color: var(--stage-color);
+      background: linear-gradient(135deg, #fff, var(--stage-soft));
+      box-shadow: -4px 5px 14px color-mix(in srgb, var(--stage-color) 8%, transparent);
+      white-space: nowrap;
     }
+    .stage-tag::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: var(--stage-color);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--stage-color) 12%, transparent);
+    }
+    .stage-tag-label { color: #536078; font-size: 10px; line-height: 1; font-weight: 650; }
+    .stage-tag-number { font-size: 13px; line-height: 1; font-weight: 850; letter-spacing: .04em; }
 
     .stage-body { padding: 14px 14px 16px; }
     .function-group + .function-group { margin-top: 16px; }
@@ -270,8 +286,9 @@
       .workflow { grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr) 28px minmax(0, 1fr); }
       .hero { padding-right: 250px; }
       .hero-art { right: 58px; }
-      .stage-head { grid-template-columns: 28px minmax(0, 1fr); }
-      .stage-tag { display: none; }
+      .stage-head { grid-template-columns: 28px minmax(0, 1fr) auto; }
+      .stage-tag { min-width: 50px; gap: 5px; padding-inline: 8px; }
+      .stage-tag-label { display: none; }
     }
 
     @media (max-width: 900px) {
@@ -282,7 +299,6 @@
       .flow-connector::before { top: 2px; bottom: 2px; left: 50%; right: auto; border-top: 0; border-left: 1px dashed #9fb0ff; }
       .connector-dot { top: calc(50% - 7px); }
       .stage-head { grid-template-columns: 30px minmax(0, 1fr) auto; }
-      .stage-tag { display: block; }
     }
 
     @media (max-width: 600px) {
@@ -296,7 +312,8 @@
       .hero-art { display: none; }
       .stage-card { border-radius: 13px; }
       .stage-head { min-height: 78px; padding: 13px 12px; }
-      .stage-tag { margin: -13px -12px 0 0; }
+      .stage-tag { min-width: 76px; gap: 5px; margin: -13px -12px 0 0; padding: 8px; }
+      .stage-tag-label { display: none; }
       .stage-body { padding: 13px 12px 15px; }
       .action-item { min-height: 46px; font-size: 13px; }
     }
@@ -312,15 +329,15 @@
   <script>
     if (!Auth.requireAuth()) {}
     if (window.parent) {
-      window.parent.postMessage({type:'breadcrumb', text:'分销管理'}, '*');
+      window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 分销全景图'}, '*');
     }
   </script>
 
   <section class="hero" aria-labelledby="pageTitle">
     <div class="hero-copy">
       <div class="eyebrow">DISTRIBUTION HUB</div>
-      <h1 id="pageTitle">分销管理</h1>
-      <p>从客户接入、合作签约到经营协作与档案沉淀，串联分销业务关键节点。点击任一功能即可快速进入对应工作台。</p>
+      <h1 id="pageTitle">分销全景图</h1>
+      <p>围绕客户招商与客户管理，串联入驻、签约及合作经营全周期。点击任一工作项即可快速进入对应工作台。</p>
     </div>
     <button class="hero-guide" type="button" onclick="openPage('pages/recruit/flow.html', '入驻流程')" aria-label="查看入驻流程指南">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.7 9a2.4 2.4 0 1 1 3.6 2.1c-.8.5-1.3 1-1.3 2.1"/><path d="M12 17h.01"/></svg>
@@ -333,29 +350,24 @@
     </div>
   </section>
 
-  <section class="workflow" aria-label="分销枢纽三阶段工作流">
+  <section class="workflow" aria-label="客户入驻、签约管理与客户管理三阶段工作流">
     <article class="stage-card" style="--stage-color:#5b6cf5;--stage-soft:#eef0ff;">
       <header class="stage-head">
         <span class="stage-number">1</span>
         <div class="stage-title">
-          <h2>合作接入与意向审核</h2>
-          <p>建立合作意向，完成入驻资料提交与内部审核</p>
+          <h2>客户入驻</h2>
+          <p>确认合作模式，完成企业信息与项目规划提交</p>
         </div>
-        <span class="stage-tag">合作前</span>
+        <span class="stage-tag" aria-label="入驻阶段 01"><span class="stage-tag-label">入驻阶段</span><strong class="stage-tag-number">01</strong></span>
       </header>
       <div class="stage-body">
         <section class="function-group" style="--group-color:#ff7849;">
-          <h3 class="group-title"><span class="group-icon"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/></svg></span>接入发起</h3>
+          <h3 class="group-title"><span class="group-icon"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/></svg></span>客户入驻</h3>
           <div class="action-list">
-            <button class="action-item" type="button" onclick="openRegisterPage()">客户注册<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
-            <button class="action-item" type="button" onclick="openPage('pages/recruit/mine.html', '客户入驻申请')">客户入驻申请<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
-          </div>
-        </section>
-        <section class="function-group" style="--group-color:#3b82f6;">
-          <h3 class="group-title"><span class="group-icon"><svg viewBox="0 0 24 24"><path d="M9 11.5 11 14l4.5-5"/><path d="M12 3 5 6v5c0 4.6 2.9 8.2 7 10 4.1-1.8 7-5.4 7-10V6l-7-3Z"/></svg></span>意向审核</h3>
-          <div class="action-list">
-            <button class="action-item" type="button" onclick="openPage('pages/recruit/list.html', '客户合作管理')">客户合作管理<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
-            <button class="action-item" type="button" onclick="openPage('pages/recruit/flow.html', '入驻流程')">招商入驻协同流程<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+            <button class="action-item" type="button" onclick="openPage('pages/recruit/apply.html', '选择合作模式')">选择合作模式<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+            <button class="action-item" type="button" onclick="openPage('pages/recruit/apply.html', '填写企业信息')">填写企业信息<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+            <button class="action-item" type="button" onclick="openPage('pages/recruit/project-plan.html', '提交项目规划')">提交项目规划<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+            <button class="action-item" type="button" onclick="openPage('pages/recruit/list.html', '审核客户资质')">审核客户资质<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
           </div>
         </section>
       </div>
@@ -367,31 +379,21 @@
       <header class="stage-head">
         <span class="stage-number">2</span>
         <div class="stage-title">
-          <h2>签约与入驻协同</h2>
-          <p>围绕合同、保证金、授权及账号权限完成入驻</p>
+          <h2>签约管理</h2>
+          <p>完成合同、保证金、授权及合作账号配置</p>
         </div>
-        <span class="stage-tag">合作中</span>
+        <span class="stage-tag" aria-label="签约阶段 02"><span class="stage-tag-label">签约阶段</span><strong class="stage-tag-number">02</strong></span>
       </header>
       <div class="stage-body">
         <section class="function-group" style="--group-color:#8b6be8;">
           <h3 class="group-title"><span class="group-icon"><svg viewBox="0 0 24 24"><path d="M6 3h9l3 3v15H6z"/><path d="M14 3v4h4M9 12h6M9 16h4"/></svg></span>签约管理</h3>
           <div class="action-list">
-            <button class="action-item" type="button" onclick="openPage('pages/recruit/cooperation-sign-list.html', '客户合作签约')">客户合作签约<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
-            <button class="action-item" type="button" onclick="openPage('pages/recruit/contract-sign.html', '签署合同')">签署合同<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
-          </div>
-        </section>
-        <section class="function-group" style="--group-color:#20a9df;">
-          <h3 class="group-title"><span class="group-icon"><svg viewBox="0 0 24 24"><path d="M12 3v18M7 7.5C7 5.6 9.2 4 12 4s5 1.6 5 3.5-2.2 3.3-5 3.3-5 1.5-5 3.4S9.2 18 12 18s5-1.7 5-3.8"/></svg></span>入驻准备</h3>
-          <div class="action-list">
+            <button class="action-item" type="button" onclick="openPage('pages/recruit/contract-sign.html', '签署合作合同')">签署合作合同<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
             <button class="action-item" type="button" onclick="openPage('pages/recruit/deposit-pay.html', '缴纳保证金')">缴纳保证金<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
             <button class="action-item" type="button" onclick="openPage('pages/recruit/auth-letter.html', '开具授权书')">开具授权书<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
-            <button class="action-item" type="button" onclick="openPage('pages/recruit/account-info.html', '录入账号信息')">录入账号信息<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
-            <button class="action-item" type="button" onclick="openPage('pages/recruit/account-apply.html', '申请账号与权限')">申请账号与权限<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
-            <button class="action-item" type="button" onclick="openPage('pages/recruit/rules-briefing.html', '宣导规则')">宣导规则<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
-          </div>
-          <div class="stage-metrics" aria-label="签约统计">
-            <div class="metric"><strong id="signCount">0</strong><span>签约记录</span></div>
-            <div class="metric"><strong id="doneCount">0</strong><span>已完成签约</span></div>
+            <button class="action-item" type="button" onclick="openPage('pages/recruit/account-info.html', '录入合作信息')">录入合作信息<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+            <button class="action-item" type="button" onclick="openPage('pages/recruit/account-apply.html', '申请账号权限')">申请账号权限<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+            <button class="action-item" type="button" onclick="openPage('pages/recruit/rules-briefing.html', '签署品牌规则')">签署品牌规则<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
           </div>
         </section>
       </div>
@@ -403,31 +405,23 @@
       <header class="stage-head">
         <span class="stage-number">3</span>
         <div class="stage-title">
-          <h2>经营协作与档案沉淀</h2>
-          <p>统一管理合作主体、经营账号与全周期业务档案</p>
+          <h2>客户管理</h2>
+          <p>覆盖客户合作后的目标、商品、账号与经营管理</p>
         </div>
-        <span class="stage-tag">合作后</span>
+        <span class="stage-tag" aria-label="管理阶段 03"><span class="stage-tag-label">管理阶段</span><strong class="stage-tag-number">03</strong></span>
       </header>
       <div class="stage-body">
         <section class="function-group" style="--group-color:#ff7849;">
-          <h3 class="group-title"><span class="group-icon"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0M14 15a4.5 4.5 0 0 1 6.5 4"/></svg></span>合作管理</h3>
+          <h3 class="group-title"><span class="group-icon"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0M14 15a4.5 4.5 0 0 1 6.5 4"/></svg></span>客户管理</h3>
           <div class="action-list">
-            <button class="action-item" type="button" onclick="openPage('pages/recruit/list.html', '客户合作管理')">客户合作管理<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
-            <button class="action-item" type="button" onclick="openPage('pages/recruit/supplier.html', '供应商管理')">供应商管理<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
-          </div>
-        </section>
-        <section class="function-group" style="--group-color:#10a7d8;">
-          <h3 class="group-title"><span class="group-icon"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3Z"/></svg></span>账号经营</h3>
-          <div class="action-list">
-            <button class="action-item" type="button" onclick="openPage('pages/recruit/live-account.html', '直播账号管理')">直播账号管理<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
-          </div>
-        </section>
-        <section class="function-group" style="--group-color:#8b6be8;">
-          <h3 class="group-title"><span class="group-icon"><svg viewBox="0 0 24 24"><path d="M4 7h6l2 2h8v11H4z"/><path d="M4 7V4h7l2 3"/></svg></span>合作档案</h3>
-          <div class="action-list">
-            <button class="action-item" type="button" onclick="openPage('pages/recruit/contract.html', '客户合同管理')">客户合同管理<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
-            <button class="action-item" type="button" onclick="openPage('pages/recruit/invoice-info.html', '开票信息录入')">开票信息录入<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
-            <button class="action-item" type="button" onclick="openPage('pages/recruit/deposit-flow.html', '保证金流水')">保证金流水<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+            <button class="action-item" type="button" onclick="openPage('pages/recruit/contract.html', '档案管理')">档案管理<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+            <button class="action-item" type="button" onclick="openPage('pages/recruit/project-plan.html', '目标管理')">目标管理<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+            <button class="action-item" type="button" onclick="openPage('pages/store-engine/list.html', '商品管理')">商品管理<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+            <button class="action-item" type="button" onclick="openPage('pages/recruit/live-account.html', '账号管理')">账号管理<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+            <button class="action-item" type="button" onclick="openPage('pages/store-engine/manage.html', '店铺管理')">店铺管理<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+            <button class="action-item" type="button" onclick="openPage('pages/store-engine/commission-manage.html', '激励管理')">激励管理<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+            <button class="action-item" type="button" onclick="openPage('pages/recruit/deposit-flow.html', '结算管理')">结算管理<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+            <button class="action-item" type="button" onclick="openPage('pages/guide/list.html', '培训管理')">培训管理<svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
           </div>
         </section>
       </div>
@@ -442,28 +436,6 @@
     }
   }
 
-  function openRegisterPage() {
-    window.open('login.html?mode=register', '_blank', 'noopener');
-  }
-
-  (function updateSignMetrics() {
-    var list = [];
-    try {
-      list = JSON.parse(localStorage.getItem('recruit_cooperation_list') || '[]');
-      if (!Array.isArray(list)) list = [];
-    } catch (error) {
-      list = [];
-    }
-
-    var requiredKeys = ['contract', 'deposit', 'auth_letter', 'account_info', 'account_apply', 'rules'];
-    var completed = list.filter(function(record) {
-      var nodes = record && record.nodes ? record.nodes : {};
-      return requiredKeys.every(function(key) { return nodes[key] === 'completed'; });
-    }).length;
-
-    document.getElementById('signCount').textContent = list.length;
-    document.getElementById('doneCount').textContent = completed;
-  })();
 </script>
 </body>
 </html>
