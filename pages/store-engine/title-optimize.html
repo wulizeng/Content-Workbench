@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>基础运营 - 批量标题优化</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    /* ===== 流程说明 ===== */
+    .flow-section {
+      background: linear-gradient(135deg, #eef0ff 0%, #f8f9ff 100%);
+      border: 1px solid #dce0f8;
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 12px;
+    }
+    .flow-header { display:flex; align-items:center; gap:6px; margin-bottom:10px; }
+    .flow-header svg { color:var(--primary); }
+    .flow-header h3 { margin:0; font-size:14px; font-weight:700; color:var(--ink); }
+    .flow-steps { display:flex; align-items:center; gap:0; }
+    .flow-step {
+      display:flex; align-items:center; gap:8px;
+      padding:8px 14px; background:#fff; border-radius:6px;
+      border:1px solid #e4e9f1; flex:1; transition:all .2s;
+    }
+    .flow-step:hover { border-color:var(--primary); box-shadow:0 2px 8px rgba(91,108,245,.12); }
+    .flow-step-icon {
+      width:28px; height:28px; border-radius:6px;
+      display:grid; place-items:center; font-size:14px;
+      flex-shrink:0; background:var(--primary-50); color:var(--primary);
+    }
+    .flow-step-info { flex:1; min-width:0; }
+    .flow-step-title { font-size:12px; font-weight:650; color:var(--ink); }
+    .flow-step-desc { font-size:11px; color:var(--text-tertiary); margin-top:1px; }
+    .flow-arrow { flex-shrink:0; color:#cbd5e1; padding:0 4px; display:flex; align-items:center; }
+
+    /* ===== 表格 ===== */
+    .to-table {
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      font-size:13px;
+    }
+    .to-table thead th {
+      background:linear-gradient(180deg, #f8fafc, #f1f5f9);
+      padding:10px 12px;
+      text-align:left;
+      font-weight:600;
+      font-size:12px;
+      color:var(--text-secondary);
+      border-bottom:2px solid var(--border);
+      white-space:nowrap;
+      position:sticky;
+      top:0;
+      z-index:10;
+    }
+    .to-table tbody td {
+      padding:10px 12px;
+      border-bottom:1px solid var(--border-light);
+      font-size:13px;
+      color:var(--text-primary);
+      white-space:nowrap !important;
+      word-break:normal !important;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .to-table tbody tr:hover td { background:#f8fafc; }
+    .to-table tbody tr.row-selected td { background:var(--primary-50) !important; }
+
+    .col-batch-no { font-family:"SF Mono","Menlo",monospace; font-size:12px; font-weight:600; color:var(--primary); white-space:nowrap; }
+
+    /* 操作类型/执行状态胶囊文本居中、隐藏前置圆点 */
+    .to-table td .status-tag { justify-content:center; }
+    .to-table td .status-tag::before { display:none; }
+
+    /* ===== 弹窗 ===== */
+    .modal-overlay {
+      position:fixed; top:0; left:0; right:0; bottom:0;
+      background:rgba(0,0,0,.45); z-index:9999;
+      display:flex; align-items:center; justify-content:center;
+      animation:modalFadeIn .25s ease;
+    }
+    @keyframes modalFadeIn { from{opacity:0} to{opacity:1} }
+    .modal {
+      background:#fff; border-radius:12px; width:620px; max-width:92vw;
+      max-height:90vh; box-shadow:0 24px 60px rgba(0,0,0,.2);
+      display:flex; flex-direction:column; animation:modalSlideIn .3s ease;
+    }
+    @keyframes modalSlideIn { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+    .modal-head {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:20px 24px 16px; border-bottom:1px solid #e4e9f1;
+    }
+    .modal-head h3 { margin:0; font-size:17px; font-weight:700; color:#0f172a; }
+    .modal-close {
+      width:28px; height:28px; border:none; background:transparent;
+      border-radius:6px; cursor:pointer; display:grid; place-items:center;
+      color:#647084; font-size:18px; transition:background .15s;
+    }
+    .modal-close:hover { background:#f0f2f5; }
+    .modal-body { padding:20px 24px; overflow-y:auto; flex:1; min-height:0; }
+    .modal-foot {
+      display:flex; justify-content:flex-end; gap:10px;
+      padding:16px 24px 20px; border-top:1px solid #e4e9f1;
+    }
+    .modal-foot .btn { min-width:80px; }
+
+    .form-label { font-size:13px; font-weight:600; color:var(--text-secondary); display:block; margin-bottom:6px; }
+    .form-input {
+      width:100%; padding:10px 14px; border:1px solid var(--border);
+      border-radius:8px; font:inherit; font-size:13px; outline:none;
+      background:var(--bg-secondary,#f8fafc); transition:border-color .18s;
+    }
+    .form-input:focus { border-color:var(--primary); background:#fff; }
+    .form-textarea {
+      width:100%; padding:12px 14px; border:1px solid var(--border);
+      border-radius:8px; font:inherit; font-size:13px; line-height:1.6;
+      resize:vertical; outline:none; background:var(--bg-secondary,#f8fafc);
+      transition:border-color .18s;
+    }
+    .form-textarea:focus { border-color:var(--primary); background:#fff; }
+    .form-select {
+      width:100%; padding:10px 14px; border:1px solid var(--border);
+      border-radius:8px; font:inherit; font-size:13px; outline:none;
+      background:var(--bg-secondary,#f8fafc); cursor:pointer; appearance:auto;
+      transition:border-color .18s;
+    }
+    .form-select:focus { border-color:var(--primary); background:#fff; }
+    .form-hint { font-size:11px; color:var(--text-tertiary); margin-top:4px; }
+    .form-row { display:flex; gap:14px; }
+    .form-row > div { flex:1; }
+
+    /* ===== 视图切换 Tab ===== */
+    .view-tabs {
+      display:flex; gap:0; margin-bottom:12px; border-bottom:2px solid var(--border);
+    }
+    .view-tab {
+      padding:10px 20px; font-size:13px; font-weight:600; color:var(--text-tertiary);
+      cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px;
+      transition:all .15s; user-select:none; display:flex; align-items:center; gap:5px;
+    }
+    .view-tab:hover { color:var(--primary); }
+    .view-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
+    .view-tab svg { width:14px; height:14px; }
+    .view-panel { display:none; }
+    .view-panel.active { display:block; }
+
+    /* ===== 日期范围 ===== */
+    .date-range { display:flex; align-items:center; gap:6px; }
+    .date-range input[type="date"] {
+      padding:6px 10px; border:1px solid var(--border); border-radius:6px;
+      font:inherit; font-size:12px; outline:none; background:var(--bg-secondary,#f8fafc);
+      transition:border-color .18s; width:130px;
+    }
+    .date-range input[type="date"]:focus { border-color:var(--primary); background:#fff; }
+    .date-sep { color:var(--text-tertiary); font-size:12px; }
+  </style>
+</head>
+<body>
+<div class="page-container">
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script>
+    if (window.parent) {
+      window.parent.postMessage({type:'breadcrumb', text:'基础运营 <span>/</span> 批量标题优化'}, '*');
+    }
+  </script>
+
+  <div class="page-title">批量标题优化</div>
+
+  <!-- ===== 视图切换 Tab ===== -->
+  <div class="view-tabs">
+    <div class="view-tab active" id="tabListView" onclick="switchView('list')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+        <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+      </svg>
+      列表视图
+    </div>
+    <div class="view-tab" id="tabDetailView" onclick="switchView('detail')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+      </svg>
+      明细视图
+    </div>
+  </div>
+
+  <!-- ===== 列表视图 ===== -->
+  <div id="listViewPanel" class="view-panel active">
+
+  <!-- ===== 流程说明 ===== -->
+  <div class="flow-section">
+    <div class="flow-header">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+        <line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/>
+      </svg>
+      <h3>流程说明</h3>
+    </div>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="flow-step-icon">📝</div>
+        <div class="flow-step-info">
+          <div class="flow-step-title">录入优化信息</div>
+          <div class="flow-step-desc">录入店铺商品优化信息</div>
+        </div>
+      </div>
+      <div class="flow-arrow"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="flow-step">
+        <div class="flow-step-icon">🔍</div>
+        <div class="flow-step-info">
+          <div class="flow-step-title">匹配商品ID</div>
+          <div class="flow-step-desc">系统自动匹配平台商品ID</div>
+        </div>
+      </div>
+      <div class="flow-arrow"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="flow-step">
+        <div class="flow-step-icon">⚙️</div>
+        <div class="flow-step-info">
+          <div class="flow-step-title">执行标题优化</div>
+          <div class="flow-step-desc">系统自动执行标题优化</div>
+        </div>
+      </div>
+      <div class="flow-arrow"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="flow-step">
+        <div class="flow-step-icon">📤</div>
+        <div class="flow-step-info">
+          <div class="flow-step-title">输出执行结果</div>
+          <div class="flow-step-desc">系统自动输出执行结果</div>
+        </div>
+      </div>
+      <div class="flow-arrow"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="flow-step">
+        <div class="flow-step-icon">📊</div>
+        <div class="flow-step-info">
+          <div class="flow-step-title">查看结果</div>
+          <div class="flow-step-desc">用户查看结果</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 主列表区域 ===== -->
+  <div id="listMain">
+
+  <!-- ===== 筛选区域 ===== -->
+  <div class="search-area">
+    <div class="search-row">
+      <div class="search-item">
+        <label>批次号：</label>
+        <input type="text" id="sBatchNo" placeholder="输入批次号">
+      </div>
+      <div class="search-item">
+        <label>店铺：</label>
+        <input type="text" id="sShopName" placeholder="输入店铺名称">
+      </div>
+      <div class="search-item">
+        <label>商品款号：</label>
+        <input type="text" id="sStyleNo" placeholder="输入商品款号">
+      </div>
+      <div class="search-item">
+        <label>平台商品ID：</label>
+        <input type="text" id="sProductId" placeholder="输入平台商品ID">
+      </div>
+      <div class="search-item">
+        <label>操作类型：</label>
+        <select id="sOpType">
+          <option value="">全部</option>
+          <option value="内容删除">内容删除</option>
+          <option value="内容替换">内容替换</option>
+        </select>
+      </div>
+      <div class="search-item">
+        <label>执行状态：</label>
+        <select id="sExecStatus">
+          <option value="">全部</option>
+          <option value="待执行">待执行</option>
+          <option value="执行中">执行中</option>
+          <option value="全部成功">全部成功</option>
+          <option value="部分成功">部分成功</option>
+          <option value="全部失败">全部失败</option>
+        </select>
+      </div>
+      <div class="search-item">
+        <label>创建时间：</label>
+        <div class="date-range">
+          <input type="date" id="sCreateTimeStart">
+          <span class="date-sep">~</span>
+          <input type="date" id="sCreateTimeEnd">
+        </div>
+      </div>
+    </div>
+    <div class="search-actions">
+      <button class="btn btn-primary" onclick="doSearch()">查询</button>
+      <button class="btn" onclick="resetSearch()">重置</button>
+    </div>
+  </div>
+
+  <!-- ===== 列表区域 ===== -->
+  <div class="table-area">
+    <div class="table-toolbar">
+      <button class="btn btn-primary" onclick="openNewModal()">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        新增
+      </button>
+      <button class="btn" onclick="doExport()">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        导出
+      </button>
+      <div style="flex:1;"></div>
+    </div>
+
+    <div class="table-scroll">
+      <table class="to-table" id="mainTable">
+        <thead>
+          <tr>
+            <th style="width:40px;"><input type="checkbox" id="checkAll" onclick="toggleAll(this)"></th>
+            <th style="width:40px;">序号</th>
+            <th style="width:160px;">批次号</th>
+            <th style="width:60px;text-align:center;">店铺数</th>
+            <th style="width:70px;text-align:center;">商品款数</th>
+            <th style="width:80px;text-align:center;">平台商品ID数</th>
+            <th style="width:80px;text-align:center;">商品ID成功数</th>
+            <th style="width:80px;text-align:center;">商品ID失败数</th>
+            <th>操作内容</th>
+            <th style="width:80px;">操作类型</th>
+            <th style="width:80px;">执行状态</th>
+            <th>失败原因</th>
+            <th style="width:80px;">创建人</th>
+            <th style="width:140px;">创建时间</th>
+            <th style="width:80px;">更新人</th>
+            <th style="width:140px;">更新时间</th>
+            <th style="width:100px;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="mainTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <span class="page-info">共 <strong id="totalCount">0</strong> 条</span>
+      <span class="page-btn disabled">&laquo;</span>
+      <span class="page-btn active">1</span>
+      <span class="page-btn">&raquo;</span>
+    </div>
+  </div>
+
+  </div><!-- /listMain -->
+
+  <!-- ===== 明细子页面 ===== -->
+  <div id="listDetail" style="display:none;">
+    <div style="margin-bottom:12px;display:flex;align-items:center;gap:12px;">
+      <button class="btn" onclick="doBackToList()" style="display:flex;align-items:center;gap:4px;">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        返回列表
+      </button>
+      <span style="font-size:14px;font-weight:600;color:var(--ink);" id="detailPageTitle">批次明细</span>
+    </div>
+    <div class="search-area">
+      <div class="search-row">
+        <div class="search-item">
+          <label>店铺编码：</label>
+          <input type="text" id="dShopCode" placeholder="输入店铺编码">
+        </div>
+        <div class="search-item">
+          <label>商品款号：</label>
+          <input type="text" id="dStyleNo" placeholder="输入商品款号">
+        </div>
+        <div class="search-item">
+          <label>平台商品ID：</label>
+          <input type="text" id="dProductId" placeholder="输入平台商品ID">
+        </div>
+        <div class="search-item">
+          <label>执行状态：</label>
+          <select id="dExecStatus">
+            <option value="">全部</option>
+            <option value="待执行">待执行</option>
+            <option value="执行中">执行中</option>
+            <option value="成功">成功</option>
+            <option value="失败">失败</option>
+          </select>
+        </div>
+      </div>
+      <div class="search-actions">
+        <button class="btn btn-primary" onclick="doDetailSearch()">查询</button>
+        <button class="btn" onclick="resetDetailSearch()">重置</button>
+      </div>
+    </div>
+    <div class="table-area">
+      <div class="table-toolbar">
+        <button class="btn" onclick="doDetailExport()">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          导出
+        </button>
+        <span style="font-size:13px;font-weight:600;color:var(--ink);margin-left:8px;">商品明细列表</span>
+        <span style="font-size:12px;color:var(--text-tertiary);margin-left:6px;" id="detailTotalBadge">共 0 条</span>
+      </div>
+      <div class="table-scroll">
+        <table class="to-table" id="detailTable">
+          <thead>
+            <tr>
+              <th style="width:40px;"><input type="checkbox" id="detailCheckAll" onclick="toggleDetailAll(this)"></th>
+              <th style="width:40px;">序号</th>
+              <th style="width:160px;">批次号</th>
+              <th>店铺编码</th>
+              <th>店铺名称</th>
+              <th>商品款号</th>
+              <th>平台商品ID</th>
+              <th>操作内容</th>
+              <th style="width:80px;">操作类型</th>
+              <th style="width:70px;">执行状态</th>
+              <th>失败原因</th>
+              <th style="width:80px;">创建人</th>
+              <th style="width:140px;">创建时间</th>
+              <th style="width:80px;">更新人</th>
+              <th style="width:140px;">更新时间</th>
+            </tr>
+          </thead>
+          <tbody id="detailTableBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <span class="page-info">共 <strong id="detailTotalCount">0</strong> 条</span>
+        <span class="page-btn disabled">&laquo;</span>
+        <span class="page-btn active">1</span>
+        <span class="page-btn">&raquo;</span>
+      </div>
+    </div>
+  </div><!-- /listDetail -->
+
+  </div><!-- /listViewPanel -->
+
+  <!-- ===== 明细视图（全量明细直接查询） ===== -->
+  <div id="detailViewPanel" class="view-panel">
+    <div class="search-area">
+      <div class="search-row">
+        <div class="search-item">
+          <label>批次号：</label>
+          <input type="text" id="dvBatchNo" placeholder="输入批次号">
+        </div>
+        <div class="search-item">
+          <label>店铺编码：</label>
+          <input type="text" id="dvShopCode" placeholder="输入店铺编码">
+        </div>
+        <div class="search-item">
+          <label>店铺名称：</label>
+          <input type="text" id="dvShopName" placeholder="输入店铺名称">
+        </div>
+        <div class="search-item">
+          <label>商品款号：</label>
+          <input type="text" id="dvStyleNo" placeholder="输入商品款号">
+        </div>
+        <div class="search-item">
+          <label>平台商品ID：</label>
+          <input type="text" id="dvProductId" placeholder="输入平台商品ID">
+        </div>
+        <div class="search-item">
+          <label>操作类型：</label>
+          <select id="dvOpType">
+            <option value="">全部</option>
+            <option value="内容删除">内容删除</option>
+            <option value="内容替换">内容替换</option>
+          </select>
+        </div>
+        <div class="search-item">
+          <label>执行状态：</label>
+          <select id="dvExecStatus">
+            <option value="">全部</option>
+            <option value="待执行">待执行</option>
+            <option value="执行中">执行中</option>
+            <option value="成功">成功</option>
+            <option value="失败">失败</option>
+          </select>
+        </div>
+        <div class="search-item">
+          <label>创建时间：</label>
+          <div class="date-range">
+            <input type="date" id="dvCreateTimeStart">
+            <span class="date-sep">~</span>
+            <input type="date" id="dvCreateTimeEnd">
+          </div>
+        </div>
+      </div>
+      <div class="search-actions">
+        <button class="btn btn-primary" onclick="doDetailViewSearch()">查询</button>
+        <button class="btn" onclick="resetDetailViewSearch()">重置</button>
+      </div>
+    </div>
+    <div class="table-area">
+      <div class="table-toolbar">
+        <button class="btn" onclick="doDetailViewExport()">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          导出
+        </button>
+        <span style="font-size:13px;font-weight:600;color:var(--ink);margin-left:8px;">商品明细列表</span>
+        <span style="font-size:12px;color:var(--text-tertiary);margin-left:6px;" id="dvTotalBadge">共 0 条</span>
+      </div>
+      <div class="table-scroll">
+        <table class="to-table" id="dvTable">
+          <thead>
+            <tr>
+              <th style="width:40px;"><input type="checkbox" id="dvCheckAll" onclick="toggleDvAll(this)"></th>
+              <th style="width:40px;">序号</th>
+              <th style="width:160px;">批次号</th>
+              <th>店铺编码</th>
+              <th>店铺名称</th>
+              <th>商品款号</th>
+              <th>平台商品ID</th>
+              <th>操作内容</th>
+              <th style="width:80px;">操作类型</th>
+              <th style="width:70px;">执行状态</th>
+              <th>失败原因</th>
+              <th style="width:80px;">创建人</th>
+              <th style="width:140px;">创建时间</th>
+              <th style="width:80px;">更新人</th>
+              <th style="width:140px;">更新时间</th>
+            </tr>
+          </thead>
+          <tbody id="dvTableBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <span class="page-info">共 <strong id="dvTotalCount">0</strong> 条</span>
+        <span class="page-btn disabled">&laquo;</span>
+        <span class="page-btn active">1</span>
+        <span class="page-btn">&raquo;</span>
+      </div>
+    </div>
+  </div><!-- /detailViewPanel -->
+
+</div>
+
+<!-- ===== 新增 - 弹窗 ===== -->
+<div id="newModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeNewModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>📝 新增批量标题优化</h3>
+      <button class="modal-close" onclick="closeNewModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:14px;">
+        <label class="form-label">选择店铺：</label>
+        <select id="newShopSelect" class="form-select">
+          <option value="">请选择店铺</option>
+          <option value="SH001|云途食品旗舰店">SH001 - 云途食品旗舰店</option>
+          <option value="SH002|西湖生鲜专营店">SH002 - 西湖生鲜专营店</option>
+          <option value="SH003|鼎盛茗茶旗舰店">SH003 - 鼎盛茗茶旗舰店</option>
+          <option value="SH004|前海食品专营店">SH004 - 前海食品专营店</option>
+        </select>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label class="form-label">商品款号：</label>
+        <textarea id="newStyleNos" class="form-textarea" rows="4" placeholder="每行一个商品款号，或英文逗号隔开&#10;例如：STY001,STY002,STY003"></textarea>
+        <div class="form-hint">支持批量录入，多个款号用英文逗号或换行分隔</div>
+      </div>
+      <div class="form-row" style="margin-bottom:14px;">
+        <div>
+          <label class="form-label">操作类型：</label>
+          <select id="newOpType" class="form-select">
+            <option value="">请选择</option>
+            <option value="内容删除">内容删除</option>
+            <option value="内容替换">内容替换</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label class="form-label">操作内容：</label>
+        <textarea id="newOpContent" class="form-textarea" rows="3" placeholder="请输入需要操作的内容，例如：门店同款、商场同款、线上线下"></textarea>
+        <div class="form-hint">描述需要对标题执行的具体操作内容</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeNewModal()">取消</button>
+      <button class="btn btn-primary" onclick="submitNew()">提交</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== 工具函数 =====
+function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function now() { return new Date().toLocaleString('zh-CN', {hour12:false}).replace(/\//g, '-'); }
+function toast(msg, type) {
+  var c = document.getElementById('toastContainer');
+  var t = document.createElement('div');
+  t.className = 'toast ' + (type || 'success');
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(function() { t.classList.add('hide'); setTimeout(function() { t.remove(); }, 300); }, 2500);
+}
+
+// ===== 批次号生成 =====
+var batchSeq = 1;
+function generateBatchNo() {
+  var d = new Date();
+  var dateStr = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+  var seq = String(batchSeq++).padStart(4, '0');
+  return 'PC' + dateStr + seq;
+}
+
+// ===== Mock 明细数据 =====
+var mockDetails = [
+  { batchNo:'PC202608280001', shopCode:'SH001', shopName:'云途食品旗舰店', styleNo:'STY001', productId:'PID100001', opContent:'门店同款', opType:'内容删除', execStatus:'成功', failReason:'', creator:'张运营', createTime:'2026-08-28 09:30:00', updater:'系统', updateTime:'2026-08-28 09:35:00' },
+  { batchNo:'PC202608280001', shopCode:'SH001', shopName:'云途食品旗舰店', styleNo:'STY002', productId:'PID100002', opContent:'门店同款', opType:'内容删除', execStatus:'成功', failReason:'', creator:'张运营', createTime:'2026-08-28 09:30:00', updater:'系统', updateTime:'2026-08-28 09:35:00' },
+  { batchNo:'PC202608280001', shopCode:'SH002', shopName:'西湖生鲜专营店', styleNo:'STY003', productId:'PID200001', opContent:'门店同款', opType:'内容删除', execStatus:'失败', failReason:'平台商品ID不存在', creator:'张运营', createTime:'2026-08-28 09:30:00', updater:'系统', updateTime:'2026-08-28 09:35:00' },
+  { batchNo:'PC202608280001', shopCode:'SH002', shopName:'西湖生鲜专营店', styleNo:'STY004', productId:'PID200002', opContent:'门店同款', opType:'内容删除', execStatus:'成功', failReason:'', creator:'张运营', createTime:'2026-08-28 09:30:00', updater:'系统', updateTime:'2026-08-28 09:36:00' },
+  { batchNo:'PC202608280001', shopCode:'SH003', shopName:'鼎盛茗茶旗舰店', styleNo:'STY005', productId:'PID300001', opContent:'门店同款', opType:'内容删除', execStatus:'成功', failReason:'', creator:'张运营', createTime:'2026-08-28 09:30:00', updater:'系统', updateTime:'2026-08-28 09:36:00' },
+  { batchNo:'PC202608280001', shopCode:'SH003', shopName:'鼎盛茗茶旗舰店', styleNo:'STY006', productId:'PID300002', opContent:'门店同款', opType:'内容删除', execStatus:'待执行', failReason:'', creator:'张运营', createTime:'2026-08-28 09:30:00', updater:'', updateTime:'' },
+  { batchNo:'PC202608290001', shopCode:'SH001', shopName:'云途食品旗舰店', styleNo:'STY007', productId:'PID100003', opContent:'商场同款', opType:'内容删除', execStatus:'执行中', failReason:'', creator:'李运营', createTime:'2026-08-29 14:00:00', updater:'', updateTime:'' },
+  { batchNo:'PC202608290001', shopCode:'SH004', shopName:'前海食品专营店', styleNo:'STY008', productId:'PID400001', opContent:'商场同款', opType:'内容删除', execStatus:'成功', failReason:'', creator:'李运营', createTime:'2026-08-29 14:00:00', updater:'系统', updateTime:'2026-08-29 14:10:00' },
+  { batchNo:'PC202608290001', shopCode:'SH004', shopName:'前海食品专营店', styleNo:'STY009', productId:'PID400002', opContent:'商场同款', opType:'内容删除', execStatus:'失败', failReason:'接口调用超时', creator:'李运营', createTime:'2026-08-29 14:00:00', updater:'系统', updateTime:'2026-08-29 14:10:00' },
+  { batchNo:'PC202608300001', shopCode:'SH002', shopName:'西湖生鲜专营店', styleNo:'STY010', productId:'PID200003', opContent:'线上线下', opType:'内容替换', execStatus:'成功', failReason:'', creator:'王运营', createTime:'2026-08-30 10:20:00', updater:'系统', updateTime:'2026-08-30 10:25:00' }
+];
+
+// ===== Mock 主列表（按批次聚合） =====
+var mockData = [
+  { batchNo:'PC202608280001', shopCount:3, styleCount:6, pidCount:6, pidSuccess:4, pidFail:2, opContent:'门店同款', opType:'内容删除', execStatus:'部分成功', failReason:'部分商品ID不存在', creator:'张运营', createTime:'2026-08-28 09:30:00', updater:'系统', updateTime:'2026-08-28 09:36:00', detailIndices:[0,1,2,3,4,5] },
+  { batchNo:'PC202608290001', shopCount:2, styleCount:3, pidCount:3, pidSuccess:1, pidFail:1, opContent:'商场同款', opType:'内容删除', execStatus:'执行中', failReason:'', creator:'李运营', createTime:'2026-08-29 14:00:00', updater:'', updateTime:'', detailIndices:[6,7,8] },
+  { batchNo:'PC202608300001', shopCount:1, styleCount:1, pidCount:1, pidSuccess:1, pidFail:0, opContent:'线上线下', opType:'内容替换', execStatus:'全部成功', failReason:'', creator:'王运营', createTime:'2026-08-30 10:20:00', updater:'系统', updateTime:'2026-08-30 10:25:00', detailIndices:[9] }
+];
+
+// ===== 状态标签 =====
+function stExec(s) {
+  if (s === '全部成功' || s === '成功') return '<span class="status-tag submitted">' + esc(s) + '</span>';
+  if (s === '执行中') return '<span class="status-tag" style="background:rgba(14,165,233,0.1);color:#0284c7;border:1px solid rgba(14,165,233,0.2);justify-content:center;">执行中</span>';
+  if (s === '待执行') return '<span class="status-tag initial">' + esc(s) + '</span>';
+  if (s === '部分成功') return '<span class="status-tag" style="background:rgba(245,158,11,0.1);color:#d97706;border:1px solid rgba(245,158,11,0.2);">部分成功</span>';
+  if (s === '全部失败' || s === '失败') return '<span class="status-tag rejected">' + esc(s) + '</span>';
+  return '<span class="status-tag initial">' + esc(s) + '</span>';
+}
+
+function stOpType(s) {
+  if (s === '内容删除') return '<span class="status-tag" style="background:rgba(239,68,68,0.08);color:#dc2626;border:1px solid rgba(239,68,68,0.15);justify-content:center;">内容删除</span>';
+  if (s === '内容替换') return '<span class="status-tag" style="background:rgba(14,165,233,0.08);color:#0284c7;border:1px solid rgba(14,165,233,0.15);justify-content:center;">内容替换</span>';
+  return esc(s || '');
+}
+
+// ===== 渲染主列表 =====
+function renderTable(data) {
+  var tbody = document.getElementById('mainTableBody');
+  var html = '';
+  if (data.length === 0) {
+    html = '<tr><td colspan="17" class="empty-state"><span class="empty-icon">&#128269;</span><div class="empty-text">暂无数据</div><div class="empty-hint">点击「新增」创建批量标题优化任务</div></td></tr>';
+  } else {
+    data.forEach(function(row, i) {
+      html += '<tr>';
+      html += '<td><input type="checkbox" class="row-check" onclick="toggleRow(this)"></td>';
+      html += '<td>' + (i + 1) + '</td>';
+      html += '<td class="col-batch-no">' + esc(row.batchNo) + '</td>';
+      html += '<td style="text-align:center;font-weight:700;color:#0ea5e9;">' + row.shopCount + '</td>';
+      html += '<td style="text-align:center;font-weight:700;color:#8b5cf6;">' + row.styleCount + '</td>';
+      html += '<td style="text-align:center;font-weight:600;color:#6366f1;">' + row.pidCount + '</td>';
+      html += '<td style="text-align:center;color:#10b981;font-weight:600;">' + row.pidSuccess + '</td>';
+      html += '<td style="text-align:center;color:#ef4444;font-weight:600;">' + row.pidFail + '</td>';
+      html += '<td title="' + esc(row.opContent) + '">' + esc(row.opContent) + '</td>';
+      html += '<td>' + stOpType(row.opType) + '</td>';
+      html += '<td>' + stExec(row.execStatus) + '</td>';
+      html += '<td title="' + esc(row.failReason) + '">' + esc(row.failReason || '') + '</td>';
+      html += '<td>' + esc(row.creator || '') + '</td>';
+      html += '<td style="font-size:12px;">' + esc(row.createTime || '') + '</td>';
+      html += '<td>' + esc(row.updater || '') + '</td>';
+      html += '<td style="font-size:12px;">' + esc(row.updateTime || '') + '</td>';
+      html += '<td class="col-actions">';
+      html += '<a class="link-action" href="javascript:void(0)" onclick="doViewDetail(\'' + esc(row.batchNo) + '\')">查看明细</a>';
+      html += '</td></tr>';
+    });
+  }
+  tbody.innerHTML = html;
+  document.getElementById('totalCount').textContent = data.length;
+  document.getElementById('checkAll').checked = false;
+}
+
+// ===== 渲染明细列表 =====
+function renderDetailTable(details) {
+  var tbody = document.getElementById('detailTableBody');
+  var html = '';
+  if (details.length === 0) {
+    html = '<tr><td colspan="15" class="empty-state"><span class="empty-icon">&#128269;</span><div class="empty-text">暂无数据</div></td></tr>';
+  } else {
+    details.forEach(function(row, i) {
+      html += '<tr>';
+      html += '<td><input type="checkbox" class="detail-row-check" onclick="toggleDetailRow(this)"></td>';
+      html += '<td>' + (i + 1) + '</td>';
+      html += '<td class="col-batch-no">' + esc(row.batchNo) + '</td>';
+      html += '<td>' + esc(row.shopCode) + '</td>';
+      html += '<td>' + esc(row.shopName) + '</td>';
+      html += '<td>' + esc(row.styleNo) + '</td>';
+      html += '<td>' + esc(row.productId) + '</td>';
+      html += '<td title="' + esc(row.opContent) + '">' + esc(row.opContent) + '</td>';
+      html += '<td>' + stOpType(row.opType) + '</td>';
+      html += '<td>' + stExec(row.execStatus) + '</td>';
+      html += '<td title="' + esc(row.failReason) + '">' + esc(row.failReason || '') + '</td>';
+      html += '<td>' + esc(row.creator || '') + '</td>';
+      html += '<td style="font-size:12px;">' + esc(row.createTime || '') + '</td>';
+      html += '<td>' + esc(row.updater || '') + '</td>';
+      html += '<td style="font-size:12px;">' + esc(row.updateTime || '') + '</td>';
+      html += '</tr>';
+    });
+  }
+  tbody.innerHTML = html;
+  document.getElementById('detailTotalCount').textContent = details.length;
+  document.getElementById('detailTotalBadge').textContent = '共 ' + details.length + ' 条';
+  document.getElementById('detailCheckAll').checked = false;
+}
+
+// ===== 全选/行选 =====
+function toggleAll(el) {
+  document.querySelectorAll('.row-check').forEach(function(c) {
+    c.checked = el.checked;
+    var tr = c.closest('tr');
+    if (tr) tr.classList.toggle('row-selected', el.checked);
+  });
+}
+function toggleRow(el) {
+  var tr = el.closest('tr');
+  if (tr) tr.classList.toggle('row-selected', el.checked);
+}
+function toggleDetailAll(el) {
+  document.querySelectorAll('.detail-row-check').forEach(function(c) {
+    c.checked = el.checked;
+    var tr = c.closest('tr');
+    if (tr) tr.classList.toggle('row-selected', el.checked);
+  });
+}
+function toggleDetailRow(el) {
+  var tr = el.closest('tr');
+  if (tr) tr.classList.toggle('row-selected', el.checked);
+}
+
+// ===== 搜索/筛选 =====
+function doSearch() {
+  var bn = document.getElementById('sBatchNo').value.trim().toLowerCase();
+  var sn = document.getElementById('sShopName').value.trim().toLowerCase();
+  var sno = document.getElementById('sStyleNo').value.trim().toLowerCase();
+  var pid = document.getElementById('sProductId').value.trim().toLowerCase();
+  var ot = document.getElementById('sOpType').value;
+  var es = document.getElementById('sExecStatus').value;
+  var ctStart = document.getElementById('sCreateTimeStart').value;
+  var ctEnd = document.getElementById('sCreateTimeEnd').value;
+  var filtered = mockData.filter(function(row) {
+    if (bn && (row.batchNo || '').toLowerCase().indexOf(bn) < 0) return false;
+    if (ot && row.opType !== ot) return false;
+    if (es && row.execStatus !== es) return false;
+    if (ctStart && row.createTime && row.createTime.substring(0,10) < ctStart) return false;
+    if (ctEnd && row.createTime && row.createTime.substring(0,10) > ctEnd) return false;
+    // 明细维度筛选：店铺/商品款号/平台商品ID
+    if (sn || sno || pid) {
+      var details = row.detailIndices.map(function(i) { return mockDetails[i]; });
+      var hasMatch = details.some(function(d) {
+        if (sn && d.shopName.toLowerCase().indexOf(sn) < 0) return false;
+        if (sno && d.styleNo.toLowerCase().indexOf(sno) < 0) return false;
+        if (pid && d.productId.toLowerCase().indexOf(pid) < 0) return false;
+        return true;
+      });
+      if (!hasMatch) return false;
+    }
+    return true;
+  });
+  renderTable(filtered);
+}
+
+function resetSearch() {
+  document.getElementById('sBatchNo').value = '';
+  document.getElementById('sShopName').value = '';
+  document.getElementById('sStyleNo').value = '';
+  document.getElementById('sProductId').value = '';
+  document.getElementById('sOpType').value = '';
+  document.getElementById('sExecStatus').value = '';
+  document.getElementById('sCreateTimeStart').value = '';
+  document.getElementById('sCreateTimeEnd').value = '';
+  renderTable(mockData);
+}
+
+// ===== 明细搜索 =====
+var currentDetailBatch = '';
+function doDetailSearch() {
+  var sc = document.getElementById('dShopCode').value.trim().toLowerCase();
+  var sn = document.getElementById('dStyleNo').value.trim().toLowerCase();
+  var pid = document.getElementById('dProductId').value.trim().toLowerCase();
+  var es = document.getElementById('dExecStatus').value;
+  var batch = mockData.find(function(r) { return r.batchNo === currentDetailBatch; });
+  var details = batch ? batch.detailIndices.map(function(i) { return mockDetails[i]; }) : [];
+  var filtered = details.filter(function(row) {
+    if (sc && row.shopCode.toLowerCase().indexOf(sc) < 0) return false;
+    if (sn && row.styleNo.toLowerCase().indexOf(sn) < 0) return false;
+    if (pid && row.productId.toLowerCase().indexOf(pid) < 0) return false;
+    if (es && row.execStatus !== es) return false;
+    return true;
+  });
+  renderDetailTable(filtered);
+}
+
+function resetDetailSearch() {
+  document.getElementById('dShopCode').value = '';
+  document.getElementById('dStyleNo').value = '';
+  document.getElementById('dProductId').value = '';
+  document.getElementById('dExecStatus').value = '';
+  var batch = mockData.find(function(r) { return r.batchNo === currentDetailBatch; });
+  var details = batch ? batch.detailIndices.map(function(i) { return mockDetails[i]; }) : [];
+  renderDetailTable(details);
+}
+
+// ===== 查看明细 =====
+function doViewDetail(batchNo) {
+  currentDetailBatch = batchNo;
+  document.getElementById('listMain').style.display = 'none';
+  document.getElementById('listDetail').style.display = '';
+  document.getElementById('detailPageTitle').innerHTML = '批次明细 - ' + esc(batchNo);
+  var batch = mockData.find(function(r) { return r.batchNo === batchNo; });
+  var details = batch ? batch.detailIndices.map(function(i) { return mockDetails[i]; }) : [];
+  renderDetailTable(details);
+}
+
+function doBackToList() {
+  document.getElementById('listDetail').style.display = 'none';
+  document.getElementById('listMain').style.display = '';
+  currentDetailBatch = '';
+}
+
+// ===== 新增弹窗 =====
+function openNewModal() {
+  document.getElementById('newModal').style.display = '';
+}
+function closeNewModal() {
+  document.getElementById('newModal').style.display = 'none';
+  document.getElementById('newShopSelect').value = '';
+  document.getElementById('newStyleNos').value = '';
+  document.getElementById('newOpType').value = '';
+  document.getElementById('newOpContent').value = '';
+}
+
+function submitNew() {
+  var shopVal = document.getElementById('newShopSelect').value;
+  var styleNos = document.getElementById('newStyleNos').value.trim();
+  var opType = document.getElementById('newOpType').value;
+  var opContent = document.getElementById('newOpContent').value.trim();
+
+  if (!shopVal) { toast('请选择店铺', 'error'); return; }
+  if (!styleNos) { toast('请输入商品款号', 'error'); return; }
+  if (!opType) { toast('请选择操作类型', 'error'); return; }
+  if (!opContent) { toast('请输入操作内容', 'error'); return; }
+
+  var shopParts = shopVal.split('|');
+  var shopCode = shopParts[0];
+  var shopName = shopParts[1];
+  var styleArr = styleNos.split(/[,\n]+/).map(function(s) { return s.trim(); }).filter(function(s) { return s; });
+
+  if (styleArr.length === 0) { toast('请输入有效的商品款号', 'error'); return; }
+
+  var batchNo = generateBatchNo();
+  var ts = now();
+  var creator = '当前用户';
+  var detailIndices = [];
+
+  styleArr.forEach(function(sno) {
+    var idx = mockDetails.length;
+    detailIndices.push(idx);
+    mockDetails.push({
+      batchNo: batchNo,
+      shopCode: shopCode,
+      shopName: shopName,
+      styleNo: sno,
+      productId: 'PID' + String(Math.floor(Math.random() * 900000) + 100000),
+      opContent: opContent,
+      opType: opType,
+      execStatus: '待执行',
+      failReason: '',
+      creator: creator,
+      createTime: ts,
+      updater: '',
+      updateTime: ''
+    });
+  });
+
+  mockData.unshift({
+    batchNo: batchNo,
+    shopCount: 1,
+    styleCount: styleArr.length,
+    pidCount: styleArr.length,
+    pidSuccess: 0,
+    pidFail: 0,
+    opContent: opContent,
+    opType: opType,
+    execStatus: '待执行',
+    failReason: '',
+    creator: creator,
+    createTime: ts,
+    updater: '',
+    updateTime: '',
+    detailIndices: detailIndices
+  });
+
+  closeNewModal();
+  renderTable(mockData);
+  toast('新增成功，批次号：' + batchNo);
+}
+
+// ===== 导出（模拟） =====
+function doExport() { toast('导出功能开发中…'); }
+function doDetailExport() { toast('明细导出功能开发中…'); }
+
+// ===== 视图切换 =====
+function switchView(view) {
+  document.getElementById('tabListView').classList.toggle('active', view === 'list');
+  document.getElementById('tabDetailView').classList.toggle('active', view === 'detail');
+  document.getElementById('listViewPanel').classList.toggle('active', view === 'list');
+  document.getElementById('detailViewPanel').classList.toggle('active', view === 'detail');
+  if (view === 'detail') renderDetailView(mockDetails);
+}
+
+// ===== 明细视图：渲染 =====
+function renderDetailView(details) {
+  var tbody = document.getElementById('dvTableBody');
+  var html = '';
+  if (details.length === 0) {
+    html = '<tr><td colspan="15" class="empty-state"><span class="empty-icon">&#128269;</span><div class="empty-text">暂无数据</div></td></tr>';
+  } else {
+    details.forEach(function(row, i) {
+      html += '<tr>';
+      html += '<td><input type="checkbox" class="dv-row-check" onclick="toggleDvRow(this)"></td>';
+      html += '<td>' + (i + 1) + '</td>';
+      html += '<td class="col-batch-no">' + esc(row.batchNo) + '</td>';
+      html += '<td>' + esc(row.shopCode) + '</td>';
+      html += '<td>' + esc(row.shopName) + '</td>';
+      html += '<td>' + esc(row.styleNo) + '</td>';
+      html += '<td>' + esc(row.productId) + '</td>';
+      html += '<td title="' + esc(row.opContent) + '">' + esc(row.opContent) + '</td>';
+      html += '<td>' + stOpType(row.opType) + '</td>';
+      html += '<td>' + stExec(row.execStatus) + '</td>';
+      html += '<td title="' + esc(row.failReason) + '">' + esc(row.failReason || '') + '</td>';
+      html += '<td>' + esc(row.creator || '') + '</td>';
+      html += '<td style="font-size:12px;">' + esc(row.createTime || '') + '</td>';
+      html += '<td>' + esc(row.updater || '') + '</td>';
+      html += '<td style="font-size:12px;">' + esc(row.updateTime || '') + '</td>';
+      html += '</tr>';
+    });
+  }
+  tbody.innerHTML = html;
+  document.getElementById('dvTotalCount').textContent = details.length;
+  document.getElementById('dvTotalBadge').textContent = '共 ' + details.length + ' 条';
+  document.getElementById('dvCheckAll').checked = false;
+}
+
+// ===== 明细视图：全选/行选 =====
+function toggleDvAll(el) {
+  document.querySelectorAll('.dv-row-check').forEach(function(c) {
+    c.checked = el.checked;
+    var tr = c.closest('tr');
+    if (tr) tr.classList.toggle('row-selected', el.checked);
+  });
+}
+function toggleDvRow(el) {
+  var tr = el.closest('tr');
+  if (tr) tr.classList.toggle('row-selected', el.checked);
+}
+
+// ===== 明细视图：搜索/筛选 =====
+function doDetailViewSearch() {
+  var bn = document.getElementById('dvBatchNo').value.trim().toLowerCase();
+  var sc = document.getElementById('dvShopCode').value.trim().toLowerCase();
+  var sn = document.getElementById('dvShopName').value.trim().toLowerCase();
+  var sno = document.getElementById('dvStyleNo').value.trim().toLowerCase();
+  var pid = document.getElementById('dvProductId').value.trim().toLowerCase();
+  var ot = document.getElementById('dvOpType').value;
+  var es = document.getElementById('dvExecStatus').value;
+  var ctStart = document.getElementById('dvCreateTimeStart').value;
+  var ctEnd = document.getElementById('dvCreateTimeEnd').value;
+  var filtered = mockDetails.filter(function(row) {
+    if (bn && (row.batchNo || '').toLowerCase().indexOf(bn) < 0) return false;
+    if (sc && row.shopCode.toLowerCase().indexOf(sc) < 0) return false;
+    if (sn && row.shopName.toLowerCase().indexOf(sn) < 0) return false;
+    if (sno && row.styleNo.toLowerCase().indexOf(sno) < 0) return false;
+    if (pid && row.productId.toLowerCase().indexOf(pid) < 0) return false;
+    if (ot && row.opType !== ot) return false;
+    if (es && row.execStatus !== es) return false;
+    if (ctStart && row.createTime && row.createTime.substring(0,10) < ctStart) return false;
+    if (ctEnd && row.createTime && row.createTime.substring(0,10) > ctEnd) return false;
+    return true;
+  });
+  renderDetailView(filtered);
+}
+
+function resetDetailViewSearch() {
+  document.getElementById('dvBatchNo').value = '';
+  document.getElementById('dvShopCode').value = '';
+  document.getElementById('dvShopName').value = '';
+  document.getElementById('dvStyleNo').value = '';
+  document.getElementById('dvProductId').value = '';
+  document.getElementById('dvOpType').value = '';
+  document.getElementById('dvExecStatus').value = '';
+  document.getElementById('dvCreateTimeStart').value = '';
+  document.getElementById('dvCreateTimeEnd').value = '';
+  renderDetailView(mockDetails);
+}
+
+function doDetailViewExport() { toast('明细视图导出功能开发中…'); }
+
+// ===== 初始化 =====
+renderTable(mockData);
+</script>
+</body>
+</html>
