@@ -69,6 +69,10 @@
     .to-table tbody tr.row-selected td { background:var(--primary-50) !important; }
 
     .col-batch-no { font-family:"SF Mono","Menlo",monospace; font-size:12px; font-weight:600; color:var(--primary); white-space:nowrap; }
+    
+        /* 商品标题列：固定宽度 +  ellipsis */
+        .col-title { max-width:230px; min-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; }
+        .col-title.title-after { color:var(--primary); font-weight:500; }
 
     /* 操作类型/执行状态胶囊文本居中、隐藏前置圆点 */
     .to-table td .status-tag { justify-content:center; }
@@ -183,6 +187,16 @@
       font-weight:600; color:var(--text-secondary); border-bottom:2px solid var(--border);
     }
     .import-preview td { padding:6px 10px; border-bottom:1px solid #f1f5f9; }
+    .import-preview tr.row-invalid td { background:#fef2f2; color:#b91c1c; }
+
+    /* ===== 语义预览 ===== */
+    .semantic-preview {
+      padding:10px 14px; border-radius:10px; font-size:13px;
+      background:var(--primary-50); border:1px solid rgba(99,102,241,0.18); color:#4338ca;
+    }
+    .semantic-preview .sp-label { font-size:11px; color:var(--text-tertiary); display:block; margin-bottom:4px; }
+    .semantic-preview strong { font-weight:700; }
+    .semantic-preview .sp-arrow { color:#ef4444; font-weight:700; margin:0 6px; }
   </style>
 </head>
 <body>
@@ -357,7 +371,8 @@
             <th style="width:80px;text-align:center;">平台商品ID数</th>
             <th style="width:80px;text-align:center;">商品ID成功数</th>
             <th style="width:80px;text-align:center;">商品ID失败数</th>
-            <th>操作内容</th>
+            <th style="width:110px;">源内容</th>
+            <th style="width:110px;">目标内容</th>
             <th style="width:80px;">操作类型</th>
             <th style="width:80px;">执行状态</th>
             <th>失败原因</th>
@@ -443,8 +458,11 @@
               <th>店铺名称</th>
               <th>商品款号</th>
               <th>平台商品ID</th>
-              <th>操作内容</th>
+              <th style="width:110px;">源内容</th>
+              <th style="width:110px;">目标内容</th>
               <th style="width:80px;">操作类型</th>
+              <th style="width:220px;">操作前标题</th>
+              <th style="width:220px;">操作后标题</th>
               <th style="width:70px;">执行状态</th>
               <th>失败原因</th>
               <th style="width:80px;">创建人</th>
@@ -545,8 +563,11 @@
               <th>店铺名称</th>
               <th>商品款号</th>
               <th>平台商品ID</th>
-              <th>操作内容</th>
+              <th style="width:110px;">源内容</th>
+              <th style="width:110px;">目标内容</th>
               <th style="width:80px;">操作类型</th>
+              <th style="width:220px;">操作前标题</th>
+              <th style="width:220px;">操作后标题</th>
               <th style="width:70px;">执行状态</th>
               <th>失败原因</th>
               <th style="width:80px;">创建人</th>
@@ -603,7 +624,7 @@
         <div class="form-row" style="margin-bottom:14px;">
           <div>
             <label class="form-label">操作类型：</label>
-            <select id="newOpType" class="form-select">
+            <select id="newOpType" class="form-select" onchange="onNewOpTypeChange()">
               <option value="">请选择</option>
               <option value="内容删除">内容删除</option>
               <option value="内容替换">内容替换</option>
@@ -611,10 +632,18 @@
           </div>
         </div>
         <div style="margin-bottom:14px;">
-          <label class="form-label">操作内容：</label>
-          <textarea id="newOpContent" class="form-textarea" rows="3" placeholder="请输入需要操作的内容，例如：门店同款、商场同款、线上线下"></textarea>
-          <div class="form-hint">描述需要对标题执行的具体操作内容</div>
+          <label class="form-label">源内容：</label>
+          <textarea id="newOpContent" class="form-textarea" rows="2" placeholder="标题中需被匹配的内容，例如：门店同款、商场同款" oninput="updateNewSemanticPreview()"></textarea>
+          <div class="form-hint">内容删除时从标题中移除该文本；内容替换时作为被替换的源文本</div>
         </div>
+        <!-- 目标内容：仅操作类型=内容替换时展示 -->
+        <div id="newReplaceField" style="display:none;margin-bottom:14px;">
+          <label class="form-label">目标内容：<span style="color:#ef4444;">*</span></label>
+          <textarea id="newReplaceContent" class="form-textarea" rows="2" placeholder="替换后的新文本，例如：线上线下" oninput="updateNewSemanticPreview()"></textarea>
+          <div class="form-hint">将标题中的源内容替换为该文本</div>
+        </div>
+        <!-- 语义实时预览 -->
+        <div id="newSemanticPreview" class="semantic-preview" style="display:none;"></div>
       </div>
 
       <!-- Excel导入面板 -->
@@ -635,7 +664,7 @@
             <polyline points="10 9 9 9 8 9"/>
           </svg>
           <div class="uz-title">点击选择 Excel 文件</div>
-          <div class="uz-hint">支持 .xlsx / .xls，表头需包含“店铺”“商品款号”“操作类型”“操作内容”列</div>
+          <div class="uz-hint">支持 .xlsx / .xls，Sheet1 为商品清单，Sheet2 为店铺清单</div>
           <input type="file" id="importFileInput" style="display:none" accept=".xlsx,.xls" onchange="handleImportFile(this.files)">
         </div>
         <div id="importFileInfo" style="display:none;margin-top:10px;padding:10px 14px;background:#ecfdf5;border-radius:10px;font-size:13px;color:#059669;"></div>
@@ -677,23 +706,26 @@ function generateBatchNo() {
 
 // ===== Mock 明细数据 =====
 var mockDetails = [
-  { batchNo:'PC202608280001', shopCode:'SH001', shopName:'云途食品旗舰店', styleNo:'STY001', productId:'PID100001', opContent:'门店同款', opType:'内容删除', execStatus:'成功', failReason:'', creator:'张运营', createTime:'2026-08-28 09:30:00', updater:'系统', updateTime:'2026-08-28 09:35:00' },
-  { batchNo:'PC202608280001', shopCode:'SH001', shopName:'云途食品旗舰店', styleNo:'STY002', productId:'PID100002', opContent:'门店同款', opType:'内容删除', execStatus:'成功', failReason:'', creator:'张运营', createTime:'2026-08-28 09:30:00', updater:'系统', updateTime:'2026-08-28 09:35:00' },
-  { batchNo:'PC202608280001', shopCode:'SH002', shopName:'西湖生鲜专营店', styleNo:'STY003', productId:'PID200001', opContent:'门店同款', opType:'内容删除', execStatus:'失败', failReason:'平台商品ID不存在', creator:'张运营', createTime:'2026-08-28 09:30:00', updater:'系统', updateTime:'2026-08-28 09:35:00' },
-  { batchNo:'PC202608280001', shopCode:'SH002', shopName:'西湖生鲜专营店', styleNo:'STY004', productId:'PID200002', opContent:'门店同款', opType:'内容删除', execStatus:'成功', failReason:'', creator:'张运营', createTime:'2026-08-28 09:30:00', updater:'系统', updateTime:'2026-08-28 09:36:00' },
-  { batchNo:'PC202608280001', shopCode:'SH003', shopName:'鼎盛茗茶旗舰店', styleNo:'STY005', productId:'PID300001', opContent:'门店同款', opType:'内容删除', execStatus:'成功', failReason:'', creator:'张运营', createTime:'2026-08-28 09:30:00', updater:'系统', updateTime:'2026-08-28 09:36:00' },
-  { batchNo:'PC202608280001', shopCode:'SH003', shopName:'鼎盛茗茶旗舰店', styleNo:'STY006', productId:'PID300002', opContent:'门店同款', opType:'内容删除', execStatus:'待执行', failReason:'', creator:'张运营', createTime:'2026-08-28 09:30:00', updater:'', updateTime:'' },
-  { batchNo:'PC202608290001', shopCode:'SH001', shopName:'云途食品旗舰店', styleNo:'STY007', productId:'PID100003', opContent:'商场同款', opType:'内容删除', execStatus:'执行中', failReason:'', creator:'李运营', createTime:'2026-08-29 14:00:00', updater:'', updateTime:'' },
-  { batchNo:'PC202608290001', shopCode:'SH004', shopName:'前海食品专营店', styleNo:'STY008', productId:'PID400001', opContent:'商场同款', opType:'内容删除', execStatus:'成功', failReason:'', creator:'李运营', createTime:'2026-08-29 14:00:00', updater:'系统', updateTime:'2026-08-29 14:10:00' },
-  { batchNo:'PC202608290001', shopCode:'SH004', shopName:'前海食品专营店', styleNo:'STY009', productId:'PID400002', opContent:'商场同款', opType:'内容删除', execStatus:'失败', failReason:'接口调用超时', creator:'李运营', createTime:'2026-08-29 14:00:00', updater:'系统', updateTime:'2026-08-29 14:10:00' },
-  { batchNo:'PC202608300001', shopCode:'SH002', shopName:'西湖生鲜专营店', styleNo:'STY010', productId:'PID200003', opContent:'线上线下', opType:'内容替换', execStatus:'成功', failReason:'', creator:'王运营', createTime:'2026-08-30 10:20:00', updater:'系统', updateTime:'2026-08-30 10:25:00' }
+  { batchNo:'PC202608280001', shopCode:'SH001', shopName:'云途食品旗舰店', styleNo:'STY001', productId:'PID100001', opContent:'门店同款', replaceContent:'', opType:'内容删除', titleBefore:'云途每日坚果混合装 500g 门店同款 健康零食', titleAfter:'云途每日坚果混合装 500g 健康零食', execStatus:'成功', failReason:'', creator:'张运营', createTime:'2026-08-28 09:30:00', updater:'系统', updateTime:'2026-08-28 09:35:00' },
+  { batchNo:'PC202608280001', shopCode:'SH001', shopName:'云途食品旗舰店', styleNo:'STY002', productId:'PID100002', opContent:'门店同款', replaceContent:'', opType:'内容删除', titleBefore:'云途有机红枣夹核桃仁 门店同款 2件装', titleAfter:'云途有机红枣夹核桃仁 2件装', execStatus:'成功', failReason:'', creator:'张运营', createTime:'2026-08-28 09:30:00', updater:'系统', updateTime:'2026-08-28 09:35:00' },
+  { batchNo:'PC202608280001', shopCode:'SH002', shopName:'西湖生鲜专营店', styleNo:'STY003', productId:'PID200001', opContent:'门店同款', replaceContent:'', opType:'内容删除', titleBefore:'', titleAfter:'', execStatus:'失败', failReason:'平台商品ID不存在', creator:'张运营', createTime:'2026-08-28 09:30:00', updater:'系统', updateTime:'2026-08-28 09:35:00' },
+  { batchNo:'PC202608280001', shopCode:'SH002', shopName:'西湖生鲜专营店', styleNo:'STY004', productId:'PID200002', opContent:'门店同款', replaceContent:'', opType:'内容删除', titleBefore:'西湖山核桃仁新货 门店同款 坚果礼盒', titleAfter:'西湖山核桃仁新货 坚果礼盒', execStatus:'成功', failReason:'', creator:'张运营', createTime:'2026-08-28 09:30:00', updater:'系统', updateTime:'2026-08-28 09:36:00' },
+  { batchNo:'PC202608280001', shopCode:'SH003', shopName:'鼎盛茗茶旗舰店', styleNo:'STY005', productId:'PID300001', opContent:'门店同款', replaceContent:'', opType:'内容删除', titleBefore:'鼎盛高山绿茶明前龙顶 门店同款 250g', titleAfter:'鼎盛高山绿茶明前龙顶 250g', execStatus:'成功', failReason:'', creator:'张运营', createTime:'2026-08-28 09:30:00', updater:'系统', updateTime:'2026-08-28 09:36:00' },
+  { batchNo:'PC202608280001', shopCode:'SH003', shopName:'鼎盛茗茶旗舰店', styleNo:'STY006', productId:'PID300002', opContent:'门店同款', replaceContent:'', opType:'内容删除', titleBefore:'鼎盛养生花茶礼盒 门店同款 十连包', titleAfter:'', execStatus:'待执行', failReason:'', creator:'张运营', createTime:'2026-08-28 09:30:00', updater:'', updateTime:'' },
+  { batchNo:'PC202608290001', shopCode:'SH001', shopName:'云途食品旗舰店', styleNo:'STY007', productId:'PID100003', opContent:'门店同款', replaceContent:'', opType:'内容删除', titleBefore:'云途云南小粒咖啡豆 门店同款 中深度烘焙', titleAfter:'', execStatus:'执行中', failReason:'', creator:'李运营', createTime:'2026-08-29 14:00:00', updater:'', updateTime:'' },
+  { batchNo:'PC202608290001', shopCode:'SH004', shopName:'前海食品专营店', styleNo:'STY008', productId:'PID400001', opContent:'门店同款', replaceContent:'', opType:'内容删除', titleBefore:'前海进口黑巧克力 门店同款 纯可可脂', titleAfter:'前海进口黑巧克力 纯可可脂', execStatus:'成功', failReason:'', creator:'李运营', createTime:'2026-08-29 14:00:00', updater:'系统', updateTime:'2026-08-29 14:10:00' },
+  { batchNo:'PC202608290001', shopCode:'SH004', shopName:'前海食品专营店', styleNo:'STY009', productId:'PID400002', opContent:'门店同款', replaceContent:'', opType:'内容删除', titleBefore:'前海手工糕点礼盒 门店同款 中式茶点', titleAfter:'', execStatus:'失败', failReason:'接口调用超时', creator:'李运营', createTime:'2026-08-29 14:00:00', updater:'系统', updateTime:'2026-08-29 14:10:00' },
+  { batchNo:'PC202608300001', shopCode:'SH002', shopName:'西湖生鲜专营店', styleNo:'STY010', productId:'PID200003', opContent:'商场同款', replaceContent:'线上线下', opType:'内容替换', titleBefore:'西湖生鲜水果礼包 商场同款 顺丰空运', titleAfter:'西湖生鲜水果礼包 线上线下 顺丰空运', execStatus:'成功', failReason:'', creator:'王运营', createTime:'2026-08-30 10:20:00', updater:'系统', updateTime:'2026-08-30 10:25:00' },
+  { batchNo:'PC202608300001', shopCode:'SH002', shopName:'西湖生鲜专营店', styleNo:'STY011', productId:'PID200004', opContent:'商场同款', replaceContent:'线上线下', opType:'内容替换', titleBefore:'西湖有机蔬果组合 商场同款 当季直发', titleAfter:'西湖有机蔬果组合 线上线下 当季直发', execStatus:'成功', failReason:'', creator:'王运营', createTime:'2026-08-30 10:20:00', updater:'系统', updateTime:'2026-08-30 10:25:00' },
+  { batchNo:'PC202608300001', shopCode:'SH003', shopName:'鼎盛茗茶旗舰店', styleNo:'STY012', productId:'PID300003', opContent:'商场同款', replaceContent:'线上线下', opType:'内容替换', titleBefore:'鼎盛功夫茶具套装 门店同款 自动上茶', titleAfter:'鼎盛功夫茶具套装 门店同款 自动上茶', execStatus:'失败', failReason:'标题中未找到“商场同款”', creator:'王运营', createTime:'2026-08-30 10:20:00', updater:'系统', updateTime:'2026-08-30 10:26:00' },
+  { batchNo:'PC202608300001', shopCode:'SH003', shopName:'鼎盛茗茶旗舰店', styleNo:'STY013', productId:'PID300004', opContent:'商场同款', replaceContent:'线上线下', opType:'内容替换', titleBefore:'鼎盛普洱熟茶陈年珍藏版礼盒装 商场同款 送礼佳选', titleAfter:'鼎盛普洱熟茶陈年珍藏版礼盒装 线上线下 送礼佳选', execStatus:'失败', failReason:'替换后标题超长（42/40）', creator:'王运营', createTime:'2026-08-30 10:20:00', updater:'系统', updateTime:'2026-08-30 10:26:00' }
 ];
 
 // ===== Mock 主列表（按批次聚合） =====
 var mockData = [
-  { batchNo:'PC202608280001', shopCount:3, styleCount:6, pidCount:6, pidSuccess:4, pidFail:2, opContent:'门店同款', opType:'内容删除', execStatus:'部分成功', failReason:'部分商品ID不存在', creator:'张运营', createTime:'2026-08-28 09:30:00', updater:'系统', updateTime:'2026-08-28 09:36:00', detailIndices:[0,1,2,3,4,5] },
-  { batchNo:'PC202608290001', shopCount:2, styleCount:3, pidCount:3, pidSuccess:1, pidFail:1, opContent:'商场同款', opType:'内容删除', execStatus:'执行中', failReason:'', creator:'李运营', createTime:'2026-08-29 14:00:00', updater:'', updateTime:'', detailIndices:[6,7,8] },
-  { batchNo:'PC202608300001', shopCount:1, styleCount:1, pidCount:1, pidSuccess:1, pidFail:0, opContent:'线上线下', opType:'内容替换', execStatus:'全部成功', failReason:'', creator:'王运营', createTime:'2026-08-30 10:20:00', updater:'系统', updateTime:'2026-08-30 10:25:00', detailIndices:[9] }
+  { batchNo:'PC202608280001', shopCount:3, styleCount:6, pidCount:6, pidSuccess:4, pidFail:2, opContent:'门店同款', replaceContent:'', opType:'内容删除', execStatus:'部分成功', failReason:'部分商品ID不存在', creator:'张运营', createTime:'2026-08-28 09:30:00', updater:'系统', updateTime:'2026-08-28 09:36:00', detailIndices:[0,1,2,3,4,5] },
+  { batchNo:'PC202608290001', shopCount:2, styleCount:3, pidCount:3, pidSuccess:1, pidFail:1, opContent:'门店同款', replaceContent:'', opType:'内容删除', execStatus:'执行中', failReason:'', creator:'李运营', createTime:'2026-08-29 14:00:00', updater:'', updateTime:'', detailIndices:[6,7,8] },
+  { batchNo:'PC202608300001', shopCount:2, styleCount:4, pidCount:4, pidSuccess:2, pidFail:2, opContent:'商场同款', replaceContent:'线上线下', opType:'内容替换', execStatus:'部分成功', failReason:'部分标题未匹配到源内容', creator:'王运营', createTime:'2026-08-30 10:20:00', updater:'系统', updateTime:'2026-08-30 10:26:00', detailIndices:[9,10,11,12] }
 ];
 
 // ===== 状态标签 =====
@@ -712,12 +744,22 @@ function stOpType(s) {
   return esc(s || '');
 }
 
+// ===== 单元格渲染：源内容 / 目标内容（内容删除时目标内容为空） =====
+function tdSrc(row) {
+  return '<td title="' + esc(row.opContent) + '">' + esc(row.opContent) + '</td>';
+}
+function tdDst(row) {
+  var v = row.opType === '内容替换' ? (row.replaceContent || '') : '';
+  return '<td title="' + esc(v) + '">' + esc(v) + '</td>';
+}
+function tdSrcDst(row) { return tdSrc(row) + tdDst(row); }
+
 // ===== 渲染主列表 =====
 function renderTable(data) {
   var tbody = document.getElementById('mainTableBody');
   var html = '';
   if (data.length === 0) {
-    html = '<tr><td colspan="17" class="empty-state"><span class="empty-icon">&#128269;</span><div class="empty-text">暂无数据</div><div class="empty-hint">点击「新增」创建批量标题优化任务</div></td></tr>';
+    html = '<tr><td colspan="18" class="empty-state"><span class="empty-icon">&#128269;</span><div class="empty-text">暂无数据</div><div class="empty-hint">点击「新增」创建批量标题优化任务</div></td></tr>';
   } else {
     data.forEach(function(row, i) {
       html += '<tr>';
@@ -729,7 +771,7 @@ function renderTable(data) {
       html += '<td style="text-align:center;font-weight:600;color:#6366f1;">' + row.pidCount + '</td>';
       html += '<td style="text-align:center;color:#10b981;font-weight:600;">' + row.pidSuccess + '</td>';
       html += '<td style="text-align:center;color:#ef4444;font-weight:600;">' + row.pidFail + '</td>';
-      html += '<td title="' + esc(row.opContent) + '">' + esc(row.opContent) + '</td>';
+      html += tdSrcDst(row);
       html += '<td>' + stOpType(row.opType) + '</td>';
       html += '<td>' + stExec(row.execStatus) + '</td>';
       html += '<td title="' + esc(row.failReason) + '">' + esc(row.failReason || '') + '</td>';
@@ -752,7 +794,7 @@ function renderDetailTable(details) {
   var tbody = document.getElementById('detailTableBody');
   var html = '';
   if (details.length === 0) {
-    html = '<tr><td colspan="15" class="empty-state"><span class="empty-icon">&#128269;</span><div class="empty-text">暂无数据</div></td></tr>';
+    html = '<tr><td colspan="18" class="empty-state"><span class="empty-icon">&#128269;</span><div class="empty-text">暂无数据</div></td></tr>';
   } else {
     details.forEach(function(row, i) {
       html += '<tr>';
@@ -763,8 +805,10 @@ function renderDetailTable(details) {
       html += '<td>' + esc(row.shopName) + '</td>';
       html += '<td>' + esc(row.styleNo) + '</td>';
       html += '<td>' + esc(row.productId) + '</td>';
-      html += '<td title="' + esc(row.opContent) + '">' + esc(row.opContent) + '</td>';
+      html += tdSrcDst(row);
       html += '<td>' + stOpType(row.opType) + '</td>';
+      html += '<td class="col-title" title="' + esc(row.titleBefore || '') + '">' + (row.titleBefore ? esc(row.titleBefore) : '—') + '</td>';
+      html += '<td class="col-title title-after" title="' + esc(row.titleAfter || '') + '">' + (row.titleAfter ? esc(row.titleAfter) : '—') + '</td>';
       html += '<td>' + stExec(row.execStatus) + '</td>';
       html += '<td title="' + esc(row.failReason) + '">' + esc(row.failReason || '') + '</td>';
       html += '<td>' + esc(row.creator || '') + '</td>';
@@ -917,31 +961,71 @@ function closeNewModal() {
   document.getElementById('newStyleNos').value = '';
   document.getElementById('newOpType').value = '';
   document.getElementById('newOpContent').value = '';
+  document.getElementById('newReplaceContent').value = '';
   document.getElementById('importFileInput').value = '';
   document.getElementById('importFileInfo').style.display = 'none';
   document.getElementById('importFileInfo').innerHTML = '';
   document.getElementById('importPreviewArea').style.display = 'none';
   document.getElementById('importPreviewContent').innerHTML = '';
   importedExcelData = [];
+  onNewOpTypeChange();
   switchNewTab('manual');
 }
 
-// ===== 下载导入模板 =====
+// ===== 操作类型联动：内容替换时展示必填「目标内容」 =====
+function onNewOpTypeChange() {
+  var isReplace = document.getElementById('newOpType').value === '内容替换';
+  document.getElementById('newReplaceField').style.display = isReplace ? '' : 'none';
+  if (!isReplace) document.getElementById('newReplaceContent').value = '';
+  updateNewSemanticPreview();
+}
+
+// ===== 实时语义预览 =====
+function updateNewSemanticPreview() {
+  var opType = document.getElementById('newOpType').value;
+  var src = document.getElementById('newOpContent').value.trim();
+  var dst = document.getElementById('newReplaceContent').value.trim();
+  var box = document.getElementById('newSemanticPreview');
+  if (!opType || !src) { box.style.display = 'none'; box.innerHTML = ''; return; }
+  box.style.display = '';
+  if (opType === '内容替换') {
+    box.innerHTML = '<span class="sp-label">执行语义预览</span>将标题中的 <strong>' + esc(src) + '</strong>'
+      + '<span class="sp-arrow">→</span>替换为 <strong>' + esc(dst || '（待填写目标内容）') + '</strong>';
+  } else {
+    box.innerHTML = '<span class="sp-label">执行语义预览</span>从标题中 <strong>删除</strong> 文本 <strong>' + esc(src) + '</strong>';
+  }
+}
+
+// ===== 下载导入模板（双 Sheet：商品清单 + 店铺清单） =====
 function downloadTemplate() {
-  var headers = ['店铺', '商品款号', '操作类型', '操作内容'];
-  var exampleRows = [
-    ['云途食品旗舰店', 'STY001', '内容删除', '门店同款'],
-    ['云途食品旗舰店', 'STY002', '内容删除', '门店同款'],
-    ['西湖生鲜专营店', 'STY003', '内容替换', '商场同款']
+  // Sheet1：商品清单
+  var productHeaders = ['商品款号', '操作类型', '源内容', '目标内容'];
+  var productExamples = [
+    ['STY001', '内容删除', '门店同款', ''],
+    ['STY002', '内容删除', '商场同款', ''],
+    ['STY003', '内容替换', '商场同款', '线上线下'],
+    ['STY004', '内容替换', '门店同款', '线上线下']
   ];
-  var ws = XLSX.utils.aoa_to_sheet([headers].concat(exampleRows));
-  ws['!cols'] = [{ wch: 22 }, { wch: 14 }, { wch: 12 }, { wch: 20 }];
+  var ws1 = XLSX.utils.aoa_to_sheet([productHeaders].concat(productExamples));
+  ws1['!cols'] = [{ wch: 14 }, { wch: 12 }, { wch: 18 }, { wch: 18 }];
+
+  // Sheet2：店铺清单
+  var shopHeaders = ['店铺编码'];
+  var shopExamples = [
+    ['SH001'],
+    ['SH002'],
+    ['SH003']
+  ];
+  var ws2 = XLSX.utils.aoa_to_sheet([shopHeaders].concat(shopExamples));
+  ws2['!cols'] = [{ wch: 14 }];
+
   var wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, '批量标题优化导入');
+  XLSX.utils.book_append_sheet(wb, ws1, '商品清单');
+  XLSX.utils.book_append_sheet(wb, ws2, '店铺清单');
   XLSX.writeFile(wb, '批量标题优化导入模板.xlsx');
 }
 
-// ===== 处理导入文件 =====
+// ===== 处理导入文件（双 Sheet：商品清单 + 店铺清单） =====
 function handleImportFile(files) {
   if (!files || files.length === 0) return;
   var file = files[0];
@@ -959,49 +1043,131 @@ function handleImportFile(files) {
     try {
       var data = new Uint8Array(e.target.result);
       var wb = XLSX.read(data, { type: 'array' });
-      var ws = wb.Sheets[wb.SheetNames[0]];
-      var json = XLSX.utils.sheet_to_json(ws, { defval: '' });
-      if (json.length === 0) { toast('Excel 文件中没有数据', 'error'); return; }
-
-      var keys = Object.keys(json[0]);
-      var shopKey = keys.find(function(k) { return k.indexOf('店铺') >= 0; }) || '';
-      var styleKey = keys.find(function(k) { return k.indexOf('款号') >= 0 || k.indexOf('商品') >= 0; }) || '';
-      var opTypeKey = keys.find(function(k) { return k.indexOf('操作类型') >= 0; }) || '';
-      var opContentKey = keys.find(function(k) { return k.indexOf('操作内容') >= 0; }) || '';
-
-      var shopMap = {
-        '云途食品旗舰店': 'SH001', '西湖生鲜专营店': 'SH002',
-        '鼎盛茗茶旗舰店': 'SH003', '前海食品专营店': 'SH004'
-      };
-
-      importedExcelData = [];
-      json.forEach(function(row) {
-        var shopName = String(row[shopKey] || '').trim();
-        var styleNo = String(row[styleKey] || '').trim();
-        if (!shopName || !styleNo) return;
-        importedExcelData.push({
-          shopCode: shopMap[shopName] || 'SH000',
-          shopName: shopName,
-          styleNo: styleNo,
-          opType: String(row[opTypeKey] || '').trim() || '内容删除',
-          opContent: String(row[opContentKey] || '').trim()
-        });
-      });
-
-      if (importedExcelData.length === 0) {
-        toast('未能解析出有效数据，请检查表头是否包含“店铺”“商品款号”列', 'error');
+      
+      // 检查是否有至少两个 Sheet
+      if (wb.SheetNames.length < 2) {
+        toast('Excel 文件需包含两个 Sheet：Sheet1 商品清单、Sheet2 店铺清单', 'error');
         return;
       }
 
+      // 解析 Sheet1：商品清单
+      var ws1 = wb.Sheets[wb.SheetNames[0]];
+      var products = XLSX.utils.sheet_to_json(ws1, { defval: '' });
+      if (products.length === 0) {
+        toast('Sheet1 商品清单中没有数据', 'error');
+        return;
+      }
+
+      // 解析 Sheet2：店铺清单
+      var ws2 = wb.Sheets[wb.SheetNames[1]];
+      var shops = XLSX.utils.sheet_to_json(ws2, { defval: '' });
+      if (shops.length === 0) {
+        toast('Sheet2 店铺清单中没有数据', 'error');
+        return;
+      }
+
+      // 识别商品清单列名
+      var productKeys = Object.keys(products[0]);
+      var styleKey = productKeys.find(function(k) { return k.indexOf('款号') >= 0 || k.indexOf('商品') >= 0; }) || '';
+      var opTypeKey = productKeys.find(function(k) { return k.indexOf('操作类型') >= 0; }) || '';
+      var opContentKey = productKeys.find(function(k) { return k.indexOf('源内容') >= 0; }) || '';
+      var replaceKey = productKeys.find(function(k) { return k.indexOf('目标内容') >= 0; }) || '';
+
+      // 识别店铺清单列名（仅需店铺编码）
+      var shopKeys = Object.keys(shops[0]);
+      var shopCodeKey = shopKeys.find(function(k) { return k.indexOf('编码') >= 0 || k.indexOf('店铺') >= 0; }) || shopKeys[0] || '';
+
+      // 店铺编码→名称映射（用于预览展示）
+      var shopCodeMap = {
+        'SH001': '云途食品旗舰店', 'SH002': '西湖生鲜专营店',
+        'SH003': '鼎盛茗茶旗舰店', 'SH004': '前海食品专营店'
+      };
+
+      // 解析店铺列表
+      var shopList = [];
+      shops.forEach(function(row) {
+        var code = String(row[shopCodeKey] || '').trim();
+        if (code) {
+          shopList.push({ shopCode: code, shopName: shopCodeMap[code] || '' });
+        }
+      });
+
+      if (shopList.length === 0) {
+        toast('店铺清单中未识别到有效店铺编码', 'error');
+        return;
+      }
+
+      // 解析商品列表并校验
+      var productList = [];
+      var invalidCount = 0;
+      products.forEach(function(row) {
+        var styleNo = String(row[styleKey] || '').trim();
+        if (!styleNo) return;
+        var opType = String(row[opTypeKey] || '').trim() || '内容删除';
+        var opContent = String(row[opContentKey] || '').trim();
+        var replaceContent = String(row[replaceKey] || '').trim();
+        var error = '';
+        if (opType !== '内容删除' && opType !== '内容替换') {
+          error = '操作类型非法（仅支持：内容删除 / 内容替换）';
+        } else if (!opContent) {
+          error = '缺少源内容';
+        } else if (opType === '内容替换' && !replaceContent) {
+          error = '内容替换缺少目标内容';
+        }
+        if (error) invalidCount++;
+        productList.push({
+          styleNo: styleNo,
+          opType: opType,
+          opContent: opContent,
+          replaceContent: opType === '内容替换' ? replaceContent : '',
+          error: error
+        });
+      });
+
+      if (productList.length === 0) {
+        toast('商品清单中未识别到有效商品（需包含商品款号列）', 'error');
+        return;
+      }
+
+      // 笛卡尔积：店铺 × 商品
+      importedExcelData = [];
+      shopList.forEach(function(shop) {
+        productList.forEach(function(product) {
+          importedExcelData.push({
+            shopCode: shop.shopCode,
+            shopName: shop.shopName,
+            styleNo: product.styleNo,
+            opType: product.opType,
+            opContent: product.opContent,
+            replaceContent: product.replaceContent,
+            error: product.error
+          });
+        });
+      });
+
+      var validProductCount = productList.length - invalidCount;
+      var totalCombinations = shopList.length * validProductCount;
+      var invalidCombinations = shopList.length * invalidCount;
+
+      // 预览：非法行标红，源内容与目标内容分列展示
       var previewHtml = '<table class="import-preview"><thead><tr>' +
-        '<th>店铺编码</th><th>店铺名称</th><th>商品款号</th><th>操作类型</th><th>操作内容</th></tr></thead><tbody>';
+        '<th>店铺编码</th><th>店铺名称</th><th>商品款号</th><th>操作类型</th><th>源内容</th><th>目标内容</th><th>校验结果</th></tr></thead><tbody>';
       importedExcelData.forEach(function(r) {
-        previewHtml += '<tr><td>' + esc(r.shopCode) + '</td><td>' + esc(r.shopName) + '</td><td>' + esc(r.styleNo) + '</td><td>' + esc(r.opType) + '</td><td>' + esc(r.opContent) + '</td></tr>';
+        var dstShown = r.opType === '内容替换' ? (r.replaceContent || '') : '';
+        previewHtml += '<tr' + (r.error ? ' class="row-invalid"' : '') + '>' +
+          '<td>' + esc(r.shopCode) + '</td><td>' + esc(r.shopName) + '</td><td>' + esc(r.styleNo) + '</td>' +
+          '<td>' + esc(r.opType) + '</td><td>' + esc(r.opContent || '—') + '</td><td>' + esc(dstShown) + '</td>' +
+          '<td>' + (r.error ? esc(r.error) : '通过') + '</td></tr>';
       });
       previewHtml += '</tbody></table>';
       document.getElementById('importPreviewContent').innerHTML = previewHtml;
       document.getElementById('importPreviewArea').style.display = '';
-      fileInfo.innerHTML = '✅ 已选择文件：' + esc(file.name) + '（' + (file.size / 1024).toFixed(1) + ' KB）共解析 <strong>' + importedExcelData.length + '</strong> 条有效数据';
+      fileInfo.style.background = invalidCount > 0 ? '#fef2f2' : '#ecfdf5';
+      fileInfo.style.color = invalidCount > 0 ? '#b91c1c' : '#059669';
+      fileInfo.innerHTML = '📄 ' + esc(file.name) + '（' + (file.size / 1024).toFixed(1) + ' KB）' +
+        shopList.length + ' 个店铺 × ' + productList.length + ' 个商品 = ' +
+        '<strong>' + totalCombinations + '</strong> 条明细' +
+        (invalidCount > 0 ? '，其中 ' + invalidCombinations + ' 条校验失败（已标红，提交时自动剔除）' : '');
     } catch (err) {
       toast('文件解析失败：' + err.message, 'error');
     }
@@ -1019,11 +1185,13 @@ function submitManual() {
   var styleNos = document.getElementById('newStyleNos').value.trim();
   var opType = document.getElementById('newOpType').value;
   var opContent = document.getElementById('newOpContent').value.trim();
+  var replaceContent = document.getElementById('newReplaceContent').value.trim();
 
   if (!shopVal) { toast('请选择店铺', 'error'); return; }
   if (!styleNos) { toast('请输入商品款号', 'error'); return; }
   if (!opType) { toast('请选择操作类型', 'error'); return; }
-  if (!opContent) { toast('请输入操作内容', 'error'); return; }
+  if (!opContent) { toast('请输入源内容', 'error'); return; }
+  if (opType === '内容替换' && !replaceContent) { toast('操作类型为内容替换时，请填写目标内容', 'error'); return; }
 
   var shopParts = shopVal.split('|');
   var shopCode = shopParts[0];
@@ -1047,7 +1215,10 @@ function submitManual() {
       styleNo: sno,
       productId: 'PID' + String(Math.floor(Math.random() * 900000) + 100000),
       opContent: opContent,
+      replaceContent: opType === '内容替换' ? replaceContent : '',
       opType: opType,
+      titleBefore: '',
+      titleAfter: '',
       execStatus: '待执行',
       failReason: '',
       creator: creator,
@@ -1065,6 +1236,7 @@ function submitManual() {
     pidSuccess: 0,
     pidFail: 0,
     opContent: opContent,
+    replaceContent: opType === '内容替换' ? replaceContent : '',
     opType: opType,
     execStatus: '待执行',
     failReason: '',
@@ -1077,6 +1249,7 @@ function submitManual() {
 
   closeNewModal();
   renderTable(mockData);
+  if (document.getElementById('detailViewPanel').classList.contains('active')) renderDetailView(mockDetails);
   toast('新增成功，批次号：' + batchNo);
 }
 
@@ -1085,14 +1258,23 @@ function submitExcel() {
     toast('请先导入 Excel 文件', 'error');
     return;
   }
+  // 仅提交校验通过的行，非法行自动剔除
+  var validRows = importedExcelData.filter(function(r) { return !r.error; });
+  if (validRows.length === 0) {
+    toast('无可用数据，全部 ' + importedExcelData.length + ' 行校验失败，请修正后重新导入', 'error');
+    return;
+  }
+  var skipped = importedExcelData.length - validRows.length;
+
   var batchNo = generateBatchNo();
   var ts = now();
   var creator = '当前用户';
   var detailIndices = [];
-  var opContents = {};
+  var srcSet = {};
+  var dstSet = {};
   var shopSet = {};
 
-  importedExcelData.forEach(function(item) {
+  validRows.forEach(function(item) {
     var idx = mockDetails.length;
     detailIndices.push(idx);
     mockDetails.push({
@@ -1102,7 +1284,10 @@ function submitExcel() {
       styleNo: item.styleNo,
       productId: 'PID' + String(Math.floor(Math.random() * 900000) + 100000),
       opContent: item.opContent,
+      replaceContent: item.replaceContent || '',
       opType: item.opType,
+      titleBefore: '',
+      titleAfter: '',
       execStatus: '待执行',
       failReason: '',
       creator: creator,
@@ -1111,23 +1296,25 @@ function submitExcel() {
       updateTime: ''
     });
     shopSet[item.shopCode] = true;
-    opContents[item.opContent] = true;
+    srcSet[item.opContent] = true;
+    if (item.replaceContent) dstSet[item.replaceContent] = true;
   });
 
-  var opContentStr = Object.keys(opContents).join(' / ') || '—';
-  var opType = importedExcelData[0].opType || '内容删除';
+  // 批次级展示：类型取首个有效行，源/目标内容去重聚合
+  var batchOpType = validRows[0].opType;
 
   mockData.unshift({
     batchNo: batchNo,
     shopCount: Object.keys(shopSet).length,
-    styleCount: importedExcelData.length,
-    pidCount: importedExcelData.length,
+    styleCount: validRows.length,
+    pidCount: validRows.length,
     pidSuccess: 0,
     pidFail: 0,
-    opContent: opContentStr,
-    opType: opType,
+    opContent: Object.keys(srcSet).join('/') || '—',
+    replaceContent: batchOpType === '内容替换' ? Object.keys(dstSet).join('/') : '',
+    opType: batchOpType,
     execStatus: '待执行',
-    failReason: '',
+    failReason: skipped > 0 ? '部分行校验失败已剔除（' + skipped + ' 行）' : '',
     creator: creator,
     createTime: ts,
     updater: '',
@@ -1137,7 +1324,8 @@ function submitExcel() {
 
   closeNewModal();
   renderTable(mockData);
-  toast('导入成功，批次号：' + batchNo + '，共 ' + importedExcelData.length + ' 条');
+  renderDetailView(mockDetails);
+  toast('导入成功，批次号：' + batchNo + '，共 ' + validRows.length + ' 条' + (skipped > 0 ? '，剔除 ' + skipped + ' 条' : ''));
 }
 
 // ===== 导出（模拟） =====
@@ -1158,7 +1346,7 @@ function renderDetailView(details) {
   var tbody = document.getElementById('dvTableBody');
   var html = '';
   if (details.length === 0) {
-    html = '<tr><td colspan="15" class="empty-state"><span class="empty-icon">&#128269;</span><div class="empty-text">暂无数据</div></td></tr>';
+    html = '<tr><td colspan="18" class="empty-state"><span class="empty-icon">&#128269;</span><div class="empty-text">暂无数据</div></td></tr>';
   } else {
     details.forEach(function(row, i) {
       html += '<tr>';
@@ -1169,8 +1357,10 @@ function renderDetailView(details) {
       html += '<td>' + esc(row.shopName) + '</td>';
       html += '<td>' + esc(row.styleNo) + '</td>';
       html += '<td>' + esc(row.productId) + '</td>';
-      html += '<td title="' + esc(row.opContent) + '">' + esc(row.opContent) + '</td>';
+      html += tdSrcDst(row);
       html += '<td>' + stOpType(row.opType) + '</td>';
+      html += '<td class="col-title" title="' + esc(row.titleBefore || '') + '">' + (row.titleBefore ? esc(row.titleBefore) : '—') + '</td>';
+      html += '<td class="col-title title-after" title="' + esc(row.titleAfter || '') + '">' + (row.titleAfter ? esc(row.titleAfter) : '—') + '</td>';
       html += '<td>' + stExec(row.execStatus) + '</td>';
       html += '<td title="' + esc(row.failReason) + '">' + esc(row.failReason || '') + '</td>';
       html += '<td>' + esc(row.creator || '') + '</td>';
