@@ -169,6 +169,28 @@
     .import-tab:hover { color:var(--primary); }
     .import-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
 
+    /* ===== 店铺 / 店铺群 tab 切换 ===== */
+    .shop-mode-bar { display:flex; gap:0; margin-bottom:10px; border-bottom:1px solid var(--border); }
+    .shop-mode-tab {
+      padding:7px 18px; font-size:12px; font-weight:600; color:var(--text-tertiary);
+      cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px;
+      transition:all .15s; user-select:none;
+    }
+    .shop-mode-tab:hover { color:var(--primary); }
+    .shop-mode-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
+
+    .shop-group-list { display:flex; flex-direction:column; gap:0; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+    .shop-group-item {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:10px 14px; cursor:pointer; transition:all .15s; background:var(--bg);
+      border-bottom:1px solid var(--border);
+    }
+    .shop-group-item:last-child { border-bottom:none; }
+    .shop-group-item:hover { background:var(--primary-50); }
+    .shop-group-item.selected { background:var(--primary-50); box-shadow:inset 3px 0 0 var(--primary); }
+    .shop-group-name { font-size:13px; font-weight:600; color:var(--ink); }
+    .shop-group-members { font-size:12px; color:var(--text-tertiary); }
+
     /* ===== 上传区域 ===== */
     .upload-zone {
       display:flex; flex-direction:column; align-items:center; gap:8px;
@@ -607,14 +629,24 @@
       <!-- 手动录入面板 -->
       <div id="newPanelManual">
         <div style="margin-bottom:14px;">
-          <label class="form-label">选择店铺：</label>
-          <select id="newShopSelect" class="form-select">
-            <option value="">请选择店铺</option>
-            <option value="SH001|云途食品旗舰店">SH001 - 云途食品旗舰店</option>
-            <option value="SH002|西湖生鲜专营店">SH002 - 西湖生鲜专营店</option>
-            <option value="SH003|鼎盛茗茶旗舰店">SH003 - 鼎盛茗茶旗舰店</option>
-            <option value="SH004|前海食品专营店">SH004 - 前海食品专营店</option>
-          </select>
+          <div class="shop-mode-bar">
+            <div id="shopModeTabShop" class="shop-mode-tab active" onclick="switchShopMode('shop')">店铺</div>
+            <div id="shopModeTabGroup" class="shop-mode-tab" onclick="switchShopMode('group')">店铺群</div>
+          </div>
+          <!-- 店铺模式：单选下拉 -->
+          <div id="shopModePanelShop">
+            <select id="newShopSelect" class="form-select">
+              <option value="">请选择店铺</option>
+              <option value="SH001|云途食品旗舰店">SH001 - 云途食品旗舰店</option>
+              <option value="SH002|西湖生鲜专营店">SH002 - 西湖生鲜专营店</option>
+              <option value="SH003|鼎盛茗茶旗舰店">SH003 - 鼎盛茗茶旗舰店</option>
+              <option value="SH004|前海食品专营店">SH004 - 前海食品专营店</option>
+            </select>
+          </div>
+          <!-- 店铺群模式：分组卡片选择 -->
+          <div id="shopModePanelGroup" style="display:none;">
+            <div id="shopGroupGrid" class="shop-group-list"></div>
+          </div>
         </div>
         <div style="margin-bottom:14px;">
           <label class="form-label">商品款号：</label>
@@ -941,10 +973,33 @@ function doBackToList() {
 // ===== 新增弹窗 =====
 var newCurrentTab = 'manual';
 var importedExcelData = [];
+var shopMode = 'shop';        // 'shop' | 'group'
+var selectedShopGroup = null; // 当前选中的店铺群 ID
+
+// ===== 店铺群 mock 数据 =====
+var mockShopGroups = [
+  { id: 'G001', name: '食品旗舰店群', shops: [
+    { shopCode: 'SH001', shopName: '云途食品旗舰店' },
+    { shopCode: 'SH004', shopName: '前海食品专营店' }
+  ]},
+  { id: 'G002', name: '生鲜旗舰店群', shops: [
+    { shopCode: 'SH002', shopName: '西湖生鲜专营店' }
+  ]},
+  { id: 'G003', name: '茗茶旗舰店群', shops: [
+    { shopCode: 'SH003', shopName: '鼎盛茗茶旗舰店' }
+  ]},
+  { id: 'G004', name: '全量店铺群', shops: [
+    { shopCode: 'SH001', shopName: '云途食品旗舰店' },
+    { shopCode: 'SH002', shopName: '西湖生鲜专营店' },
+    { shopCode: 'SH003', shopName: '鼎盛茗茶旗舰店' },
+    { shopCode: 'SH004', shopName: '前海食品专营店' }
+  ]}
+];
 
 function openNewModal() {
   document.getElementById('newModal').style.display = '';
   switchNewTab('manual');
+  renderShopGroups();
 }
 
 function switchNewTab(tab) {
@@ -953,6 +1008,35 @@ function switchNewTab(tab) {
   document.getElementById('newTabExcel').classList.toggle('active', tab === 'excel');
   document.getElementById('newPanelManual').style.display = tab === 'manual' ? '' : 'none';
   document.getElementById('newPanelExcel').style.display = tab === 'excel' ? '' : 'none';
+}
+
+// ===== 店铺 / 店铺群切换 =====
+function switchShopMode(mode) {
+  shopMode = mode;
+  document.getElementById('shopModeTabShop').classList.toggle('active', mode === 'shop');
+  document.getElementById('shopModeTabGroup').classList.toggle('active', mode === 'group');
+  document.getElementById('shopModePanelShop').style.display = mode === 'shop' ? '' : 'none';
+  document.getElementById('shopModePanelGroup').style.display = mode === 'group' ? '' : 'none';
+  if (mode === 'group') renderShopGroups();
+}
+
+function renderShopGroups() {
+  var grid = document.getElementById('shopGroupGrid');
+  var html = '';
+  mockShopGroups.forEach(function(g) {
+    var sel = selectedShopGroup === g.id ? ' selected' : '';
+    var memberText = g.shops.map(function(s) { return s.shopName; }).join('、');
+    html += '<div class="shop-group-item' + sel + '" onclick="selectShopGroup(\'' + g.id + '\')">';
+    html += '<span class="shop-group-name">' + esc(g.name) + '</span>';
+    html += '<span class="shop-group-members">' + esc(memberText) + '（' + g.shops.length + ' 家）</span>';
+    html += '</div>';
+  });
+  grid.innerHTML = html;
+}
+
+function selectShopGroup(groupId) {
+  selectedShopGroup = groupId;
+  renderShopGroups();
 }
 
 function closeNewModal() {
@@ -968,6 +1052,9 @@ function closeNewModal() {
   document.getElementById('importPreviewArea').style.display = 'none';
   document.getElementById('importPreviewContent').innerHTML = '';
   importedExcelData = [];
+  shopMode = 'shop';
+  selectedShopGroup = null;
+  switchShopMode('shop');
   onNewOpTypeChange();
   switchNewTab('manual');
 }
@@ -1181,58 +1268,73 @@ function submitNew() {
 }
 
 function submitManual() {
-  var shopVal = document.getElementById('newShopSelect').value;
   var styleNos = document.getElementById('newStyleNos').value.trim();
   var opType = document.getElementById('newOpType').value;
   var opContent = document.getElementById('newOpContent').value.trim();
   var replaceContent = document.getElementById('newReplaceContent').value.trim();
 
-  if (!shopVal) { toast('请选择店铺', 'error'); return; }
+  // 根据 shopMode 获取店铺列表
+  var shopList = [];
+  if (shopMode === 'shop') {
+    var shopVal = document.getElementById('newShopSelect').value;
+    if (!shopVal) { toast('请选择店铺', 'error'); return; }
+    var shopParts = shopVal.split('|');
+    shopList.push({ shopCode: shopParts[0], shopName: shopParts[1] });
+  } else {
+    if (!selectedShopGroup) { toast('请选择店铺群', 'error'); return; }
+    var group = mockShopGroups.find(function(g) { return g.id === selectedShopGroup; });
+    if (!group) { toast('店铺群不存在', 'error'); return; }
+    shopList = group.shops;
+  }
+
   if (!styleNos) { toast('请输入商品款号', 'error'); return; }
   if (!opType) { toast('请选择操作类型', 'error'); return; }
   if (!opContent) { toast('请输入源内容', 'error'); return; }
   if (opType === '内容替换' && !replaceContent) { toast('操作类型为内容替换时，请填写目标内容', 'error'); return; }
 
-  var shopParts = shopVal.split('|');
-  var shopCode = shopParts[0];
-  var shopName = shopParts[1];
   var styleArr = styleNos.split(/[,\n]+/).map(function(s) { return s.trim(); }).filter(function(s) { return s; });
-
   if (styleArr.length === 0) { toast('请输入有效的商品款号', 'error'); return; }
 
   var batchNo = generateBatchNo();
   var ts = now();
   var creator = '当前用户';
   var detailIndices = [];
+  var shopSet = {};
 
-  styleArr.forEach(function(sno) {
-    var idx = mockDetails.length;
-    detailIndices.push(idx);
-    mockDetails.push({
-      batchNo: batchNo,
-      shopCode: shopCode,
-      shopName: shopName,
-      styleNo: sno,
-      productId: 'PID' + String(Math.floor(Math.random() * 900000) + 100000),
-      opContent: opContent,
-      replaceContent: opType === '内容替换' ? replaceContent : '',
-      opType: opType,
-      titleBefore: '',
-      titleAfter: '',
-      execStatus: '待执行',
-      failReason: '',
-      creator: creator,
-      createTime: ts,
-      updater: '',
-      updateTime: ''
+  // 笛卡尔积：店铺 × 商品款号
+  shopList.forEach(function(shop) {
+    shopSet[shop.shopCode] = true;
+    styleArr.forEach(function(sno) {
+      var idx = mockDetails.length;
+      detailIndices.push(idx);
+      mockDetails.push({
+        batchNo: batchNo,
+        shopCode: shop.shopCode,
+        shopName: shop.shopName,
+        styleNo: sno,
+        productId: 'PID' + String(Math.floor(Math.random() * 900000) + 100000),
+        opContent: opContent,
+        replaceContent: opType === '内容替换' ? replaceContent : '',
+        opType: opType,
+        titleBefore: '',
+        titleAfter: '',
+        execStatus: '待执行',
+        failReason: '',
+        creator: creator,
+        createTime: ts,
+        updater: '',
+        updateTime: ''
+      });
     });
   });
 
+  var totalPidCount = shopList.length * styleArr.length;
+
   mockData.unshift({
     batchNo: batchNo,
-    shopCount: 1,
+    shopCount: Object.keys(shopSet).length,
     styleCount: styleArr.length,
-    pidCount: styleArr.length,
+    pidCount: totalPidCount,
     pidSuccess: 0,
     pidFail: 0,
     opContent: opContent,
