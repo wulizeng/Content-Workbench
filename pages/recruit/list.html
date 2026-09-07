@@ -284,7 +284,7 @@ function showSearchTags() {
   if (tags.length === 0) { container.style.display = 'none'; container.innerHTML = ''; return; }
   var html = '';
   tags.forEach(function(t) {
-    html += '<span class="search-active-tag">' + t.name + '：' + t.value + '<span class="tag-remove" onclick="clearSearchTag(\'' + t.id + '\')">&times;</span></span>';
+    html += '<span class="search-active-tag">' + esc(t.name) + '：' + esc(t.value) + '<span class="tag-remove" onclick="clearSearchTag(\'' + t.id + '\')">&times;</span></span>';
   });
   container.style.display = '';
   container.innerHTML = html;
