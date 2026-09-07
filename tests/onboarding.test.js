@@ -347,3 +347,15 @@ test('manage page basic info exposes bdContact display and edit modal', () => {
   assert.match(html, /Store\.updateBdContact/, '应调用 updateBdContact 保存');
   compileInlineScripts('pages/store-engine/manage.html');
 });
+
+test('cooperation list page reads onboarding store with new column set', () => {
+  const html = read('pages/recruit/list.html');
+  assert.match(html, /onboarding-store\.js/, '应引入入驻申请数据模块');
+  ['客户名称', '入驻类型', '入驻模式', '入驻平台', '对接商务', '创建时间', '创建人', '更新人', '更新时间', '状态'].forEach(col => {
+    assert.ok(html.includes(`<th>${col}</th>`), `列表应包含列 ${col}`);
+  });
+  assert.doesNotMatch(html, /recruit_applications/, '不应再读取旧数据');
+  assert.doesNotMatch(html, /recruit_talents/, '不应再读取旧达人映射');
+  assert.match(html, /typeOfMode/);
+  compileInlineScripts('pages/recruit/list.html');
+});
