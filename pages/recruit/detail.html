@@ -39,6 +39,15 @@
     .empty-box { padding: 60px 0; text-align: center; color: var(--text-tertiary, #94a3b8); font-size: 13px; }
     .empty-box .empty-text { font-size: 15px; font-weight: 600; color: var(--text-secondary, #475569); margin-bottom: 6px; }
 
+    /* 审核弹窗 */
+    .review-overlay { display: flex; position: fixed; inset: 0; z-index: 100; background: rgba(15,23,42,.45); align-items: center; justify-content: center; }
+    .review-modal { width: min(480px, calc(100vw - 32px)); background: #fff; border-radius: 14px; padding: 20px 22px; box-shadow: 0 20px 50px rgba(15,23,42,.25); }
+    .review-modal h3 { margin: 0 0 6px; font-size: 16px; color: var(--text, #0f172a); }
+    .review-modal .sub { font-size: 12px; color: var(--text-tertiary, #94a3b8); margin-bottom: 14px; }
+    .review-modal label { display: block; font-size: 13px; color: var(--text-secondary, #475569); margin-bottom: 6px; }
+    .review-modal textarea { width: 100%; box-sizing: border-box; border: 1px solid var(--border, #e2e8f0); border-radius: 8px; padding: 8px 10px; font-size: 13px; font-family: inherit; resize: vertical; }
+    .review-modal .foot { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+
     @media (max-width: 900px) { .detail-grid { grid-template-columns: 1fr 1fr; } }
     @media (max-width: 640px) {
       .page-container { padding: 16px; }
@@ -58,6 +67,7 @@
       返回列表
     </button>
     <div class="page-title">客户合作详情 <span id="dStatus"></span></div>
+    <button class="btn btn-primary" id="btnReview" onclick="openReviewModal()" style="display:none;">审核</button>
   </div>
 
   <div class="detail-card" id="emptyState" style="display:none;">
@@ -88,6 +98,20 @@
 
 </div>
 
+<!-- ===== 运营审核弹窗 ===== -->
+<div class="review-overlay" id="reviewModal" style="display:none;" onclick="if(event.target===this) closeReviewModal()">
+  <div class="review-modal" role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle">
+    <h3 id="reviewModalTitle">运营审核</h3>
+    <div class="sub" id="reviewAppInfo"></div>
+    <label for="reviewRemark">审核备注（选填）</label>
+    <textarea id="reviewRemark" rows="3" placeholder="可填写审核备注；确认审核后申请将变为只读"></textarea>
+    <div class="foot">
+      <button type="button" class="btn" onclick="closeReviewModal()">取消</button>
+      <button type="button" class="btn btn-primary" onclick="confirmReview()">确认审核</button>
+    </div>
+  </div>
+</div>
+
 <script src="../../js/onboarding-store.js"></script>
 <script src="../../js/auth.js"></script>
 <script>
@@ -112,6 +136,60 @@ function goBack() {
   else location.href = 'list.html';
 }
 
+// ===== 审核（与 manage.html 约定一致：operator/admin 角色 + submitted 状态） =====
+function canReview() {
+  var user = Auth.getCurrentUser();
+  return !!user && (user.role === 'operator' || user.role === 'admin');
+}
+function operatorName() {
+  var user = Auth.getCurrentUser() || {};
+  return user.name || user.phone || '运营';
+}
+
+function openReviewModal() {
+  if (!app) return;
+  var fin = (app.form && app.form.finance) || {};
+  document.getElementById('reviewAppInfo').textContent = '申请编号：' + app.id + '　客户名称：' + (fin.fullName || '-');
+  document.getElementById('reviewRemark').value = '';
+  document.getElementById('reviewModal').style.display = '';
+  document.getElementById('reviewRemark').focus();
+}
+function closeReviewModal() {
+  document.getElementById('reviewModal').style.display = 'none';
+}
+function confirmReview() {
+  if (!app) return;
+  var remark = document.getElementById('reviewRemark').value.trim();
+  var result = Store.review(app.id, remark, operatorName());
+  if (!result.ok) { showToast(result.error, 'error'); return; }
+  app = result.app;
+  closeReviewModal();
+  render();
+  showToast('审核完成', 'success');
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeReviewModal();
+});
+
+// Toast 轻提示
+function showToast(message, type) {
+  type = type || 'info';
+  var container = document.getElementById('toastContainer');
+  if (!container) return;
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(function() {
+    if (toast.parentNode) {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s';
+      setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+    }
+  }, 2500);
+}
+
 function creatorOf(a) { return a.ownerName || a.ownerPhone || '-'; }
 function updaterOf(a) {
   var versions = a.versions || [];
@@ -124,6 +202,7 @@ function render() {
     return;
   }
   document.getElementById('dStatus').innerHTML = st(app.status);
+  document.getElementById('btnReview').style.display = (canReview() && app.status === 'submitted') ? '' : 'none';
 
   var fin = (app.form && app.form.finance) || {};
   var basic = [

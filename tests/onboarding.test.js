@@ -385,3 +385,15 @@ test('manage page finance panel exposes license upload with mock recognition', (
   assert.match(html, /f_finance_region_domestic/, '应回填企业所在地为境内');
   compileInlineScripts('pages/store-engine/manage.html');
 });
+
+test('cooperation detail page exposes review action for operator roles', () => {
+  const html = read('pages/recruit/detail.html');
+  ['btnReview', 'reviewModal', 'reviewRemark', 'reviewAppInfo'].forEach(id => {
+    assert.match(html, new RegExp(`id="${id}"`), `详情页应包含 #${id}`);
+  });
+  assert.match(html, /Store\.review\(/, '应调用 Store.review 完成审核');
+  assert.match(html, /user\.role === 'operator'/, '运营角色应可审核');
+  assert.match(html, /user\.role === 'admin'/, '管理员角色应可审核');
+  assert.match(html, /app\.status === 'submitted'/, '仅已提交状态显示审核入口');
+  compileInlineScripts('pages/recruit/detail.html');
+});
