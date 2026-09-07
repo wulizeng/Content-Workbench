@@ -801,7 +801,10 @@ body {
   color: var(--text-secondary);
   font-size: 13px;
   font-weight: 500;
-  white-space: nowrap;
+  /* 超长字段名在 140px 标签列内换行，避免溢出覆盖输入框 */
+  white-space: normal;
+  line-height: 1.5;
+  word-break: break-all;
 }
 
 .form-item label.required::before {
@@ -980,6 +983,11 @@ select {
 .btn:active {
   transform: translateY(0);
   box-shadow: var(--shadow-sm);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 .btn-primary {

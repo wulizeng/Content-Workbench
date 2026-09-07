@@ -81,6 +81,7 @@
     },
 
     // 根据角色过滤申请列表
+    // 兼容两类申请字段：旧招募体系用 phone，新入驻体系用 ownerPhone
     filterApplications: function(applications) {
       var user = this.getCurrentUser();
       if (!user) return [];
@@ -88,7 +89,8 @@
       if (user.role === 'talent') {
         // 达人只看自己的申请
         return applications.filter(function(app) {
-          return app.phone === user.phone;
+          var own = app.ownerPhone || app.phone || '';
+          return own === user.phone;
         });
       } else if (user.role === 'operator' || user.role === 'bd' || user.role === 'admin') {
         // 运营、BD和管理员看全部申请
