@@ -40,7 +40,7 @@
     padding: 2px 8px; border-radius: 10px; white-space: nowrap;
   }
 
-  /* 类型标签 */
+  /* 操作类型标签 */
   .type-tag { font-size:11px; padding:2px 8px; border-radius:10px; white-space:nowrap; font-weight:500; }
   .type-tag.clone { background:#eff6ff; color:#2563eb; }
   .type-tag.sync { background:#fef3c7; color:#d97706; }
@@ -117,7 +117,7 @@
         <div class="flow-step-icon">🏪</div>
         <div class="flow-step-info">
           <div class="flow-step-title">选择源店铺</div>
-          <div class="flow-step-desc">选择要克隆的源店铺，自动获取所有岗位</div>
+          <div class="flow-step-desc">用户选择要克隆的源店铺，自动获取所有岗位</div>
         </div>
       </div>
       <div class="flow-arrow"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
@@ -125,7 +125,7 @@
         <div class="flow-step-icon">📋</div>
         <div class="flow-step-info">
           <div class="flow-step-title">选择克隆岗位</div>
-          <div class="flow-step-desc">选择需要克隆复制的岗位</div>
+          <div class="flow-step-desc">用户选择需要克隆复制的岗位</div>
         </div>
       </div>
       <div class="flow-arrow"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
@@ -133,7 +133,7 @@
         <div class="flow-step-icon">🏬</div>
         <div class="flow-step-info">
           <div class="flow-step-title">选择目标店铺</div>
-          <div class="flow-step-desc">选择需要克隆到的目标店铺</div>
+          <div class="flow-step-desc">用户选择需要克隆到的目标店铺</div>
         </div>
       </div>
       <div class="flow-arrow"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
@@ -141,15 +141,15 @@
         <div class="flow-step-icon">⚡</div>
         <div class="flow-step-info">
           <div class="flow-step-title">确认执行</div>
-          <div class="flow-step-desc">确认克隆信息后执行克隆</div>
+          <div class="flow-step-desc">系统自动后执行克隆修改操作</div>
         </div>
       </div>
       <div class="flow-arrow"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
       <div class="flow-step">
         <div class="flow-step-icon">✅</div>
         <div class="flow-step-info">
-          <div class="flow-step-title">后台检查结果</div>
-          <div class="flow-step-desc">店铺后台自动检查克隆结果</div>
+          <div class="flow-step-title">检查结果</div>
+          <div class="flow-step-desc">系统自动检查克隆结果</div>
         </div>
       </div>
     </div>
@@ -220,11 +220,11 @@
         <thead>
           <tr>
             <th style="width:50px;">序号</th>
-            <th style="width:70px;">类型</th>
             <th style="width:130px;">编号</th>
             <th style="width:80px;">平台</th>
             <th style="width:110px;">源店铺编码</th>
             <th style="width:110px;">源店铺名称</th>
+            <th style="width:90px;">操作类型</th>
             <th style="width:120px;">源岗位</th>
             <th style="width:120px;">目标岗位</th>
             <th style="width:140px;">目标店铺</th>
@@ -397,11 +397,11 @@ function renderTable(data) {
       var isSync = row.type === 'sync';
       html += '<tr>';
       html += '<td>' + (index + 1) + '</td>';
-      html += '<td><span class="type-tag ' + (isSync ? 'sync' : 'clone') + '">' + (isSync ? '修改' : '新增') + '</span></td>';
       html += '<td style="font-family:monospace;font-size:12px;color:var(--primary);">' + escapeHtml(row.id) + '</td>';
       html += '<td><span class="platform-tag">' + escapeHtml(row.platform || '抖音') + '</span></td>';
       html += '<td><span class="store-id">' + escapeHtml(row.sourceShopId || row.sourceStoreId) + '</span></td>';
       html += '<td>' + escapeHtml(row.sourceStore) + '</td>';
+      html += '<td><span class="type-tag ' + (isSync ? 'sync' : 'clone') + '">' + (isSync ? '修改' : '新增') + '</span></td>';
       // 源岗位列
       if (isSync) {
         html += '<td style="font-size:12px;">' + escapeHtml(row.sourcePosition) + '</td>';

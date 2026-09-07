@@ -3,34 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>入驻意向审核 - 列表</title>
+  <title>客户合作管理 - 列表</title>
   <link rel="stylesheet" href="../../css/style.css">
   <style>
     /* 桌面端：操作列图标+文字链接 */
-    .link-action-icon {
-      display: inline-flex; align-items: center; gap: 4px;
-    }
+    .link-action-icon { display: inline-flex; align-items: center; gap: 4px; }
     .link-action-icon svg { flex-shrink: 0; }
-    /* 平台 / 运营账号 分字段展示：平台灰色标签 + 账号文本，多账号逐行等高对齐 */
-    .plat-tag {
-      display: inline-flex; align-items: center; padding: 1px 9px; border-radius: 10px;
-      background: #f1f5f9; color: var(--text-secondary); font-size: 12px; font-weight: 600;
-      line-height: 1.6; white-space: nowrap;
-    }
-    .acct-text { font-size: 13px; color: var(--text); }
-    #dataTable .ml { min-height: 24px; display: flex; align-items: center; }
-    #dataTable .ml + .ml { margin-top: 4px; }
-    /* 窄桌面（1024~1279px）：运营账号过长允许换行 */
-    @media (min-width: 1024px) and (max-width: 1279px) {
-      #dataTable td.col-account { white-space: normal; word-break: break-all; }
-    }
-    /* 基础规则：折叠按钮默认隐藏（必须写在平板媒体查询之前，平板区间内靠后出现的 display:block 才能覆盖它） */
-    .search-fold-bar { display: none; }
-    /* 无 PAD 专用模式：< 1024 统一走手机端卡片，≥ 1024 走电脑端表格 */
-    /* 桌面端：状态列下方叠加时间小字隐藏（独立"提交时间"列恢复显示由浏览器默认表格布局提供） */
-    @media (min-width: 1024px) {
-      #dataTable .td-sub-time { display: none; }
-    }
     /* 移动端（<1024px）：卡片流 + 底部抽屉筛选 + 加载更多 */
     .card-list, .load-more-bar, .filter-fab, .filter-sheet-overlay { display: none; }
     @media (max-width: 1023px) {
@@ -41,14 +19,9 @@
         background: #fff; border: 1px solid var(--border); border-radius: 12px;
         padding: 14px 16px; margin-bottom: 12px;
       }
-      .recruit-card-head {
-        display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
-      }
-      .recruit-card-head .name { font-size: 15px; font-weight: 700; color: var(--text); }
+      .recruit-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+      .recruit-card-head .name { font-size: 15px; font-weight: 700; color: var(--text); word-break: break-all; }
       .recruit-card-body { font-size: 13px; color: var(--text-secondary); line-height: 1.9; }
-      .recruit-card-body .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-      .recruit-card-body .chip-row .pa-line { display: inline-flex; align-items: center; gap: 6px; }
-      .recruit-card-body .chip-row .acct { font-size: 13px; color: var(--text); }
       .recruit-card-foot {
         display: flex; justify-content: space-between; align-items: center;
         margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-light);
@@ -94,6 +67,7 @@
   <div id="toastContainer" class="toast-container"></div>
 
   <script src="../../js/auth.js"></script>
+  <script src="../../js/onboarding-store.js"></script>
   <script>
     // 权限检查
     if (!Auth.requireAuth()) {
@@ -103,51 +77,29 @@
     var currentUser = Auth.getCurrentUser();
 
     if (window.parent) {
-      window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 入驻意向审核'}, '*');
+      window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 客户合作管理'}, '*');
     }
   </script>
 
-  <div class="page-title">入驻意向审核列表</div>
+  <div class="page-title">客户合作管理</div>
 
-  <div class="search-area folded">
-    <div class="search-fold-bar">
-      <button type="button" class="btn" id="searchFoldBtn" onclick="toggleSearchFold()">筛选 &#9662;</button>
-    </div>
+  <div class="search-area">
     <div class="search-row">
       <div class="search-item">
-        <label>申请人手机号：</label>
-        <input type="text" id="sPhone" placeholder="请输入手机号">
+        <label>客户名称：</label>
+        <input type="text" id="sName" placeholder="请输入企业全称关键词">
       </div>
       <div class="search-item">
-        <label>业务类型：</label>
-        <select id="sBusinessType"><option value="">全部</option><option value="DP">DP</option><option value="达播达人">达播达人</option><option value="达播机构">达播机构</option><option value="客户KOC">客户 KOC</option><option value="联营KOC">联营 KOC</option><option value="素人KOC">素人 KOC</option></select>
+        <label>入驻类型：</label>
+        <select id="sType"><option value="">全部</option><option value="DP">DP</option><option value="KOC">KOC</option><option value="达播">达播</option></select>
       </div>
       <div class="search-item">
-        <label>品牌：</label>
-        <select id="sBrand"><option value="">全部</option><option value="巴拉">巴拉</option><option value="迷你">迷你</option><option value="森马">森马</option></select>
-      </div>
-      <div class="search-item">
-        <label>平台：</label>
-        <select id="sPlatform">
-          <option value="">全部</option>
-          <option value="抖音">抖音</option>
-          <option value="视频号">视频号</option>
-          <option value="快手">快手</option>
-          <option value="小红书">小红书</option>
-        </select>
+        <label>入驻平台：</label>
+        <select id="sPlatform"><option value="">全部</option></select>
       </div>
       <div class="search-item">
         <label>状态：</label>
-        <select id="sStatus">
-          <option value="">全部</option>
-          <option value="已提交">已提交</option>
-          <option value="审核中">审核中</option>
-          <option value="已驳回">已驳回</option>
-          <option value="待提交项目规划">待提交项目规划</option>
-          <option value="规划审核中">规划审核中</option>
-          <option value="规划已驳回">规划已驳回</option>
-          <option value="已通过">已通过</option>
-        </select>
+        <select id="sStatus"><option value="">全部</option><option value="submitted">已提交</option><option value="reviewed">已审核</option></select>
       </div>
     </div>
     <div class="search-actions">
@@ -168,16 +120,16 @@
         <thead>
           <tr>
             <th>序号</th>
-            <th>姓名</th>
-            <th>申请人手机号</th>
-            <th>业务类型</th>
-            <th>品牌</th>
-            <th>平台</th>
-            <th>运营账号</th>
-            <th>近3个月GMV</th>
-            <th>运营负责人</th>
+            <th>客户名称</th>
+            <th>入驻类型</th>
+            <th>入驻模式</th>
+            <th>入驻平台</th>
+            <th>对接商务</th>
+            <th>创建时间</th>
+            <th>创建人</th>
+            <th>更新人</th>
+            <th>更新时间</th>
             <th>状态</th>
-            <th>提交时间</th>
             <th>操作</th>
           </tr>
         </thead>
@@ -207,15 +159,10 @@
         <button type="button" class="filter-sheet-close" onclick="toggleFilterSheet()">&times;</button>
       </div>
       <div class="filter-sheet-body">
-        <div class="search-item"><label>申请人手机号：</label><input type="text" id="mSPhone" placeholder="请输入手机号"></div>
-        <div class="search-item"><label>业务类型：</label><select id="mSBusinessType"><option value="">全部</option><option value="DP">DP</option><option value="达播达人">达播达人</option><option value="达播机构">达播机构</option><option value="客户KOC">客户 KOC</option><option value="联营KOC">联营 KOC</option><option value="素人KOC">素人 KOC</option></select></div>
-        <div class="search-item"><label>品牌：</label><select id="mSBrand"><option value="">全部</option><option value="巴拉">巴拉</option><option value="迷你">迷你</option><option value="森马">森马</option></select></div>
-        <div class="search-item"><label>平台：</label>
-          <select id="mSPlatform"><option value="">全部</option><option value="抖音">抖音</option><option value="视频号">视频号</option><option value="快手">快手</option><option value="小红书">小红书</option></select>
-        </div>
-        <div class="search-item"><label>状态：</label>
-          <select id="mSStatus"><option value="">全部</option><option value="已提交">已提交</option><option value="审核中">审核中</option><option value="已驳回">已驳回</option><option value="待提交项目规划">待提交项目规划</option><option value="规划审核中">规划审核中</option><option value="规划已驳回">规划已驳回</option><option value="已通过">已通过</option></select>
-        </div>
+        <div class="search-item"><label>客户名称：</label><input type="text" id="mSName" placeholder="请输入企业全称关键词"></div>
+        <div class="search-item"><label>入驻类型：</label><select id="mSType"><option value="">全部</option><option value="DP">DP</option><option value="KOC">KOC</option><option value="达播">达播</option></select></div>
+        <div class="search-item"><label>入驻平台：</label><select id="mSPlatform"><option value="">全部</option></select></div>
+        <div class="search-item"><label>状态：</label><select id="mSStatus"><option value="">全部</option><option value="submitted">已提交</option><option value="reviewed">已审核</option></select></div>
       </div>
       <div class="filter-sheet-foot">
         <button type="button" class="btn" onclick="resetMobileSearch()">重置</button>
@@ -225,131 +172,112 @@
   </div>
 
 <script>
-var mockData = JSON.parse(localStorage.getItem('recruit_applications') || 'null') || [
-  { id:1, phone:'138****2231', platform_accounts:[{platform:'抖音',account_name:'@潮流小美'}], gmv:128000, status:'已提交', created_at:'2026-07-20 10:12:00', brand:'品牌A', main_product:'女装连衣裙', recommender:'李明', screenshots:[], reject_logs:[] },
-  { id:2, phone:'159****8820', platform_accounts:[{platform:'抖音',account_name:'@数码老王'},{platform:'视频号',account_name:'老王数码测评'}], gmv:356000, status:'审核中', created_at:'2026-07-21 14:05:00', brand:'品牌B', main_product:'蓝牙耳机', recommender:'张华', screenshots:[], reject_logs:[] },
-  { id:5, phone:'135****9911', platform_accounts:[{platform:'抖音',account_name:'@潮玩阿К'}], gmv:210000, status:'规划审核中', created_at:'2026-07-24 10:00:00', brand:'品牌D', main_product:'潮玩盲盒', recommender:'王磊', screenshots:[], reject_logs:[],
-    project_plan: {
-      company_intro: '公司成立于2019年，注册资本500万元，团队规模约40人，专注3C数码类目电商代运营。',
-      categories: [], maternity_scale:'', maternity_brands:'', apparel_scale:'', apparel_brands:'',
-      paid_traffic_case: '2025年双11期间通过千川投放实现单场GMV破百万，ROI稳定在3.2以上。',
-      paid_traffic_shots: [],
-      content_case: '数码测评账号"老王数码测评"粉丝120万，单条爆款视频播放量超800万。',
-      content_case_shots: [],
-      people_goods_field: '主播2人+场控1人+中控1人，账号定位为专业数码测评+性价比好物推荐。',
-      short_video_strategy: '每周产出10条测评类短视频，聚焦新品首发与横向对比测评。',
-      ad_strategy: '千川+磁力金牛组合投放，前期以放量测试计划为主，稳定后转精准投放。',
-      team_plan: [{role:'主播', count:2, duty:'直播带货'}, {role:'场控', count:1, duty:'直播间节奏控制'}, {role:'中控', count:1, duty:'后台数据与话术支持'}],
-      venue_plan: '在杭州市余杭区租用200平米直播基地，预计装修投入30万元。',
-      submitted_at: '2026-07-24 11:00:00'
-    }
-  },
-  { id:3, phone:'186****0093', platform_accounts:[{platform:'快手',account_name:'家居好物研究所'}], gmv:76000, status:'已通过', created_at:'2026-07-18 09:30:00', brand:'品牌C', main_product:'收纳用品', recommender:'刘芳', screenshots:[], reject_logs:[],
-    project_plan: {
-      company_intro: '公司成立于2017年，注册资本300万元，深耕家居收纳品类电商运营6年。',
-      categories: ['母婴'], maternity_scale:'母婴品类年GMV约2000万元，覆盖全国15个省份。', maternity_brands:'代理知名母婴品牌3个，自营品牌1个。',
-      apparel_scale:'', apparel_brands:'',
-      paid_traffic_case: '通过巨量千川精准投放，家居收纳类目单月GMV突破300万元。',
-      paid_traffic_shots: [],
-      content_case: '"家居好物研究所"账号粉丝85万，收纳类种草视频平均播放量50万+。',
-      content_case_shots: [],
-      people_goods_field: '主播1人+助播1人，账号定位为家居收纳好物测评与场景化种草。',
-      short_video_strategy: '每周产出8条收纳场景类短视频，突出使用前后对比效果。',
-      ad_strategy: '磁力金牛为主，结合达人分销扩大曝光。',
-      team_plan: [{role:'主播', count:1, duty:'直播带货'}, {role:'助播', count:1, duty:'配合互动与上架'}],
-      venue_plan: '在广州市白云区租用80平米直播间，预计装修投入12万元。',
-      submitted_at: '2026-07-19 15:20:00'
-    }
-  },
-  { id:4, phone:'177****5567', platform_accounts:[{platform:'抖音',account_name:'@美妆小鹿'}], gmv:42000, status:'已驳回', created_at:'2026-07-22 16:48:00', brand:'品牌A', main_product:'口红套装', recommender:'', screenshots:[], reject_logs:[{reason:'业绩截图模糊，无法核实GMV数据', time:'2026-07-23 09:00:00', operator:'BD-张敏'}] }
-];
+var Store = OnboardingStore;
+var VISIBLE_STATUSES = [Store.STATUS.SUBMITTED, Store.STATUS.REVIEWED];
 
-// 根据角色过滤数据
-mockData = Auth.filterApplications(mockData);
-
-var mockTalentNames = {
-  '138****2231':'李潮', '159****8820':'王强', '186****0093':'陈静', '177****5567':'林晓鹿', '135****9911':'赵凯'
-};
-var talents = JSON.parse(localStorage.getItem('recruit_talents') || '{}');
-function talentName(phone) {
-  return (talents[phone] || {}).name || mockTalentNames[phone] || '-';
+// ===== 数据：入驻申请（已提交 + 已审核），按更新时间倒序 =====
+function loadData() {
+  var data = Store.list().filter(function(a) { return VISIBLE_STATUSES.indexOf(a.status) > -1; });
+  data = Auth.filterApplications(data);
+  return data.sort(function(a, b) { return (b.updatedAt || '').localeCompare(a.updatedAt || ''); });
 }
+var allData = loadData();
+
+// ===== 字段取值（列表与卡片共用） =====
+function customerName(app) { return (((app.form || {}).finance) || {}).fullName || ''; }
+function creatorOf(app) { return app.ownerName || app.ownerPhone || '-'; }
+function updaterOf(app) {
+  var versions = app.versions || [];
+  if (versions.length) return versions[versions.length - 1].operator || creatorOf(app);
+  return creatorOf(app);
+}
+function modeLabel(app) { var m = Store.modeByValue(app.mode); return m ? m.label : (app.mode || '-'); }
+function platText(app) { return (app.platforms && app.platforms.length) ? app.platforms.join('、') : '-'; }
+
+// 平台下拉选项（桌面 + 移动端）
+(function fillPlatformSelects() {
+  ['sPlatform', 'mSPlatform'].forEach(function(id) {
+    var sel = document.getElementById(id);
+    Store.PLATFORMS.forEach(function(p) {
+      var opt = document.createElement('option');
+      opt.value = p; opt.textContent = p;
+      sel.appendChild(opt);
+    });
+  });
+})();
+
+function st(s) {
+  var m = { submitted: 'reviewing', reviewed: 'approved' };
+  return '<span class="status-tag ' + (m[s] || '') + '">' + esc(Store.statusLabel(s)) + '</span>';
+}
+function esc(s) { if (!s) return ''; var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
 function renderTable(data) {
   var tbody = document.getElementById('tableBody');
   var html = '';
   if (data.length === 0) {
-    html = '<tr><td colspan="12" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无数据</div><div class="empty-hint">暂无符合条件的申请</div></td></tr>';
+    html = '<tr><td colspan="12" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无数据</div><div class="empty-hint">暂无已提交的入驻申请</div></td></tr>';
   } else {
     data.forEach(function(row, index) {
       html += '<tr>';
-      html += '<td>' + (index+1) + '</td>';
-      html += '<td>' + esc(talentName(row.phone)) + '</td>';
-      html += '<td>' + esc(row.phone) + '</td>';
-      html += '<td>' + esc(row.business_type || '-') + '</td>';
-      html += '<td>' + esc(row.brand || '-') + '</td>';
-      html += '<td class="col-platform">' + platCells(row.platform_accounts) + '</td>';
-      html += '<td class="col-account">' + acctCells(row.platform_accounts) + '</td>';
-      html += '<td>&#165;' + Number(row.gmv).toLocaleString('zh-CN') + '</td>';
-      html += '<td>' + esc(row.recommender || '-') + '</td>';
-      html += '<td class="col-status">' + st(row.status) + '<div class="td-sub-time">' + esc(row.created_at) + '</div></td>';
-      html += '<td>' + esc(row.created_at) + '</td>';
+      html += '<td>' + (index + 1) + '</td>';
+      html += '<td>' + esc(customerName(row) || '-') + '</td>';
+      html += '<td>' + esc(Store.typeOfMode(row.mode)) + '</td>';
+      html += '<td>' + esc(modeLabel(row)) + '</td>';
+      html += '<td>' + esc(platText(row)) + '</td>';
+      html += '<td>' + esc(row.bdContact || '-') + '</td>';
+      html += '<td>' + esc(row.createdAt || '-') + '</td>';
+      html += '<td>' + esc(creatorOf(row)) + '</td>';
+      html += '<td>' + esc(updaterOf(row)) + '</td>';
+      html += '<td>' + esc(row.updatedAt || '-') + '</td>';
+      html += '<td class="col-status">' + st(row.status) + '</td>';
       html += '<td class="col-actions">';
-      html += '<a class="link-action link-action-icon" title="查看详情" href="detail.html?id='+row.id+'&mode=view"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>查看</a>';
+      html += '<a class="link-action link-action-icon" title="查看详情" href="detail.html?id=' + encodeURIComponent(row.id) + '&mode=view"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>查看</a>';
       html += '</td></tr>';
     });
   }
   tbody.innerHTML = html;
   document.getElementById('totalCount').textContent = data.length;
 }
-function platCells(accounts) {
-  if (!accounts || accounts.length === 0) return '<div class="ml">-</div>';
-  return accounts.map(function(a) { return '<div class="ml"><span class="plat-tag">' + esc(a.platform) + '</span></div>'; }).join('');
-}
-function acctCells(accounts) {
-  if (!accounts || accounts.length === 0) return '<div class="ml">-</div>';
-  return accounts.map(function(a) { return '<div class="ml"><span class="acct-text">' + esc(a.account_name) + '</span></div>'; }).join('');
-}
-function st(s) {
-  var m = {
-    '已提交':'submitted', '审核中':'reviewing', '已驳回':'rejected',
-    '待提交项目规划':'initial', '规划审核中':'reviewing', '规划已驳回':'rejected', '已通过':'approved'
-  };
-  return '<span class="status-tag '+(m[s]||'')+'">'+s+'</span>';
-}
-function esc(s) { if(!s) return ''; var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
-function doSearch() {
-  var p = document.getElementById('sPhone').value.trim();
-  var bt = document.getElementById('sBusinessType').value;
-  var brand = document.getElementById('sBrand').value;
-  var pf = document.getElementById('sPlatform').value;
-  var s = document.getElementById('sStatus').value;
-  var f = mockData.filter(function(x) {
-    if (p && x.phone.indexOf(p) < 0) return false;
-    if (bt && x.business_type !== bt) return false;
-    if (brand && x.brand !== brand) return false;
-    if (pf && !x.platform_accounts.some(function(a){ return a.platform === pf; })) return false;
-    if (s && x.status !== s) return false;
+
+// ===== 筛选 =====
+function applyFilter(list, q) {
+  return list.filter(function(x) {
+    if (q.name && customerName(x).toLowerCase().indexOf(q.name.toLowerCase()) < 0) return false;
+    if (q.type && Store.typeOfMode(x.mode) !== q.type) return false;
+    if (q.platform && (x.platforms || []).indexOf(q.platform) < 0) return false;
+    if (q.status && x.status !== q.status) return false;
     return true;
   });
-  renderView(f);
+}
+
+function doSearch() {
+  var q = {
+    name: document.getElementById('sName').value.trim(),
+    type: document.getElementById('sType').value,
+    platform: document.getElementById('sPlatform').value,
+    status: document.getElementById('sStatus').value
+  };
+  renderView(applyFilter(allData, q));
   showSearchTags();
 }
 function resetSearch() {
-  document.getElementById('sPhone').value = '';
-  document.getElementById('sBusinessType').value = '';
-  document.getElementById('sBrand').value = '';
+  document.getElementById('sName').value = '';
+  document.getElementById('sType').value = '';
   document.getElementById('sPlatform').value = '';
   document.getElementById('sStatus').value = '';
-  renderView(mockData);
+  renderView(allData);
   showSearchTags();
 }
 function showSearchTags() {
-  var map = { sPhone:'申请人手机号', sBusinessType:'业务类型', sBrand:'品牌', sPlatform:'平台', sStatus:'状态' };
+  var map = { sName: '客户名称', sType: '入驻类型', sPlatform: '入驻平台', sStatus: '状态' };
   var tags = [];
   Object.keys(map).forEach(function(id) {
     var el = document.getElementById(id);
-    if (el && el.value) tags.push({ name: map[id], value: el.value, id: id });
+    if (el && el.value) {
+      var value = id === 'sStatus' ? Store.statusLabel(el.value) : el.value;
+      tags.push({ name: map[id], value: value, id: id });
+    }
   });
   var container = document.getElementById('searchTags');
   if (!container) return;
@@ -365,16 +293,11 @@ function clearSearchTag(id) {
   document.getElementById(id).value = '';
   doSearch();
 }
-function toggleSearchFold() {
-  var area = document.querySelector('.search-area');
-  var btn = document.getElementById('searchFoldBtn');
-  var folded = area.classList.toggle('folded');
-  btn.innerHTML = folded ? '筛选 &#9662;' : '筛选 &#9652;';
-}
 
+// ===== 移动端卡片 =====
 var MOBILE_PAGE_SIZE = 10;
 var mobileShownCount = MOBILE_PAGE_SIZE;
-var currentFiltered = mockData.slice();
+var currentFiltered = allData.slice();
 
 function isMobileView() {
   return window.matchMedia('(max-width: 1023px)').matches;
@@ -385,23 +308,20 @@ function renderCards(data) {
   var slice = data.slice(0, mobileShownCount);
   var html = '';
   if (slice.length === 0) {
-    html = '<div class="recruit-card"><div class="recruit-card-body">暂无符合条件的申请</div></div>';
+    html = '<div class="recruit-card"><div class="recruit-card-body">暂无已提交的入驻申请</div></div>';
   } else {
     slice.forEach(function(row) {
-      var chips = (row.platform_accounts || []).map(function(a) {
-        return '<span class="pa-line"><span class="plat-tag">' + esc(a.platform) + '</span><span class="acct">' + esc(a.account_name) + '</span></span>';
-      }).join('');
       html += '<div class="recruit-card">';
-      html += '<div class="recruit-card-head"><span class="name">' + esc(talentName(row.phone)) + '</span>' + st(row.status) + '</div>';
+      html += '<div class="recruit-card-head"><span class="name">' + esc(customerName(row) || '-') + '</span>' + st(row.status) + '</div>';
       html += '<div class="recruit-card-body">';
-      html += '<div>手机号：' + esc(row.phone) + '</div>';
-      html += '<div>业务类型 / 品牌：' + esc(row.business_type || '-') + ' / ' + esc(row.brand || '-') + '</div>';
-      html += '<div>近3个月GMV：&#165;' + Number(row.gmv).toLocaleString('zh-CN') + '</div>';
-      html += '<div>运营负责人：' + esc(row.recommender || '-') + '</div>';
-      if (chips) html += '<div class="chip-row">' + chips + '</div>';
+      html += '<div>入驻类型 / 模式：' + esc(Store.typeOfMode(row.mode)) + ' / ' + esc(modeLabel(row)) + '</div>';
+      html += '<div>入驻平台：' + esc(platText(row)) + '</div>';
+      html += '<div>对接商务：' + esc(row.bdContact || '-') + '</div>';
+      html += '<div>创建人：' + esc(creatorOf(row)) + '</div>';
+      html += '<div>更新时间：' + esc(row.updatedAt || '-') + '</div>';
       html += '</div>';
-      html += '<div class="recruit-card-foot"><span class="time">' + esc(row.created_at) + '</span>';
-      html += '<a class="btn btn-primary" style="height:48px;line-height:48px;padding:0 16px;" href="detail.html?id=' + row.id + '&mode=view">查看详情</a>';
+      html += '<div class="recruit-card-foot"><span class="time">' + esc(row.createdAt || '') + '</span>';
+      html += '<a class="btn btn-primary" style="height:48px;line-height:48px;padding:0 16px;" href="detail.html?id=' + encodeURIComponent(row.id) + '&mode=view">查看详情</a>';
       html += '</div></div>';
     });
   }
@@ -430,32 +350,24 @@ function toggleFilterSheet() {
 }
 
 function doMobileSearch() {
-  var p = document.getElementById('mSPhone').value.trim();
-  var bt = document.getElementById('mSBusinessType').value;
-  var brand = document.getElementById('mSBrand').value;
-  var pf = document.getElementById('mSPlatform').value;
-  var s = document.getElementById('mSStatus').value;
-  var f = mockData.filter(function(x) {
-    if (p && x.phone.indexOf(p) < 0) return false;
-    if (bt && x.business_type !== bt) return false;
-    if (brand && x.brand !== brand) return false;
-    if (pf && !x.platform_accounts.some(function(a){ return a.platform === pf; })) return false;
-    if (s && x.status !== s) return false;
-    return true;
-  });
+  var q = {
+    name: document.getElementById('mSName').value.trim(),
+    type: document.getElementById('mSType').value,
+    platform: document.getElementById('mSPlatform').value,
+    status: document.getElementById('mSStatus').value
+  };
   mobileShownCount = MOBILE_PAGE_SIZE;
-  renderView(f);
+  renderView(applyFilter(allData, q));
   toggleFilterSheet();
 }
 
 function resetMobileSearch() {
-  document.getElementById('mSPhone').value = '';
-  document.getElementById('mSBusinessType').value = '';
-  document.getElementById('mSBrand').value = '';
+  document.getElementById('mSName').value = '';
+  document.getElementById('mSType').value = '';
   document.getElementById('mSPlatform').value = '';
   document.getElementById('mSStatus').value = '';
   mobileShownCount = MOBILE_PAGE_SIZE;
-  renderView(mockData);
+  renderView(allData);
 }
 
 window.addEventListener('resize', function() { renderView(currentFiltered); });
@@ -478,10 +390,7 @@ function showToast(message, type) {
   }, 2500);
 }
 
-if (!localStorage.getItem('recruit_applications')) {
-  localStorage.setItem('recruit_applications', JSON.stringify(mockData));
-}
-renderView(JSON.parse(localStorage.getItem('recruit_applications')) || mockData);
+renderView(allData);
 </script>
 <!-- 设备效果预览切换器：电脑 / 手机 -->
 <script>

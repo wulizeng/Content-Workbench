@@ -88,6 +88,31 @@
     .tl-time { font-size:11px; color:var(--text-tertiary); font-family:"SF Mono","Menlo",monospace; }
     .tl-detail { font-size:12px; color:var(--text-secondary); margin-top:2px; }
 
+    /* ===== 明细查询栏 ===== */
+    .detail-search-bar {
+      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+      padding:10px 16px; background:#f8fafc; border-bottom:1px solid var(--border-light);
+    }
+    .detail-search-item { display:flex; align-items:center; gap:4px; }
+    .detail-search-item label { font-size:12px; color:var(--text-secondary); white-space:nowrap; }
+    .detail-search-item input,
+    .detail-search-item select {
+      padding:5px 8px; border:1px solid var(--border); border-radius:6px;
+      font-size:12px; outline:none; background:#fff; transition:border-color .18s;
+    }
+    .detail-search-item input { width:140px; }
+    .detail-search-item select { width:100px; }
+    .detail-search-item input:focus,
+    .detail-search-item select:focus { border-color:var(--primary); }
+    .detail-search-btns { display:flex; gap:6px; }
+    .detail-search-btns .btn { padding:5px 12px; font-size:12px; }
+    .detail-toolbar {
+      display:flex; align-items:center; gap:10px;
+      padding:8px 16px; border-bottom:1px solid var(--border-light); background:#fff;
+    }
+    .batch-info { margin-left:auto; font-size:12px; color:var(--text-tertiary); }
+    .batch-info.active { color:var(--primary); font-weight:600; }
+
     /* ===== 空状态 ===== */
     .empty-box { text-align:center; padding:60px 0; color:var(--text-tertiary); font-size:13px; }
   </style>
@@ -119,6 +144,36 @@
       <div class="section">
         <div class="section-head"><h3>📦 商品明细</h3><span class="sec-badge" id="itemCountBadge"></span></div>
         <div class="section-body" style="padding:0;">
+          <!-- 查询区域 -->
+          <div class="detail-search-bar">
+            <div class="detail-search-item">
+              <label>店铺编码：</label>
+              <input type="text" id="detailSearchShop" placeholder="输入店铺编码">
+            </div>
+            <div class="detail-search-item">
+              <label>平台商品ID：</label>
+              <input type="text" id="detailSearchProduct" placeholder="输入平台商品ID">
+            </div>
+            <div class="detail-search-item">
+              <label>执行状态：</label>
+              <select id="detailSearchStatus">
+                <option value="">全部</option>
+                <option value="待执行">待执行</option>
+                <option value="执行中">执行中</option>
+                <option value="已完成">已完成</option>
+                <option value="失败">失败</option>
+              </select>
+            </div>
+            <div class="detail-search-btns">
+              <button class="btn btn-primary" onclick="doDetailSearch()">查询</button>
+              <button class="btn" onclick="resetDetailSearch()">重置</button>
+            </div>
+          </div>
+          <!-- 批量执行工具栏 -->
+          <div class="detail-toolbar">
+            <button class="btn btn-primary" onclick="batchExecuteDetail()" style="font-size:12px;padding:5px 14px;">批量执行</button>
+            <span class="batch-info" id="detailBatchInfo"></span>
+          </div>
           <div style="overflow-x:auto;">
             <table class="pkg-table">
               <thead id="itemHead">
@@ -240,15 +295,31 @@
       document.getElementById('infoGrid').innerHTML = html;
     }
 
-    // ===== 渲染商品明细（按任务类型动态渲染列） =====
+    // ===== 渲染商品明细（按任务类型动态渲染列，支持查询筛选与复选框） =====
     function renderItems(batch) {
       var items = batch.items || [];
       var isRecommend = (batch.type === 'recommend');
       var isText = (batch.type === 'text');
-      document.getElementById('itemCountBadge').textContent = '共 ' + items.length + ' 条商品';
+
+      // 应用查询筛选
+      var shopQ = document.getElementById('detailSearchShop').value.trim();
+      var productQ = document.getElementById('detailSearchProduct').value.trim();
+      var statusQ = document.getElementById('detailSearchStatus').value;
+      var filtered = items;
+      if (shopQ || productQ || statusQ) {
+        filtered = items.filter(function(it) {
+          if (shopQ && it.shopCode.indexOf(shopQ) === -1) return false;
+          if (productQ && it.productId.indexOf(productQ) === -1) return false;
+          if (statusQ && it.status !== statusQ) return false;
+          return true;
+        });
+      }
+
+      document.getElementById('itemCountBadge').textContent = '共 ' + filtered.length + ' 条商品' + (filtered.length !== items.length ? '（已筛选，总 ' + items.length + ' 条）' : '');
 
       // 动态表头：按任务类型插入专属列
       var headHtml = '<tr>';
+      headHtml += '<th style="width:40px;text-align:center;"><input type="checkbox" id="detailCheckAll" onclick="toggleDetailAll(this)"></th>';
       headHtml += '<th style="width:50px;">序号</th>';
       headHtml += '<th style="width:120px;">店铺编码</th>';
       headHtml += '<th style="width:200px;">平台商品ID</th>';
@@ -268,15 +339,17 @@
       headHtml += '</tr>';
       document.getElementById('itemHead').innerHTML = headHtml;
 
-      // 列数：推荐 11 / 文本 9 / 其他 8
-      var colCount = isRecommend ? 11 : (isText ? 9 : 8);
+      // 列数（含复选框列）：推荐 12 / 文本 10 / 其他 9
+      var colCount = isRecommend ? 12 : (isText ? 10 : 9);
       var html = '';
-      if (items.length === 0) {
+      if (filtered.length === 0) {
         html = '<tr><td colspan="' + colCount + '" style="text-align:center;padding:40px 0;color:var(--text-tertiary);">暂无商品明细</td></tr>';
       } else {
-        items.forEach(function(it, idx) {
+        filtered.forEach(function(it, idx) {
+          var origIdx = items.indexOf(it);
           var canDelete = (it.status === '待执行' || it.status === '失败');
           html += '<tr>';
+          html += '<td style="text-align:center;"><input type="checkbox" class="detail-row-check" value="' + origIdx + '" onclick="toggleDetailRow(this)"></td>';
           html += '<td>' + (idx + 1) + '</td>';
           html += '<td class="col-shop-code">' + esc(it.shopCode) + '</td>';
           html += '<td class="col-batch-no">' + esc(it.productId) + '</td>';
@@ -295,7 +368,7 @@
           html += '<td>' + (it.updater ? esc(it.updater) : '-') + '</td>';
           html += '<td>';
           if (canDelete) {
-            html += '<a href="javascript:void(0)" onclick="deleteItem(' + idx + ')" style="color:#dc2626;font-size:12px;text-decoration:none;cursor:pointer;">删除</a>';
+            html += '<a href="javascript:void(0)" onclick="deleteItem(' + origIdx + ')" style="color:#dc2626;font-size:12px;text-decoration:none;cursor:pointer;">删除</a>';
           } else {
             html += '<span style="color:var(--text-tertiary);font-size:12px;">-</span>';
           }
@@ -304,6 +377,7 @@
         });
       }
       document.getElementById('itemBody').innerHTML = html;
+      updateDetailBatchInfo();
     }
 
     // ===== 删除商品明细 =====
@@ -324,6 +398,98 @@
       renderInfo(batch, agg);
       renderItems(batch);
       renderLogs(batch, agg);
+    }
+
+    // ===== 明细查询 =====
+    function doDetailSearch() {
+      var batches = loadBatches();
+      var batch = null;
+      for (var i = 0; i < batches.length; i++) {
+        if (batches[i].batchNo === getBatchNo()) { batch = batches[i]; break; }
+      }
+      if (batch) renderItems(batch);
+    }
+
+    function resetDetailSearch() {
+      document.getElementById('detailSearchShop').value = '';
+      document.getElementById('detailSearchProduct').value = '';
+      document.getElementById('detailSearchStatus').value = '';
+      doDetailSearch();
+    }
+
+    // ===== 复选框操作 =====
+    function toggleDetailAll(el) {
+      document.querySelectorAll('.detail-row-check').forEach(function(c) {
+        c.checked = el.checked;
+        var tr = c.closest('tr');
+        if (tr) tr.classList.toggle('row-selected', el.checked);
+      });
+      updateDetailBatchInfo();
+    }
+
+    function toggleDetailRow(el) {
+      var tr = el.closest('tr');
+      if (tr) tr.classList.toggle('row-selected', el.checked);
+      var all = document.querySelectorAll('.detail-row-check');
+      var checked = document.querySelectorAll('.detail-row-check:checked');
+      var checkAllEl = document.getElementById('detailCheckAll');
+      if (checkAllEl) checkAllEl.checked = all.length > 0 && all.length === checked.length;
+      updateDetailBatchInfo();
+    }
+
+    function updateDetailBatchInfo() {
+      var checked = document.querySelectorAll('.detail-row-check:checked');
+      var infoEl = document.getElementById('detailBatchInfo');
+      if (checked.length > 0) {
+        infoEl.textContent = '已选 ' + checked.length + ' 项';
+        infoEl.className = 'batch-info active';
+      } else {
+        infoEl.textContent = '';
+        infoEl.className = 'batch-info';
+      }
+    }
+
+    // ===== 批量执行 =====
+    function batchExecuteDetail() {
+      var checked = document.querySelectorAll('.detail-row-check:checked');
+      if (checked.length === 0) {
+        alert('请先选择要执行的商品明细');
+        return;
+      }
+      var batchNo = getBatchNo();
+      var batches = loadBatches();
+      var batch = null;
+      for (var i = 0; i < batches.length; i++) {
+        if (batches[i].batchNo === batchNo) { batch = batches[i]; break; }
+      }
+      if (!batch) return;
+
+      var executedCount = 0;
+      var now = new Date();
+      var timeStr = now.getFullYear() + '-' +
+        String(now.getMonth() + 1).padStart(2, '0') + '-' +
+        String(now.getDate()).padStart(2, '0') + ' ' +
+        String(now.getHours()).padStart(2, '0') + ':' +
+        String(now.getMinutes()).padStart(2, '0') + ':00';
+
+      checked.forEach(function(c) {
+        var idx = parseInt(c.value, 10);
+        var item = batch.items[idx];
+        if (item && (item.status === '待执行' || item.status === '失败')) {
+          item.status = '已完成';
+          item.failReason = '';
+          item.updateTime = timeStr;
+          item.updater = '管理员';
+          executedCount++;
+        }
+      });
+
+      localStorage.setItem('size_params_batches', JSON.stringify(batches));
+      var agg = aggregateBatch(batch);
+      renderInfo(batch, agg);
+      renderItems(batch);
+      renderLogs(batch, agg);
+      alert('已执行 ' + executedCount + ' 条商品明细');
     }
 
     // ===== 构建操作日志（流水式） =====

@@ -189,8 +189,8 @@
             <span>平台店铺授权书</span>
           </a>
           <a class="sidebar-item sidebar-child" data-page="pages/store-engine/manage.html" onclick="switchSidebar(this)">
-            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
-            <span>店铺入驻</span>
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            <span>客户入驻申请</span>
           </a>
           <a class="sidebar-item sidebar-child" data-page="pages/store-engine/position-clone-list.html" onclick="switchSidebar(this)">
             <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
@@ -241,7 +241,7 @@
           </a>
           <a class="sidebar-item sidebar-child" data-page="pages/package/size-params.html" onclick="switchSidebar(this)">
             <svg viewBox="0 0 24 24" width="17" height="17"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-            <span>批量配置任务</span>
+            <span>详情页设置</span>
           </a>
         </div>
         <div class="sidebar-parent" onclick="toggleSubmenu(this)">
@@ -535,7 +535,7 @@
         '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>' +
         '<span>客户注册</span>' +
         '</div>' +
-        '<div class="sidebar-parent" data-page="pages/recruit/mine.html" onclick="switchSidebar(this)">' +
+        '<div class="sidebar-parent" data-page="pages/store-engine/manage.html" onclick="switchSidebar(this)">' +
         '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' +
         '<span>客户入驻申请</span>' +
         '</div>' +
@@ -643,38 +643,9 @@
       window.open('pages/recruit/login.html?mode=register', '_blank');
     }
 
-    // ===== 达人端：定位当前达人的申请记录（管理员可见全部） =====
-    function getTalentApps() {
-      var apps = JSON.parse(localStorage.getItem('recruit_applications') || '[]');
-      if (currentUser && currentUser.role === 'admin') return apps;
-      var phone = localStorage.getItem('recruit_current_phone') || currentUser.phone;
-      return apps.filter(function(a) { return a.phone === phone; });
-    }
-
     function markSidebarActive(el) {
       clearSidebarActive();
       el.classList.add('active');
-    }
-
-    // 项目规划：打开最新一条可规划/已规划的申请，无记录则引导到我的申请
-    function openTalentPlan(el) {
-      markSidebarActive(el);
-      var apps = getTalentApps();
-      var target = null;
-      var PLAN_STATUSES = ['待提交项目规划', '规划已驳回', '规划审核中', '已通过'];
-      for (var i = apps.length - 1; i >= 0; i--) {
-        if (PLAN_STATUSES.indexOf(apps[i].status) > -1) { target = apps[i]; break; }
-      }
-      if (target) openTab('pages/recruit/project-plan.html?id=' + target.id, '项目规划');
-      else openTab('pages/recruit/mine.html', '客户入驻申请');
-    }
-
-    // 申请详情：打开最新一条申请的详情，无记录则引导到客户入驻申请
-    function openTalentDetail(el) {
-      markSidebarActive(el);
-      var apps = getTalentApps();
-      if (apps.length > 0) openTab('pages/recruit/detail.html?id=' + apps[apps.length - 1].id, '申请详情');
-      else openTab('pages/recruit/mine.html', '客户入驻申请');
     }
 
     // ===== 右上角账号切换：客户 / 运营 / 管理员 =====

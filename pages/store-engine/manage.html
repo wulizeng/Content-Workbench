@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>店铺入驻</title>
+  <title>客户入驻申请</title>
   <link rel="stylesheet" href="../../css/style.css">
   <style>
   .data-table thead th,
@@ -14,249 +14,1644 @@
   .data-table .col-actions {
     text-align: center;
   }
+  .data-table .col-index { width: 56px; }
+  .data-table .td-index { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+
+  /* ================= 列表分页 ================= */
+  /* 分页始终单行显示；极窄屏幕下允许横向滚动兜底 */
+  .ob-pagination { flex-wrap: nowrap; overflow-x: auto; }
+  .ob-pagination .page-info { white-space: nowrap; }
+  .ob-pagination .page-btn, .ob-pagination .page-size { flex-shrink: 0; }
+  .ob-pagination .page-size {
+    /* 全局 select 默认 width:100%，这里固定宽度避免撑满分页条 */
+    width: 96px; height: 34px; padding: 0 8px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+    background: var(--bg-white); font-size: 13px; color: var(--text); cursor: pointer;
+  }
+  .page-btns { display: inline-flex; align-items: center; gap: 6px; }
+  .page-ellipsis { color: var(--text-tertiary); padding: 0 2px; user-select: none; }
+  .page-btns .page-btn:disabled { cursor: not-allowed; }
+
+  /* ================= 视图切换 ================= */
+  .ob-view[hidden] { display: none; }
+
+  /* ================= 表单视图标题区 ================= */
+  .ob-form-head { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+  .ob-form-title { font-size: 16px; font-weight: 700; color: var(--text); }
+  .back-link {
+    display: inline-flex; align-items: center; gap: 4px; font-size: 13px;
+    font-weight: 600; color: var(--text-secondary); cursor: pointer; text-decoration: none;
+    padding: 5px 12px; border: 1px solid var(--border); border-radius: 16px;
+    background: #fff; transition: all .15s;
+  }
+  .back-link:hover { color: var(--primary); border-color: var(--primary); }
+
+  /* ================= 基本信息模块 ================= */
+  .ob-basic-info {
+    background: #fff; border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px 24px; margin-top: 14px; box-shadow: 0 1px 3px rgba(15,23,42,.04);
+  }
+  .ob-basic-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .ob-basic-title { font-size: 16px; font-weight: 700; color: var(--text); }
+  .ob-basic-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px 24px; margin-top: 14px; }
+  /* 字段名与字段值同行展示 */
+  .ob-info-item { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+  .ob-info-label { flex-shrink: 0; font-size: 12px; color: var(--text-tertiary); }
+  .ob-info-label::after { content: '：'; }
+  .ob-info-value { font-size: 14px; font-weight: 600; color: var(--text); word-break: break-all; min-width: 0; }
+  .ob-basic-info .ob-banner { margin-top: 14px; }
+  .ob-chip-edit {
+    display: inline-flex; align-items: center; gap: 5px;
+    height: 30px; padding: 0 14px; border-radius: 15px;
+    border: 1px solid var(--primary); background: var(--primary-light); color: var(--primary);
+    font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s;
+    box-shadow: 0 1px 3px rgba(91,108,245,.18);
+  }
+  .ob-chip-edit:hover {
+    background: var(--primary); border-color: var(--primary); color: #fff;
+    box-shadow: 0 3px 10px rgba(91,108,245,.32); transform: translateY(-1px);
+  }
+  .ob-chip-edit:active { transform: translateY(0) scale(.97); box-shadow: 0 1px 3px rgba(91,108,245,.2); }
+  .ob-chip-edit-sm { margin-left: 8px; height: 24px; padding: 0 10px; font-size: 11px; }
+  /* 营业执照上传区块（财务信息面板顶部） */
+  .license-block { border: 1px dashed var(--border); border-radius: 10px; padding: 14px 16px; margin: 0 0 18px; background: #fafbff; }
+  .license-row { display: flex; align-items: center; gap: 14px; }
+  .license-thumb { width: 96px; height: 68px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-light); background: #fff; flex-shrink: 0; }
+  .license-main { flex: 1; min-width: 0; }
+  .license-title { font-size: 13px; font-weight: 600; color: var(--text); }
+  .license-hint { font-size: 12px; color: var(--text-tertiary, #94a3b8); margin-top: 3px; }
+  .license-badge { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; background: rgba(16,185,129,.12); color: #059669; vertical-align: 1px; }
+  .license-badge.doing { background: rgba(91,108,245,.12); color: var(--primary); }
+  .license-spinner { display: inline-block; width: 11px; height: 11px; border: 2px solid rgba(91,108,245,.3); border-top-color: var(--primary); border-radius: 50%; animation: licenseSpin .8s linear infinite; }
+  @keyframes licenseSpin { to { transform: rotate(360deg); } }
+  .ob-chip-edit:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  .ob-save-hint { margin-left: auto; font-size: 12px; color: var(--text-tertiary); }
+
+  /* ================= 14 阶段流程指示器 ================= */
+  .stage-wrap {
+    background: #fff; border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px 14px 14px; margin-top: 14px;
+  }
+  .stage-strip {
+    display: flex; align-items: flex-start; list-style: none;
+    margin: 0; padding: 0 4px;
+  }
+  .stage-item { display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 0; position: relative; }
+  .stage-item:not(:last-child)::after {
+    content: ''; position: absolute; top: 13px; left: calc(50% + 15px);
+    width: calc(100% - 30px); height: 2px; background: var(--border-light);
+  }
+  .stage-item.done:not(:last-child)::after { background: var(--success); }
+  .stage-dot {
+    width: 27px; height: 27px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; background: #f1f5f9; color: var(--text-tertiary);
+    border: 2px solid var(--border-light); position: relative; z-index: 1; transition: all .2s;
+  }
+  .stage-item.done .stage-dot { background: var(--success); border-color: var(--success); color: #fff; }
+  .stage-item.current .stage-dot {
+    background: var(--primary); border-color: var(--primary); color: #fff;
+    box-shadow: 0 0 0 5px rgba(91,108,245,.16);
+  }
+  .stage-name { margin-top: 7px; font-size: 11px; color: var(--text-tertiary); text-align: center; line-height: 1.35; }
+  .stage-item.done .stage-name { color: var(--success); }
+  .stage-item.current .stage-name { color: var(--primary); font-weight: 700; }
+  .stage-legend { display: flex; gap: 18px; margin-top: 12px; font-size: 12px; color: var(--text-tertiary); flex-wrap: wrap; }
+  .stage-legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .lg-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .lg-dot.done { background: var(--success); } .lg-dot.cur { background: var(--primary); }
+  .lg-dot.todo { background: #e2e8f0; }
+
+  /* ================= 列表区 ================= */
+  .ob-summary-bar { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0; }
+  .ob-summary-chip {
+    display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px;
+    background: #fff; border: 1px solid var(--border); border-radius: 20px; font-size: 13px; color: var(--text-secondary);
+  }
+  .ob-summary-chip strong { font-size: 15px; color: var(--text); }
+  .stage-badge {
+    display: inline-flex; align-items: center; gap: 5px; padding: 2px 10px;
+    background: #f1f5f9; border-radius: 12px; font-size: 12px; color: var(--text-secondary); white-space: nowrap;
+  }
+  .stage-badge .stage-no { color: var(--primary); font-weight: 700; }
+
+  /* ================= 表单面板 ================= */
+  .panel {
+    background: #fff; border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px 24px 24px; margin-top: 16px; box-shadow: 0 1px 3px rgba(15,23,42,.04);
+    /* 重置 fieldset 默认样式 */
+    min-width: 0;
+  }
+  .panel[hidden] { display: none; }
+  .panel-title {
+    font-size: 16px; font-weight: 700; color: var(--text); margin: 0 0 6px;
+    padding-bottom: 12px; border-bottom: 1px solid var(--border-light, #f1f5f9);
+    display: block; width: 100%;
+  }
+  .panel-sub { font-size: 12px; color: var(--text-tertiary); margin: 12px 0 18px; }
+  /* 表单项两列布局（默认单列，短字段自动变两列） */
+  .form-item.half { width: calc(50% - 20px); }
+
+  .radio-line { display: flex; gap: 22px; align-items: center; min-height: 38px; }
+  .radio-line label { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text); cursor: pointer; font-weight: 400; }
+  .radio-line input { width: auto; }
+  .month-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+  .month-cell label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+  .month-cell input { height: 34px; }
+  .month-sum { margin-top: 8px; font-size: 12px; color: var(--text-tertiary); }
+  .month-warn { display: none; margin-top: 6px; font-size: 12px; color: #b45309; }
+  .month-warn.show { display: block; }
+
+  /* 只读状态视觉 */
+  .panel.readonly { background: #fafbfc; }
+  .panel.readonly .panel-title::before {
+    content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='11' width='18' height='11' rx='2'/%3E%3Cpath d='M7 11V7a5 5 0 0 1 10 0v4'/%3E%3C/svg%3E");
+    margin-right: 6px;
+    opacity: 0.6;
+  }
+  .form-control input:disabled,
+  .form-control select:disabled,
+  .form-control textarea:disabled {
+    background: #f8f9fa;
+    color: var(--text-tertiary);
+    border-color: var(--border-light, #e2e8f0);
+    cursor: not-allowed;
+  }
+
+  /* ================= 底部操作条 ================= */
+  .ob-footer {
+    position: sticky; bottom: 0; z-index: 20; margin-top: 24px;
+    display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;
+    background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 16px 24px;
+    box-shadow: 0 -6px 20px rgba(15,23,42,.06);
+  }
+
+  /* ================= 弹窗（模式选择 / 审核） ================= */
+  .ob-modal-overlay {
+    position: fixed; inset: 0; z-index: 200; background: rgba(15,23,42,.5);
+    display: flex; align-items: center; justify-content: center; padding: 16px;
+    animation: obFadeIn .2s ease;
+  }
+  .ob-modal-overlay[hidden] { display: none; }
+  @keyframes obFadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .ob-modal {
+    width: 640px; max-width: 100%; max-height: 88vh; overflow-y: auto;
+    background: #fff; border-radius: 16px; padding: 20px 22px;
+    animation: obSlideUp .25s ease;
+  }
+  @keyframes obSlideUp { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .ob-modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .ob-modal-head h3 { margin: 0; font-size: 17px; font-weight: 700; color: var(--text); }
+  .ob-modal-close {
+    width: 30px; height: 30px; border: none; border-radius: 8px; background: #f4f6fb;
+    font-size: 18px; color: #94a3b8; cursor: pointer; line-height: 1;
+  }
+  .ob-modal-close:hover { background: #e8ecf5; color: var(--text); }
+  .ob-modal-sub { font-size: 13px; color: var(--text-tertiary); margin-bottom: 14px; }
+  .ob-mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .ob-mode-item { position: relative; display: block; cursor: pointer; }
+  .ob-mode-item input { position: absolute; opacity: 0; pointer-events: none; }
+  .ob-mode-card {
+    display: block; border: 1.5px solid var(--border); border-radius: 12px;
+    padding: 12px 14px; transition: border-color .15s, background .15s;
+  }
+  .ob-mode-item input:checked + .ob-mode-card { border-color: var(--primary); background: #f5f6ff; }
+  .ob-mode-item input:focus-visible + .ob-mode-card { outline: 2px solid var(--primary); outline-offset: 2px; }
+  .ob-mode-name { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+  .ob-mode-desc { font-size: 12px; color: var(--text-tertiary); line-height: 1.5; }
+  .ob-brand-row { margin-top: 14px; padding: 13px 14px; border: 1px dashed var(--border); border-radius: 12px; background: #fafbff; }
+  .ob-brand-row[hidden] { display: none; }
+  .ob-brand-row label { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+  .ob-brand-row label .req { color: var(--danger); margin-left: 2px; }
+  .ob-brand-row select { width: 100%; height: 40px; border: 1px solid var(--border); border-radius: 8px; padding: 0 10px; font-size: 14px; color: var(--text); background: #fff; }
+  .ob-brand-row select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(91,108,245,.12); }
+  .ob-platform-row { margin-top: 14px; padding: 13px 14px; border: 1px dashed var(--border); border-radius: 12px; background: #fafbff; }
+  .ob-platform-label { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+  .ob-platform-label .req { color: var(--danger); margin-left: 2px; }
+  .ob-platform-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+  .ob-platform-item { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; padding: 7px 14px; border: 1px solid var(--border); border-radius: 8px; background: #fff; font-size: 13px; color: var(--text); transition: all .15s; user-select: none; }
+  .ob-platform-item:hover { border-color: var(--primary); color: var(--primary); }
+  .ob-platform-item input { width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; margin: 0; }
+  .ob-platform-item.checked { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 600; }
+  .ob-field-error { display: none; margin-top: 6px; font-size: 12px; color: var(--danger); }
+  .ob-field-error.show { display: block; }
+  #platformError { margin-top: 8px; }
+  .ob-modal-foot { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+
+  /* ================= 提示条 / 加载 / 错误 ================= */
+  .ob-banner { display: flex; align-items: center; gap: 6px; margin-top: 8px; padding: 6px 12px; border-radius: 6px; font-size: 12px; line-height: 1.5; }
+  .ob-banner svg { flex-shrink: 0; width: 14px; height: 14px; }
+  .ob-banner.warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+  .ob-banner.info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; }
+  .ob-loading { padding: 60px 0; text-align: center; color: var(--text-tertiary); font-size: 14px; }
+  .ob-spinner { width: 28px; height: 28px; margin: 0 auto 12px; border-radius: 50%; border: 3px solid #e2e8f0; border-top-color: var(--primary); animation: obSpin .8s linear infinite; }
+  @keyframes obSpin { to { transform: rotate(360deg); } }
+  .ob-error-state { padding: 50px 0; text-align: center; }
+  .ob-error-state .msg { color: var(--danger); font-size: 14px; margin-bottom: 14px; }
+  .btn .btn-spin { display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(255,255,255,.45); border-top-color: #fff; border-radius: 50%; animation: obSpin .7s linear infinite; vertical-align: -1px; margin-right: 5px; }
+
+  /* ================= 响应式 ================= */
+  @media (max-width: 1023px) {
+    .table-area .table-scroll { display: none; }
+    .ob-card-list { display: block; }
+    .ob-app-card {
+      background: #fff; border: 1px solid var(--border); border-radius: 12px;
+      padding: 14px 16px; margin-bottom: 12px;
+    }
+    .ob-app-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 8px; }
+    .ob-app-card-head .name { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: var(--text); }
+    .ob-card-no {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 24px; height: 22px; padding: 0 7px; border-radius: 6px;
+      background: var(--primary-light); color: var(--primary);
+      font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; flex-shrink: 0;
+    }
+    .ob-app-card-body { font-size: 13px; color: var(--text-secondary); line-height: 1.9; }
+    .ob-app-card-foot { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-light); }
+    .ob-app-card-foot .link-action { height: 32px; line-height: 32px; padding: 0 12px; background: #f4f6fb; border-radius: 8px; }
+  }
+  @media (min-width: 1024px) {
+    .ob-card-list { display: none; }
+  }
+  @media (max-width: 900px) {
+    /* 平板/移动端两列表单降为单列 */
+    .form-item, .form-item.half { width: 100%; min-width: 0; }
+    .form-item label { width: auto; min-width: 0; text-align: left; padding-right: 0; margin-bottom: 4px; }
+    /* 基本信息 4 列降为 2 列 */
+    .ob-basic-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 760px) {
+    .ob-mode-grid { grid-template-columns: 1fr; }
+    .ob-modal { padding: 16px; border-radius: 16px 16px 0 0; max-height: 92vh; align-self: flex-end; width: 100%; }
+    .ob-modal-overlay { align-items: flex-end; padding: 0; }
+    .month-grid { grid-template-columns: repeat(3, 1fr); }
+    .stage-name { font-size: 10px; }
+    .ob-save-hint { width: 100%; margin-left: 0; }
+    .ob-footer { position: fixed; left: 0; right: 0; bottom: 0; border-radius: 0; margin-top: 12px; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+    body { padding-bottom: 90px; }
+    .ob-pagination { justify-content: center; gap: 4px; }
+    .ob-pagination .page-btn { min-width: 30px; height: 30px; }
+    .ob-pagination .page-size { height: 30px; font-size: 12px; }
+    .ob-pagination .page-info { margin: 0 4px; white-space: nowrap; }
+  }
+  @media (max-width: 400px) {
+    .month-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  /* 用户开启"减弱动态效果"时，关闭装饰性动画与过渡 */
+  @media (prefers-reduced-motion: reduce) {
+    .ob-modal-overlay, .ob-modal { animation: none; }
+    .stage-dot, .ob-chip-edit, .ob-platform-item, .btn, .stage-item::after { transition: none; }
+  }
   </style>
 </head>
 <body>
 <div class="page-container">
 
-  <div id="toastContainer" class="toast-container"></div>
+  <div id="toastContainer" class="toast-container" aria-live="polite" role="status"></div>
 
+  <script src="../../js/auth.js?v=20260903"></script>
+  <script src="../../js/onboarding-store.js?v=20260903"></script>
   <script>
+    // 登录校验（子页面需回到根目录登录页）
+    if (!Auth.isAuthenticated()) {
+      window.location.href = '../../login.html';
+    }
     if (window.parent) {
-      window.parent.postMessage({type:'breadcrumb', text:'店铺管理 <span>/</span> 店铺入驻'}, '*');
+      window.parent.postMessage({type:'breadcrumb', text:'店铺管理 <span>/</span> 客户入驻申请'}, '*');
     }
   </script>
 
-  <div class="page-title">店铺入驻</div>
+  <div class="page-title">客户入驻申请</div>
 
-  <!-- 搜索区域 -->
-  <div class="search-area">
-    <div class="search-row">
-      <div class="search-item">
-        <label>店铺名称：</label>
-        <input type="text" id="searchShopName" placeholder="请输入店铺名称">
+  <!-- ============================================================
+       申请列表（默认页）
+  ============================================================ -->
+  <section class="ob-view" id="viewList" aria-label="已有申请列表">
+    <div class="ob-summary-bar" id="summaryBar" aria-live="polite"></div>
+
+    <div class="search-area">
+      <div class="search-row">
+        <div class="search-item">
+          <label for="sKeyword">关键词：</label>
+          <input type="text" id="sKeyword" placeholder="申请编号 / 模式 / 品牌 / 申请人 / 手机号">
+        </div>
+        <div class="search-item">
+          <label for="sStatus">状态：</label>
+          <select id="sStatus">
+            <option value="">全部</option>
+            <option value="unsubmit">待提交</option>
+            <option value="submitted">已提交</option>
+            <option value="reviewed">已审核</option>
+          </select>
+        </div>
       </div>
-      <div class="search-item">
-        <label>平台名称：</label>
-        <select id="searchPlatform">
-          <option value="">全部</option>
-          <option value="抖音">抖音</option>
-          <option value="快手">快手</option>
-          <option value="小红书">小红书</option>
-          <option value="淘宝">淘宝</option>
-          <option value="京东">京东</option>
-        </select>
-      </div>
-      <div class="search-item">
-        <label>状态：</label>
-        <select id="searchStatus">
-          <option value="">全部</option>
-          <option value="待审核">待审核</option>
-          <option value="已通过">已通过</option>
-          <option value="已驳回">已驳回</option>
-        </select>
+      <div class="search-actions">
+        <button class="btn btn-primary" onclick="doSearch()">查询</button>
+        <button class="btn" onclick="resetSearch()">重置</button>
+        <button type="button" class="btn btn-primary" id="btnCreate" onclick="openModeModal()">新增申请</button>
       </div>
     </div>
-    <div class="search-actions">
-      <button class="btn btn-primary" onclick="doSearch()">查询</button>
-      <button class="btn" onclick="resetSearch()">重置</button>
-    </div>
-    <div class="search-active-tags" id="searchTags" style="display:none;"></div>
-  </div>
 
-  <!-- 表格区域 -->
-  <div class="table-area">
-    <div class="table-toolbar">
-      <button class="btn btn-primary" onclick="goAdd()">+ 新增入驻</button>
+    <!-- 加载中 -->
+    <div class="ob-loading" id="loadingState" role="status" aria-live="polite">
+      <div class="ob-spinner" aria-hidden="true"></div>加载中…
     </div>
 
-    <div class="table-scroll">
-      <table class="data-table" id="dataTable">
-        <thead>
-          <tr>
-            <th style="width:40px;"><input type="checkbox" id="checkAll" onclick="toggleAll(this)"></th>
-            <th style="width:50px;">序号</th>
-            <th style="width:100px;">店铺编码</th>
-            <th style="width:130px;">店铺名称</th>
-            <th style="width:90px;">平台名称</th>
-            <th style="width:110px;">平台店铺ID</th>
-            <th style="width:100px;">联系人</th>
-            <th style="width:120px;">联系电话</th>
-            <th style="width:80px;">状态</th>
-            <th style="width:130px;">创建时间</th>
-            <th style="width:130px;">更新时间</th>
-            <th style="width:100px;">操作</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-      </table>
+    <!-- 加载失败 -->
+    <div class="ob-error-state" id="errorState" hidden role="alert">
+      <div class="msg" id="errorMsg">申请数据加载失败</div>
+      <button class="btn btn-primary" onclick="loadList()">重试</button>
     </div>
 
-    <!-- 分页 -->
-    <div class="pagination" id="pagination">
+    <!-- 桌面端表格 -->
+    <div class="table-area" id="tableArea" hidden>
+      <div class="table-scroll">
+        <table class="data-table" id="dataTable">
+          <thead>
+            <tr>
+              <th class="col-index">序号</th>
+              <th>申请编号</th>
+              <th>入驻模式</th>
+              <th>品牌</th>
+              <th>入驻平台</th>
+              <th>申请人</th>
+              <th>当前阶段</th>
+              <th>状态</th>
+              <th>更新时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 移动端卡片流 -->
+    <div class="ob-card-list" id="cardList" hidden></div>
+
+    <!-- 分页（表格 / 卡片流共用） -->
+    <div class="pagination ob-pagination" id="listPagination" hidden>
       <span class="page-info">共 <strong id="totalCount">0</strong> 条</span>
-      <span class="page-btn disabled">&laquo;</span>
-      <span class="page-btn active">1</span>
-      <span class="page-btn">2</span>
-      <span class="page-btn">&raquo;</span>
+      <select class="page-size" id="pageSizeSelect" onchange="changePageSize(this.value)" aria-label="每页条数">
+        <option value="10">10 条/页</option>
+        <option value="20">20 条/页</option>
+        <option value="50">50 条/页</option>
+      </select>
+      <div class="page-btns" id="pageBtns"></div>
     </div>
-  </div>
+  </section>
+
+  <!-- ============================================================
+       视图三：填写 / 编辑申请（14 阶段进度 + 四步表单）
+  ============================================================ -->
+  <section class="ob-view" id="viewForm" hidden aria-label="填写入驻申请">
+
+    <!-- 标题区 -->
+    <div class="ob-form-head">
+      <a class="back-link" href="javascript:void(0)" onclick="backFromForm()">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+        返回列表
+      </a>
+      <span class="ob-form-title" id="formTitle">入驻申请</span>
+      <span class="ob-save-hint" id="saveHint" aria-live="polite"></span>
+    </div>
+
+    <!-- 流程节点（标题下方） -->
+    <section class="stage-wrap" aria-label="入驻流程进度（共 14 个阶段）">
+      <ol class="stage-strip" id="stageStrip"></ol>
+      <div class="stage-legend" aria-hidden="true">
+        <span><span class="lg-dot done"></span>已完成</span>
+        <span><span class="lg-dot cur"></span>当前阶段</span>
+        <span><span class="lg-dot todo"></span>未开始</span>
+      </div>
+    </section>
+
+    <!-- 基本信息模块 -->
+    <div class="ob-basic-info">
+      <div class="ob-basic-head">
+        <span class="ob-basic-title">基本信息</span>
+        <button type="button" class="ob-chip-edit" id="btnEditMode" onclick="openEditModeModal()" hidden>
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+          修改模式/品牌/平台
+        </button>
+      </div>
+      <div class="ob-basic-grid">
+        <div class="ob-info-item">
+          <div class="ob-info-label">单据编号</div>
+          <div class="ob-info-value" id="headId"></div>
+        </div>
+        <div class="ob-info-item">
+          <div class="ob-info-label">入驻模式</div>
+          <div class="ob-info-value" id="headMode"></div>
+        </div>
+        <div class="ob-info-item">
+          <div class="ob-info-label">入驻品牌</div>
+          <div class="ob-info-value" id="headBrand"></div>
+        </div>
+        <div class="ob-info-item">
+          <div class="ob-info-label">当前状态</div>
+          <div class="ob-info-value" id="headStatus"></div>
+        </div>
+        <div class="ob-info-item">
+          <div class="ob-info-label">入驻平台</div>
+          <div class="ob-info-value" id="headPlatform"></div>
+        </div>
+        <div class="ob-info-item">
+          <div class="ob-info-label">对接商务</div>
+          <div class="ob-info-value" id="headBdContact"></div>
+          <button type="button" class="ob-chip-edit ob-chip-edit-sm" id="btnEditBdContact" onclick="openBdContactModal()" hidden>
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+            修改
+          </button>
+        </div>
+        <div class="ob-info-item">
+          <div class="ob-info-label">申请人</div>
+          <div class="ob-info-value" id="headOwner"></div>
+        </div>
+        <div class="ob-info-item">
+          <div class="ob-info-label">创建时间</div>
+          <div class="ob-info-value" id="headCreatedAt"></div>
+        </div>
+        <div class="ob-info-item">
+          <div class="ob-info-label">更新时间</div>
+          <div class="ob-info-value" id="headUpdatedAt"></div>
+        </div>
+      </div>
+      <!-- 状态提示条 -->
+      <div class="ob-banner" id="statusBanner" hidden>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="statusBannerIcon"></svg>
+        <span id="statusBannerText"></span>
+      </div>
+    </div>
+
+    <!-- 表单模块：企业业务能力 / 企业负责人 / 项目规划 / 财务信息 -->
+    <form id="obForm" novalidate>
+      <div id="panelContainer"></div>
+
+      <div class="ob-footer">
+        <button type="button" class="btn" id="cancelBtn" onclick="backFromForm()">取消</button>
+        <button type="button" class="btn" id="saveBtn" onclick="explicitSave()">保存草稿</button>
+        <button type="button" class="btn btn-primary" id="submitBtn" onclick="submitApplication()">提交审核</button>
+      </div>
+    </form>
+  </section>
 
 </div>
 
-<script>
-// 模拟数据
-var mockData = [
-  { id:1, shopCode:'SHOP-DY-001', shopName:'潮流男装旗舰店', platformName:'抖音', platformShopId:'DShop_88231', contact:'张三', phone:'13800138001', status:'已通过', createTime:'2026-03-10 09:00:00', updateTime:'2026-07-20 14:30:00' },
-  { id:2, shopCode:'SHOP-KS-002', shopName:'时尚女装专营店', platformName:'快手', platformShopId:'KShop_55102', contact:'李四', phone:'13900139002', status:'已通过', createTime:'2026-04-05 10:30:00', updateTime:'2026-07-18 11:20:00' },
-  { id:3, shopCode:'SHOP-XHS-003', shopName:'童装优选店', platformName:'小红书', platformShopId:'XShop_77321', contact:'王五', phone:'13700137003', status:'待审核', createTime:'2026-07-01 14:45:00', updateTime:'2026-07-25 09:10:00' },
-  { id:4, shopCode:'SHOP-TB-004', shopName:'运动户外专营店', platformName:'淘宝', platformShopId:'TShop_99012', contact:'赵六', phone:'13600136004', status:'已驳回', createTime:'2026-06-20 08:30:00', updateTime:'2026-07-22 16:45:00' },
-  { id:5, shopCode:'SHOP-JD-005', shopName:'品质男装官方旗舰店', platformName:'京东', platformShopId:'JShop_33456', contact:'孙七', phone:'13500135005', status:'待审核', createTime:'2026-07-15 11:00:00', updateTime:'2026-07-28 10:00:00' }
-];
+<!-- ===== 模式选择弹窗 ===== -->
+<div class="ob-modal-overlay" id="modeModal" hidden onclick="if(event.target===this) closeModeModal()">
+  <div class="ob-modal" role="dialog" aria-modal="true" aria-labelledby="modeModalTitle">
+    <div class="ob-modal-head">
+      <h3 id="modeModalTitle">选择入驻模式</h3>
+      <button type="button" class="ob-modal-close" onclick="closeModeModal()" aria-label="关闭弹窗">&times;</button>
+    </div>
+    <p class="ob-modal-sub">请选择本次入驻的业务模式，不同模式的流程与资料要求略有差异。</p>
+    <div class="ob-mode-grid" role="radiogroup" aria-label="入驻模式" id="modeGrid"></div>
+    <div class="ob-brand-row" id="brandRow" hidden>
+      <label for="brandSelect">选择品牌</label>
+      <select id="brandSelect" aria-describedby="brandError">
+        <option value="">请选择品牌</option>
+      </select>
+      <div class="ob-field-error" id="brandError">选择 DP 模式时必须选择品牌</div>
+    </div>
+    <div class="ob-platform-row" id="platformRow">
+      <label class="ob-platform-label">入驻平台</label>
+      <div class="ob-platform-grid" id="platformGrid" role="group" aria-label="入驻平台"></div>
+      <div class="ob-field-error" id="platformError">请至少选择一个入驻平台</div>
+    </div>
+    <div class="ob-modal-foot">
+      <button type="button" class="btn" onclick="closeModeModal()">取消</button>
+      <button type="button" class="btn btn-primary" id="modeConfirmBtn" onclick="confirmMode()">下一步：填写申请</button>
+    </div>
+  </div>
+</div>
 
-// 渲染表格
+<!-- ===== 运营审核弹窗 ===== -->
+<div class="ob-modal-overlay" id="reviewModal" hidden onclick="if(event.target===this) closeReviewModal()">
+  <div class="ob-modal" role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle" style="width:480px;">
+    <div class="ob-modal-head">
+      <h3 id="reviewModalTitle">运营审核</h3>
+      <button type="button" class="ob-modal-close" onclick="closeReviewModal()" aria-label="关闭弹窗">&times;</button>
+    </div>
+    <p class="ob-modal-sub" id="reviewAppInfo"></p>
+    <div class="form-group">
+      <div class="form-item full">
+        <label for="reviewRemark">审核备注（选填）</label>
+        <div class="form-control">
+          <textarea id="reviewRemark" rows="3" placeholder="可填写审核备注；确认审核后申请将变为只读"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="ob-modal-foot">
+      <button type="button" class="btn" onclick="closeReviewModal()">取消</button>
+      <button type="button" class="btn btn-primary" id="reviewSubmitBtn" onclick="confirmReview()">确认审核</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 对接商务编辑弹窗 ===== -->
+<div class="ob-modal-overlay" id="bdContactModal" hidden onclick="if(event.target===this) closeBdContactModal()">
+  <div class="ob-modal" role="dialog" aria-modal="true" aria-labelledby="bdContactModalTitle" style="width:420px;">
+    <div class="ob-modal-head">
+      <h3 id="bdContactModalTitle">修改对接商务</h3>
+      <button type="button" class="ob-modal-close" onclick="closeBdContactModal()" aria-label="关闭弹窗">&times;</button>
+    </div>
+    <div class="form-group">
+      <div class="form-item full">
+        <label for="bdContactInput">对接商务</label>
+        <div class="form-control">
+          <input type="text" id="bdContactInput" maxlength="50" placeholder="请输入对接商务姓名">
+        </div>
+      </div>
+    </div>
+    <div class="ob-modal-foot">
+      <button type="button" class="btn" onclick="closeBdContactModal()">取消</button>
+      <button type="button" class="btn btn-primary" onclick="confirmBdContact()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var Store = OnboardingStore;
+var app = null;            // 表单视图当前申请
+var dirty = false;         // 是否有未保存改动
+var readOnly = false;      // 只读（已审核或查看模式）
+var forceViewOnly = false; // 「查看」进入的详情页：无论状态一律只读
+var autoSaveTimer = null;
+
+var STEPS_KEYS = Store.STEPS.map(function(s) { return s.key; });
+var STAGE_LABEL = Store.STAGES.map(function(s) { return s.name; });
+
+function esc(s) { if (s === null || s === undefined) return ''; var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+function showToast(message, type) {
+  type = type || 'info';
+  var container = document.getElementById('toastContainer');
+  if (!container) return;
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(function() {
+    if (toast.parentNode) {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s';
+      setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+    }
+  }, 2500);
+}
+
+function statusTag(status) {
+  var cls = { unsubmit: 'initial', submitted: 'reviewing', reviewed: 'approved' };
+  return '<span class="status-tag ' + (cls[status] || '') + '">' + esc(Store.statusLabel(status)) + '</span>';
+}
+
+// ================= 视图切换 =================
+function showView(name) {
+  ['viewList', 'viewForm'].forEach(function(id) {
+    document.getElementById(id).hidden = id !== name;
+  });
+  if (name === 'viewList' && !listLoaded) loadList();
+}
+
+function showListView() { showView('viewList'); }
+
+function openFormView(id, viewOnly) {
+  var loaded = Store.get(id);
+  if (!loaded) { showToast('申请不存在或已被删除', 'error'); return; }
+  app = loaded;
+  dirty = false;
+  forceViewOnly = !!viewOnly;
+  setSaveHint('');
+  resetLicenseState();
+  document.getElementById('panelContainer').innerHTML = '';
+  buildPanels();
+  fillForm(app.form);
+  renderAll();
+  showView('viewForm');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function backFromForm() {
+  if (dirty && !readOnly) {
+    if (!window.confirm('有未保存的修改，离开将丢失（自动保存已开启，仍在 2 秒倒计时的改动除外）。确定离开吗？')) return;
+  }
+  clearTimeout(autoSaveTimer);
+  showView('viewList');
+  renderView(getFilteredData());
+}
+
+// ================= 模式选择弹窗 =================
+function renderModeGrid() {
+  var grid = document.getElementById('modeGrid');
+  var html = '';
+  Store.MODES.forEach(function(m) {
+    html += '<label class="ob-mode-item">' +
+      '<input type="radio" name="obMode" value="' + esc(m.value) + '" data-needs-brand="' + (m.needsBrand ? '1' : '0') + '" onchange="onModeChange()">' +
+      '<span class="ob-mode-card">' +
+        '<span class="ob-mode-name">' + esc(m.label) + '</span>' +
+        '<span class="ob-mode-desc" style="display:block;">' + esc(m.desc) + '</span>' +
+      '</span></label>';
+  });
+  grid.innerHTML = html;
+}
+
+function renderPlatformGrid(selectedPlatforms) {
+  var grid = document.getElementById('platformGrid');
+  var html = '';
+  var selected = selectedPlatforms || [];
+  Store.PLATFORMS.forEach(function(p) {
+    var isChecked = selected.indexOf(p) > -1 ? ' checked' : '';
+    var isCheckedClass = selected.indexOf(p) > -1 ? ' checked' : '';
+    html += '<label class="ob-platform-item' + isCheckedClass + '">' +
+      '<input type="checkbox" name="obPlatform" value="' + esc(p) + '"' + isChecked + ' onchange="onPlatformChange(this)">' +
+      '<span>' + esc(p) + '</span>' +
+      '</label>';
+  });
+  grid.innerHTML = html;
+}
+
+function onPlatformChange(el) {
+  var label = el.closest('.ob-platform-item');
+  if (el.checked) label.classList.add('checked');
+  else label.classList.remove('checked');
+  document.getElementById('platformError').classList.remove('show');
+}
+
+function openModeModal() {
+  var modal = document.getElementById('modeModal');
+  modal.hidden = false;
+  renderModeGrid();
+  renderPlatformGrid([]);
+  document.getElementById('brandRow').hidden = true;
+  document.getElementById('brandError').classList.remove('show');
+  document.getElementById('platformError').classList.remove('show');
+  document.getElementById('modeConfirmBtn').textContent = '下一步：填写申请';
+  document.getElementById('modeConfirmBtn').onclick = confirmMode;
+  document.getElementById('modeModalTitle').textContent = '选择入驻模式';
+  var first = modal.querySelector('input[name="obMode"]');
+  if (first) first.focus();
+}
+
+function openEditModeModal() {
+  if (!app) return;
+  var modal = document.getElementById('modeModal');
+  modal.hidden = false;
+  renderModeGrid();
+  // 预选当前模式
+  var currentRadio = modal.querySelector('input[name="obMode"][value="' + app.mode + '"]');
+  if (currentRadio) {
+    currentRadio.checked = true;
+    onModeChange();
+    // 预选当前品牌
+    if (app.brand) {
+      var sel = document.getElementById('brandSelect');
+      sel.value = app.brand;
+    }
+  }
+  // 预选当前平台
+  renderPlatformGrid(app.platforms || []);
+  document.getElementById('platformError').classList.remove('show');
+  document.getElementById('modeConfirmBtn').textContent = '保存修改';
+  document.getElementById('modeConfirmBtn').onclick = confirmChangeMode;
+  document.getElementById('modeModalTitle').textContent = '修改入驻模式 / 品牌';
+  var first = modal.querySelector('input[name="obMode"]');
+  if (first) first.focus();
+}
+
+function closeModeModal() {
+  document.getElementById('modeModal').hidden = true;
+  if (document.getElementById('viewForm').hidden) document.getElementById('btnCreate').focus();
+}
+
+function openBdContactModal() {
+  if (!app) return;
+  document.getElementById('bdContactInput').value = app.bdContact || '';
+  document.getElementById('bdContactModal').hidden = false;
+  document.getElementById('bdContactInput').focus();
+}
+
+function closeBdContactModal() {
+  document.getElementById('bdContactModal').hidden = true;
+}
+
+function confirmBdContact() {
+  if (!app) return;
+  var value = document.getElementById('bdContactInput').value.trim();
+  var user = Auth.getCurrentUser() || {};
+  var result = Store.updateBdContact(app.id, value, user.name || user.phone || '运营');
+  if (!result.ok) { showToast(result.error, 'error'); return; }
+  app = result.app;
+  closeBdContactModal();
+  renderHead();
+  showToast('对接商务已更新', 'success');
+}
+
+function onModeChange() {
+  var checked = document.querySelector('input[name="obMode"]:checked');
+  var needsBrand = checked && checked.getAttribute('data-needs-brand') === '1';
+  document.getElementById('brandRow').hidden = !needsBrand;
+  document.getElementById('brandError').classList.remove('show');
+}
+
+function confirmMode() {
+  var checked = document.querySelector('input[name="obMode"]:checked');
+  if (!checked) { showToast('请先选择入驻模式', 'error'); return; }
+  var mode = checked.value;
+  var needsBrand = checked.getAttribute('data-needs-brand') === '1';
+  var brand = '';
+  if (needsBrand) {
+    brand = document.getElementById('brandSelect').value;
+    if (!brand) {
+      document.getElementById('brandError').classList.add('show');
+      document.getElementById('brandSelect').focus();
+      return;
+    }
+  }
+  // 收集平台选择
+  var platforms = [];
+  document.querySelectorAll('input[name="obPlatform"]:checked').forEach(function(cb) {
+    platforms.push(cb.value);
+  });
+  if (!platforms.length) {
+    document.getElementById('platformError').classList.add('show');
+    return;
+  }
+  // 创建申请（待提交）并进入填写视图
+  var user = Auth.getCurrentUser() || {};
+  var created = Store.createDraft({ mode: mode, brand: brand ? brand : null, platforms: platforms, owner: user });
+  closeModeModal();
+  showToast('申请已创建，开始填写资料', 'success');
+  openFormView(created.id);
+}
+
+function confirmChangeMode() {
+  var checked = document.querySelector('input[name="obMode"]:checked');
+  if (!checked) { showToast('请先选择入驻模式', 'error'); return; }
+  var mode = checked.value;
+  var needsBrand = checked.getAttribute('data-needs-brand') === '1';
+  var brand = '';
+  if (needsBrand) {
+    brand = document.getElementById('brandSelect').value;
+    if (!brand) {
+      document.getElementById('brandError').classList.add('show');
+      document.getElementById('brandSelect').focus();
+      return;
+    }
+  }
+  // 收集平台选择
+  var platforms = [];
+  document.querySelectorAll('input[name="obPlatform"]:checked').forEach(function(cb) {
+    platforms.push(cb.value);
+  });
+  if (!platforms.length) {
+    document.getElementById('platformError').classList.add('show');
+    return;
+  }
+  var user = Auth.getCurrentUser() || {};
+  var result = Store.updateMode(app.id, mode, brand || null, platforms, user.name || user.phone || '客户');
+  if (!result.ok) { showToast(result.error, 'error'); return; }
+  app = result.app;
+  closeModeModal();
+  renderHead();
+  renderStages();
+  showToast('模式/品牌/平台已更新', 'success');
+}
+
+// ================= 列表 =================
+var listLoaded = false;
+var currentData = [];  // 当前筛选条件下的完整数据（分页基于它切片）
+var currentPage = 1;
+var pageSize = 10;
+
+// 模拟异步加载（含加载态与错误处理）
+function loadList() {
+  var loading = document.getElementById('loadingState');
+  var errorState = document.getElementById('errorState');
+  var tableArea = document.getElementById('tableArea');
+  var cardList = document.getElementById('cardList');
+  var pagination = document.getElementById('listPagination');
+  loading.hidden = false; errorState.hidden = true; tableArea.hidden = true; cardList.hidden = true; pagination.hidden = true;
+  setTimeout(function() {
+    try {
+      var data = getFilteredData();
+      listLoaded = true;
+      loading.hidden = true;
+      renderView(data);
+    } catch (e) {
+      loading.hidden = true;
+      errorState.hidden = false;
+      document.getElementById('errorMsg').textContent = '申请数据加载失败：' + e.message;
+    }
+  }, 300);
+}
+
+function getFilteredData() {
+  var kw = document.getElementById('sKeyword').value.trim();
+  var st = document.getElementById('sStatus').value;
+  var data = Store.list(st, kw);
+  // 按角色过滤：客户只看自己的申请；运营/BD/管理员看全部
+  return Auth.filterApplications(data);
+}
+
+function doSearch() {
+  currentPage = 1; // 新查询从第 1 页开始
+  if (!listLoaded) { loadList(); return; }
+  try { renderView(getFilteredData()); }
+  catch (e) { showToast('查询失败：' + e.message, 'error'); }
+}
+
+function resetSearch() {
+  document.getElementById('sKeyword').value = '';
+  document.getElementById('sStatus').value = '';
+  doSearch();
+}
+
+function stageBadge(appData) {
+  var no = Store.currentStageOf(appData);
+  return '<span class="stage-badge"><span class="stage-no">' + no + '/14</span>' + esc(STAGE_LABEL[no - 1]) + '</span>';
+}
+
+function canEdit(appData) {
+  return appData.status !== 'reviewed'; // 已审核前均可编辑
+}
+
+function canReview() {
+  var user = Auth.getCurrentUser();
+  return !!user && (user.role === 'operator' || user.role === 'admin');
+}
+
+function actionButtons(appData) {
+  var html = '';
+  // 查看：一律进入只读详情页
+  html += '<a class="link-action" href="javascript:void(0)" onclick="openFormView(\'' + appData.id + '\', true)">查看</a>';
+  // 编辑：已审核前可用
+  if (canEdit(appData)) {
+    html += '<a class="link-action" href="javascript:void(0)" onclick="openFormView(\'' + appData.id + '\')">编辑</a>';
+  }
+  if (appData.status === 'unsubmit') {
+    html += '<a class="link-action" href="javascript:void(0)" onclick="submitApp(\'' + appData.id + '\')">提交</a>';
+  }
+  if (canReview() && appData.status === 'submitted') {
+    html += '<a class="link-action" href="javascript:void(0)" onclick="openReviewModal(\'' + appData.id + '\')">审核</a>';
+  }
+  return html;
+}
+
+function renderSummary(data) {
+  var bar = document.getElementById('summaryBar');
+  var counts = { unsubmit: 0, submitted: 0, reviewed: 0 };
+  data.forEach(function(a) { if (counts[a.status] !== undefined) counts[a.status]++; });
+  bar.innerHTML =
+    '<span class="ob-summary-chip">全部 <strong>' + data.length + '</strong></span>' +
+    '<span class="ob-summary-chip">待提交 <strong>' + counts.unsubmit + '</strong></span>' +
+    '<span class="ob-summary-chip">已提交 <strong>' + counts.submitted + '</strong></span>' +
+    '<span class="ob-summary-chip">已审核 <strong>' + counts.reviewed + '</strong></span>';
+}
+
 function renderTable(data) {
   var tbody = document.getElementById('tableBody');
   var html = '';
   if (data.length === 0) {
-    html = '<tr><td colspan="12" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无数据</div><div class="empty-hint">点击「+ 新增入驻」创建记录</div></td></tr>';
+    html = '<tr><td colspan="10" class="empty-state"><svg class="empty-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg><div class="empty-text">暂无申请</div><div class="empty-hint">点击「新增申请」开始首次入驻</div></td></tr>';
   } else {
-    data.forEach(function(row, index) {
-      html += '<tr class="' + (row._checked ? 'row-selected' : '') + '">';
-      html += '<td><input type="checkbox" class="row-check" value="' + row.id + '" ' + (row._checked ? 'checked' : '') + ' onclick="toggleRow(this,' + row.id + ')"></td>';
-      html += '<td>' + (index + 1) + '</td>';
-      html += '<td>' + escapeHtml(row.shopCode) + '</td>';
-      html += '<td>' + escapeHtml(row.shopName) + '</td>';
-      html += '<td>' + escapeHtml(row.platformName) + '</td>';
-      html += '<td>' + escapeHtml(row.platformShopId) + '</td>';
-      html += '<td>' + escapeHtml(row.contact) + '</td>';
-      html += '<td>' + escapeHtml(row.phone) + '</td>';
-      html += '<td>' + getStatusTag(row.status) + '</td>';
-      html += '<td>' + escapeHtml(row.createTime) + '</td>';
-      html += '<td>' + escapeHtml(row.updateTime) + '</td>';
-      html += '<td class="col-actions">';
-      html += '<a class="link-action" href="javascript:void(0)" onclick="doEdit(' + row.id + ')">编辑</a>';
-      html += '<a class="link-action" href="javascript:void(0)" onclick="doView(' + row.id + ')">查看</a>';
-      html += '</td>';
+    data.forEach(function(appData, i) {
+      var modeInfo = Store.modeByValue(appData.mode);
+      var platText = (appData.platforms && appData.platforms.length) ? appData.platforms.join('、') : '-';
+      html += '<tr>';
+      html += '<td class="td-index">' + ((currentPage - 1) * pageSize + i + 1) + '</td>';
+      html += '<td>' + esc(appData.id) + '</td>';
+      html += '<td>' + esc(modeInfo ? modeInfo.label : appData.mode) + '</td>';
+      html += '<td>' + esc(appData.brand || '-') + '</td>';
+      html += '<td>' + esc(platText) + '</td>';
+      html += '<td>' + esc(appData.ownerName || appData.ownerPhone || '-') + '</td>';
+      html += '<td>' + stageBadge(appData) + '</td>';
+      html += '<td class="col-status">' + statusTag(appData.status) + '</td>';
+      html += '<td>' + esc(appData.updatedAt) + '</td>';
+      html += '<td class="col-actions">' + actionButtons(appData) + '</td>';
       html += '</tr>';
     });
   }
   tbody.innerHTML = html;
-  document.getElementById('totalCount').textContent = data.length;
-  document.getElementById('checkAll').checked = false;
 }
 
-// 全选/取消全选
-function toggleAll(el) {
-  var checks = document.querySelectorAll('.row-check');
-  checks.forEach(function(c) {
-    c.checked = el.checked;
-    var tr = c.closest('tr');
-    if (tr) tr.classList.toggle('row-selected', el.checked);
-  });
-}
-function toggleRow(el, id) {
-  var tr = el.closest('tr');
-  if (tr) tr.classList.toggle('row-selected', el.checked);
-  updateCheckAll();
-}
-function updateCheckAll() {
-  var all = document.querySelectorAll('.row-check');
-  var checked = document.querySelectorAll('.row-check:checked');
-  document.getElementById('checkAll').checked = all.length > 0 && all.length === checked.length;
-}
-
-// 状态标签
-function getStatusTag(status) {
-  var cls = '';
-  switch(status) {
-    case '已通过': cls = 'submitted'; break;
-    case '已驳回': cls = 'cancelled'; break;
-    case '待审核': cls = 'initial'; break;
-    default: cls = 'initial';
+function renderCards(data) {
+  var list = document.getElementById('cardList');
+  var html = '';
+  if (data.length === 0) {
+    html = '<div class="ob-app-card"><div class="ob-app-card-body">暂无申请，点击「新增申请」开始首次入驻</div></div>';
+  } else {
+    data.forEach(function(appData, i) {
+      var modeInfo = Store.modeByValue(appData.mode);
+      var no = (currentPage - 1) * pageSize + i + 1;
+      html += '<div class="ob-app-card">';
+      html += '<div class="ob-app-card-head"><span class="name"><span class="ob-card-no">' + no + '</span>' + esc(appData.id) + '</span>' + statusTag(appData.status) + '</div>';
+      html += '<div class="ob-app-card-body">';
+      html += '<div>入驻模式：' + esc(modeInfo ? modeInfo.label : appData.mode) + (appData.brand ? '（' + esc(appData.brand) + '）' : '') + '</div>';
+      var platText = (appData.platforms && appData.platforms.length) ? appData.platforms.join('、') : '-';
+      html += '<div>入驻平台：' + esc(platText) + '</div>';
+      html += '<div>申请人：' + esc(appData.ownerName || appData.ownerPhone || '-') + '</div>';
+      html += '<div>当前阶段：' + Store.currentStageOf(appData) + '/14 ' + esc(STAGE_LABEL[Store.currentStageOf(appData) - 1]) + '</div>';
+      html += '<div>更新时间：' + esc(appData.updatedAt) + '</div>';
+      if (appData.status === 'reviewed' && appData.reviewReason) {
+        html += '<div>审核备注：' + esc(appData.reviewReason) + '</div>';
+      }
+      html += '</div>';
+      html += '<div class="ob-app-card-foot">' + actionButtons(appData) + '</div>';
+      html += '</div>';
+    });
   }
-  return '<span class="status-tag ' + cls + '">' + escapeHtml(status) + '</span>';
+  list.innerHTML = html;
 }
 
-function escapeHtml(str) {
-  if (!str) return '';
-  var div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
+function renderView(data) {
+  currentData = data;
+  var totalPages = Math.max(1, Math.ceil(data.length / pageSize));
+  if (currentPage > totalPages) currentPage = totalPages;
+  if (currentPage < 1) currentPage = 1;
+  renderSummary(data);
+  var isMobile = window.matchMedia('(max-width: 1023px)').matches;
+  document.getElementById('tableArea').hidden = isMobile;
+  document.getElementById('cardList').hidden = false; // 卡片流显隐由 CSS 断点控制
+  document.getElementById('listPagination').hidden = data.length === 0;
+  var slice = data.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  renderTable(slice);
+  renderCards(slice);
+  renderPagination();
 }
 
-// 搜索
-function doSearch() {
-  var shopName = document.getElementById('searchShopName').value.trim();
-  var platform = document.getElementById('searchPlatform').value;
-  var status = document.getElementById('searchStatus').value;
-  var filtered = mockData.filter(function(row) {
-    if (shopName && row.shopName.indexOf(shopName) === -1) return false;
-    if (platform && row.platformName !== platform) return false;
-    if (status && row.status !== status) return false;
-    return true;
+// ================= 分页 =================
+function renderPagination() {
+  var total = currentData.length;
+  var totalPages = Math.max(1, Math.ceil(total / pageSize));
+  document.getElementById('totalCount').textContent = total;
+  var html = '';
+  html += '<button type="button" class="page-btn" onclick="goToPage(' + (currentPage - 1) + ')"' +
+          (currentPage <= 1 ? ' disabled' : '') + ' aria-label="上一页">‹</button>';
+  pageNumbers(currentPage, totalPages).forEach(function(p) {
+    if (p === '…') {
+      html += '<span class="page-ellipsis">…</span>';
+    } else {
+      html += '<button type="button" class="page-btn' + (p === currentPage ? ' active' : '') + '" onclick="goToPage(' + p + ')"' +
+              (p === currentPage ? ' aria-current="page"' : '') + '>' + p + '</button>';
+    }
   });
-  renderTable(filtered);
-  showSearchTags();
+  html += '<button type="button" class="page-btn" onclick="goToPage(' + (currentPage + 1) + ')"' +
+          (currentPage >= totalPages ? ' disabled' : '') + ' aria-label="下一页">›</button>';
+  document.getElementById('pageBtns').innerHTML = html;
 }
 
-function resetSearch() {
-  document.getElementById('searchShopName').value = '';
-  document.getElementById('searchPlatform').value = '';
-  document.getElementById('searchStatus').value = '';
-  renderTable(mockData);
-  hideSearchTags();
+// 页码序列：总页数 ≤7 全显示，否则 1 … 当前±1 … 末页
+function pageNumbers(cur, total) {
+  var pages = [];
+  if (total <= 7) {
+    for (var i = 1; i <= total; i++) pages.push(i);
+    return pages;
+  }
+  pages.push(1);
+  var start = Math.max(2, cur - 1);
+  var end = Math.min(total - 1, cur + 1);
+  if (start > 2) pages.push('…');
+  for (var j = start; j <= end; j++) pages.push(j);
+  if (end < total - 1) pages.push('…');
+  pages.push(total);
+  return pages;
 }
 
-// 搜索条件标签
-function showSearchTags() {
-  var tags = [];
-  var shopName = document.getElementById('searchShopName').value.trim();
-  var platform = document.getElementById('searchPlatform').value;
-  var status = document.getElementById('searchStatus').value;
-  if (shopName) tags.push({label:'店铺名称: '+shopName, field:'searchShopName'});
-  if (platform) tags.push({label:'平台名称: '+platform, field:'searchPlatform'});
-  if (status) tags.push({label:'状态: '+status, field:'searchStatus'});
-  var container = document.getElementById('searchTags');
-  if (tags.length === 0) { container.style.display = 'none'; return; }
-  container.style.display = '';
-  container.innerHTML = tags.map(function(t) {
-    return '<span class="active-tag" onclick="clearTag(\''+t.field+'\')">'+t.label+' ×</span>';
-  }).join('');
-}
-function hideSearchTags() {
-  document.getElementById('searchTags').style.display = 'none';
-}
-function clearTag(field) {
-  var el = document.getElementById(field);
-  if (el.tagName === 'SELECT') el.value = '';
-  else el.value = '';
-  doSearch();
+function goToPage(p) {
+  var totalPages = Math.max(1, Math.ceil(currentData.length / pageSize));
+  if (p < 1 || p > totalPages || p === currentPage) return;
+  currentPage = p;
+  renderView(currentData);
 }
 
-function goAdd() {
-  showToast('新增入驻功能开发中', 'info');
-}
-function doEdit(id) {
-  showToast('编辑功能开发中', 'info');
-}
-function doView(id) {
-  showToast('查看详情功能开发中', 'info');
+function changePageSize(v) {
+  pageSize = parseInt(v, 10) || 10;
+  currentPage = 1;
+  renderView(currentData);
 }
 
-// Toast 轻提示
-function showToast(msg, type) {
-  var container = document.getElementById('toastContainer');
-  var toast = document.createElement('div');
-  toast.className = 'toast toast-' + (type || 'info');
-  toast.textContent = msg;
-  container.appendChild(toast);
-  setTimeout(function() { toast.classList.add('toast-hide'); }, 2500);
-  setTimeout(function() { toast.remove(); }, 3000);
+window.addEventListener('resize', function() {
+  if (listLoaded && !document.getElementById('viewList').hidden) {
+    renderView(getFilteredData());
+  }
+});
+
+// ================= 提交审核（列表快捷入口） =================
+function submitApp(id) {
+  var result = Store.submit(id, operatorName());
+  if (result.ok) {
+    showToast('已提交运营审核', 'success');
+    renderView(getFilteredData());
+  } else {
+    showToast(result.error || '提交失败', 'error');
+    if (result.errors && result.errors.length) {
+      openFormView(id);
+    }
+  }
 }
 
-// 初始化渲染
-renderTable(mockData);
+// ================= 运营审核弹窗 =================
+var reviewingId = null;
+
+function openReviewModal(id) {
+  reviewingId = id;
+  var appData = Store.get(id);
+  if (!appData) { showToast('申请不存在', 'error'); return; }
+  document.getElementById('reviewAppInfo').textContent = '申请编号：' + appData.id + '（' + (appData.ownerName || appData.ownerPhone || '-') + '）';
+  document.getElementById('reviewRemark').value = '';
+  document.getElementById('reviewModal').hidden = false;
+}
+
+function closeReviewModal() {
+  document.getElementById('reviewModal').hidden = true;
+  reviewingId = null;
+}
+
+function confirmReview() {
+  var remark = document.getElementById('reviewRemark').value.trim();
+  var btn = document.getElementById('reviewSubmitBtn');
+  btn.disabled = true;
+  btn.textContent = '提交中…';
+  setTimeout(function() {
+    var result = Store.review(reviewingId, remark, operatorName());
+    btn.disabled = false;
+    btn.textContent = '确认审核';
+    if (result.ok) {
+      closeReviewModal();
+      showToast('审核完成，状态更新为「已审核」', 'success');
+      if (!document.getElementById('viewForm').hidden && app && app.id === reviewingId) {
+        app = result.app; // 同步表单视图
+        renderAll();
+      }
+      if (!document.getElementById('viewList').hidden) renderView(getFilteredData());
+    } else {
+      showToast(result.error || '审核失败', 'error');
+    }
+  }, 300);
+}
+
+// ================= 14 阶段流程指示器 =================
+function renderStages() {
+  var current = Store.currentStageOf(app);
+  var strip = document.getElementById('stageStrip');
+  var html = '';
+  Store.STAGES.forEach(function(stage) {
+    var cls = 'todo';
+    if (stage.no < current) cls = 'done';
+    else if (stage.no === current) cls = 'current';
+    var dot = cls === 'done' ? '✓' : stage.no;
+    var aria = cls === 'current' ? ' aria-current="step"' : '';
+    html += '<li class="stage-item ' + cls + '"' + aria + '>' +
+      '<span class="stage-dot" aria-hidden="true">' + dot + '</span>' +
+      '<span class="stage-name">' + esc(stage.name) + '</span></li>';
+  });
+  strip.innerHTML = html;
+}
+
+// ================= 步骤 Tab =================
+// ================= 字段渲染 =================
+function fieldId(stepKey, key) { return 'f_' + stepKey + '_' + key; }
+
+function buildField(stepKey, def) {
+  var wrapper = document.createElement('div');
+  // 智能布局：textarea、radio 占满行，其他短字段两列
+  var isFullWidth = def.type === 'textarea' || def.type === 'radio';
+  wrapper.className = isFullWidth ? 'form-item full' : 'form-item half';
+  wrapper.setAttribute('data-field', stepKey + '.' + def.key);
+  if (def.showIf) wrapper.hidden = true; // 条件字段初始隐藏，由联动控制
+
+  var label = document.createElement('label');
+  if (def.type !== 'radio') label.setAttribute('for', fieldId(stepKey, def.key));
+  label.textContent = def.label + (def.unit ? '（' + def.unit + '）' : '');
+  wrapper.appendChild(label);
+
+  var control = document.createElement('div');
+  control.className = 'form-control';
+
+  var input;
+  if (def.type === 'textarea') {
+    input = document.createElement('textarea');
+    input.rows = 3;
+    if (def.maxlength) input.maxLength = def.maxlength;
+  } else if (def.type === 'select') {
+    input = document.createElement('select');
+    var ph = document.createElement('option');
+    ph.value = ''; ph.textContent = '请选择';
+    input.appendChild(ph);
+    def.options.forEach(function(opt) {
+      var o = document.createElement('option'); o.value = opt; o.textContent = opt;
+      input.appendChild(o);
+    });
+  } else if (def.type === 'radio') {
+    input = null;
+    var line = document.createElement('div');
+    line.className = 'radio-line';
+    line.id = fieldId(stepKey, def.key);
+    line.setAttribute('role', 'radiogroup');
+    line.setAttribute('aria-label', def.label);
+    def.options.forEach(function(opt, idx) {
+      var lab = document.createElement('label');
+      var r = document.createElement('input');
+      r.type = 'radio';
+      r.name = fieldId(stepKey, def.key);
+      r.value = opt.value;
+      r.id = fieldId(stepKey, def.key) + '_' + opt.value;
+      if (idx === 0) r.checked = true;
+      r.addEventListener('change', function() {
+        clearError(stepKey, def.key);
+        toggleConditionalFields();
+        markDirty();
+      });
+      lab.appendChild(r);
+      lab.appendChild(document.createTextNode(opt.label));
+      line.appendChild(lab);
+    });
+    control.appendChild(line);
+  } else {
+    input = document.createElement('input');
+    input.type = def.type === 'number' ? 'number' : 'text';
+    if (def.type === 'number') { input.min = '0'; input.step = 'any'; input.inputMode = 'decimal'; }
+  }
+
+  if (input) {
+    input.id = fieldId(stepKey, def.key);
+    if (def.placeholder) input.placeholder = def.placeholder;
+    input.addEventListener('input', function() {
+      clearError(stepKey, def.key);
+      markDirty();
+      if (stepKey === 'plan') refreshPlanHint();
+    });
+    control.appendChild(input);
+  }
+
+  var err = document.createElement('div');
+  err.className = 'field-error';
+  err.setAttribute('role', 'alert');
+  control.appendChild(err);
+
+  wrapper.appendChild(control);
+  wrapper.setAttribute('data-step', stepKey);
+  wrapper.setAttribute('data-key', def.key);
+  return wrapper;
+}
+
+function buildMonthlyGrid() {
+  var wrapper = document.createElement('div');
+  wrapper.className = 'form-item full';
+  wrapper.setAttribute('data-field', 'plan.monthly');
+
+  var label = document.createElement('label');
+  label.textContent = '月度分解目标';
+  wrapper.appendChild(label);
+
+  var control = document.createElement('div');
+  control.className = 'form-control';
+
+  var grid = document.createElement('div');
+  grid.className = 'month-grid';
+  grid.id = 'monthGrid';
+  for (var m = 1; m <= 12; m++) {
+    var cell = document.createElement('div');
+    cell.className = 'month-cell';
+    var lab = document.createElement('label');
+    lab.setAttribute('for', 'f_plan_m' + m);
+    lab.textContent = m + '月（万元）';
+    var inp = document.createElement('input');
+    inp.type = 'number'; inp.min = '0'; inp.step = 'any'; inp.inputMode = 'decimal';
+    inp.id = 'f_plan_m' + m;
+    inp.placeholder = '0';
+    inp.setAttribute('aria-label', m + '月分解目标（万元）');
+    inp.addEventListener('input', function() {
+      clearError('plan', 'monthly');
+      markDirty();
+      refreshPlanHint();
+    });
+    cell.appendChild(lab); cell.appendChild(inp);
+    grid.appendChild(cell);
+  }
+  control.appendChild(grid);
+
+  var sum = document.createElement('div');
+  sum.className = 'month-sum';
+  sum.id = 'monthSumText';
+  control.appendChild(sum);
+
+  var warn = document.createElement('div');
+  warn.className = 'month-warn';
+  warn.id = 'monthWarn';
+  warn.setAttribute('role', 'alert');
+  control.appendChild(warn);
+
+  var err = document.createElement('div');
+  err.className = 'field-error';
+  err.setAttribute('role', 'alert');
+  control.appendChild(err);
+
+  wrapper.appendChild(control);
+  wrapper.setAttribute('data-step', 'plan');
+  wrapper.setAttribute('data-key', 'monthly');
+  return wrapper;
+}
+
+function buildPanels() {
+  var container = document.getElementById('panelContainer');
+  container.innerHTML = '';
+  Store.STEPS.forEach(function(step, i) {
+    var panel = document.createElement('fieldset');
+    panel.className = 'panel';
+    panel.id = 'panel_' + step.key;
+
+    var legend = document.createElement('legend');
+    legend.className = 'panel-title';
+    legend.style.padding = '0';
+    legend.textContent = step.label;
+    panel.appendChild(legend);
+
+    var sub = document.createElement('p');
+    sub.className = 'panel-sub';
+    sub.textContent = step.key === 'finance'
+      ? '财务信息仅用于结算与签约，将加密存储，请确保与银行开户信息一致。'
+      : '带 * 为必填项，其余为选填。填写过程中会自动保存草稿。';
+    panel.appendChild(sub);
+
+    if (step.key === 'finance') panel.appendChild(buildLicenseBlock());
+
+    var group = document.createElement('div');
+    group.className = 'form-group';
+    Store.FIELD_DEFS[step.key].forEach(function(def) {
+      group.appendChild(buildField(step.key, def));
+      if (step.key === 'plan' && def.key === 'annualTarget') {
+        group.appendChild(buildMonthlyGrid());
+      }
+    });
+    panel.appendChild(group);
+    container.appendChild(panel);
+  });
+}
+
+// 条件字段联动：境外企业才显示「街道/门牌号」
+function toggleConditionalFields() {
+  var region = getRadioValue('f_finance_region');
+  var streetWrap = document.querySelector('[data-field="finance.street"]');
+  if (streetWrap) {
+    streetWrap.hidden = region !== 'overseas';
+  }
+}
+
+function getRadioValue(name) {
+  var checked = document.querySelector('input[name="' + name + '"]:checked');
+  return checked ? checked.value : '';
+}
+
+// ================= 营业执照上传（模拟识别，会话内预览不落盘） =================
+var LICENSE_DEMO_DATA = [
+  { fullName: '杭州星辰电子商务有限公司', taxNo: '91330100MA2KJRX70B' },
+  { fullName: '上海锦泓贸易有限公司', taxNo: '91310115MA1K35T62C' },
+  { fullName: '广州云上服饰有限公司', taxNo: '91440101MA5AKT3P8D' }
+];
+var LICENSE_MAX_SIZE = 5 * 1024 * 1024;
+var licenseObjectUrl = null;
+var licenseTimer = null;
+
+function resetLicenseState() {
+  clearTimeout(licenseTimer);
+  licenseTimer = null;
+  if (licenseObjectUrl) { URL.revokeObjectURL(licenseObjectUrl); licenseObjectUrl = null; }
+}
+
+function buildLicenseBlock() {
+  var wrap = document.createElement('div');
+  wrap.innerHTML =
+    '<div class="license-block" id="licenseUploadBlock">' +
+      '<input type="file" id="licenseFileInput" accept="image/jpeg,image/png" style="display:none" onchange="onLicenseFileChange(this)">' +
+      '<div class="license-row" id="licenseInitial">' +
+        '<div class="license-main">' +
+          '<div class="license-title">上传营业执照</div>' +
+          '<div class="license-hint">支持 JPG/PNG，不超过 5MB；上传后自动识别企业全称与税务登记号</div>' +
+        '</div>' +
+        '<button type="button" class="btn btn-primary" id="licenseUploadBtn" onclick="document.getElementById(\'licenseFileInput\').click()">选择图片</button>' +
+      '</div>' +
+      '<div class="license-row" id="licensePreview" style="display:none;">' +
+        '<img class="license-thumb" id="licensePreviewImg" alt="营业执照预览">' +
+        '<div class="license-main">' +
+          '<div class="license-title">营业执照<span id="licenseStatus"></span></div>' +
+          '<div class="license-hint" id="licenseHint"></div>' +
+        '</div>' +
+        '<button type="button" class="btn" id="licenseRetryBtn" onclick="document.getElementById(\'licenseFileInput\').click()" style="display:none;">重新上传</button>' +
+      '</div>' +
+    '</div>';
+  return wrap.firstChild;
+}
+
+function onLicenseFileChange(input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  if (!/^image\/(jpeg|png)$/.test(file.type) || file.size > LICENSE_MAX_SIZE) {
+    showToast('仅支持 JPG/PNG 格式且不超过 5MB 的图片', 'error');
+    input.value = '';
+    return;
+  }
+  resetLicenseState();
+  licenseObjectUrl = URL.createObjectURL(file);
+  document.getElementById('licenseInitial').style.display = 'none';
+  document.getElementById('licensePreview').style.display = '';
+  document.getElementById('licensePreviewImg').src = licenseObjectUrl;
+  document.getElementById('licenseStatus').innerHTML = '<span class="license-badge doing"><span class="license-spinner"></span>识别中…</span>';
+  document.getElementById('licenseHint').textContent = '正在识别执照信息';
+  document.getElementById('licenseRetryBtn').style.display = 'none';
+  input.value = '';
+  licenseTimer = setTimeout(function() {
+    licenseTimer = null;
+    var demo = LICENSE_DEMO_DATA[Math.floor(Math.random() * LICENSE_DEMO_DATA.length)];
+    fillLicenseFields(demo);
+    document.getElementById('licenseStatus').innerHTML = '<span class="license-badge">已识别</span>';
+    document.getElementById('licenseHint').textContent = '已自动填充企业全称、税务登记号与企业所在地，请核对';
+    document.getElementById('licenseRetryBtn').style.display = '';
+    showToast('已识别营业执照，自动填充 3 项字段，请核对', 'success');
+  }, 1500);
+}
+
+function fillLicenseFields(demo) {
+  var fullName = document.getElementById('f_finance_fullName');
+  if (fullName) fullName.value = demo.fullName;
+  var taxNo = document.getElementById('f_finance_taxNo');
+  if (taxNo) taxNo.value = demo.taxNo;
+  var region = document.getElementById('f_finance_region_domestic');
+  if (region) region.checked = true;
+  clearError('finance', 'fullName');
+  clearError('finance', 'taxNo');
+  clearError('finance', 'region');
+  toggleConditionalFields();
+  markDirty();
+}
+
+// ================= 数据读写 =================
+function collectForm() {
+  var form = Store.emptyForm();
+  Store.STEPS.forEach(function(step) {
+    Store.FIELD_DEFS[step.key].forEach(function(def) {
+      if (def.type === 'radio') {
+        form[step.key][def.key] = getRadioValue(fieldId(step.key, def.key));
+      } else {
+        var el = document.getElementById(fieldId(step.key, def.key));
+        if (el) form[step.key][def.key] = el.value.trim();
+      }
+    });
+  });
+  form.plan.monthly = {};
+  for (var m = 1; m <= 12; m++) {
+    var el = document.getElementById('f_plan_m' + m);
+    form.plan.monthly['m' + m] = el ? el.value.trim() : '';
+  }
+  return form;
+}
+
+function fillForm(data) {
+  Store.STEPS.forEach(function(step) {
+    Store.FIELD_DEFS[step.key].forEach(function(def) {
+      if (def.type === 'radio') {
+        var val = data[step.key][def.key] || def.options[0].value;
+        var r = document.getElementById(fieldId(step.key, def.key) + '_' + val);
+        if (r) r.checked = true;
+      } else {
+        var el = document.getElementById(fieldId(step.key, def.key));
+        if (el) el.value = data[step.key][def.key] || '';
+      }
+    });
+  });
+  var monthly = (data.plan && data.plan.monthly) || {};
+  for (var m = 1; m <= 12; m++) {
+    var el = document.getElementById('f_plan_m' + m);
+    if (el && monthly['m' + m] !== undefined) el.value = monthly['m' + m];
+  }
+  toggleConditionalFields();
+  refreshPlanHint();
+}
+
+// ================= 校验与错误展示 =================
+function showError(stepKey, key, message) {
+  var selector = key === 'monthly' ? '[data-field="plan.monthly"]' : '[data-field="' + stepKey + '.' + key + '"]';
+  var wrap = document.querySelector(selector);
+  if (!wrap) return;
+  var control = wrap.querySelector('.form-control');
+  var errEl = wrap.querySelector('.field-error');
+  if (control) control.classList.add('has-error');
+  if (errEl) errEl.textContent = message;
+  wrap.setAttribute('data-has-error', '1');
+}
+
+function clearError(stepKey, key) {
+  var selector = key === 'monthly' ? '[data-field="plan.monthly"]' : '[data-field="' + stepKey + '.' + key + '"]';
+  var wrap = document.querySelector(selector);
+  if (!wrap || wrap.getAttribute('data-has-error') !== '1') return;
+  var control = wrap.querySelector('.form-control');
+  var errEl = wrap.querySelector('.field-error');
+  if (control) control.classList.remove('has-error');
+  if (errEl) errEl.textContent = '';
+  wrap.removeAttribute('data-has-error');
+}
+
+function applyStepErrors(stepKey, errors) {
+  // 先清掉本步骤已有错误
+  document.querySelectorAll('[data-step="' + stepKey + '"][data-has-error]').forEach(function(w) {
+    w.removeAttribute('data-has-error');
+    w.querySelector('.form-control').classList.remove('has-error');
+    w.querySelector('.field-error').textContent = '';
+  });
+  Object.keys(errors).forEach(function(fullKey) {
+    var parts = fullKey.split('.');
+    if (parts[0] !== stepKey) return;
+    showError(parts[0], parts[1], errors[fullKey]);
+  });
+  return Object.keys(errors).length === 0;
+}
+
+function refreshPlanHint() {
+  var form = collectForm();
+  var sum = 0, filled = 0;
+  for (var m = 1; m <= 12; m++) {
+    var v = parseFloat(form.plan.monthly['m' + m]);
+    if (!isNaN(v)) { sum += v; filled++; }
+  }
+  var sumText = document.getElementById('monthSumText');
+  sumText.textContent = filled ? '已填 ' + filled + '/12 个月，合计 ' + sum + ' 万元' : '';
+  var warn = document.getElementById('monthWarn');
+  var msg = Store.planWarning(form);
+  warn.textContent = msg;
+  warn.classList.toggle('show', !!msg);
+}
+
+// ================= 脏标记与自动保存 =================
+function markDirty() {
+  if (readOnly) return;
+  dirty = true;
+  clearTimeout(autoSaveTimer);
+  setSaveHint('正在编辑…');
+  document.getElementById('saveHint').classList.add('saving');
+  autoSaveTimer = setTimeout(autoSave, 2000);
+}
+
+function autoSave() {
+  if (!dirty || readOnly || !app) return;
+  var result = Store.saveDraft(app.id, collectForm(), operatorName(), { silent: true });
+  if (result.ok) {
+    dirty = false;
+    setSaveHint('已自动保存 ' + shortTime());
+  } else {
+    setSaveHint('自动保存失败：' + result.error);
+  }
+}
+
+function explicitSave() {
+  if (readOnly) { showToast('当前状态不可编辑', 'error'); return; }
+  clearTimeout(autoSaveTimer);
+  var btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="btn-spin" aria-hidden="true"></span>保存中…';
+  setTimeout(function() {
+    var result = Store.saveDraft(app.id, collectForm(), operatorName());
+    btn.disabled = false;
+    btn.textContent = app.status === 'submitted' ? '保存修改' : '保存草稿';
+    if (result.ok) {
+      dirty = false;
+      app = result.app;
+      setSaveHint('已保存 ' + shortTime());
+      showToast('保存成功', 'success');
+    } else {
+      showToast(result.error || '保存失败', 'error');
+    }
+  }, 250);
+}
+
+function operatorName() {
+  var user = Auth.getCurrentUser() || {};
+  return user.name || user.phone || '客户';
+}
+
+function shortTime() {
+  var d = new Date();
+  function p(n) { return (n < 10 ? '0' : '') + n; }
+  return p(d.getHours()) + ':' + p(d.getMinutes());
+}
+
+function setSaveHint(text) {
+  var el = document.getElementById('saveHint');
+  el.textContent = text;
+  el.classList.remove('saving');
+}
+
+// ================= 提交审核（表单视图） =================
+function submitApplication() {
+  if (readOnly) { showToast('申请已审核，无需重复提交', 'info'); return; }
+  if (!window.confirm('提交后将进入运营审核，确认提交吗？')) return;
+  var btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="btn-spin" aria-hidden="true"></span>提交中…';
+  setTimeout(function() {
+    var result = Store.submit(app.id, operatorName());
+    btn.disabled = false;
+    btn.textContent = '提交审核';
+    if (result.ok) {
+      dirty = false;
+      app = result.app;
+      showToast('已提交运营审核，状态更新为「已提交」', 'success');
+      renderAll();
+    } else {
+      showToast(result.error || '提交失败', 'error');
+    }
+  }, 350);
+}
+
+// ================= 只读控制 =================
+function applyReadOnly() {
+  var licenseBlock = document.getElementById('licenseUploadBlock');
+  if (licenseBlock) licenseBlock.style.display = readOnly ? 'none' : '';
+  var btns = ['cancelBtn', 'saveBtn', 'submitBtn'];
+  var fields = document.querySelectorAll('#obForm input, #obForm textarea, #obForm select');
+  var panels = document.querySelectorAll('#obForm .panel');
+  if (!readOnly) {
+    // 恢复可编辑状态（按钮是静态元素，只读页设置的内联隐藏会残留，必须显式还原）
+    btns.forEach(function(id) { document.getElementById(id).style.display = ''; });
+    fields.forEach(function(el) { el.disabled = false; });
+    panels.forEach(function(panel) { panel.classList.remove('readonly'); });
+    return;
+  }
+  fields.forEach(function(el) { el.disabled = true; });
+  btns.forEach(function(id) { document.getElementById(id).style.display = 'none'; });
+  // 只读视觉：面板整体加锁定样式
+  panels.forEach(function(panel) { panel.classList.add('readonly'); });
+}
+
+// ================= 标题区 / 基本信息模块 =================
+function renderHead() {
+  document.getElementById('formTitle').textContent = forceViewOnly ? '申请详情' : '入驻申请';
+  document.getElementById('headId').textContent = app.id;
+  var mode = Store.modeByValue(app.mode);
+  document.getElementById('headMode').textContent = mode ? mode.label : (app.mode || '-');
+  document.getElementById('headBrand').textContent = app.brand || '-';
+  document.getElementById('headStatus').innerHTML = statusTag(app.status);
+  document.getElementById('headPlatform').textContent = (app.platforms && app.platforms.length) ? app.platforms.join('、') : '-';
+  document.getElementById('headBdContact').textContent = app.bdContact || '-';
+  document.getElementById('headOwner').textContent = app.ownerName || app.ownerPhone || '-';
+  document.getElementById('headCreatedAt').textContent = app.createdAt || '-';
+  document.getElementById('headUpdatedAt').textContent = app.updatedAt || '-';
+  
+  // 统一提示条
+  var banner = document.getElementById('statusBanner');
+  var bannerIcon = document.getElementById('statusBannerIcon');
+  var bannerText = document.getElementById('statusBannerText');
+  
+  if (app.status === 'submitted') {
+    banner.hidden = false;
+    banner.className = 'ob-banner info';
+    bannerIcon.innerHTML = '<circle cx="12" cy="12" r="10"/><line x1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>';
+    bannerText.textContent = '已提交，等待运营审核（审核完成前仍可修改）';
+  } else if (app.status === 'reviewed') {
+    banner.hidden = false;
+    banner.className = 'ob-banner warn';
+    bannerIcon.innerHTML = '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>';
+    bannerText.textContent = '已审核，资料只读' + (app.reviewReason ? '（审核备注：' + app.reviewReason + '）' : '');
+  } else {
+    banner.hidden = true;
+  }
+
+  document.getElementById('btnEditMode').hidden = forceViewOnly || app.status === 'reviewed';
+  document.getElementById('btnEditBdContact').hidden = forceViewOnly || app.status === 'reviewed';
+  document.getElementById('saveBtn').textContent = app.status === 'submitted' ? '保存修改' : '保存草稿';
+}
+
+function renderAll() {
+  renderHead();
+  renderStages();
+  readOnly = forceViewOnly || app.status === 'reviewed';
+  applyReadOnly();
+}
+
+// ================= Esc 关闭弹窗（无障碍） =================
+document.addEventListener('keydown', function(e) {
+  if (e.key !== 'Escape') return;
+  ['modeModal', 'reviewModal', 'bdContactModal'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el && !el.hidden) el.hidden = true;
+  });
+});
+
+// ================= 初始化 =================
+(function init() {
+  var brandSelect = document.getElementById('brandSelect');
+  Store.BRANDS.forEach(function(b) {
+    var opt = document.createElement('option');
+    opt.value = b; opt.textContent = b;
+    brandSelect.appendChild(opt);
+  });
+  // 支持 ?id= 直达填写视图（兼容旧链接）
+  var params = new URLSearchParams(window.location.search);
+  var id = params.get('id');
+  if (id) {
+    openFormView(id);
+  } else {
+    showListView();
+  }
+})();
 </script>
 </body>
 </html>
