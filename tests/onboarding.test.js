@@ -369,3 +369,19 @@ test('cooperation detail page is read-only over onboarding store', () => {
   assert.doesNotMatch(html, /recruit-application-templates\.js/, '不应再引用旧模板模块');
   compileInlineScripts('pages/recruit/detail.html');
 });
+
+test('manage page finance panel exposes license upload with mock recognition', () => {
+  const html = read('pages/store-engine/manage.html');
+  ['licenseUploadBlock', 'licenseFileInput', 'licensePreview', 'licenseStatus'].forEach(id => {
+    assert.match(html, new RegExp(`id="${id}"`), `营业执照上传区块应包含 #${id}`);
+  });
+  assert.match(html, /上传营业执照/, '应包含上传入口文案');
+  assert.match(html, /识别中/, '应包含识别中状态');
+  assert.match(html, /已识别/, '应包含识别完成状态');
+  assert.match(html, /LICENSE_DEMO_DATA/, '应内置模拟识别演示数据池');
+  assert.equal((html.match(/taxNo: '91/g) || []).length, 3, '演示数据池应有 3 组');
+  assert.match(html, /f_finance_fullName/, '应回填企业全称');
+  assert.match(html, /f_finance_taxNo/, '应回填税务登记号');
+  assert.match(html, /f_finance_region_domestic/, '应回填企业所在地为境内');
+  compileInlineScripts('pages/store-engine/manage.html');
+});

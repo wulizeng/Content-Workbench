@@ -72,6 +72,17 @@
   }
   .ob-chip-edit:active { transform: translateY(0) scale(.97); box-shadow: 0 1px 3px rgba(91,108,245,.2); }
   .ob-chip-edit-sm { margin-left: 8px; height: 24px; padding: 0 10px; font-size: 11px; }
+  /* 营业执照上传区块（财务信息面板顶部） */
+  .license-block { border: 1px dashed var(--border); border-radius: 10px; padding: 14px 16px; margin: 0 0 18px; background: #fafbff; }
+  .license-row { display: flex; align-items: center; gap: 14px; }
+  .license-thumb { width: 96px; height: 68px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-light); background: #fff; flex-shrink: 0; }
+  .license-main { flex: 1; min-width: 0; }
+  .license-title { font-size: 13px; font-weight: 600; color: var(--text); }
+  .license-hint { font-size: 12px; color: var(--text-tertiary, #94a3b8); margin-top: 3px; }
+  .license-badge { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; background: rgba(16,185,129,.12); color: #059669; vertical-align: 1px; }
+  .license-badge.doing { background: rgba(91,108,245,.12); color: var(--primary); }
+  .license-spinner { display: inline-block; width: 11px; height: 11px; border: 2px solid rgba(91,108,245,.3); border-top-color: var(--primary); border-radius: 50%; animation: licenseSpin .8s linear infinite; }
+  @keyframes licenseSpin { to { transform: rotate(360deg); } }
   .ob-chip-edit:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
   .ob-save-hint { margin-left: auto; font-size: 12px; color: var(--text-tertiary); }
 
@@ -610,6 +621,7 @@ function openFormView(id, viewOnly) {
   dirty = false;
   forceViewOnly = !!viewOnly;
   setSaveHint('');
+  resetLicenseState();
   document.getElementById('panelContainer').innerHTML = '';
   buildPanels();
   fillForm(app.form);
@@ -1261,6 +1273,8 @@ function buildPanels() {
       : '带 * 为必填项，其余为选填。填写过程中会自动保存草稿。';
     panel.appendChild(sub);
 
+    if (step.key === 'finance') panel.appendChild(buildLicenseBlock());
+
     var group = document.createElement('div');
     group.className = 'form-group';
     Store.FIELD_DEFS[step.key].forEach(function(def) {
@@ -1286,6 +1300,88 @@ function toggleConditionalFields() {
 function getRadioValue(name) {
   var checked = document.querySelector('input[name="' + name + '"]:checked');
   return checked ? checked.value : '';
+}
+
+// ================= 营业执照上传（模拟识别，会话内预览不落盘） =================
+var LICENSE_DEMO_DATA = [
+  { fullName: '杭州星辰电子商务有限公司', taxNo: '91330100MA2KJRX70B' },
+  { fullName: '上海锦泓贸易有限公司', taxNo: '91310115MA1K35T62C' },
+  { fullName: '广州云上服饰有限公司', taxNo: '91440101MA5AKT3P8D' }
+];
+var LICENSE_MAX_SIZE = 5 * 1024 * 1024;
+var licenseObjectUrl = null;
+var licenseTimer = null;
+
+function resetLicenseState() {
+  clearTimeout(licenseTimer);
+  licenseTimer = null;
+  if (licenseObjectUrl) { URL.revokeObjectURL(licenseObjectUrl); licenseObjectUrl = null; }
+}
+
+function buildLicenseBlock() {
+  var wrap = document.createElement('div');
+  wrap.innerHTML =
+    '<div class="license-block" id="licenseUploadBlock">' +
+      '<input type="file" id="licenseFileInput" accept="image/jpeg,image/png" style="display:none" onchange="onLicenseFileChange(this)">' +
+      '<div class="license-row" id="licenseInitial">' +
+        '<div class="license-main">' +
+          '<div class="license-title">上传营业执照</div>' +
+          '<div class="license-hint">支持 JPG/PNG，不超过 5MB；上传后自动识别企业全称与税务登记号</div>' +
+        '</div>' +
+        '<button type="button" class="btn btn-primary" id="licenseUploadBtn" onclick="document.getElementById(\'licenseFileInput\').click()">选择图片</button>' +
+      '</div>' +
+      '<div class="license-row" id="licensePreview" style="display:none;">' +
+        '<img class="license-thumb" id="licensePreviewImg" alt="营业执照预览">' +
+        '<div class="license-main">' +
+          '<div class="license-title">营业执照<span id="licenseStatus"></span></div>' +
+          '<div class="license-hint" id="licenseHint"></div>' +
+        '</div>' +
+        '<button type="button" class="btn" id="licenseRetryBtn" onclick="document.getElementById(\'licenseFileInput\').click()" style="display:none;">重新上传</button>' +
+      '</div>' +
+    '</div>';
+  return wrap.firstChild;
+}
+
+function onLicenseFileChange(input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  if (!/^image\/(jpeg|png)$/.test(file.type) || file.size > LICENSE_MAX_SIZE) {
+    showToast('仅支持 JPG/PNG 格式且不超过 5MB 的图片', 'error');
+    input.value = '';
+    return;
+  }
+  resetLicenseState();
+  licenseObjectUrl = URL.createObjectURL(file);
+  document.getElementById('licenseInitial').style.display = 'none';
+  document.getElementById('licensePreview').style.display = '';
+  document.getElementById('licensePreviewImg').src = licenseObjectUrl;
+  document.getElementById('licenseStatus').innerHTML = '<span class="license-badge doing"><span class="license-spinner"></span>识别中…</span>';
+  document.getElementById('licenseHint').textContent = '正在识别执照信息';
+  document.getElementById('licenseRetryBtn').style.display = 'none';
+  input.value = '';
+  licenseTimer = setTimeout(function() {
+    licenseTimer = null;
+    var demo = LICENSE_DEMO_DATA[Math.floor(Math.random() * LICENSE_DEMO_DATA.length)];
+    fillLicenseFields(demo);
+    document.getElementById('licenseStatus').innerHTML = '<span class="license-badge">已识别</span>';
+    document.getElementById('licenseHint').textContent = '已自动填充企业全称、税务登记号与企业所在地，请核对';
+    document.getElementById('licenseRetryBtn').style.display = '';
+    showToast('已识别营业执照，自动填充 3 项字段，请核对', 'success');
+  }, 1500);
+}
+
+function fillLicenseFields(demo) {
+  var fullName = document.getElementById('f_finance_fullName');
+  if (fullName) fullName.value = demo.fullName;
+  var taxNo = document.getElementById('f_finance_taxNo');
+  if (taxNo) taxNo.value = demo.taxNo;
+  var region = document.getElementById('f_finance_region_domestic');
+  if (region) region.checked = true;
+  clearError('finance', 'fullName');
+  clearError('finance', 'taxNo');
+  clearError('finance', 'region');
+  toggleConditionalFields();
+  markDirty();
 }
 
 // ================= 数据读写 =================
@@ -1467,6 +1563,8 @@ function submitApplication() {
 
 // ================= 只读控制 =================
 function applyReadOnly() {
+  var licenseBlock = document.getElementById('licenseUploadBlock');
+  if (licenseBlock) licenseBlock.style.display = readOnly ? 'none' : '';
   var btns = ['cancelBtn', 'saveBtn', 'submitBtn'];
   var fields = document.querySelectorAll('#obForm input, #obForm textarea, #obForm select');
   var panels = document.querySelectorAll('#obForm .panel');
