@@ -359,3 +359,13 @@ test('cooperation list page reads onboarding store with new column set', () => {
   assert.match(html, /typeOfMode/);
   compileInlineScripts('pages/recruit/list.html');
 });
+
+test('cooperation detail page is read-only over onboarding store', () => {
+  const html = read('pages/recruit/detail.html');
+  assert.match(html, /onboarding-store\.js/, '应引入入驻申请数据模块');
+  assert.match(html, /Store\.get\(/, '应通过 Store.get 读取详情');
+  ['基本信息', '版本历史', '月度分解目标'].forEach(t => assert.ok(html.includes(t), `详情页应包含「${t}」`));
+  assert.doesNotMatch(html, /recruit_applications/, '不应再读取旧数据');
+  assert.doesNotMatch(html, /recruit-application-templates\.js/, '不应再引用旧模板模块');
+  compileInlineScripts('pages/recruit/detail.html');
+});
