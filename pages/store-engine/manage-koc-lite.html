@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>素人KOC / 联营KOC 入驻申请</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    .page-container { min-height: 100vh; background: #f5f7fb; padding: 24px 28px; }
+    .page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .page-title { font-size: 18px; font-weight: 700; color: var(--text); flex: 1; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+    /* 阶段流程指示器 */
+    .stage-wrap { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 18px 14px 14px; margin-bottom: 16px; }
+    .stage-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; padding: 0 4px; flex-wrap: wrap; }
+    .stage-head .stage-title { font-size: 14px; font-weight: 700; color: var(--text); }
+    .stage-head .stage-hint { font-size: 12px; color: var(--text-tertiary); margin-left: 8px; font-weight: normal; }
+    .stage-strip { display: flex; align-items: flex-start; list-style: none; margin: 0; padding: 0 4px; }
+    .stage-item { display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 0; position: relative; }
+    .stage-item:not(:last-child)::after { content: ''; position: absolute; top: 13px; left: calc(50% + 15px); width: calc(100% - 30px); height: 2px; background: var(--border-light); }
+    .stage-item.done:not(:last-child)::after { background: var(--success); }
+    .stage-dot { width: 27px; height: 27px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; background: #f1f5f9; color: var(--text-tertiary); border: 2px solid var(--border-light); position: relative; z-index: 1; }
+    .stage-item.done .stage-dot { background: var(--success); border-color: var(--success); color: #fff; }
+    .stage-item.current .stage-dot { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 0 0 5px rgba(91,108,245,.16); }
+    .stage-name { margin-top: 7px; font-size: 11px; color: var(--text-tertiary); text-align: center; line-height: 1.35; }
+    .stage-item.done .stage-name { color: var(--success); }
+    .stage-item.current .stage-name { color: var(--primary); font-weight: 700; }
+    .stage-legend { display: flex; gap: 18px; margin-top: 12px; font-size: 12px; color: var(--text-tertiary); flex-wrap: wrap; }
+    .stage-legend span { display: inline-flex; align-items: center; gap: 5px; }
+    .lg-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .lg-dot.done { background: var(--success); } .lg-dot.cur { background: var(--primary); } .lg-dot.todo { background: #e2e8f0; }
+
+    /* 表单卡片（字段参考 default 流程财务信息模块） */
+    .panel { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px 24px; margin-bottom: 16px; }
+    .panel h3 { margin: 0 0 8px; font-size: 15px; font-weight: 700; color: var(--text); }
+    .panel .sub { font-size: 12px; color: var(--text-tertiary); margin: 0 0 16px; }
+    .fin-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 20px; }
+    .fin-item { display: flex; flex-direction: column; }
+    .fin-item.full { grid-column: 1 / -1; }
+    .fin-item label { font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }
+    .fin-item .req { color: #ef4444; margin-left: 2px; }
+    .fin-item input[type="text"], .fin-item input[type="number"], .fin-item select {
+      height: 36px; padding: 0 10px; border: 1px solid var(--border); border-radius: 8px;
+      font-size: 13px; font-family: inherit; box-sizing: border-box; background: #fff;
+    }
+    .fin-item input:focus, .fin-item select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(91,108,245,.15); }
+    .fin-item input[disabled], .fin-item select[disabled] { background: #f8fafc; color: var(--text-tertiary); cursor: not-allowed; }
+    .radio-row { display: flex; gap: 18px; height: 36px; align-items: center; }
+    .radio-row label { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text); margin: 0; }
+    .err-tip { color: #ef4444; font-size: 12px; margin-top: 4px; min-height: 16px; }
+    /* 账号信息录入（多行） */
+    .account-row { position: relative; border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px 4px; margin-bottom: 12px; background: #fbfcfe; }
+    .account-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .account-index { font-size: 14px; font-weight: 700; color: var(--primary); }
+    .account-remove { border: none; background: transparent; color: #ef4444; font-size: 12px; cursor: pointer; padding: 4px 10px; border-radius: 6px; }
+    .account-remove:hover { background: #fef2f2; }
+    .image-picker { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .image-picker input[type="file"] { display: none; }
+    .image-picker .image-btn { display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border: 1px dashed var(--border); border-radius: 8px; background: #fff; color: var(--text-secondary); font-size: 12px; cursor: pointer; }
+    .image-picker .image-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .image-picker .preview { display: none; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); }
+    .image-picker .preview.show { display: inline-flex; }
+    .image-picker .preview img { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-light); }
+    .image-picker .file-meta { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .accounts-actions { margin-top: 4px; }
+    .accounts-empty { padding: 24px 16px; text-align: center; color: var(--text-tertiary); background: #f8fafc; border: 1px dashed var(--border); border-radius: 10px; font-size: 13px; margin-bottom: 8px; }
+    /* 入驻信息（模式/品牌/平台 + 修改入口） */
+    .mode-info-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .mode-info-head h3 { margin: 0; }
+    .mode-info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 20px; }
+    .mi-item { display: flex; flex-direction: column; gap: 4px; }
+    .mi-label { font-size: 12px; color: var(--text-tertiary); }
+    .mi-value { font-size: 14px; font-weight: 600; color: var(--text); }
+    @media (max-width: 900px) { .mode-info-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 900px) { .fin-grid { grid-template-columns: 1fr; } }
+    .placeholder { padding: 40px 20px; text-align: center; color: var(--text-tertiary); background: #f8fafc; border: 1px dashed var(--border); border-radius: 10px; font-size: 13px; line-height: 1.8; }
+    .placeholder strong { color: var(--text); font-size: 14px; display: block; margin-bottom: 6px; }
+
+    /* 操作日志 */
+    .op-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .op-table th, .op-table td { padding: 8px 10px; border: 1px solid var(--border-light); text-align: left; vertical-align: top; }
+    .op-table th { background: #f8fafc; color: var(--text-tertiary); font-weight: 600; font-size: 12px; white-space: nowrap; }
+
+    @media (max-width: 900px) {
+      .stage-name { font-size: 10px; }
+      .stage-dot { width: 22px; height: 22px; font-size: 11px; }
+      .stage-item:not(:last-child)::after { top: 11px; left: calc(50% + 12px); width: calc(100% - 24px); }
+    }
+  </style>
+</head>
+<body>
+<div class="page-container">
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <div class="page-header">
+    <button class="btn" onclick="goBack()" style="display:flex;align-items:center;gap:4px;padding:6px 12px;height:auto;">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      返回
+    </button>
+    <div class="page-title"><span id="pageTitleText">素人KOC / 联营KOC 入驻申请</span> <span id="dStatus"></span></div>
+    <button class="btn btn-primary" id="btnSubmit" style="display:none;">提交</button>
+    <button class="btn" id="btnSave" style="display:none;">保存</button>
+  </div>
+
+  <div id="emptyState" class="panel" style="display:none;">
+    <div style="padding:60px 0;text-align:center;color:#94a3b8;font-size:13px;">
+      <div style="font-size:15px;font-weight:600;color:#475569;margin-bottom:6px;">未找到该申请</div>
+      <div>请从「客户入驻申请」选择「素人KOC / 联营KOC」模式后进入本页</div>
+    </div>
+  </div>
+
+  <div id="detailBody" style="display:none;">
+    <div class="panel">
+      <div class="mode-info-head">
+        <h3>入驻信息</h3>
+        <button type="button" class="btn" id="btnEditMode" onclick="openModeModal()" style="display:none;">修改入驻模式</button>
+      </div>
+      <div class="mode-info-grid">
+        <div class="mi-item"><span class="mi-label">入驻模式</span><span class="mi-value" id="miMode">-</span></div>
+        <div class="mi-item"><span class="mi-label">品牌</span><span class="mi-value" id="miBrand">-</span></div>
+        <div class="mi-item"><span class="mi-label">入驻平台</span><span class="mi-value" id="miPlatform">-</span></div>
+      </div>
+    </div>
+
+    <section class="stage-wrap" aria-label="入驻流程进度（6 阶段）">
+      <div class="stage-head">
+        <div><span class="stage-title">入驻流程进度</span><span class="stage-hint" id="stageHeadHint"></span></div>
+        <button type="button" class="btn btn-primary" id="btnAdvanceStage" onclick="openStageModal()" style="display:none;">更新节点</button>
+      </div>
+      <ol class="stage-strip" id="dStageStrip"></ol>
+      <div class="stage-legend" aria-hidden="true">
+        <span><span class="lg-dot done"></span>已完成</span>
+        <span><span class="lg-dot cur"></span>当前阶段</span>
+        <span><span class="lg-dot todo"></span>未开始</span>
+      </div>
+    </section>
+
+    <div class="panel">
+      <h3>账号信息录入</h3>
+      <p class="sub">支持录入多个账号；对接商务默认取自「客户注册账号」档案，可就地覆盖；图片仅会话内预览（不落盘）。</p>
+      <div id="accountsContainer"></div>
+      <div class="accounts-actions">
+        <button type="button" class="btn" id="btnAddAccount" onclick="addAccountRow()">+ 新增账号</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>操作日志</h3>
+      <div style="overflow-x:auto;">
+        <table class="op-table">
+          <thead>
+            <tr><th style="width:160px;">时间</th><th style="width:120px;">操作人</th><th style="width:220px;">动作</th><th>变更内容</th></tr>
+          </thead>
+          <tbody id="dOpLogBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="dOpLogPagination"></div>
+    </div>
+  </div>
+
+  <!-- 修改入驻模式弹窗 -->
+  <div class="ob-modal-overlay" id="modeModal" hidden onclick="if(event.target===this) closeModeModal()" style="position:fixed;inset:0;z-index:220;background:rgba(15,23,42,.5);display:flex;align-items:center;justify-content:center;padding:16px;">
+    <div style="width:460px;max-width:100%;background:#fff;border-radius:16px;padding:20px 22px;box-shadow:0 20px 60px rgba(15,23,42,.2);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <h3 style="margin:0;font-size:17px;font-weight:700;color:var(--text);">修改入驻模式</h3>
+        <button type="button" onclick="closeModeModal()" style="width:30px;height:30px;border:none;border-radius:8px;background:#f4f6fb;font-size:18px;color:#94a3b8;cursor:pointer;">&times;</button>
+      </div>
+      <div style="font-size:12px;color:#94a3b8;margin-bottom:14px;">修改后按新模式对应的流程节点与页面结构重新加载；若切换到其它流程，会自动跳转到对应页面。</div>
+      <label style="display:block;margin-bottom:6px;font-size:13px;color:var(--text-secondary);">入驻模式 <span style="color:#ef4444;">*</span></label>
+      <select id="mcMode" onchange="onMcModeChange()" style="width:100%;height:38px;padding:0 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;margin-bottom:14px;background:#fff;"></select>
+      <label style="display:block;margin-bottom:6px;font-size:13px;color:var(--text-secondary);">品牌 <span style="color:#ef4444;">*</span></label>
+      <select id="mcBrand" style="width:100%;height:38px;padding:0 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;margin-bottom:14px;background:#fff;"></select>
+      <label style="display:block;margin-bottom:6px;font-size:13px;color:var(--text-secondary);">入驻平台 <span style="color:#ef4444;">*</span></label>
+      <select id="mcPlatform" style="width:100%;height:38px;padding:0 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;background:#fff;"></select>
+      <div id="mcFlowHint" style="font-size:12px;color:var(--primary);margin-top:10px;min-height:16px;"></div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
+        <button type="button" class="btn" onclick="closeModeModal()">取消</button>
+        <button type="button" class="btn btn-primary" onclick="confirmModeChange()">确认修改</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 手工流转弹窗 -->
+  <div class="ob-modal-overlay" id="stageModal" hidden onclick="if(event.target===this) closeStageModal()" style="position:fixed;inset:0;z-index:210;background:rgba(15,23,42,.5);display:flex;align-items:center;justify-content:center;padding:16px;">
+    <div style="width:520px;max-width:100%;background:#fff;border-radius:16px;padding:20px 22px;box-shadow:0 20px 60px rgba(15,23,42,.2);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <h3 style="margin:0;font-size:17px;font-weight:700;color:var(--text);">手工流转入驻节点</h3>
+        <button type="button" onclick="closeStageModal()" style="width:30px;height:30px;border:none;border-radius:8px;background:#f4f6fb;font-size:18px;color:#94a3b8;cursor:pointer;">&times;</button>
+      </div>
+      <div style="font-size:12px;color:#94a3b8;margin-bottom:14px;">适用于内部软件开通/品牌规则签署等线下或独立事项。</div>
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px;font-size:13px;"><span style="color:var(--text-secondary);min-width:96px;">客户名称：</span><span id="stgAppName" style="font-weight:600;">-</span></div>
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px;font-size:13px;"><span style="color:var(--text-secondary);min-width:96px;">节点变化：</span><span id="stgFromName" style="font-weight:600;">-</span><span style="color:var(--primary);font-weight:700;margin:0 6px;">→</span><span id="stgToName" style="font-weight:600;">-</span></div>
+      <div style="background:#fff7ed;color:#9a3412;padding:8px 12px;border-radius:8px;font-size:12px;margin:12px 0;line-height:1.6;">仅向下一个节点流转（+1），将写入操作日志作为审计记录；客户端（达人）可见节点变化，不可见备注内容。</div>
+      <label style="display:block;margin-bottom:6px;font-size:13px;color:var(--text-secondary);">流转备注 <span style="color:#ef4444;">*</span></label>
+      <textarea id="stgReason" maxlength="200" placeholder="例如：品牌规则已签署完毕，法务王六确认" style="width:100%;min-height:80px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box;"></textarea>
+      <div id="stgReasonError" style="color:#ef4444;font-size:12px;margin-top:4px;min-height:16px;"></div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:14px;">
+        <button type="button" class="btn" onclick="closeStageModal()">取消</button>
+        <button type="button" class="btn btn-primary" onclick="confirmStageAdvance()">确认流转</button>
+      </div>
+    </div>
+  </div>
+  <style>.ob-modal-overlay[hidden] { display: none !important; }</style>
+
+</div>
+
+<script src="../../js/onboarding-store.js"></script>
+<script src="../../js/auth.js"></script>
+<script>
+if (!Auth.requireAuth()) { /* 跳转在 requireAuth 内 */ }
+var Store = OnboardingStore;
+var FLOW_KEY = 'koc_lite';
+var currentUser = Auth.getCurrentUser();
+
+function g(name) { var r = location.search.match(new RegExp('[?&]' + name + '=([^&]*)')); return r ? decodeURIComponent(r[1]) : ''; }
+var appId = g('id');
+var app = appId ? Store.get(appId) : null;
+
+// 加载时校验：非 koc_lite 流程 → 路由到对应页面
+(function routeIfNeeded() {
+  if (!app) return;
+  var flowKey = Store.flowKeyOfMode(app.mode);
+  if (flowKey === FLOW_KEY) return;
+  location.replace(flowTarget(flowKey) + '?id=' + encodeURIComponent(app.id));
+})();
+
+function esc(s) { if (s === null || s === undefined) return ''; var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function st(s) {
+  var m = { unsubmit: 'initial', submitted: 'reviewing', reviewed: 'approved' };
+  return '<span class="status-tag ' + (m[s] || '') + '">' + esc(Store.statusLabel(s)) + '</span>';
+}
+function operatorName() { return (currentUser && (currentUser.name || currentUser.phone)) || '运营'; }
+function goBack() { location.href = 'manage.html'; }
+
+var canOperateStage = !!currentUser && ['operator', 'bd', 'admin'].indexOf(currentUser.role) > -1;
+var OP_LOG_PAGE_SIZE = 10;
+var opLogPage = 1;
+
+function render() {
+  if (!app) {
+    document.getElementById('emptyState').style.display = '';
+    return;
+  }
+  document.getElementById('dStatus').innerHTML = st(app.status);
+  document.getElementById('detailBody').style.display = '';
+  var editable = app.status !== 'reviewed';
+  document.getElementById('btnSave').style.display = editable ? '' : 'none';
+  document.getElementById('btnSubmit').style.display = app.status === 'unsubmit' ? '' : 'none';
+  var modeInfo = Store.modeByValue(app.mode);
+  var pt = document.getElementById('pageTitleText');
+  if (pt) pt.textContent = (modeInfo ? modeInfo.label : (app.mode || '')) + ' 入驻申请';
+  renderModeInfo();
+  renderStages();
+  renderOpLog();
+  updateAdvanceEntry();
+}
+
+function renderStages() {
+  var strip = document.getElementById('dStageStrip');
+  var stages = Store.stagesForApp(app);
+  var current = Store.currentStageOf(app);
+  var html = '';
+  stages.forEach(function(stage) {
+    var cls = 'todo';
+    if (stage.no < current) cls = 'done';
+    else if (stage.no === current) cls = 'current';
+    html += '<li class="stage-item ' + cls + '">' +
+      '<span class="stage-dot">' + (cls === 'done' ? '✓' : stage.no) + '</span>' +
+      '<span class="stage-name">' + esc(stage.name) + '</span></li>';
+  });
+  strip.innerHTML = html;
+  var hint = document.getElementById('stageHeadHint');
+  if (hint) hint.textContent = '当前：第 ' + current + '/' + stages.length + ' · ' + ((stages[current - 1] || {}).name || '-');
+}
+
+function updateAdvanceEntry() {
+  var btn = document.getElementById('btnAdvanceStage');
+  var stages = Store.stagesForApp(app);
+  var no = Store.currentStageOf(app);
+  var show = canOperateStage && app.status === Store.STATUS.REVIEWED && no < stages.length;
+  if (btn) btn.style.display = show ? '' : 'none';
+}
+
+// ===== 入驻信息展示 + 修改入驻模式（跨流程自动跳转对应页面） =====
+function flowTarget(flowKey) {
+  if (flowKey === 'koc_lite') return 'manage-koc-lite.html';
+  if (flowKey === 'influencer' || flowKey === 'customer_koc') return 'manage-influencer.html';
+  return 'manage.html';
+}
+function renderModeInfo() {
+  if (!app) return;
+  var modeInfo = Store.modeByValue(app.mode);
+  var m = document.getElementById('miMode'); if (m) m.textContent = modeInfo ? modeInfo.label : (app.mode || '-');
+  var b = document.getElementById('miBrand'); if (b) b.textContent = app.brand || '-';
+  var p = document.getElementById('miPlatform'); if (p) p.textContent = (app.platforms && app.platforms.length) ? app.platforms.join('、') : '-';
+  var btn = document.getElementById('btnEditMode');
+  if (btn) btn.style.display = app.status !== 'reviewed' ? '' : 'none';
+}
+function openModeModal() {
+  if (!app || app.status === 'reviewed') return;
+  document.getElementById('mcMode').innerHTML = Store.MODES.map(function(m) {
+    return '<option value="' + esc(m.value) + '"' + (m.value === app.mode ? ' selected' : '') + '>' + esc(m.label) + '</option>';
+  }).join('');
+  document.getElementById('mcBrand').innerHTML = '';
+  renderMcBrandOptions(app.mode, app.brand);
+  var curPlat = (app.platforms || [])[0] || '';
+  document.getElementById('mcPlatform').innerHTML = '<option value="">请选择</option>' + Store.PLATFORMS.map(function(pl) {
+    return '<option value="' + esc(pl) + '"' + (pl === curPlat ? ' selected' : '') + '>' + esc(pl) + '</option>';
+  }).join('');
+  onMcModeChange();
+  document.getElementById('modeModal').hidden = false;
+}
+function onMcModeChange() {
+  var mode = document.getElementById('mcMode').value;
+  // 品牌选项随模式联动：马卡乐合伙人仅「马卡乐」
+  renderMcBrandOptions(mode, Store.isMakaleMode(mode) ? '马卡乐' : app.brand);
+  var fk = Store.flowKeyOfMode(mode);
+  var hint = document.getElementById('mcFlowHint');
+  if (fk === FLOW_KEY) hint.textContent = '新模式仍属于本页面流程（6 阶段），确认后原地重新加载。';
+  else hint.textContent = '新模式的流程与本页面不同，确认后将自动跳转到对应页面继续填写。';
+}
+function renderMcBrandOptions(mode, selected) {
+  var sel = document.getElementById('mcBrand');
+  if (!sel) return;
+  var brands = Store.brandsForMode(mode);
+  var html = brands.length > 1 ? '<option value="">请选择</option>' : '';
+  html += brands.map(function(b) {
+    return '<option value="' + esc(b) + '"' + (b === selected ? ' selected' : '') + '>' + esc(b) + '</option>';
+  }).join('');
+  sel.innerHTML = html;
+}
+function closeModeModal() { document.getElementById('modeModal').hidden = true; }
+function confirmModeChange() {
+  if (!app) { closeModeModal(); return; }
+  var mode = document.getElementById('mcMode').value;
+  var brand = document.getElementById('mcBrand').value;
+  var platform = document.getElementById('mcPlatform').value;
+  if (!mode) { showToast('请选择入驻模式', 'error'); return; }
+  if (!brand) { showToast('请选择品牌', 'error'); return; }
+  if (!platform) { showToast('请选择入驻平台', 'error'); return; }
+  var user = Auth.getCurrentUser() || {};
+  var res = Store.updateMode(app.id, mode, brand, [platform], user.name || user.phone || '客户');
+  if (!res.ok) { showToast(res.error, 'error'); return; }
+  closeModeModal();
+  var flowKey = Store.flowKeyOfMode(res.app.mode);
+  // 跨流程 → 跳转到目标页面，重新加载该流程的完整结构布局
+  if (flowKey !== FLOW_KEY) {
+    location.replace(flowTarget(flowKey) + '?id=' + encodeURIComponent(res.app.id));
+    return;
+  }
+  app = res.app;
+  render();
+  renderAccountRows();
+  renderModeInfo();
+  showToast('入驻模式已更新，页面结构已重新加载', 'success');
+}
+
+function openStageModal() {
+  if (!app) return;
+  var stages = Store.stagesForApp(app);
+  var total = stages.length;
+  var no = Store.currentStageOf(app);
+  if (app.status !== Store.STATUS.REVIEWED) { showToast('仅已审核的申请可手工流转节点', 'error'); return; }
+  if (no >= total) { showToast('当前已是最后一个节点，无需手工流转', 'info'); return; }
+  var fin = (app.form && app.form.finance) || {};
+  document.getElementById('stgAppName').textContent = fin.fullName || app.id;
+  document.getElementById('stgFromName').textContent = '第 ' + no + '/' + total + ' · ' + stages[no - 1].name;
+  document.getElementById('stgToName').textContent = '第 ' + (no + 1) + '/' + total + ' · ' + stages[no].name;
+  document.getElementById('stgReason').value = '';
+  document.getElementById('stgReasonError').textContent = '';
+  document.getElementById('stageModal').hidden = false;
+}
+function closeStageModal() { document.getElementById('stageModal').hidden = true; }
+function confirmStageAdvance() {
+  if (!app) { closeStageModal(); return; }
+  var reason = String(document.getElementById('stgReason').value || '').trim();
+  var errEl = document.getElementById('stgReasonError');
+  errEl.textContent = '';
+  if (!reason) { errEl.textContent = '请填写流转备注，作为审计依据'; return; }
+  var res = Store.advanceStage(app.id, { reason: reason, operator: operatorName() });
+  if (!res.ok) { errEl.textContent = res.error || '流转失败'; return; }
+  app = res.app;
+  opLogPage = 1;
+  closeStageModal();
+  render();
+  showToast('节点已更新', 'success');
+}
+
+function renderOpLog() {
+  var body = document.getElementById('dOpLogBody');
+  var pager = document.getElementById('dOpLogPagination');
+  var all = (app.versions || []).slice();
+  all.sort(function(a, b) {
+    var ta = String(a.time || ''), tb = String(b.time || '');
+    if (ta !== tb) return tb.localeCompare(ta);
+    return (b.v || 0) - (a.v || 0);
+  });
+  var total = all.length;
+  if (!total) {
+    body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#94a3b8;">暂无操作记录</td></tr>';
+    pager.innerHTML = '';
+    return;
+  }
+  var totalPages = Math.max(1, Math.ceil(total / OP_LOG_PAGE_SIZE));
+  if (opLogPage > totalPages) opLogPage = totalPages;
+  if (opLogPage < 1) opLogPage = 1;
+  var start = (opLogPage - 1) * OP_LOG_PAGE_SIZE;
+  var paged = all.slice(start, start + OP_LOG_PAGE_SIZE);
+  body.innerHTML = paged.map(function(v) {
+    return '<tr><td>' + esc(v.time) + '</td><td>' + esc(v.operator || '-') + '</td><td>' + esc(v.action || '-') + '</td><td>' + esc((v.changes || []).join('；') || '-') + '</td></tr>';
+  }).join('');
+  if (totalPages <= 1) {
+    pager.innerHTML = '<span class="page-info">共 <strong>' + total + '</strong> 条</span>';
+    return;
+  }
+  var html = '<span class="page-info">共 <strong>' + total + '</strong> 条</span>';
+  html += '<span class="page-btn' + (opLogPage <= 1 ? ' disabled' : '') + '" onclick="goOpLogPage(' + (opLogPage - 1) + ')">&laquo;</span>';
+  var startP = Math.max(1, opLogPage - 2);
+  var endP = Math.min(totalPages, startP + 4);
+  if (endP - startP < 4) startP = Math.max(1, endP - 4);
+  for (var p = startP; p <= endP; p++) {
+    html += '<span class="page-btn' + (p === opLogPage ? ' active' : '') + '" onclick="goOpLogPage(' + p + ')">' + p + '</span>';
+  }
+  html += '<span class="page-btn' + (opLogPage >= totalPages ? ' disabled' : '') + '" onclick="goOpLogPage(' + (opLogPage + 1) + ')">&raquo;</span>';
+  pager.innerHTML = html;
+}
+function goOpLogPage(page) {
+  var total = (app && app.versions || []).length;
+  var totalPages = Math.max(1, Math.ceil(total / OP_LOG_PAGE_SIZE));
+  if (page < 1 || page > totalPages || page === opLogPage) return;
+  opLogPage = page;
+  renderOpLog();
+}
+
+function showToast(message, type) {
+  type = type || 'info';
+  var container = document.getElementById('toastContainer');
+  if (!container) return;
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(function() {
+    if (toast.parentNode) {
+      toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s';
+      setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+    }
+  }, 2500);
+}
+
+document.getElementById('btnSave').onclick = function() {
+  if (!app) return;
+  var form = JSON.parse(JSON.stringify(app.form));
+  form.accounts = readAccountsFields();
+  var res = Store.saveDraft(app.id, form, operatorName());
+  if (!res.ok) { showToast(res.error, 'error'); return; }
+  app = res.app; dirty = false;
+  render();
+  renderAccountRows();
+  showToast('已保存', 'success');
+};
+document.getElementById('btnSubmit').onclick = function() {
+  if (!app) return;
+  var form = JSON.parse(JSON.stringify(app.form));
+  form.accounts = readAccountsFields();
+  var accErr = validateAccounts(form.accounts);
+  if (accErr) { showToast(accErr, 'error'); return; }
+  var save = Store.saveDraft(app.id, form, operatorName());
+  if (!save.ok) { showToast(save.error, 'error'); return; }
+  var res = Store.submit(app.id, operatorName());
+  if (!res.ok) { showToast(res.error, 'error'); return; }
+  app = res.app; opLogPage = 1; dirty = false;
+  render();
+  renderAccountRows();
+  showToast('已提交', 'success');
+};
+
+if (window.parent && window.parent !== window) {
+  window.parent.postMessage({ type: 'breadcrumb', text: '店铺管理 <span>/</span> 素人KOC / 联营KOC 入驻申请' }, '*');
+}
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') { var m = document.getElementById('stageModal'); if (m && !m.hidden) closeStageModal(); }
+});
+
+// ===== 脏数据标记（账号信息录入使用） =====
+var dirty = false;
+function markDirty() { dirty = true; }
+
+// ===== 账号信息录入（多行；图片仅会话内预览） =====
+function listAccounts() {
+  if (!app) return [];
+  if (!app.form) app.form = {};
+  if (!Array.isArray(app.form.accounts)) app.form.accounts = [];
+  return app.form.accounts;
+}
+function defaultBdContact() {
+  try {
+    var map = JSON.parse(localStorage.getItem('recruit_talents') || '{}');
+    var phone = currentUser && currentUser.phone;
+    return (phone && map[phone] && map[phone].bdContact) || '';
+  } catch (e) { return ''; }
+}
+function addAccountRow() {
+  var list = listAccounts();
+  list.push({
+    uid: '', nickname: '', cooperationCode: '', bdContact: defaultBdContact(),
+    uidImageName: '', cooperationCodeImageName: '',
+    uidImageUrl: '', cooperationCodeImageUrl: ''
+  });
+  renderAccountRows();
+  markDirty();
+}
+function removeAccountRow(i) {
+  var list = listAccounts();
+  if (i < 0 || i >= list.length) return;
+  list.splice(i, 1);
+  renderAccountRows();
+  markDirty();
+}
+function renderAccountRows() {
+  var container = document.getElementById('accountsContainer');
+  if (!container || !app) return;
+  var list = listAccounts();
+  if (!list.length) {
+    container.innerHTML = '<div class="accounts-empty">尚未录入账号，点击下方「+ 新增账号」开始。</div>';
+  } else {
+    container.innerHTML = list.map(function(row, i) {
+      return '<div class="account-row" data-idx="' + i + '">' +
+        '<div class="account-head"><span class="account-index">账号 ' + (i + 1) + '</span>' +
+        '<button type="button" class="account-remove" onclick="removeAccountRow(' + i + ')">删除</button></div>' +
+        '<div class="fin-grid">' +
+        accountText(i, 'uid', '账号UID', row.uid, true) +
+        accountText(i, 'nickname', '账号昵称', row.nickname, true) +
+        accountText(i, 'cooperationCode', '合作码', row.cooperationCode, true) +
+        accountText(i, 'bdContact', '对接商务', row.bdContact, false) +
+        accountImage(i, 'uid', 'UID 图片', row.uidImageName, row.uidImageUrl, true) +
+        accountImage(i, 'cooperationCode', '合作码图片', row.cooperationCodeImageName, row.cooperationCodeImageUrl, true) +
+        '</div></div>';
+    }).join('');
+  }
+  if (app.status === 'reviewed') {
+    container.querySelectorAll('input, select').forEach(function(el) { el.disabled = true; });
+    container.querySelectorAll('.account-remove, .image-btn').forEach(function(el) { el.style.display = 'none'; });
+    var addBtn = document.getElementById('btnAddAccount');
+    if (addBtn) addBtn.style.display = 'none';
+  }
+}
+function accountText(idx, key, label, value, req) {
+  return '<div class="fin-item"><label for="acc_' + idx + '_' + key + '">' + label + (req ? '<span class="req">*</span>' : '') + '</label>' +
+    '<input type="text" id="acc_' + idx + '_' + key + '" value="' + esc(value || '') + '" onblur="onAccountField(' + idx + ',\'' + key + '\', this.value)"></div>';
+}
+function accountImage(idx, key, label, fileName, url, req) {
+  var showClass = url ? 'show' : '';
+  return '<div class="fin-item full"><label>' + label + (req ? '<span class="req">*</span>' : '') + '</label>' +
+    '<div class="image-picker">' +
+    '<label class="image-btn" for="acc_' + idx + '_' + key + '_file">选择图片</label>' +
+    '<input type="file" id="acc_' + idx + '_' + key + '_file" accept="image/jpeg,image/png" onchange="onAccountImage(' + idx + ',\'' + key + '\', this)">' +
+    '<div class="preview ' + showClass + '">' + (url ? '<img src="' + url + '" alt="预览">' : '') + '<span class="file-meta">' + esc(fileName || '') + '</span></div>' +
+    '</div></div>';
+}
+function onAccountField(idx, key, value) {
+  var list = listAccounts();
+  if (!list[idx]) return;
+  list[idx][key] = value;
+  markDirty();
+}
+function onAccountImage(idx, key, input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  if (!/^image\/(jpeg|png)$/.test(file.type) || file.size > 5 * 1024 * 1024) {
+    showToast('仅支持 JPG/PNG 格式且不超过 5MB 的图片', 'error');
+    input.value = '';
+    return;
+  }
+  var list = listAccounts();
+  if (!list[idx]) return;
+  list[idx][key + 'ImageName'] = file.name;
+  list[idx][key + 'ImageUrl'] = URL.createObjectURL(file);
+  renderAccountRows();
+  markDirty();
+}
+function readAccountsFields() {
+  var list = listAccounts();
+  return list.map(function(row, i) {
+    function val(k, fallback) {
+      var el = document.getElementById('acc_' + i + '_' + k);
+      return el ? el.value : (fallback || '');
+    }
+    return {
+      uid: val('uid', row.uid),
+      nickname: val('nickname', row.nickname),
+      cooperationCode: val('cooperationCode', row.cooperationCode),
+      bdContact: val('bdContact', row.bdContact),
+      uidImageName: row.uidImageName || '',
+      cooperationCodeImageName: row.cooperationCodeImageName || ''
+    };
+  });
+}
+
+// 提交前校验账号信息录入：UID/昵称/合作码、以及 UID图片与合作码图片均为必填
+function validateAccounts(accounts) {
+  var list = accounts || [];
+  for (var i = 0; i < list.length; i++) {
+    var a = list[i] || {};
+    var tag = '账号' + (i + 1) + '：';
+    if (!String(a.uid || '').trim()) return tag + '请填写账号UID';
+    if (!String(a.nickname || '').trim()) return tag + '请填写账号昵称';
+    if (!String(a.cooperationCode || '').trim()) return tag + '请填写合作码';
+    if (!String(a.uidImageName || '').trim()) return tag + '请上传UID图片';
+    if (!String(a.cooperationCodeImageName || '').trim()) return tag + '请上传合作码图片';
+  }
+  return '';
+}
+
+render();
+renderAccountRows();
+</script>
+</body>
+</html>

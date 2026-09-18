@@ -5,10 +5,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>客户合作管理 - 列表</title>
   <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet" href="../../css/components.css">
+  <link rel="stylesheet" href="../../css/domains/recruit.css">
   <style>
-    /* 桌面端：操作列图标+文字链接 */
-    .link-action-icon { display: inline-flex; align-items: center; gap: 4px; }
-    .link-action-icon svg { flex-shrink: 0; }
+    /* 入驻节点小徽章 — 与客户入驻申请页保持一致的视觉 */
+    .stage-badge {
+      display: inline-flex; align-items: center; gap: 5px; padding: 2px 10px;
+      background: #f1f5f9; border-radius: 12px; font-size: 12px; color: var(--text-secondary); white-space: nowrap;
+    }
+    .stage-badge .stage-no { color: var(--primary); font-weight: 700; }
+    .stage-cell { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .stage-final-tip { font-size: 12px; color: #16a34a; }
+    /* 手工流转弹窗 */
+    .stg-overlay { position: fixed; inset: 0; z-index: 210; background: rgba(15,23,42,.5); display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .stg-overlay[hidden] { display: none; }
+    .stg-modal { width: 520px; max-width: 100%; background: #fff; border-radius: 16px; padding: 20px 22px; box-shadow: 0 20px 60px rgba(15,23,42,.2); }
+    .stg-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .stg-head h3 { margin: 0; font-size: 17px; font-weight: 700; color: var(--text); }
+    .stg-close { width: 30px; height: 30px; border: none; border-radius: 8px; background: #f4f6fb; font-size: 18px; color: #94a3b8; cursor: pointer; line-height: 1; }
+    .stg-sub { font-size: 12px; color: var(--text-tertiary); margin-bottom: 14px; }
+    .stg-info { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; font-size: 13px; }
+    .stg-info .lbl { color: var(--text-secondary); min-width: 96px; }
+    .stg-info .val { color: var(--text); font-weight: 600; word-break: break-all; }
+    .stg-arrow { color: var(--primary); font-weight: 700; margin: 0 6px; }
+    .stg-tip { background: #fff7ed; color: #9a3412; padding: 8px 12px; border-radius: 8px; font-size: 12px; margin: 12px 0; line-height: 1.6; }
+    .stg-form label { display: block; margin-bottom: 6px; font-size: 13px; color: var(--text-secondary); }
+    .stg-form .req { color: #ef4444; }
+    .stg-form textarea { width: 100%; min-height: 80px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 13px; box-sizing: border-box; resize: vertical; }
+    .stg-form textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(91,108,245,.15); }
+    .stg-err { color: #ef4444; font-size: 12px; margin-top: 4px; min-height: 16px; }
+    .stg-foot { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; }
     /* 移动端（<1024px）：卡片流 + 底部抽屉筛选 + 加载更多 */
     .card-list, .load-more-bar, .filter-fab, .filter-sheet-overlay { display: none; }
     @media (max-width: 1023px) {
@@ -68,6 +94,8 @@
 
   <script src="../../js/auth.js"></script>
   <script src="../../js/onboarding-store.js"></script>
+  <script src="../../js/shared/escape-html.js"></script>
+  <script src="../../js/shared/toast.js"></script>
   <script>
     // 权限检查
     if (!Auth.requireAuth()) {
@@ -129,7 +157,8 @@
             <th>创建人</th>
             <th>更新人</th>
             <th>更新时间</th>
-            <th>状态</th>
+            <th>入驻节点</th>
+            <th>节点状态</th>
             <th>操作</th>
           </tr>
         </thead>
@@ -171,6 +200,29 @@
     </div>
   </div>
 
+  <!-- 手工流转入驻节点弹窗 -->
+  <div class="stg-overlay" id="stageModal" hidden onclick="if(event.target===this) closeStageModal()">
+    <div class="stg-modal" role="dialog" aria-modal="true" aria-labelledby="stageModalTitle">
+      <div class="stg-head">
+        <h3 id="stageModalTitle">手工流转入驻节点</h3>
+        <button type="button" class="stg-close" onclick="closeStageModal()" aria-label="关闭">&times;</button>
+      </div>
+      <div class="stg-sub">适用于 BPM/保证金/授权书/培训等线下或独立事项，无法自动联动时人工推进。</div>
+      <div class="stg-info"><span class="lbl">客户名称：</span><span class="val" id="stgAppName">-</span></div>
+      <div class="stg-info"><span class="lbl">节点变化：</span><span class="val"><span id="stgFromName">-</span><span class="stg-arrow">→</span><span id="stgToName">-</span></span></div>
+      <div class="stg-tip">仅向下一个节点流转（+1），将写入操作日志作为审计记录；客户端（达人）可见节点变化，不可见备注内容。</div>
+      <div class="stg-form">
+        <label>流转备注 <span class="req">*</span></label>
+        <textarea id="stgReason" maxlength="200" placeholder="例如：保证金 10,000 元已到账，财务张三 09-15 确认"></textarea>
+        <div class="stg-err" id="stgReasonError"></div>
+      </div>
+      <div class="stg-foot">
+        <button type="button" class="btn" onclick="closeStageModal()">取消</button>
+        <button type="button" class="btn btn-primary" onclick="confirmStageAdvance()">确认流转</button>
+      </div>
+    </div>
+  </div>
+
 <script>
 var Store = OnboardingStore;
 var VISIBLE_STATUSES = [Store.STATUS.SUBMITTED, Store.STATUS.REVIEWED];
@@ -182,9 +234,22 @@ function loadData() {
   return data.sort(function(a, b) { return (b.updatedAt || '').localeCompare(a.updatedAt || ''); });
 }
 var allData = loadData();
+// 手工流转仅开放运营侧（operator / bd / admin）；达人菜单不展示本页，同时作前端防御
+var canOperateStage = !!currentUser && ['operator', 'bd', 'admin'].indexOf(currentUser.role) > -1;
+// 记录上一次搜索条件，刷新时无需手动重新录入
+var lastQuery = { name: '', type: '', platform: '', status: '' };
+function refresh() {
+  allData = loadData();
+  renderView(applyFilter(allData, lastQuery));
+}
 
 // ===== 字段取值（列表与卡片共用） =====
-function customerName(app) { return (((app.form || {}).finance) || {}).fullName || ''; }
+function customerName(app) {
+  var form = app.form || {};
+  var fin = form.finance || {};
+  var ent = form.enterprise || {};
+  return fin.fullName || ent.entName || '';
+}
 function creatorOf(app) { return app.ownerName || app.ownerPhone || '-'; }
 function updaterOf(app) {
   var versions = app.versions || [];
@@ -210,13 +275,32 @@ function st(s) {
   var m = { submitted: 'reviewing', reviewed: 'approved' };
   return '<span class="status-tag ' + (m[s] || '') + '">' + esc(Store.statusLabel(s)) + '</span>';
 }
-function esc(s) { if (!s) return ''; var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-
+// 与客户入驻申请页保持同一表现：【stage-badge】 X/N · 阶段名（N 基于模式对应的流程模板：13/8/7）
+function stageBadge(app) {
+  var stages = Store.stagesForApp(app);
+  var no = Store.currentStageOf(app) || 1;
+  var stage = stages[no - 1] || { name: '-' };
+  return '<span class="stage-badge"><span class="stage-no">' + no + '/' + stages.length + '</span>' + esc(stage.name || '-') + '</span>';
+}
+// 单元格：徐章 + （运营侧可见）手工流转入口；仅已审核且未到达最后一个节点时展示链接
+function stageCell(app) {
+  var no = Store.currentStageOf(app) || 1;
+  var total = Store.stagesForApp(app).length;
+  var html = '<div class="stage-cell">' + stageBadge(app);
+  if (canOperateStage) {
+    if (app.status === Store.STATUS.REVIEWED && no < total) {
+      html += '<a class="link-action" href="javascript:void(0)" onclick="openStageModal(\'' + encodeURIComponent(app.id) + '\')">更新节点</a>';
+    } else if (app.status === Store.STATUS.REVIEWED && no >= total) {
+      html += '<span class="stage-final-tip">已入驻完毕</span>';
+    }
+  }
+  return html + '</div>';
+}
 function renderTable(data) {
   var tbody = document.getElementById('tableBody');
   var html = '';
   if (data.length === 0) {
-    html = '<tr><td colspan="12" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无数据</div><div class="empty-hint">暂无已提交的入驻申请</div></td></tr>';
+    html = '<tr><td colspan="13" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无数据</div><div class="empty-hint">暂无已提交的入驻申请</div></td></tr>';
   } else {
     data.forEach(function(row, index) {
       html += '<tr>';
@@ -230,6 +314,7 @@ function renderTable(data) {
       html += '<td>' + esc(creatorOf(row)) + '</td>';
       html += '<td>' + esc(updaterOf(row)) + '</td>';
       html += '<td>' + esc(row.updatedAt || '-') + '</td>';
+      html += '<td>' + stageCell(row) + '</td>';
       html += '<td class="col-status">' + st(row.status) + '</td>';
       html += '<td class="col-actions">';
       html += '<a class="link-action link-action-icon" title="查看详情" href="detail.html?id=' + encodeURIComponent(row.id) + '&mode=view"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>查看</a>';
@@ -258,6 +343,7 @@ function doSearch() {
     platform: document.getElementById('sPlatform').value,
     status: document.getElementById('sStatus').value
   };
+  lastQuery = q;
   renderView(applyFilter(allData, q));
   showSearchTags();
 }
@@ -266,6 +352,7 @@ function resetSearch() {
   document.getElementById('sType').value = '';
   document.getElementById('sPlatform').value = '';
   document.getElementById('sStatus').value = '';
+  lastQuery = { name: '', type: '', platform: '', status: '' };
   renderView(allData);
   showSearchTags();
 }
@@ -284,7 +371,7 @@ function showSearchTags() {
   if (tags.length === 0) { container.style.display = 'none'; container.innerHTML = ''; return; }
   var html = '';
   tags.forEach(function(t) {
-    html += '<span class="search-active-tag">' + t.name + '：' + t.value + '<span class="tag-remove" onclick="clearSearchTag(\'' + t.id + '\')">&times;</span></span>';
+    html += '<span class="search-active-tag">' + esc(t.name) + '：' + esc(t.value) + '<span class="tag-remove" onclick="clearSearchTag(\'' + t.id + '\')">&times;</span></span>';
   });
   container.style.display = '';
   container.innerHTML = html;
@@ -318,6 +405,7 @@ function renderCards(data) {
       html += '<div>入驻平台：' + esc(platText(row)) + '</div>';
       html += '<div>对接商务：' + esc(row.bdContact || '-') + '</div>';
       html += '<div>创建人：' + esc(creatorOf(row)) + '</div>';
+      html += '<div>当前节点：' + stageCell(row) + '</div>';
       html += '<div>更新时间：' + esc(row.updatedAt || '-') + '</div>';
       html += '</div>';
       html += '<div class="recruit-card-foot"><span class="time">' + esc(row.createdAt || '') + '</span>';
@@ -356,6 +444,7 @@ function doMobileSearch() {
     platform: document.getElementById('mSPlatform').value,
     status: document.getElementById('mSStatus').value
   };
+  lastQuery = q;
   mobileShownCount = MOBILE_PAGE_SIZE;
   renderView(applyFilter(allData, q));
   toggleFilterSheet();
@@ -366,31 +455,57 @@ function resetMobileSearch() {
   document.getElementById('mSType').value = '';
   document.getElementById('mSPlatform').value = '';
   document.getElementById('mSStatus').value = '';
+  lastQuery = { name: '', type: '', platform: '', status: '' };
   mobileShownCount = MOBILE_PAGE_SIZE;
   renderView(allData);
 }
 
 window.addEventListener('resize', function() { renderView(currentFiltered); });
 
-// Toast 轻提示
-function showToast(message, type) {
-  type = type || 'info';
-  var container = document.getElementById('toastContainer');
-  if (!container) return;
-  var toast = document.createElement('div');
-  toast.className = 'toast toast-' + type;
-  toast.textContent = message;
-  container.appendChild(toast);
-  setTimeout(function() {
-    if (toast.parentNode) {
-      toast.style.opacity = '0';
-      toast.style.transition = 'opacity 0.3s';
-      setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
-    }
-  }, 2500);
-}
-
 renderView(allData);
+
+// ===== 手工流转入驻节点 =====
+var currentStageAppId = null;
+function operatorName() { return (currentUser && (currentUser.name || currentUser.phone)) || '运营'; }
+function openStageModal(encId) {
+  var id = decodeURIComponent(String(encId || ''));
+  var app = Store.get(id);
+  if (!app) { showToast('申请不存在', 'error'); return; }
+  var stages = Store.stagesForApp(app);
+  var total = stages.length;
+  var no = Store.currentStageOf(app);
+  if (no >= total) { showToast('当前已是最后一个节点，无需手工流转', 'info'); return; }
+  currentStageAppId = id;
+  document.getElementById('stgAppName').textContent = customerName(app) || app.id;
+  document.getElementById('stgFromName').textContent = '第 ' + no + '/' + total + ' · ' + stages[no - 1].name;
+  document.getElementById('stgToName').textContent = '第 ' + (no + 1) + '/' + total + ' · ' + stages[no].name;
+  document.getElementById('stgReason').value = '';
+  document.getElementById('stgReasonError').textContent = '';
+  document.getElementById('stageModal').hidden = false;
+  setTimeout(function() { var el = document.getElementById('stgReason'); if (el) el.focus(); }, 30);
+}
+function closeStageModal() {
+  document.getElementById('stageModal').hidden = true;
+  currentStageAppId = null;
+}
+function confirmStageAdvance() {
+  if (!currentStageAppId) { closeStageModal(); return; }
+  var reason = String(document.getElementById('stgReason').value || '').trim();
+  var errEl = document.getElementById('stgReasonError');
+  errEl.textContent = '';
+  if (!reason) { errEl.textContent = '请填写流转备注，作为审计依据'; return; }
+  var appBefore = Store.get(currentStageAppId);
+  var res = Store.advanceStage(currentStageAppId, { reason: reason, operator: operatorName() });
+  if (!res.ok) { errEl.textContent = res.error || '流转失败'; return; }
+  var stagesAfter = Store.stagesForApp(res.app || appBefore);
+  var newNo = res.app.stageNo || Store.currentStageOf(res.app);
+  closeStageModal();
+  showToast('已推进至「' + ((stagesAfter[newNo - 1] || {}).name || '-') + '」', 'success');
+  refresh();
+}
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && currentStageAppId) { closeStageModal(); }
+});
 </script>
 <!-- 设备效果预览切换器：电脑 / 手机 -->
 <script>

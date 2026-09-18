@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>账号信息详情</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet" href="../../css/components.css">
+  <link rel="stylesheet" href="../../css/domains/recruit.css">
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+    .page-container { min-height: 100vh; background: #f5f7fb; padding: 24px 28px; }
+    .page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .page-title { font-size: 18px; font-weight: 700; color: var(--text); flex: 1; }
+
+    .detail-card {
+      background:#fff; border:1px solid var(--border); border-radius:12px;
+      padding:24px; margin-bottom:16px;
+    }
+    .detail-card-title {
+      font-size:15px; font-weight:700; color:var(--text,#0f172a);
+      margin:0 0 18px; padding-bottom:12px; border-bottom:1px solid var(--border-light);
+    }
+    .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px 24px; }
+    .detail-item .k { font-size:12px; color:var(--text-tertiary,#94a3b8); margin-bottom:4px; }
+    .detail-item .v { font-size:14px; color:var(--text,#0f172a); font-weight:500; min-height:22px; word-break:break-all; }
+    .detail-item.span-2 { grid-column: span 2; }
+    .file-meta { font-size:12.5px; color:var(--text-secondary); }
+    .form-actions { display:flex; justify-content:flex-end; gap:10px; padding:16px 0; }
+
+    @media (max-width: 640px) {
+      .page-container { padding: 16px; }
+      .detail-card { padding: 16px; }
+      .detail-grid { grid-template-columns: 1fr; gap: 12px; }
+      .detail-item.span-2 { grid-column: span 1; }
+    }
+  </style>
+</head>
+<body>
+<div class="page-container">
+
+  <div class="page-header">
+    <button class="btn" onclick="goBack()" style="display:flex;align-items:center;gap:4px;padding:6px 12px;height:auto;">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      返回
+    </button>
+    <div class="page-title">账号信息详情</div>
+  </div>
+
+  <div class="detail-card">
+    <h3 class="detail-card-title">基本信息</h3>
+    <div class="detail-grid" id="baseGrid"></div>
+  </div>
+
+  <div class="detail-card">
+    <h3 class="detail-card-title" id="accountCardTitle">账号信息</h3>
+    <div class="detail-grid" id="accountGrid"></div>
+  </div>
+
+  <div class="detail-card" id="imageCard" style="display:none;">
+    <h3 class="detail-card-title">凭证图片</h3>
+    <div class="detail-grid" id="imageGrid"></div>
+  </div>
+
+  <div class="form-actions">
+    <button class="btn" onclick="goBack()">返回</button>
+    <button class="btn btn-primary" onclick="goEdit()">编辑</button>
+  </div>
+
+</div>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<script src="../../js/auth.js"></script>
+<script src="../../js/onboarding-store.js"></script>
+<script src="../../js/shared/escape-html.js"></script>
+<script src="../../js/shared/storage.js"></script>
+<script src="../../js/shared/toast.js"></script>
+<script>
+// 权限检查
+if (!Auth.requireAuth()) {
+  // 已在 requireAuth 中跳转到登录页
+}
+
+var Store = OnboardingStore;
+var STORAGE_KEY = 'recruit_account_entries';
+
+if (window.parent) {
+  window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 客户视角 <span>/</span> 账号信息录入 <span>/</span> 详情'}, '*');
+}
+
+function g(name) { var r = location.search.match(new RegExp('[?&]' + name + '=([^&]*)')); return r ? decodeURIComponent(r[1]) : ''; }
+var recordId = parseInt(g('id')) || 0;
+
+// 无值字段统一显示为空
+function val(v) { return (v === null || v === undefined) ? '' : String(v); }
+
+function renderGrid(containerId, items) {
+  var html = items.map(function(it) {
+    return '<div class="detail-item' + (it.span ? ' span-2' : '') + '">' +
+      '<div class="k">' + esc(it.label) + '</div>' +
+      '<div class="v">' + (it.raw ? it.value : esc(val(it.value)) || '') + '</div>' +
+      '</div>';
+  }).join('');
+  document.getElementById(containerId).innerHTML = html;
+}
+
+function init() {
+  var list = AppStorage.load(STORAGE_KEY, []);
+  var record = list.find(function(r) { return r.id === recordId; });
+  if (!record) { showToast('未找到该账号信息', 'error'); return; }
+
+  var koc = Store.accountEntryKindOfMode(record.mode) === 'koc';
+
+  renderGrid('baseGrid', [
+    { label: '入驻模式', raw: true, value: record.mode ? '<span class="type-tag">' + esc(record.mode) + '</span>' : '' },
+    { label: '字段集类型', value: koc ? 'KOC 轻量字段集' : '直播账号完整字段集' },
+    { label: '创建人', value: record.creator },
+    { label: '创建时间', value: record.created_at },
+    { label: '更新时间', value: record.updated_at, span: true }
+  ]);
+
+  if (koc) {
+    document.getElementById('accountCardTitle').textContent = '账号信息（KOC）';
+    renderGrid('accountGrid', [
+      { label: '账号UID', value: record.uid },
+      { label: '账号昵称', value: record.nickname },
+      { label: '合作码', value: record.cooperation_code },
+      { label: '对接商务', value: record.bd_contact }
+    ]);
+    document.getElementById('imageCard').style.display = '';
+    renderGrid('imageGrid', [
+      { label: 'UID图片', raw: true, value: fileHtml(record.uid_image_name) },
+      { label: '合作码图片', raw: true, value: fileHtml(record.cooperation_code_image_name) }
+    ]);
+  } else {
+    document.getElementById('accountCardTitle').textContent = '账号信息';
+    renderGrid('accountGrid', [
+      { label: '账号所属平台', value: record.platform },
+      { label: '账号昵称', value: record.nickname },
+      { label: '账号运营模式', value: record.operation_mode },
+      { label: '账号UID', value: record.uid },
+      { label: '账号ID', value: record.account_id },
+      { label: '账号类型', value: record.account_type },
+      { label: '账号负责人', value: record.owner },
+      { label: '账号绑定手机号', value: record.bindphone },
+      { label: '主销品牌', value: record.brand },
+      { label: '账号属性', value: record.account_attr },
+      { label: '账号定位', value: record.positioning },
+      { label: '绑定店铺名称', value: record.shop_name },
+      { label: '账号注册主体', value: record.register_entity },
+      { label: '账号运营机构', value: record.agency_name }
+    ]);
+  }
+}
+
+// 图片仅会话内预览、不落盘，详情页展示已上传的文件名
+function fileHtml(name) {
+  if (!name) return '';
+  return '<span class="file-meta">' + esc(name) + '</span>';
+}
+
+function goBack() { location.href = 'account-entry.html'; }
+function goEdit() { location.href = 'account-entry-edit.html?mode=edit&id=' + recordId; }
+
+init();
+
+// 从编辑页返回时自动刷新数据
+window.addEventListener('pageshow', function() { init(); });
+</script>
+</body>
+</html>

@@ -146,19 +146,6 @@
           <label class="form-label">账号运营模式 <span class="required">*</span></label>
           <select class="form-select" id="operationMode">
             <option value="">请选择账号运营模式</option>
-            <option value="自播">自播 (A0001)</option>
-            <option value="达人播">达人播 (A0004)</option>
-            <option value="代播">代播 (A0006)</option>
-            <option value="分销">分销 (A0007)</option>
-            <option value="其他">其他 (A0008)</option>
-            <option value="商品卡">商品卡 (A0015)</option>
-            <option value="分销一组">分销一组 (A0016)</option>
-            <option value="分销二组">分销二组 (A0017)</option>
-            <option value="短视频">短视频 (A0018)</option>
-            <option value="头部达人">头部达人 (A0019)</option>
-            <option value="头达矩阵号">头达矩阵号 (A0020)</option>
-            <option value="新锐达人">新锐达人 (A0021)</option>
-            <option value="达人机构">达人机构 (A0022)</option>
           </select>
           <div class="field-error">账号运营模式为必填项</div>
         </div>
@@ -250,6 +237,7 @@
 </div>
 
 <script src="../../js/auth.js"></script>
+<script src="../../js/onboarding-store.js"></script>
 <script>
 if (!Auth.requireAuth()) {}
 
@@ -289,7 +277,18 @@ function setCheckedDocTypes(arr) {
   });
 }
 
+// 运营模式选项与「账号信息录入」同源，统一取自 OnboardingStore 字典
+function renderOperationModes() {
+  var sel = document.getElementById('operationMode');
+  var current = sel.value;
+  sel.innerHTML = '<option value="">请选择账号运营模式</option>' + OnboardingStore.ACCOUNT_OPERATION_MODES.map(function(o) {
+    return '<option value="' + o.label + '">' + o.label + ' (' + o.code + ')</option>';
+  }).join('');
+  if (current) sel.value = current;
+}
+
 function init() {
+  renderOperationModes();
   if (mode === 'edit' && editId > 0) {
     document.getElementById('pageTitle').textContent = '编辑直播账号';
     var list = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');

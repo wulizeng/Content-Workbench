@@ -11,3 +11,6 @@
 
 # Qoder cache
 .qoder/
+
+# 会话与验证产物（截图、临时 pid、sdd review diff 等）
+.superpowers/
