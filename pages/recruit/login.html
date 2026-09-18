@@ -129,7 +129,7 @@
     <div class="login-hint">还没有账号？<a href="javascript:void(0)" onclick="switchMode('register')" style="color:var(--primary);font-weight:600;text-decoration:underline;">立即注册</a><br><a href="javascript:void(0)" onclick="quickDemo()" style="color:var(--primary);font-weight:600;text-decoration:underline;">演示快捷登录（跳过验证）</a></div>
   </div>
 
-  <!-- 注册表单：手机号 + 姓名 + 验证码 -->
+  <!-- 注册表单：手机号 + 姓名 + 对接商务 + 验证码 -->
   <div class="login-form" id="registerForm">
     <div class="login-field">
       <label>手机号</label>
@@ -140,6 +140,11 @@
       <label>姓名</label>
       <input type="text" class="login-input" id="regName" placeholder="请输入姓名">
       <div class="field-error-text" id="regNameError">请输入姓名</div>
+    </div>
+    <div class="login-field">
+      <label>对接商务</label>
+      <input type="text" class="login-input" id="regBdContact" maxlength="50" placeholder="请输入对接商务姓名">
+      <div class="field-error-text" id="regBdContactError">请输入对接商务姓名</div>
     </div>
     <div class="login-field">
       <label>验证码</label>
@@ -225,18 +230,25 @@ function doLogin() {
     switchMode('register');
     return;
   }
+  // 登录成功：刷新最近登录时间，同时兼容历史数据补齐 updated_at
+  var now = nowStr();
+  talents[phone].last_login_at = now;
+  if (!talents[phone].updated_at) talents[phone].updated_at = talents[phone].created_at || now;
+  localStorage.setItem('recruit_talents', JSON.stringify(talents));
   setTalentSession(phone, talents[phone].name);
   showToast('登录成功', 'success');
   setTimeout(function() { location.href = 'mine.html'; }, 400);
 }
 
-// 注册：手机号 + 姓名 + 验证码，注册成功后自动登录
+// 注册：手机号 + 姓名 + 对接商务 + 验证码，注册成功后自动登录
 function doRegister() {
   var phone = document.getElementById('regPhone').value.trim();
   var name = document.getElementById('regName').value.trim();
+  var bdContact = document.getElementById('regBdContact').value.trim();
   var code = document.getElementById('regCode').value.trim();
   document.getElementById('regPhoneError').style.display = 'none';
   document.getElementById('regNameError').style.display = 'none';
+  document.getElementById('regBdContactError').style.display = 'none';
   document.getElementById('regCodeError').style.display = 'none';
 
   if (!/^1\d{10}$/.test(phone)) {
@@ -245,6 +257,10 @@ function doRegister() {
   }
   if (!name) {
     document.getElementById('regNameError').style.display = 'block';
+    return;
+  }
+  if (!bdContact) {
+    document.getElementById('regBdContactError').style.display = 'block';
     return;
   }
   if (code !== MOCK_CODE) {
@@ -259,7 +275,11 @@ function doRegister() {
     switchMode('login');
     return;
   }
-  talents[phone] = { phone: phone, name: name, talent_id: 'T' + Date.now(), created_at: nowStr() };
+  talents[phone] = {
+    phone: phone, name: name, bdContact: bdContact,
+    talent_id: 'T' + Date.now(),
+    created_at: nowStr(), updated_at: nowStr(), last_login_at: nowStr()
+  };
   localStorage.setItem('recruit_talents', JSON.stringify(talents));
   setTalentSession(phone, name);
   showToast('注册成功，已自动登录', 'success');
@@ -270,10 +290,14 @@ function quickDemo() {
   var demoPhone = '138****2231';
   var demoName = '李潮';
   var talents = JSON.parse(localStorage.getItem('recruit_talents') || '{}');
+  var now = nowStr();
   if (!talents[demoPhone]) {
-    talents[demoPhone] = { phone: demoPhone, name: demoName, talent_id: 'T_DEMO_001', created_at: nowStr() };
-    localStorage.setItem('recruit_talents', JSON.stringify(talents));
+    talents[demoPhone] = { phone: demoPhone, name: demoName, talent_id: 'T_DEMO_001', created_at: now, updated_at: now, last_login_at: now };
+  } else {
+    talents[demoPhone].last_login_at = now;
+    if (!talents[demoPhone].updated_at) talents[demoPhone].updated_at = talents[demoPhone].created_at || now;
   }
+  localStorage.setItem('recruit_talents', JSON.stringify(talents));
   setTalentSession(demoPhone, demoName);
   showToast('演示账号已登录（' + demoName + '）', 'success');
   setTimeout(function() { location.href = 'mine.html'; }, 400);

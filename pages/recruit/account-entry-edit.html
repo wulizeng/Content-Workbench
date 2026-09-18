@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>账号信息录入</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet" href="../../css/components.css">
+  <link rel="stylesheet" href="../../css/domains/recruit.css">
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+    .page-container { min-height: 100vh; background: #f5f7fb; padding: 24px 28px; }
+    .page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .page-title { font-size: 18px; font-weight: 700; color: var(--text); flex: 1; }
+
+    .form-card {
+      background: #fff; border: 1px solid var(--border); border-radius: 12px;
+      padding: 24px; margin-bottom: 16px;
+    }
+    .form-card-title {
+      font-size: 15px; font-weight: 700; color: var(--text, #0f172a);
+      margin: 0 0 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border-light);
+    }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; }
+    .form-group { display: flex; flex-direction: column; }
+    .form-group.span-2 { grid-column: span 2; }
+    .form-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+    .form-label .required { color: #ef4444; margin-left: 2px; }
+    .form-input, .form-select {
+      width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 9px;
+      font: inherit; font-size: 13px; outline: none; background: #fafbfd; box-sizing: border-box;
+      transition: border-color .18s;
+    }
+    .form-input:focus, .form-select:focus { border-color: var(--primary); background: #fff; }
+    .form-input[readonly] { background: #f1f5f9; color: var(--text-secondary); }
+    .field-hint { font-size: 12px; color: var(--text-tertiary, #94a3b8); margin-top: 5px; }
+    .field-error { display: none; color: #dc2626; font-size: 12px; margin-top: 5px; }
+    .has-error .form-input, .has-error .form-select { border-color: #ef4444; background: #fef2f2; }
+    .has-error .field-error { display: block; }
+
+    /* 图片上传：选择按钮 + 会话内预览（不落盘，仅记录文件名） */
+    .image-picker { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .image-picker input[type="file"] { display: none; }
+    .image-btn {
+      display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;
+      border: 1px dashed var(--border); border-radius: 9px; background: #fafbfd;
+      font-size: 13px; color: var(--text-secondary); cursor: pointer;
+    }
+    .image-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .image-preview { display: flex; align-items: center; gap: 10px; }
+    .image-preview img { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); }
+    .image-file { font-size: 12px; color: var(--text-secondary); word-break: break-all; }
+    .image-file .uploaded { color: #059669; font-weight: 600; }
+
+    /* 模式说明条 */
+    .mode-tip {
+      padding: 12px 16px; border-radius: 10px; font-size: 12.5px; line-height: 1.7;
+      background: var(--primary-50, #eef0ff); border: 1px solid #dfe3ff; color: #3b49c4;
+    }
+
+    .form-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 0; }
+
+    @media (max-width: 640px) {
+      .page-container { padding: 16px; }
+      .form-card { padding: 16px; }
+      .form-grid { grid-template-columns: 1fr; gap: 14px; }
+      .form-group.span-2 { grid-column: span 1; }
+    }
+  </style>
+</head>
+<body>
+<div class="page-container">
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <div class="page-header">
+    <button class="btn" onclick="goBack()" style="display:flex;align-items:center;gap:4px;padding:6px 12px;height:auto;">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      返回
+    </button>
+    <div class="page-title" id="pageTitle">新增账号信息</div>
+  </div>
+
+  <form id="mainForm">
+    <!-- 入驻模式：决定下方需要填写的账号信息字段集 -->
+    <div class="form-card">
+      <h3 class="form-card-title">入驻模式</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">入驻模式 <span class="required">*</span></label>
+          <select class="form-select" id="mode" onchange="onModeChange()">
+            <option value="">请选择入驻模式</option>
+          </select>
+          <div class="field-hint" id="modeHint"></div>
+          <div class="field-error">入驻模式为必填项</div>
+        </div>
+        <div class="form-group">
+          <div class="mode-tip">
+            客户KOC、素人KOC、联营KOC 仅需录入账号基础信息与两张凭证图片；<br>
+            其余入驻模式按全品牌直播账号管理要求录入完整账号信息。
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KOC 类字段集：客户KOC / 素人KOC / 联营KOC -->
+    <div class="form-card" id="kocCard" style="display:none;">
+      <h3 class="form-card-title">账号信息（KOC）</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">账号UID <span class="required">*</span></label>
+          <input type="text" class="form-input" id="kUid" placeholder="请输入账号UID" maxlength="50">
+          <div class="field-error">账号UID为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">账号昵称 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="kNickname" placeholder="请输入账号昵称" maxlength="50">
+          <div class="field-error">账号昵称为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">合作码 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="kCooperationCode" placeholder="请输入合作码" maxlength="50">
+          <div class="field-error">合作码为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">对接商务</label>
+          <input type="text" class="form-input" id="kBdContact" placeholder="请输入对接商务" maxlength="50">
+          <div class="field-hint">默认取本人注册档案/入驻申请的对接商务，可修改</div>
+        </div>
+        <div class="form-group span-2">
+          <label class="form-label">UID图片上传 <span class="required">*</span></label>
+          <div class="image-picker">
+            <label class="image-btn" for="kUidImage">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              选择图片
+            </label>
+            <input type="file" id="kUidImage" accept="image/jpeg,image/png" onchange="onPickImage('kUidImage','kUidImagePreview')">
+            <div class="image-preview" id="kUidImagePreview"></div>
+          </div>
+          <div class="field-error">请上传UID图片</div>
+        </div>
+        <div class="form-group span-2">
+          <label class="form-label">合作码图片上传 <span class="required">*</span></label>
+          <div class="image-picker">
+            <label class="image-btn" for="kCooperationCodeImage">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              选择图片
+            </label>
+            <input type="file" id="kCooperationCodeImage" accept="image/jpeg,image/png" onchange="onPickImage('kCooperationCodeImage','kCooperationCodeImagePreview')">
+            <div class="image-preview" id="kCooperationCodeImagePreview"></div>
+          </div>
+          <div class="field-error">请上传合作码图片</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 直播账号完整字段集：除 KOC 三类之外的入驻模式 -->
+    <div class="form-card" id="stdCard" style="display:none;">
+      <h3 class="form-card-title">账号信息</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">账号所属平台 <span class="required">*</span></label>
+          <select class="form-select" id="platform">
+            <option value="">请选择账号所属平台</option>
+            <option value="抖音">抖音 (Z142)</option>
+            <option value="快手">快手 (Z143)</option>
+            <option value="小红书">小红书 (Z128)</option>
+          </select>
+          <div class="field-error">账号所属平台为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">账号昵称 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="nickname" placeholder="请输入账号昵称" maxlength="50">
+          <div class="field-error">账号昵称为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">账号运营模式 <span class="required">*</span></label>
+          <select class="form-select" id="operationMode">
+            <option value="">请选择账号运营模式</option>
+          </select>
+          <div class="field-error">账号运营模式为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">账号UID <span class="required">*</span></label>
+          <input type="text" class="form-input" id="uid" placeholder="请输入账号UID" maxlength="50">
+          <div class="field-error">账号UID为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">账号ID <span class="required">*</span></label>
+          <input type="text" class="form-input" id="accountId" placeholder="请输入账号ID" maxlength="50">
+          <div class="field-error">账号ID为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">账号类型 <span class="required">*</span></label>
+          <select class="form-select" id="accountType">
+            <option value="个人号">个人号 (AT002)</option>
+            <option value="蓝V">蓝V (AT001)</option>
+          </select>
+          <div class="field-hint">默认个人号</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">账号负责人 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="owner" placeholder="请输入账号负责人" maxlength="50">
+          <div class="field-hint">自动取对接商务，可修改</div>
+          <div class="field-error">账号负责人为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">账号绑定手机号 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="bindphone" placeholder="请输入账号绑定手机号" maxlength="11">
+          <div class="field-error">账号绑定手机号为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">主销品牌 <span class="required">*</span></label>
+          <select class="form-select" id="brand" onchange="onBrandChange()">
+            <option value="">请选择主销品牌</option>
+          </select>
+          <div class="field-error">主销品牌为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">账号属性 <span class="required">*</span></label>
+          <select class="form-select" id="accountAttr">
+            <option value="主账号">主账号</option>
+            <option value="非主账号">非主账号</option>
+          </select>
+          <div class="field-hint">默认主账号</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">账号定位 <span class="required">*</span></label>
+          <select class="form-select" id="positioning">
+            <option value="">请先选择主销品牌</option>
+          </select>
+          <div class="field-hint">取值随主销品牌联动：森马→男装/女装；巴拉巴拉→中童/幼童/婴童；迷你巴拉→婴童</div>
+          <div class="field-error">账号定位为必填项</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">绑定店铺名称</label>
+          <input type="text" class="form-input" id="shopName" placeholder="请输入绑定店铺名称" maxlength="100">
+        </div>
+        <div class="form-group">
+          <label class="form-label">账号注册主体</label>
+          <input type="text" class="form-input" id="registerEntity" placeholder="请输入账号注册主体" maxlength="100">
+        </div>
+        <div class="form-group">
+          <label class="form-label">账号运营机构</label>
+          <input type="text" class="form-input" id="agencyName" placeholder="请输入账号运营机构" maxlength="100">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn" onclick="goBack()">取消</button>
+      <button type="button" class="btn btn-primary" onclick="doSubmit()">保存</button>
+    </div>
+  </form>
+
+</div>
+
+<script src="../../js/auth.js"></script>
+<script src="../../js/onboarding-store.js"></script>
+<script src="../../js/shared/escape-html.js"></script>
+<script src="../../js/shared/storage.js"></script>
+<script src="../../js/shared/toast.js"></script>
+<script>
+// 权限检查
+if (!Auth.requireAuth()) {
+  // 已在 requireAuth 中跳转到登录页
+}
+
+var currentUser = Auth.getCurrentUser();
+var Store = OnboardingStore;
+var STORAGE_KEY = 'recruit_account_entries';
+
+if (window.parent) {
+  window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 客户视角 <span>/</span> 账号信息录入 <span>/</span> 录入'}, '*');
+}
+
+function g(name) { var r = location.search.match(new RegExp('[?&]' + name + '=([^&]*)')); return r ? decodeURIComponent(r[1]) : ''; }
+var mode = g('mode') || 'add';
+var editId = parseInt(g('id')) || 0;
+
+// 字段映射：表单ID → 数据key（按入驻模式字段集区分）
+var KOC_FIELD_MAP = {
+  kUid: 'uid', kNickname: 'nickname', kCooperationCode: 'cooperation_code', kBdContact: 'bd_contact'
+};
+var STD_FIELD_MAP = {
+  platform: 'platform', nickname: 'nickname', operationMode: 'operation_mode', uid: 'uid',
+  accountId: 'account_id', accountType: 'account_type', owner: 'owner', bindphone: 'bindphone',
+  brand: 'brand', accountAttr: 'account_attr', positioning: 'positioning',
+  shopName: 'shop_name', registerEntity: 'register_entity', agencyName: 'agency_name'
+};
+var KOC_REQUIRED = ['kUid', 'kNickname', 'kCooperationCode'];
+var STD_REQUIRED = ['platform', 'nickname', 'operationMode', 'uid', 'accountId', 'owner', 'bindphone', 'brand', 'accountAttr', 'positioning'];
+// 必填图片字段（KOC 类）
+var KOC_IMAGES = ['kUidImage', 'kCooperationCodeImage'];
+
+// 会话内图片预览地址：objectURL 不落盘，仅文件名入库
+var imageState = { kUidImage: { name: '', url: '' }, kCooperationCodeImage: { name: '', url: '' } };
+
+function kind() { return Store.accountEntryKindOfMode(document.getElementById('mode').value); }
+
+// 对接商务默认值：优先本人注册档案，其次最近一次入驻申请
+function defaultBdContact() {
+  var map = AppStorage.load('recruit_talents', {});
+  var phone = currentUser && currentUser.phone;
+  if (phone && map[phone] && map[phone].bdContact) return map[phone].bdContact;
+  var apps = Store.list('', '');
+  var mine = apps.filter(function(a) { return currentUser && a.ownerPhone === currentUser.phone; });
+  return (mine.length ? mine[0].bdContact : '') || '';
+}
+
+// 本人最近一次入驻选择的模式（新增时默认带出，可修改）
+function defaultMode() {
+  var apps = Store.list('', '');
+  var mine = apps.filter(function(a) { return currentUser && a.ownerPhone === currentUser.phone && a.mode; });
+  return mine.length ? mine[0].mode : '';
+}
+
+function fillSelect(id, items, placeholder) {
+  var sel = document.getElementById(id);
+  sel.innerHTML = '<option value="">' + placeholder + '</option>' + items.map(function(it) {
+    return '<option value="' + it.value + '">' + it.text + '</option>';
+  }).join('');
+}
+
+function renderDictOptions() {
+  fillSelect('mode', Store.MODES.map(function(m) { return { value: m.value, text: m.label }; }), '请选择入驻模式');
+  fillSelect('operationMode', Store.accountEntryOperationModes().map(function(o) {
+    return { value: o.label, text: o.label + ' (' + o.code + ')' };
+  }), '请选择账号运营模式');
+  fillSelect('brand', Store.ACCOUNT_BRANDS.map(function(b) { return { value: b, text: b }; }), '请选择主销品牌');
+}
+
+// 主销品牌 → 账号定位联动；仅一个取值时自动选中
+function onBrandChange(keep) {
+  var brand = document.getElementById('brand').value;
+  var list = Store.positioningsOfBrand(brand);
+  var sel = document.getElementById('positioning');
+  if (!list.length) {
+    sel.innerHTML = '<option value="">' + (brand ? '请选择账号定位' : '请先选择主销品牌') + '</option>';
+    return;
+  }
+  sel.innerHTML = '<option value="">请选择账号定位</option>' + list.map(function(p) {
+    return '<option value="' + p + '">' + p + '</option>';
+  }).join('');
+  if (keep && list.indexOf(keep) > -1) sel.value = keep;
+  else if (list.length === 1) sel.value = list[0];
+}
+
+// 切换入驻模式：仅展示该模式需要的字段集；未选模式时两个字段集都隐藏
+function onModeChange() {
+  var modeSel = document.getElementById('mode');
+  var selected = modeSel.value;
+  var koc = selected ? kind() === 'koc' : false;
+  document.getElementById('kocCard').style.display = selected && koc ? '' : 'none';
+  document.getElementById('stdCard').style.display = selected && !koc ? '' : 'none';
+  // 编辑态不允许改模式，提示保留原有语义；否则提示当前字段集
+  if (modeSel.disabled) {
+    document.getElementById('modeHint').textContent = '入驻模式在新增时确定，编辑时不可修改';
+  } else {
+    document.getElementById('modeHint').textContent = selected
+      ? '当前模式：' + selected + '（' + (koc ? 'KOC 轻量字段集' : '直播账号完整字段集') + '）'
+      : '请先选择入驻模式，选择后展示对应的账号信息字段';
+    // 重新选定模式后清除上一轮的必填报错
+    modeSel.closest('.form-group').classList.remove('has-error');
+  }
+  if (!selected) return;
+  if (!koc && !document.getElementById('owner').value) document.getElementById('owner').value = defaultBdContact();
+  if (koc && !document.getElementById('kBdContact').value) document.getElementById('kBdContact').value = defaultBdContact();
+}
+
+function onPickImage(inputId, previewId) {
+  var input = document.getElementById(inputId);
+  var file = input.files && input.files[0];
+  if (!file) return;
+  if (!/^image\/(jpeg|png)$/.test(file.type) || file.size > 5 * 1024 * 1024) {
+    showToast('仅支持 JPG/PNG 格式且不超过 5MB 的图片', 'error');
+    input.value = '';
+    return;
+  }
+  imageState[inputId] = { name: file.name, url: URL.createObjectURL(file) };
+  renderImagePreview(inputId, previewId);
+  input.closest('.form-group').classList.remove('has-error');
+}
+
+function renderImagePreview(inputId, previewId) {
+  var st = imageState[inputId];
+  var box = document.getElementById(previewId);
+  if (!st.name) { box.innerHTML = '<span class="image-file">未选择图片</span>'; return; }
+  box.innerHTML = (st.url ? '<img src="' + st.url + '" alt="预览">' : '') +
+    '<span class="image-file">' + esc(st.name) + (st.url ? '' : '<span class="uploaded">（已上传）</span>') + '</span>';
+}
+
+function init() {
+  renderDictOptions();
+
+  if (mode === 'edit' && editId > 0) {
+    document.getElementById('pageTitle').textContent = '编辑账号信息';
+    var list = AppStorage.load(STORAGE_KEY, []);
+    var record = list.find(function(r) { return r.id === editId; });
+    if (!record) {
+      showToast('未找到该账号信息', 'error');
+      onModeChange();
+      return;
+    }
+    var modeSel = document.getElementById('mode');
+    modeSel.value = record.mode || '';
+    // 入驻模式决定字段集，编辑时不允许改模式
+    modeSel.disabled = true;
+    onModeChange();
+    var map = kind() === 'koc' ? KOC_FIELD_MAP : STD_FIELD_MAP;
+    Object.keys(map).forEach(function(formId) {
+      var el = document.getElementById(formId);
+      if (el) el.value = record[map[formId]] || '';
+    });
+    if (kind() === 'standard') onBrandChange(record.positioning);
+    if (record.uid_image_name) imageState.kUidImage = { name: record.uid_image_name, url: '' };
+    if (record.cooperation_code_image_name) imageState.kCooperationCodeImage = { name: record.cooperation_code_image_name, url: '' };
+    renderImagePreview('kUidImage', 'kUidImagePreview');
+    renderImagePreview('kCooperationCodeImage', 'kCooperationCodeImagePreview');
+    return;
+  }
+
+  // 新增：默认带出本人最近一次入驻模式与对接商务
+  var preset = g('mode_value') || defaultMode();
+  if (preset) {
+    document.getElementById('mode').value = preset;
+    document.getElementById('owner').value = defaultBdContact();
+  }
+  onModeChange();
+  renderImagePreview('kUidImage', 'kUidImagePreview');
+  renderImagePreview('kCooperationCodeImage', 'kCooperationCodeImagePreview');
+}
+
+function clearErrors() { document.querySelectorAll('.form-group').forEach(function(g) { g.classList.remove('has-error'); }); }
+
+function validate() {
+  clearErrors();
+  var modeSel = document.getElementById('mode');
+  if (!modeSel.value) {
+    // 未选入驻模式时不知道要展示哪套字段，只提示模式必填
+    modeSel.closest('.form-group').classList.add('has-error');
+    return false;
+  }
+  var ok = true;
+
+  var koc = kind() === 'koc';
+  (koc ? KOC_REQUIRED : STD_REQUIRED).forEach(function(fieldId) {
+    var el = document.getElementById(fieldId);
+    if (el && !el.value.trim()) { el.closest('.form-group').classList.add('has-error'); ok = false; }
+  });
+  if (koc) {
+    KOC_IMAGES.forEach(function(inputId) {
+      if (!imageState[inputId].name) { document.getElementById(inputId).closest('.form-group').classList.add('has-error'); ok = false; }
+    });
+  } else {
+    var phone = document.getElementById('bindphone').value.trim();
+    if (phone && !/^1[3-9]\d{9}$/.test(phone)) {
+      document.getElementById('bindphone').closest('.form-group').classList.add('has-error');
+      showToast('账号绑定手机号格式不正确', 'error');
+      ok = false;
+    }
+  }
+  return ok;
+}
+
+function doSubmit() {
+  if (!validate()) { showToast('请完善必填项', 'error'); return; }
+
+  var list = AppStorage.load(STORAGE_KEY, []);
+  var selectedMode = document.getElementById('mode').value;
+  var entryKind = Store.accountEntryKindOfMode(selectedMode);
+  var data = { mode: selectedMode, entry_kind: entryKind };
+
+  var map = entryKind === 'koc' ? KOC_FIELD_MAP : STD_FIELD_MAP;
+  Object.keys(map).forEach(function(formId) {
+    data[map[formId]] = document.getElementById(formId).value.trim();
+  });
+  if (entryKind === 'koc') {
+    data.uid_image_name = imageState.kUidImage.name;
+    data.cooperation_code_image_name = imageState.kCooperationCodeImage.name;
+  }
+
+  if (mode === 'edit' && editId > 0) {
+    var idx = list.findIndex(function(r) { return r.id === editId; });
+    if (idx >= 0) {
+      data.id = editId;
+      data.creator = list[idx].creator;
+      data.creator_phone = list[idx].creator_phone;
+      data.created_at = list[idx].created_at;
+      data.updated_at = now();
+      list[idx] = data;
+    }
+  } else {
+    data.id = list.length > 0 ? Math.max.apply(null, list.map(function(r) { return r.id; })) + 1 : 1;
+    data.creator = currentUser ? currentUser.name : '';
+    data.creator_phone = currentUser ? (currentUser.phone || '') : '';
+    data.created_at = now();
+    data.updated_at = data.created_at;
+    list.push(data);
+  }
+
+  AppStorage.save(STORAGE_KEY, list);
+  showToast(mode === 'edit' ? '保存成功' : '新增成功', 'success');
+  setTimeout(function() { goBack(); }, 400);
+}
+
+function now() { return new Date().toLocaleString('zh-CN', {hour12: false}).replace(/\//g, '-'); }
+function goBack() { location.href = 'account-entry.html'; }
+
+init();
+</script>
+</body>
+</html>

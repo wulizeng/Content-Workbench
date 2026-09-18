@@ -86,7 +86,7 @@
   .ob-chip-edit:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
   .ob-save-hint { margin-left: auto; font-size: 12px; color: var(--text-tertiary); }
 
-  /* ================= 14 阶段流程指示器 ================= */
+  /* ================= 13 阶段流程指示器 ================= */
   .stage-wrap {
     background: #fff; border: 1px solid var(--border); border-radius: 12px;
     padding: 18px 14px 14px; margin-top: 14px;
@@ -400,7 +400,7 @@
   </section>
 
   <!-- ============================================================
-       视图三：填写 / 编辑申请（14 阶段进度 + 四步表单）
+       视图三：填写 / 编辑申请（13 阶段进度 + 四步表单）
   ============================================================ -->
   <section class="ob-view" id="viewForm" hidden aria-label="填写入驻申请">
 
@@ -415,7 +415,7 @@
     </div>
 
     <!-- 流程节点（标题下方） -->
-    <section class="stage-wrap" aria-label="入驻流程进度（共 14 个阶段）">
+    <section class="stage-wrap" aria-label="入驻流程进度（共 13 个阶段）">
       <ol class="stage-strip" id="stageStrip"></ol>
       <div class="stage-legend" aria-hidden="true">
         <span><span class="lg-dot done"></span>已完成</span>
@@ -453,14 +453,6 @@
         <div class="ob-info-item">
           <div class="ob-info-label">入驻平台</div>
           <div class="ob-info-value" id="headPlatform"></div>
-        </div>
-        <div class="ob-info-item">
-          <div class="ob-info-label">对接商务</div>
-          <div class="ob-info-value" id="headBdContact"></div>
-          <button type="button" class="ob-chip-edit ob-chip-edit-sm" id="btnEditBdContact" onclick="openBdContactModal()" hidden>
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
-            修改
-          </button>
         </div>
         <div class="ob-info-item">
           <div class="ob-info-label">申请人</div>
@@ -503,19 +495,19 @@
       <h3 id="modeModalTitle">选择入驻模式</h3>
       <button type="button" class="ob-modal-close" onclick="closeModeModal()" aria-label="关闭弹窗">&times;</button>
     </div>
-    <p class="ob-modal-sub">请选择本次入驻的业务模式，不同模式的流程与资料要求略有差异。</p>
+    <p class="ob-modal-sub">请选择本次入驻的业务模式；任一模式均需选择品牌（单选）与入驻平台（单选）。</p>
     <div class="ob-mode-grid" role="radiogroup" aria-label="入驻模式" id="modeGrid"></div>
-    <div class="ob-brand-row" id="brandRow" hidden>
-      <label for="brandSelect">选择品牌</label>
+    <div class="ob-brand-row" id="brandRow">
+      <label for="brandSelect">选择品牌（单选）<span class="req">*</span></label>
       <select id="brandSelect" aria-describedby="brandError">
         <option value="">请选择品牌</option>
       </select>
-      <div class="ob-field-error" id="brandError">选择 DP 模式时必须选择品牌</div>
+      <div class="ob-field-error" id="brandError">请选择入驻品牌</div>
     </div>
     <div class="ob-platform-row" id="platformRow">
-      <label class="ob-platform-label">入驻平台</label>
-      <div class="ob-platform-grid" id="platformGrid" role="group" aria-label="入驻平台"></div>
-      <div class="ob-field-error" id="platformError">请至少选择一个入驻平台</div>
+      <label class="ob-platform-label">入驻平台（单选）<span class="req">*</span></label>
+      <div class="ob-platform-grid" id="platformGrid" role="radiogroup" aria-label="入驻平台"></div>
+      <div class="ob-field-error" id="platformError">请选择入驻平台</div>
     </div>
     <div class="ob-modal-foot">
       <button type="button" class="btn" onclick="closeModeModal()">取消</button>
@@ -547,27 +539,7 @@
   </div>
 </div>
 
-<!-- ===== 对接商务编辑弹窗 ===== -->
-<div class="ob-modal-overlay" id="bdContactModal" hidden onclick="if(event.target===this) closeBdContactModal()">
-  <div class="ob-modal" role="dialog" aria-modal="true" aria-labelledby="bdContactModalTitle" style="width:420px;">
-    <div class="ob-modal-head">
-      <h3 id="bdContactModalTitle">修改对接商务</h3>
-      <button type="button" class="ob-modal-close" onclick="closeBdContactModal()" aria-label="关闭弹窗">&times;</button>
-    </div>
-    <div class="form-group">
-      <div class="form-item full">
-        <label for="bdContactInput">对接商务</label>
-        <div class="form-control">
-          <input type="text" id="bdContactInput" maxlength="50" placeholder="请输入对接商务姓名">
-        </div>
-      </div>
-    </div>
-    <div class="ob-modal-foot">
-      <button type="button" class="btn" onclick="closeBdContactModal()">取消</button>
-      <button type="button" class="btn btn-primary" onclick="confirmBdContact()">保存</button>
-    </div>
-  </div>
-</div>
+<!-- ===== 对接商务编辑弹窗（已下线，页面不再提供入口） ===== -->
 
 <script>
 var Store = OnboardingStore;
@@ -617,6 +589,10 @@ function showListView() { showView('viewList'); }
 function openFormView(id, viewOnly) {
   var loaded = Store.get(id);
   if (!loaded) { showToast('申请不存在或已被删除', 'error'); return; }
+  // 非默认流程时路由到专用页面（列表展示所有模式，但编辑页仅本模板）
+  var flowKey = Store.flowKeyOfMode(loaded.mode);
+  if (flowKey === 'influencer' || flowKey === 'customer_koc') { location.href = 'manage-influencer.html?id=' + encodeURIComponent(id) + (viewOnly ? '&mode=view' : ''); return; }
+  if (flowKey === 'koc_lite') { location.href = 'manage-koc-lite.html?id=' + encodeURIComponent(id) + (viewOnly ? '&mode=view' : ''); return; }
   app = loaded;
   dirty = false;
   forceViewOnly = !!viewOnly;
@@ -658,11 +634,11 @@ function renderPlatformGrid(selectedPlatforms) {
   var grid = document.getElementById('platformGrid');
   var html = '';
   var selected = selectedPlatforms || [];
+  var current = selected.length ? selected[0] : '';
   Store.PLATFORMS.forEach(function(p) {
-    var isChecked = selected.indexOf(p) > -1 ? ' checked' : '';
-    var isCheckedClass = selected.indexOf(p) > -1 ? ' checked' : '';
-    html += '<label class="ob-platform-item' + isCheckedClass + '">' +
-      '<input type="checkbox" name="obPlatform" value="' + esc(p) + '"' + isChecked + ' onchange="onPlatformChange(this)">' +
+    var isActive = current === p;
+    html += '<label class="ob-platform-item' + (isActive ? ' checked' : '') + '">' +
+      '<input type="radio" name="obPlatform" value="' + esc(p) + '"' + (isActive ? ' checked' : '') + ' onchange="onPlatformChange(this)">' +
       '<span>' + esc(p) + '</span>' +
       '</label>';
   });
@@ -670,9 +646,13 @@ function renderPlatformGrid(selectedPlatforms) {
 }
 
 function onPlatformChange(el) {
-  var label = el.closest('.ob-platform-item');
-  if (el.checked) label.classList.add('checked');
-  else label.classList.remove('checked');
+  // 单选 radio：浏览器自动处理互斥，这里同步更新卡片选中样式
+  document.querySelectorAll('input[name="obPlatform"]').forEach(function(cb) {
+    var label = cb.closest('.ob-platform-item');
+    if (!label) return;
+    if (cb.checked) label.classList.add('checked');
+    else label.classList.remove('checked');
+  });
   document.getElementById('platformError').classList.remove('show');
 }
 
@@ -681,7 +661,8 @@ function openModeModal() {
   modal.hidden = false;
   renderModeGrid();
   renderPlatformGrid([]);
-  document.getElementById('brandRow').hidden = true;
+  // 品牌行默认展示未选模式时的通用品牌（未选模式前不锁定为马卡乐）
+  renderBrandOptions('', null);
   document.getElementById('brandError').classList.remove('show');
   document.getElementById('platformError').classList.remove('show');
   document.getElementById('modeConfirmBtn').textContent = '下一步：填写申请';
@@ -700,12 +681,8 @@ function openEditModeModal() {
   var currentRadio = modal.querySelector('input[name="obMode"][value="' + app.mode + '"]');
   if (currentRadio) {
     currentRadio.checked = true;
-    onModeChange();
-    // 预选当前品牌
-    if (app.brand) {
-      var sel = document.getElementById('brandSelect');
-      sel.value = app.brand;
-    }
+    // 品牌选项按当前模式联动，并预选当前品牌
+    renderBrandOptions(app.mode, app.brand);
   }
   // 预选当前平台
   renderPlatformGrid(app.platforms || []);
@@ -722,34 +699,23 @@ function closeModeModal() {
   if (document.getElementById('viewForm').hidden) document.getElementById('btnCreate').focus();
 }
 
-function openBdContactModal() {
-  if (!app) return;
-  document.getElementById('bdContactInput').value = app.bdContact || '';
-  document.getElementById('bdContactModal').hidden = false;
-  document.getElementById('bdContactInput').focus();
-}
-
-function closeBdContactModal() {
-  document.getElementById('bdContactModal').hidden = true;
-}
-
-function confirmBdContact() {
-  if (!app) return;
-  var value = document.getElementById('bdContactInput').value.trim();
-  var user = Auth.getCurrentUser() || {};
-  var result = Store.updateBdContact(app.id, value, user.name || user.phone || '运营');
-  if (!result.ok) { showToast(result.error, 'error'); return; }
-  app = result.app;
-  closeBdContactModal();
-  renderHead();
-  showToast('对接商务已更新', 'success');
-}
-
 function onModeChange() {
+  // 品牌选项随入驻模式联动：马卡乐合伙人仅「马卡乐」（唯一选项自动选中），其余模式使用通用品牌
   var checked = document.querySelector('input[name="obMode"]:checked');
-  var needsBrand = checked && checked.getAttribute('data-needs-brand') === '1';
-  document.getElementById('brandRow').hidden = !needsBrand;
+  renderBrandOptions(checked ? checked.value : '', null);
   document.getElementById('brandError').classList.remove('show');
+}
+
+// 按模式渲染品牌下拉：单品牌时自动选中，多品牌时保留 placeholder 与已选值
+function renderBrandOptions(mode, selected) {
+  var sel = document.getElementById('brandSelect');
+  if (!sel) return;
+  var brands = Store.brandsForMode(mode);
+  var html = brands.length > 1 ? '<option value="">请选择品牌</option>' : '';
+  brands.forEach(function(b) {
+    html += '<option value="' + esc(b) + '"' + (b === selected ? ' selected' : '') + '>' + esc(b) + '</option>';
+  });
+  sel.innerHTML = html;
 }
 
 function confirmMode() {
@@ -775,11 +741,14 @@ function confirmMode() {
     document.getElementById('platformError').classList.add('show');
     return;
   }
-  // 创建申请（待提交）并进入填写视图
+  // 创建申请（待提交）并按流程模板路由到对应页面
   var user = Auth.getCurrentUser() || {};
   var created = Store.createDraft({ mode: mode, brand: brand ? brand : null, platforms: platforms, owner: user });
   closeModeModal();
   showToast('申请已创建，开始填写资料', 'success');
+  var flowKey = Store.flowKeyOfMode(mode);
+  if (flowKey === 'influencer' || flowKey === 'customer_koc') { location.href = 'manage-influencer.html?id=' + encodeURIComponent(created.id); return; }
+  if (flowKey === 'koc_lite') { location.href = 'manage-koc-lite.html?id=' + encodeURIComponent(created.id); return; }
   openFormView(created.id);
 }
 
@@ -807,10 +776,19 @@ function confirmChangeMode() {
     return;
   }
   var user = Auth.getCurrentUser() || {};
+  var wasMakale = Store.isMakaleMode(app.mode);
   var result = Store.updateMode(app.id, mode, brand || null, platforms, user.name || user.phone || '客户');
   if (!result.ok) { showToast(result.error, 'error'); return; }
   app = result.app;
   closeModeModal();
+  // 在两种字段集之间切换（普通四段 ↔ 马卡乐两段）时重建表单面板并回填
+  if (wasMakale !== Store.isMakaleMode(app.mode)) {
+    document.getElementById('panelContainer').innerHTML = '';
+    buildPanels();
+    fillForm(app.form);
+    dirty = false;
+    setSaveHint('');
+  }
   renderHead();
   renderStages();
   showToast('模式/品牌/平台已更新', 'success');
@@ -866,8 +844,10 @@ function resetSearch() {
 }
 
 function stageBadge(appData) {
+  var stages = Store.stagesForApp(appData);
   var no = Store.currentStageOf(appData);
-  return '<span class="stage-badge"><span class="stage-no">' + no + '/14</span>' + esc(STAGE_LABEL[no - 1]) + '</span>';
+  var name = (stages[no - 1] || {}).name || '-';
+  return '<span class="stage-badge"><span class="stage-no">' + no + '/' + stages.length + '</span>' + esc(name) + '</span>';
 }
 
 function canEdit(appData) {
@@ -949,7 +929,9 @@ function renderCards(data) {
       var platText = (appData.platforms && appData.platforms.length) ? appData.platforms.join('、') : '-';
       html += '<div>入驻平台：' + esc(platText) + '</div>';
       html += '<div>申请人：' + esc(appData.ownerName || appData.ownerPhone || '-') + '</div>';
-      html += '<div>当前阶段：' + Store.currentStageOf(appData) + '/14 ' + esc(STAGE_LABEL[Store.currentStageOf(appData) - 1]) + '</div>';
+      var appStages = Store.stagesForApp(appData);
+      var appStageNo = Store.currentStageOf(appData);
+      html += '<div>当前阶段：' + appStageNo + '/' + appStages.length + ' ' + esc((appStages[appStageNo - 1] || {}).name || '-') + '</div>';
       html += '<div>更新时间：' + esc(appData.updatedAt) + '</div>';
       if (appData.status === 'reviewed' && appData.reviewReason) {
         html += '<div>审核备注：' + esc(appData.reviewReason) + '</div>';
@@ -1089,7 +1071,7 @@ function confirmReview() {
   }, 300);
 }
 
-// ================= 14 阶段流程指示器 =================
+// ================= 13 阶段流程指示器 =================
 function renderStages() {
   var current = Store.currentStageOf(app);
   var strip = document.getElementById('stageStrip');
@@ -1178,7 +1160,7 @@ function buildField(stepKey, def) {
     input.addEventListener('input', function() {
       clearError(stepKey, def.key);
       markDirty();
-      if (stepKey === 'plan') refreshPlanHint();
+      if (stepKey === 'plan' || stepKey === 'capability') refreshPlanHint();
     });
     control.appendChild(input);
   }
@@ -1194,10 +1176,11 @@ function buildField(stepKey, def) {
   return wrapper;
 }
 
-function buildMonthlyGrid() {
+function buildMonthlyGrid(stepKey) {
+  stepKey = stepKey || 'plan';
   var wrapper = document.createElement('div');
   wrapper.className = 'form-item full';
-  wrapper.setAttribute('data-field', 'plan.monthly');
+  wrapper.setAttribute('data-field', stepKey + '.monthly');
 
   var label = document.createElement('label');
   label.textContent = '月度分解目标';
@@ -1213,15 +1196,15 @@ function buildMonthlyGrid() {
     var cell = document.createElement('div');
     cell.className = 'month-cell';
     var lab = document.createElement('label');
-    lab.setAttribute('for', 'f_plan_m' + m);
+    lab.setAttribute('for', 'f_' + stepKey + '_m' + m);
     lab.textContent = m + '月（万元）';
     var inp = document.createElement('input');
     inp.type = 'number'; inp.min = '0'; inp.step = 'any'; inp.inputMode = 'decimal';
-    inp.id = 'f_plan_m' + m;
+    inp.id = 'f_' + stepKey + '_m' + m;
     inp.placeholder = '0';
     inp.setAttribute('aria-label', m + '月分解目标（万元）');
     inp.addEventListener('input', function() {
-      clearError('plan', 'monthly');
+      clearError(stepKey, 'monthly');
       markDirty();
       refreshPlanHint();
     });
@@ -1247,7 +1230,7 @@ function buildMonthlyGrid() {
   control.appendChild(err);
 
   wrapper.appendChild(control);
-  wrapper.setAttribute('data-step', 'plan');
+  wrapper.setAttribute('data-step', stepKey);
   wrapper.setAttribute('data-key', 'monthly');
   return wrapper;
 }
@@ -1255,6 +1238,37 @@ function buildMonthlyGrid() {
 function buildPanels() {
   var container = document.getElementById('panelContainer');
   container.innerHTML = '';
+  // 马卡乐合伙人：企业信息 + 业务能力 两区块（流程节点不变）
+  if (app && Store.isMakaleMode(app.mode)) {
+    Store.MAKALE_STEPS.forEach(function(step) {
+      var panel = document.createElement('fieldset');
+      panel.className = 'panel';
+      panel.id = 'panel_' + step.key;
+      var legend = document.createElement('legend');
+      legend.className = 'panel-title';
+      legend.style.padding = '0';
+      legend.textContent = step.label;
+      panel.appendChild(legend);
+      var sub = document.createElement('p');
+      sub.className = 'panel-sub';
+      sub.textContent = step.key === 'enterprise'
+        ? '企业与机构名称可与营业执照识别联动，填写过程中会自动保存草稿。'
+        : '带 * 为必填项，其余为选填。填写过程中会自动保存草稿。';
+      panel.appendChild(sub);
+      if (step.key === 'enterprise') panel.appendChild(buildLicenseBlock());
+      var group = document.createElement('div');
+      group.className = 'form-group';
+      Store.MAKALE_FIELD_DEFS[step.key].forEach(function(def) {
+        group.appendChild(buildField(step.key, def));
+        if (step.key === 'capability' && def.key === 'annualTarget') {
+          group.appendChild(buildMonthlyGrid('capability'));
+        }
+      });
+      panel.appendChild(group);
+      container.appendChild(panel);
+    });
+    return;
+  }
   Store.STEPS.forEach(function(step, i) {
     var panel = document.createElement('fieldset');
     panel.className = 'panel';
@@ -1371,6 +1385,13 @@ function onLicenseFileChange(input) {
 }
 
 function fillLicenseFields(demo) {
+  // 马卡乐合伙人：营业执照仅回填「企业与机构名称」（无独立税务登记号/所在地字段）
+  if (app && Store.isMakaleMode(app.mode)) {
+    var entName = document.getElementById(fieldId('enterprise', 'entName'));
+    if (entName) { entName.value = demo.fullName; clearError('enterprise', 'entName'); }
+    markDirty();
+    return;
+  }
   var fullName = document.getElementById('f_finance_fullName');
   if (fullName) fullName.value = demo.fullName;
   var taxNo = document.getElementById('f_finance_taxNo');
@@ -1386,6 +1407,22 @@ function fillLicenseFields(demo) {
 
 // ================= 数据读写 =================
 function collectForm() {
+  // 马卡乐合伙人：收集「企业信息 + 业务能力」字段（含 capability.monthly）
+  if (app && Store.isMakaleMode(app.mode)) {
+    var mkForm = Store.emptyForm('马卡乐合伙人');
+    Store.MAKALE_STEPS.forEach(function(step) {
+      Store.MAKALE_FIELD_DEFS[step.key].forEach(function(def) {
+        var el = document.getElementById(fieldId(step.key, def.key));
+        if (el) mkForm[step.key][def.key] = el.value.trim();
+      });
+    });
+    mkForm.capability.monthly = {};
+    for (var mm = 1; mm <= 12; mm++) {
+      var mel = document.getElementById('f_capability_m' + mm);
+      mkForm.capability.monthly['m' + mm] = mel ? mel.value.trim() : '';
+    }
+    return mkForm;
+  }
   var form = Store.emptyForm();
   Store.STEPS.forEach(function(step) {
     Store.FIELD_DEFS[step.key].forEach(function(def) {
@@ -1406,6 +1443,22 @@ function collectForm() {
 }
 
 function fillForm(data) {
+  // 马卡乐合伙人：回填专属字段集（缺失键按空处理）
+  if (app && Store.isMakaleMode(app.mode)) {
+    Store.MAKALE_STEPS.forEach(function(step) {
+      Store.MAKALE_FIELD_DEFS[step.key].forEach(function(def) {
+        var el = document.getElementById(fieldId(step.key, def.key));
+        if (el) el.value = ((data && data[step.key]) || {})[def.key] || '';
+      });
+    });
+    var mkMonthly = (data && data.capability && data.capability.monthly) || {};
+    for (var mm = 1; mm <= 12; mm++) {
+      var mel = document.getElementById('f_capability_m' + mm);
+      if (mel && mkMonthly['m' + mm] !== undefined) mel.value = mkMonthly['m' + mm];
+    }
+    refreshPlanHint();
+    return;
+  }
   Store.STEPS.forEach(function(step) {
     Store.FIELD_DEFS[step.key].forEach(function(def) {
       if (def.type === 'radio') {
@@ -1429,7 +1482,7 @@ function fillForm(data) {
 
 // ================= 校验与错误展示 =================
 function showError(stepKey, key, message) {
-  var selector = key === 'monthly' ? '[data-field="plan.monthly"]' : '[data-field="' + stepKey + '.' + key + '"]';
+  var selector = key === 'monthly' ? '[data-field="' + stepKey + '.monthly"]' : '[data-field="' + stepKey + '.' + key + '"]';
   var wrap = document.querySelector(selector);
   if (!wrap) return;
   var control = wrap.querySelector('.form-control');
@@ -1440,7 +1493,7 @@ function showError(stepKey, key, message) {
 }
 
 function clearError(stepKey, key) {
-  var selector = key === 'monthly' ? '[data-field="plan.monthly"]' : '[data-field="' + stepKey + '.' + key + '"]';
+  var selector = key === 'monthly' ? '[data-field="' + stepKey + '.monthly"]' : '[data-field="' + stepKey + '.' + key + '"]';
   var wrap = document.querySelector(selector);
   if (!wrap || wrap.getAttribute('data-has-error') !== '1') return;
   var control = wrap.querySelector('.form-control');
@@ -1467,15 +1520,26 @@ function applyStepErrors(stepKey, errors) {
 
 function refreshPlanHint() {
   var form = collectForm();
+  var isMk = app && Store.isMakaleMode(app.mode);
+  var monthly = isMk ? ((form.capability && form.capability.monthly) || {}) : form.plan.monthly;
+  var annual = isMk ? (form.capability && form.capability.annualTarget) : form.plan.annualTarget;
   var sum = 0, filled = 0;
   for (var m = 1; m <= 12; m++) {
-    var v = parseFloat(form.plan.monthly['m' + m]);
+    var v = parseFloat(monthly['m' + m]);
     if (!isNaN(v)) { sum += v; filled++; }
   }
   var sumText = document.getElementById('monthSumText');
   sumText.textContent = filled ? '已填 ' + filled + '/12 个月，合计 ' + sum + ' 万元' : '';
   var warn = document.getElementById('monthWarn');
-  var msg = Store.planWarning(form);
+  var msg = '';
+  if (isMk) {
+    // 与 Store.planWarning 保持同口径的非阻塞提示（马卡乐目标在 capability 下）
+    if (filled === 12 && annual !== '' && isFinite(Number(annual)) && Math.abs(sum - Number(annual)) > 0.001) {
+      msg = '月度分解目标合计（' + sum + ' 万元）与年度目标（' + annual + ' 万元）不一致，请确认';
+    }
+  } else {
+    msg = Store.planWarning(form);
+  }
   warn.textContent = msg;
   warn.classList.toggle('show', !!msg);
 }
@@ -1590,7 +1654,6 @@ function renderHead() {
   document.getElementById('headBrand').textContent = app.brand || '-';
   document.getElementById('headStatus').innerHTML = statusTag(app.status);
   document.getElementById('headPlatform').textContent = (app.platforms && app.platforms.length) ? app.platforms.join('、') : '-';
-  document.getElementById('headBdContact').textContent = app.bdContact || '-';
   document.getElementById('headOwner').textContent = app.ownerName || app.ownerPhone || '-';
   document.getElementById('headCreatedAt').textContent = app.createdAt || '-';
   document.getElementById('headUpdatedAt').textContent = app.updatedAt || '-';
@@ -1615,7 +1678,6 @@ function renderHead() {
   }
 
   document.getElementById('btnEditMode').hidden = forceViewOnly || app.status === 'reviewed';
-  document.getElementById('btnEditBdContact').hidden = forceViewOnly || app.status === 'reviewed';
   document.getElementById('saveBtn').textContent = app.status === 'submitted' ? '保存修改' : '保存草稿';
 }
 
@@ -1629,7 +1691,7 @@ function renderAll() {
 // ================= Esc 关闭弹窗（无障碍） =================
 document.addEventListener('keydown', function(e) {
   if (e.key !== 'Escape') return;
-  ['modeModal', 'reviewModal', 'bdContactModal'].forEach(function(id) {
+  ['modeModal', 'reviewModal'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el && !el.hidden) el.hidden = true;
   });
@@ -1637,12 +1699,7 @@ document.addEventListener('keydown', function(e) {
 
 // ================= 初始化 =================
 (function init() {
-  var brandSelect = document.getElementById('brandSelect');
-  Store.BRANDS.forEach(function(b) {
-    var opt = document.createElement('option');
-    opt.value = b; opt.textContent = b;
-    brandSelect.appendChild(opt);
-  });
+  renderBrandOptions('', null);
   // 支持 ?id= 直达填写视图（兼容旧链接）
   var params = new URLSearchParams(window.location.search);
   var id = params.get('id');

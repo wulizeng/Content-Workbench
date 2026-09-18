@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>客户注册账号 - 用户档案信息记录表</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    /* 桌面端表格；移动端卡片流 */
+    .card-list, .load-more-bar { display: none; }
+    @media (max-width: 1023px) {
+      .search-area { display: none; }
+      .table-area .table-scroll, .table-area .pagination { display: none; }
+      .card-list { display: block; }
+      .profile-card {
+        background: #fff; border: 1px solid var(--border); border-radius: 12px;
+        padding: 14px 16px; margin-bottom: 12px;
+      }
+      .profile-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+      .profile-card-head .name { font-size: 15px; font-weight: 700; color: var(--text); word-break: break-all; }
+      .profile-card-head .talent-id { font-size: 12px; color: #94a3b8; }
+      .profile-card-body { font-size: 13px; color: var(--text-secondary); line-height: 1.9; }
+      .profile-card-foot {
+        display: flex; justify-content: flex-end; align-items: center;
+        margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-light);
+        font-size: 12px; color: #94a3b8;
+      }
+      .load-more-bar { display: block; text-align: center; margin: 8px 0 16px; }
+      .load-more-bar .btn { width: 100%; height: 48px; }
+    }
+  </style>
+</head>
+<body>
+<div class="page-container">
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="../../js/auth.js"></script>
+  <script>
+    if (!Auth.requireAuth()) { /* requireAuth 已跳转登录页 */ }
+    var currentUser = Auth.getCurrentUser();
+    if (window.parent) {
+      window.parent.postMessage({ type: 'breadcrumb', text: '分销枢纽 <span>/</span> 客户注册账号' }, '*');
+    }
+  </script>
+
+  <div class="page-title">客户注册账号</div>
+  <div class="page-sub" style="font-size:12.5px;color:var(--text-tertiary);margin:-6px 0 14px;">
+    查看已注册的客户账号档案；对接商务、姓名等基础信息在客户注册环节录入，如需变更请联系管理员。
+  </div>
+
+  <div class="search-area">
+    <div class="search-row">
+      <div class="search-item">
+        <label>姓名：</label>
+        <input type="text" id="sName" placeholder="请输入姓名关键词">
+      </div>
+      <div class="search-item">
+        <label>手机号：</label>
+        <input type="text" id="sPhone" placeholder="请输入手机号关键词">
+      </div>
+      <div class="search-item">
+        <label>对接商务：</label>
+        <input type="text" id="sBd" placeholder="请输入对接商务关键词">
+      </div>
+    </div>
+    <div class="search-actions">
+      <button class="btn btn-primary" onclick="doSearch()">查询</button>
+      <button class="btn" onclick="resetSearch()">重置</button>
+    </div>
+  </div>
+
+  <div class="card-list" id="cardList"></div>
+  <div class="load-more-bar" id="loadMoreBar" style="display:none;">
+    <button type="button" class="btn" onclick="loadMore()">加载更多</button>
+  </div>
+
+  <div class="table-area">
+    <div class="table-scroll">
+      <table class="data-table" id="dataTable">
+        <thead>
+          <tr>
+            <th>序号</th>
+            <th>用户编号</th>
+            <th>姓名</th>
+            <th>手机号</th>
+            <th>对接商务</th>
+            <th>创建时间</th>
+            <th>更新时间</th>
+            <th>最近登录时间</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <span class="page-info">共 <strong id="totalCount">0</strong> 条</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+var TALENTS_KEY = 'recruit_talents';
+var MOBILE_PAGE_SIZE = 10;
+var mobileShownCount = MOBILE_PAGE_SIZE;
+var currentFiltered = [];
+
+function esc(s) { if (s === null || s === undefined) return ''; var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
+
+// ===== 数据加载 =====
+// talent 只看自己；operator / bd / admin 看全部
+function loadTalents() {
+  var map = {};
+  try { map = JSON.parse(localStorage.getItem(TALENTS_KEY) || '{}'); } catch (e) { map = {}; }
+  var list = Object.keys(map).map(function(k) {
+    var t = map[k] || {};
+    // 兼容历史数据：无 updated_at 时回退到 created_at；无 last_login_at 时显示为 '-'
+    if (!t.updated_at) t.updated_at = t.created_at || '';
+    if (!t.last_login_at) t.last_login_at = '';
+    return t;
+  });
+  if (currentUser && currentUser.role === 'talent') {
+    list = list.filter(function(t) { return t.phone === currentUser.phone; });
+  }
+  // 按创建时间倒序（无 created_at 视为最旧）
+  list.sort(function(a, b) { return (b.created_at || '').localeCompare(a.created_at || ''); });
+  return list;
+}
+var allData = loadTalents();
+
+// ===== 桌面表格 =====
+function renderTable(data) {
+  var tbody = document.getElementById('tableBody');
+  var html = '';
+  if (data.length === 0) {
+    html = '<tr><td colspan="8" class="empty-state"><span class="empty-icon">&#128100;</span><div class="empty-text">暂无数据</div><div class="empty-hint">' + (currentUser && currentUser.role === 'talent' ? '暂无我的账号档案' : '暂无客户注册记录') + '</div></td></tr>';
+  } else {
+    data.forEach(function(row, index) {
+      html += '<tr>';
+      html += '<td class="col-index">' + (index + 1) + '</td>';
+      html += '<td>' + esc(row.talent_id || '-') + '</td>';
+      html += '<td>' + esc(row.name || '-') + '</td>';
+      html += '<td>' + esc(row.phone || '-') + '</td>';
+      html += '<td>' + esc(row.bdContact || '-') + '</td>';
+      html += '<td>' + esc(row.created_at || '-') + '</td>';
+      html += '<td>' + esc(row.updated_at || '-') + '</td>';
+      html += '<td>' + esc(row.last_login_at || '-') + '</td>';
+      html += '</tr>';
+    });
+  }
+  tbody.innerHTML = html;
+  document.getElementById('totalCount').textContent = data.length;
+}
+
+// ===== 移动端卡片 =====
+function isMobileView() { return window.matchMedia('(max-width: 1023px)').matches; }
+function renderCards(data) {
+  var list = document.getElementById('cardList');
+  var slice = data.slice(0, mobileShownCount);
+  var html = '';
+  if (slice.length === 0) {
+    html = '<div class="profile-card"><div class="profile-card-body">' + (currentUser && currentUser.role === 'talent' ? '暂无我的账号档案' : '暂无客户注册记录') + '</div></div>';
+  } else {
+    slice.forEach(function(row) {
+      html += '<div class="profile-card">';
+      html += '<div class="profile-card-head"><span class="name">' + esc(row.name || '-') + '</span><span class="talent-id">' + esc(row.talent_id || '') + '</span></div>';
+      html += '<div class="profile-card-body">';
+      html += '<div>手机号：' + esc(row.phone || '-') + '</div>';
+      html += '<div>对接商务：' + esc(row.bdContact || '-') + '</div>';
+      html += '<div>创建时间：' + esc(row.created_at || '-') + '</div>';
+      html += '<div>更新时间：' + esc(row.updated_at || '-') + '</div>';
+      html += '<div>最近登录：' + esc(row.last_login_at || '-') + '</div>';
+      html += '</div>';
+      html += '<div class="profile-card-foot">账号编号 ' + esc(row.talent_id || '-') + '</div>';
+      html += '</div>';
+    });
+  }
+  list.innerHTML = html;
+  var bar = document.getElementById('loadMoreBar');
+  bar.style.display = data.length > mobileShownCount ? '' : 'none';
+}
+
+function renderView(data) {
+  currentFiltered = data;
+  if (isMobileView()) renderCards(data);
+  else renderTable(data);
+}
+function loadMore() { mobileShownCount += MOBILE_PAGE_SIZE; renderCards(currentFiltered); }
+
+// ===== 筛选 =====
+function applyFilter(list, q) {
+  return list.filter(function(x) {
+    if (q.name && String(x.name || '').toLowerCase().indexOf(q.name.toLowerCase()) < 0) return false;
+    if (q.phone && String(x.phone || '').indexOf(q.phone) < 0) return false;
+    if (q.bd && String(x.bdContact || '').toLowerCase().indexOf(q.bd.toLowerCase()) < 0) return false;
+    return true;
+  });
+}
+function doSearch() {
+  var q = {
+    name: document.getElementById('sName').value.trim(),
+    phone: document.getElementById('sPhone').value.trim(),
+    bd: document.getElementById('sBd').value.trim()
+  };
+  mobileShownCount = MOBILE_PAGE_SIZE;
+  renderView(applyFilter(allData, q));
+}
+function resetSearch() {
+  document.getElementById('sName').value = '';
+  document.getElementById('sPhone').value = '';
+  document.getElementById('sBd').value = '';
+  mobileShownCount = MOBILE_PAGE_SIZE;
+  renderView(allData);
+}
+
+window.addEventListener('resize', function() { renderView(currentFiltered); });
+
+// Toast
+function showToast(message, type) {
+  type = type || 'info';
+  var container = document.getElementById('toastContainer');
+  if (!container) return;
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(function() {
+    if (toast.parentNode) {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s';
+      setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+    }
+  }, 2500);
+}
+
+renderView(allData);
+</script>
+</body>
+</html>

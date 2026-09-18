@@ -5,10 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>开票信息录入 - 列表</title>
   <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet" href="../../css/components.css">
+  <link rel="stylesheet" href="../../css/domains/recruit.css">
   <style>
-    /* 桌面端：操作列图标+文字链接 */
-    .link-action-icon { display: inline-flex; align-items: center; gap: 4px; }
-    .link-action-icon svg { flex-shrink: 0; }
     /* 主表字段较多：单元格统一不换行，横向滚动查看 */
     #dataTable th, #dataTable td { white-space: nowrap; }
     /* 操作列固定在右侧 */
@@ -19,12 +18,6 @@
       box-shadow: inset 1px 0 0 var(--border-light);
     }
     #dataTable tbody tr:hover td.col-actions { background: var(--primary-50); }
-    /* 纳税人类别灰色标签 */
-    .type-tag {
-      display: inline-flex; align-items: center; padding: 1px 9px; border-radius: 10px;
-      background: #f1f5f9; color: var(--text-secondary); font-size: 12px; font-weight: 600;
-      line-height: 1.6; white-space: nowrap;
-    }
     /* 移动端（<1024px）：卡片流替代宽表格 */
     .card-list { display: none; }
     @media (max-width: 1023px) {
@@ -66,6 +59,9 @@
       window.parent.postMessage({type:'breadcrumb', text:'分销枢纽 <span>/</span> 客户视角 <span>/</span> 开票信息录入'}, '*');
     }
   </script>
+  <script src="../../js/shared/escape-html.js"></script>
+  <script src="../../js/shared/storage.js"></script>
+  <script src="../../js/shared/toast.js"></script>
 
   <div class="page-title" style="display:flex;align-items:center;gap:12px;">
     <span>开票信息录入列表</span>
@@ -147,16 +143,9 @@
 <script>
 var STORAGE_KEY = 'recruit_supplier_applications';
 
-var mockData = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+var mockData = AppStorage.load(STORAGE_KEY, []);
 
 // 无值字段统一显示为空
-function esc(s) {
-  if (s === null || s === undefined || s === '') return '';
-  var d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
-}
-
 function renderTable(data) {
   var tbody = document.getElementById('tableBody');
   var html = '';
@@ -280,29 +269,11 @@ function clearSearchTag(id) {
   doSearch();
 }
 
-// Toast 轻提示
-function showToast(message, type) {
-  type = type || 'info';
-  var container = document.getElementById('toastContainer');
-  if (!container) return;
-  var toast = document.createElement('div');
-  toast.className = 'toast toast-' + type;
-  toast.textContent = message;
-  container.appendChild(toast);
-  setTimeout(function() {
-    if (toast.parentNode) {
-      toast.style.opacity = '0';
-      toast.style.transition = 'opacity 0.3s';
-      setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
-    }
-  }, 2500);
-}
-
 window.addEventListener('resize', function() { renderView(currentFiltered); });
 
 // 从编辑页返回时自动刷新数据
 window.addEventListener('pageshow', function() {
-  mockData = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  mockData = AppStorage.load(STORAGE_KEY, []);
   renderView(mockData);
 });
 

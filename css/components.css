@@ -1,0 +1,5 @@
+/* 可跨业务域复用的低层组件样式。业务域样式请放在 css/domains/ 下。 */
+.link-action-icon { display: inline-flex; align-items: center; gap: 4px; }
+.link-action-icon svg { flex-shrink: 0; }
+.type-tag { display: inline-flex; align-items: center; padding: 1px 9px; border-radius: 10px; background: #f1f5f9; color: var(--text-secondary); font-size: 12px; font-weight: 600; line-height: 1.6; white-space: nowrap; }
+.app-empty-state { padding: 32px 16px; color: var(--text-tertiary); text-align: center; }

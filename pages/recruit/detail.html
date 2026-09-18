@@ -39,6 +39,66 @@
     .empty-box { padding: 60px 0; text-align: center; color: var(--text-tertiary, #94a3b8); font-size: 13px; }
     .empty-box .empty-text { font-size: 15px; font-weight: 600; color: var(--text-secondary, #475569); margin-bottom: 6px; }
 
+    /* 13 阶段流程指示器（与客户入驻申请页保持同一视觉） */
+    .stage-wrap {
+      background: #fff; border: 1px solid var(--border); border-radius: 12px;
+      padding: 18px 14px 14px; margin-bottom: 16px;
+    }
+    .stage-strip { display: flex; align-items: flex-start; list-style: none; margin: 0; padding: 0 4px; }
+    .stage-item { display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 0; position: relative; }
+    .stage-item:not(:last-child)::after {
+      content: ''; position: absolute; top: 13px; left: calc(50% + 15px);
+      width: calc(100% - 30px); height: 2px; background: var(--border-light, #e2e8f0);
+    }
+    .stage-item.done:not(:last-child)::after { background: var(--success, #16a34a); }
+    .stage-dot {
+      width: 27px; height: 27px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; background: #f1f5f9; color: var(--text-tertiary, #94a3b8);
+      border: 2px solid var(--border-light, #e2e8f0); position: relative; z-index: 1;
+    }
+    .stage-item.done .stage-dot { background: var(--success, #16a34a); border-color: var(--success, #16a34a); color: #fff; }
+    .stage-item.current .stage-dot {
+      background: var(--primary, #5b6cf5); border-color: var(--primary, #5b6cf5); color: #fff;
+      box-shadow: 0 0 0 5px rgba(91,108,245,.16);
+    }
+    .stage-name { margin-top: 7px; font-size: 11px; color: var(--text-tertiary, #94a3b8); text-align: center; line-height: 1.35; }
+    .stage-item.done .stage-name { color: var(--success, #16a34a); }
+    .stage-item.current .stage-name { color: var(--primary, #5b6cf5); font-weight: 700; }
+    .stage-legend { display: flex; gap: 18px; margin-top: 12px; font-size: 12px; color: var(--text-tertiary, #94a3b8); flex-wrap: wrap; }
+    .stage-legend span { display: inline-flex; align-items: center; gap: 5px; }
+    .lg-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .lg-dot.done { background: var(--success, #16a34a); } .lg-dot.cur { background: var(--primary, #5b6cf5); }
+    .lg-dot.todo { background: #e2e8f0; }
+    /* stage-wrap 头部：左标题 + 右手工流转入口 */
+    .stage-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; padding: 0 4px; flex-wrap: wrap; }
+    .stage-head .stage-title { font-size: 14px; font-weight: 700; color: var(--text, #0f172a); }
+    .stage-head .stage-hint { font-size: 12px; color: var(--text-tertiary, #94a3b8); margin-left: 8px; font-weight: normal; }
+    .stage-head .btn { height: 32px; padding: 0 14px; font-size: 13px; }
+    /* 手工流转弹窗 */
+    .stg-overlay { position: fixed; inset: 0; z-index: 210; background: rgba(15,23,42,.5); display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .stg-overlay[hidden] { display: none; }
+    .stg-modal { width: 520px; max-width: 100%; background: #fff; border-radius: 16px; padding: 20px 22px; box-shadow: 0 20px 60px rgba(15,23,42,.2); }
+    .stg-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .stg-head h3 { margin: 0; font-size: 17px; font-weight: 700; color: var(--text); }
+    .stg-close { width: 30px; height: 30px; border: none; border-radius: 8px; background: #f4f6fb; font-size: 18px; color: #94a3b8; cursor: pointer; line-height: 1; }
+    .stg-sub { font-size: 12px; color: var(--text-tertiary); margin-bottom: 14px; }
+    .stg-info { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; font-size: 13px; }
+    .stg-info .lbl { color: var(--text-secondary); min-width: 96px; }
+    .stg-info .val { color: var(--text); font-weight: 600; word-break: break-all; }
+    .stg-arrow { color: var(--primary); font-weight: 700; margin: 0 6px; }
+    .stg-tip { background: #fff7ed; color: #9a3412; padding: 8px 12px; border-radius: 8px; font-size: 12px; margin: 12px 0; line-height: 1.6; }
+    .stg-form label { display: block; margin-bottom: 6px; font-size: 13px; color: var(--text-secondary); }
+    .stg-form .req { color: #ef4444; }
+    .stg-form textarea { width: 100%; min-height: 80px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 13px; box-sizing: border-box; resize: vertical; }
+    .stg-form textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(91,108,245,.15); }
+    .stg-err { color: #ef4444; font-size: 12px; margin-top: 4px; min-height: 16px; }
+    .stg-foot { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; }
+    @media (max-width: 900px) {
+      .stage-name { font-size: 10px; }
+      .stage-dot { width: 22px; height: 22px; font-size: 11px; }
+      .stage-item:not(:last-child)::after { top: 11px; left: calc(50% + 12px); width: calc(100% - 24px); }
+    }
+
     /* 审核弹窗 */
     .review-overlay { display: flex; position: fixed; inset: 0; z-index: 100; background: rgba(15,23,42,.45); align-items: center; justify-content: center; }
     .review-modal { width: min(480px, calc(100vw - 32px)); background: #fff; border-radius: 14px; padding: 20px 22px; box-shadow: 0 20px 50px rgba(15,23,42,.25); }
@@ -78,21 +138,34 @@
   </div>
 
   <div id="detailBody" style="display:none;">
+    <section class="stage-wrap" aria-label="入驻流程进度（共 13 个阶段）">
+      <div class="stage-head">
+        <div><span class="stage-title">入驻流程进度</span><span class="stage-hint" id="stageHeadHint"></span></div>
+        <button type="button" class="btn btn-primary" id="btnAdvanceStage" onclick="openStageModal()" style="display:none;">更新节点</button>
+      </div>
+      <ol class="stage-strip" id="dStageStrip"></ol>
+      <div class="stage-legend" aria-hidden="true">
+        <span><span class="lg-dot done"></span>已完成</span>
+        <span><span class="lg-dot cur"></span>当前阶段</span>
+        <span><span class="lg-dot todo"></span>未开始</span>
+      </div>
+    </section>
     <div class="detail-card">
       <h3 class="detail-card-title">基本信息</h3>
       <div class="detail-grid" id="dBasicGrid"></div>
     </div>
     <div id="dFormCards"></div>
     <div class="detail-card">
-      <h3 class="detail-card-title">版本历史</h3>
+      <h3 class="detail-card-title">操作日志</h3>
       <div style="overflow-x:auto;">
         <table class="version-table">
           <thead>
-            <tr><th style="width:60px;">版本</th><th style="width:160px;">时间</th><th style="width:110px;">操作人</th><th>动作</th><th>变更字段</th></tr>
+            <tr><th style="width:160px;">时间</th><th style="width:120px;">操作人</th><th style="width:220px;">动作</th><th>变更内容</th></tr>
           </thead>
-          <tbody id="dVersionBody"></tbody>
+          <tbody id="dOpLogBody"></tbody>
         </table>
       </div>
+      <div class="pagination" id="dOpLogPagination"></div>
     </div>
   </div>
 
@@ -108,6 +181,29 @@
     <div class="foot">
       <button type="button" class="btn" onclick="closeReviewModal()">取消</button>
       <button type="button" class="btn btn-primary" onclick="confirmReview()">确认审核</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 手工流转入驻节点弹窗 ===== -->
+<div class="stg-overlay" id="stageModal" hidden onclick="if(event.target===this) closeStageModal()">
+  <div class="stg-modal" role="dialog" aria-modal="true" aria-labelledby="stageModalTitle">
+    <div class="stg-head">
+      <h3 id="stageModalTitle">手工流转入驻节点</h3>
+      <button type="button" class="stg-close" onclick="closeStageModal()" aria-label="关闭">&times;</button>
+    </div>
+    <div class="stg-sub">适用于 BPM/保证金/授权书/培训等线下或独立事项，无法自动联动时人工推进。</div>
+    <div class="stg-info"><span class="lbl">客户名称：</span><span class="val" id="stgAppName">-</span></div>
+    <div class="stg-info"><span class="lbl">节点变化：</span><span class="val"><span id="stgFromName">-</span><span class="stg-arrow">→</span><span id="stgToName">-</span></span></div>
+    <div class="stg-tip">仅向下一个节点流转（+1），将写入操作日志作为审计记录；客户端（达人）可见节点变化，不可见备注内容。</div>
+    <div class="stg-form">
+      <label>流转备注 <span class="req">*</span></label>
+      <textarea id="stgReason" maxlength="200" placeholder="例如：保证金 10,000 元已到账，财务张三 09-15 确认"></textarea>
+      <div class="stg-err" id="stgReasonError"></div>
+    </div>
+    <div class="stg-foot">
+      <button type="button" class="btn" onclick="closeStageModal()">取消</button>
+      <button type="button" class="btn btn-primary" onclick="confirmStageAdvance()">确认流转</button>
     </div>
   </div>
 </div>
@@ -149,7 +245,7 @@ function operatorName() {
 function openReviewModal() {
   if (!app) return;
   var fin = (app.form && app.form.finance) || {};
-  document.getElementById('reviewAppInfo').textContent = '申请编号：' + app.id + '　客户名称：' + (fin.fullName || '-');
+  document.getElementById('reviewAppInfo').textContent = '申请编号：' + app.id + '　客户名称：' + (displayName(app) || '-');
   document.getElementById('reviewRemark').value = '';
   document.getElementById('reviewModal').style.display = '';
   document.getElementById('reviewRemark').focus();
@@ -163,13 +259,18 @@ function confirmReview() {
   var result = Store.review(app.id, remark, operatorName());
   if (!result.ok) { showToast(result.error, 'error'); return; }
   app = result.app;
+  opLogPage = 1;
   closeReviewModal();
   render();
   showToast('审核完成', 'success');
 }
 
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') closeReviewModal();
+  if (e.key === 'Escape') {
+    closeReviewModal();
+    var stgEl = document.getElementById('stageModal');
+    if (stgEl && !stgEl.hidden) closeStageModal();
+  }
 });
 
 // Toast 轻提示
@@ -191,9 +292,68 @@ function showToast(message, type) {
 }
 
 function creatorOf(a) { return a.ownerName || a.ownerPhone || '-'; }
+// 客户名称：普通模式取财务企业全称，马卡乐合伙人取企业信息名称
+function displayName(a) {
+  var fin = ((a.form || {}).finance) || {};
+  var ent = ((a.form || {}).enterprise) || {};
+  return fin.fullName || ent.entName || '';
+}
 function updaterOf(a) {
   var versions = a.versions || [];
   return versions.length ? (versions[versions.length - 1].operator || creatorOf(a)) : creatorOf(a);
+}
+
+// ===== 手工流转入驻节点（仅已审核且未达末节点时开放，与列表页保持同一能力） =====
+var canOperateStage = (function() {
+  var u = Auth.getCurrentUser();
+  return !!u && ['operator', 'bd', 'admin'].indexOf(u.role) > -1;
+})();
+function updateAdvanceEntry() {
+  var btn = document.getElementById('btnAdvanceStage');
+  var hint = document.getElementById('stageHeadHint');
+  var stages = Store.stagesForApp(app);
+  var total = stages.length;
+  var no = Store.currentStageOf(app);
+  if (hint) {
+    hint.textContent = '当前：第 ' + no + '/' + total + ' · ' + ((stages[no - 1] || {}).name || '-');
+  }
+  var show = canOperateStage && app && app.status === Store.STATUS.REVIEWED && no < total;
+  if (btn) btn.style.display = show ? '' : 'none';
+}
+function openStageModal() {
+  if (!app) return;
+  var stages = Store.stagesForApp(app);
+  var total = stages.length;
+  var no = Store.currentStageOf(app);
+  if (app.status !== Store.STATUS.REVIEWED) { showToast('仅已审核的申请可手工流转节点', 'error'); return; }
+  if (no >= total) { showToast('当前已是最后一个节点，无需手工流转', 'info'); return; }
+  var fin = (app.form && app.form.finance) || {};
+  document.getElementById('stgAppName').textContent = displayName(app) || app.id;
+  document.getElementById('stgFromName').textContent = '第 ' + no + '/' + total + ' · ' + stages[no - 1].name;
+  document.getElementById('stgToName').textContent = '第 ' + (no + 1) + '/' + total + ' · ' + stages[no].name;
+  document.getElementById('stgReason').value = '';
+  document.getElementById('stgReasonError').textContent = '';
+  document.getElementById('stageModal').hidden = false;
+  setTimeout(function() { var el = document.getElementById('stgReason'); if (el) el.focus(); }, 30);
+}
+function closeStageModal() {
+  document.getElementById('stageModal').hidden = true;
+}
+function confirmStageAdvance() {
+  if (!app) { closeStageModal(); return; }
+  var reason = String(document.getElementById('stgReason').value || '').trim();
+  var errEl = document.getElementById('stgReasonError');
+  errEl.textContent = '';
+  if (!reason) { errEl.textContent = '请填写流转备注，作为审计依据'; return; }
+  var res = Store.advanceStage(app.id, { reason: reason, operator: operatorName() });
+  if (!res.ok) { errEl.textContent = res.error || '流转失败'; return; }
+  app = res.app;
+  opLogPage = 1;
+  closeStageModal();
+  var stagesAfter = Store.stagesForApp(app);
+  var newNo = app.stageNo || Store.currentStageOf(app);
+  showToast('已推进至「' + ((stagesAfter[newNo - 1] || {}).name || '-') + '」', 'success');
+  render();
 }
 
 function render() {
@@ -205,9 +365,13 @@ function render() {
   document.getElementById('btnReview').style.display = (canReview() && app.status === 'submitted') ? '' : 'none';
 
   var fin = (app.form && app.form.finance) || {};
+  var appStages = Store.stagesForApp(app);
+  var curStage = Store.currentStageOf(app);
+  var curStageName = (appStages[curStage - 1] || {}).name || '-';
   var basic = [
     ['申请编号', app.id],
-    ['客户名称', fin.fullName || '-'],
+    ['客户名称', displayName(app) || '-'],
+    ['当前节点', '第 ' + curStage + '/' + appStages.length + ' · ' + curStageName],
     ['入驻类型', Store.typeOfMode(app.mode)],
     ['入驻模式', (Store.modeByValue(app.mode) || {}).label || app.mode || '-'],
     ['品牌', app.brand || '-'],
@@ -226,14 +390,29 @@ function render() {
   }).join('');
 
   renderFormCards();
-  renderVersions();
+  renderStages();
+  renderOpLog();
+  updateAdvanceEntry();
   document.getElementById('detailBody').style.display = '';
 }
 
-// 四步表单只读展示（按 Store.STEPS / FIELD_DEFS 渲染）
+// 表单只读展示：普通模式按 Store.STEPS / FIELD_DEFS；马卡乐合伙人按专属「企业信息/业务能力」字段集
 function renderFormCards() {
   var container = document.getElementById('dFormCards');
   var html = '';
+  if (Store.isMakaleMode(app.mode)) {
+    Store.MAKALE_STEPS.forEach(function(step) {
+      var sec = (app.form[step.key] || {});
+      html += '<div class="detail-card"><h3 class="detail-card-title locked">' + esc(step.label) + '</h3><div class="detail-grid">';
+      Store.MAKALE_FIELD_DEFS[step.key].forEach(function(def) {
+        html += '<div class="detail-item"><div class="k">' + esc(def.label) + (def.unit ? '（' + def.unit + '）' : '') + '</div><div class="v">' + esc(sec[def.key] || '-') + '</div></div>';
+      });
+      if (step.key === 'capability') html += renderMonthly(sec.monthly);
+      html += '</div></div>';
+    });
+    container.innerHTML = html;
+    return;
+  }
   Store.STEPS.forEach(function(step) {
     html += '<div class="detail-card"><h3 class="detail-card-title locked">' + esc(step.label) + '</h3><div class="detail-grid">';
     Store.FIELD_DEFS[step.key].forEach(function(def) {
@@ -245,15 +424,15 @@ function renderFormCards() {
       }
       html += '<div class="detail-item"><div class="k">' + esc(def.label) + (def.unit ? '（' + def.unit + '）' : '') + '</div><div class="v">' + esc(value || '-') + '</div></div>';
     });
-    if (step.key === 'plan') html += renderMonthly();
+    if (step.key === 'plan') html += renderMonthly(app.form.plan.monthly);
     html += '</div></div>';
   });
   container.innerHTML = html;
 }
 
 // 月度分解目标（1-12 月）表格
-function renderMonthly() {
-  var monthly = (app.form.plan && app.form.plan.monthly) || {};
+function renderMonthly(monthlySource) {
+  var monthly = monthlySource || {};
   var cells = '';
   var sum = 0;
   Store.MONTH_KEYS.forEach(function(mk) {
@@ -268,16 +447,74 @@ function renderMonthly() {
     '<tbody><tr>' + cells + '<td style="background:#fffbeb;font-weight:600;">' + sum.toLocaleString('zh-CN') + '</td></tr></tbody></table></div></div>';
 }
 
-function renderVersions() {
-  var versions = app.versions || [];
-  var body = document.getElementById('dVersionBody');
-  if (!versions.length) {
-    body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;">暂无版本记录</td></tr>';
+function renderStages() {
+  var strip = document.getElementById('dStageStrip');
+  var stages = Store.stagesForApp(app);
+  var current = Store.currentStageOf(app);
+  var html = '';
+  stages.forEach(function(stage) {
+    var cls = 'todo';
+    if (stage.no < current) cls = 'done';
+    else if (stage.no === current) cls = 'current';
+    html += '<li class="stage-item ' + cls + '">' +
+      '<span class="stage-dot">' + (cls === 'done' ? '✓' : stage.no) + '</span>' +
+      '<span class="stage-name">' + esc(stage.name) + '</span></li>';
+  });
+  strip.innerHTML = html;
+}
+
+// 操作日志：汇总展示创建/编辑/提交/审核/手工流转等一切历史写入记录（时间倒序 + 分页）
+var OP_LOG_PAGE_SIZE = 10;
+var opLogPage = 1;
+function renderOpLog() {
+  var body = document.getElementById('dOpLogBody');
+  var pager = document.getElementById('dOpLogPagination');
+  var all = (app.versions || []).slice();
+  // 时间倒序；同时间点按 v 倒序，保证手工流转后新记录位于首页顶部
+  all.sort(function(a, b) {
+    var ta = String(a.time || ''), tb = String(b.time || '');
+    if (ta !== tb) return tb.localeCompare(ta);
+    return (b.v || 0) - (a.v || 0);
+  });
+  var total = all.length;
+  if (!total) {
+    body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#94a3b8;">暂无操作记录</td></tr>';
+    pager.innerHTML = '';
     return;
   }
-  body.innerHTML = versions.map(function(v) {
-    return '<tr><td>v' + v.v + '</td><td>' + esc(v.time) + '</td><td>' + esc(v.operator) + '</td><td>' + esc(v.action) + '</td><td>' + esc((v.changes || []).join('；') || '-') + '</td></tr>';
+  var totalPages = Math.max(1, Math.ceil(total / OP_LOG_PAGE_SIZE));
+  if (opLogPage > totalPages) opLogPage = totalPages;
+  if (opLogPage < 1) opLogPage = 1;
+  var start = (opLogPage - 1) * OP_LOG_PAGE_SIZE;
+  var paged = all.slice(start, start + OP_LOG_PAGE_SIZE);
+  body.innerHTML = paged.map(function(v) {
+    return '<tr><td>' + esc(v.time) + '</td><td>' + esc(v.operator || '-') + '</td><td>' + esc(v.action || '-') + '</td><td>' + esc((v.changes || []).join('；') || '-') + '</td></tr>';
   }).join('');
+  renderOpLogPager(total, totalPages);
+}
+function renderOpLogPager(total, totalPages) {
+  var pager = document.getElementById('dOpLogPagination');
+  if (totalPages <= 1) {
+    pager.innerHTML = '<span class="page-info">共 <strong>' + total + '</strong> 条</span>';
+    return;
+  }
+  var html = '<span class="page-info">共 <strong>' + total + '</strong> 条</span>';
+  html += '<span class="page-btn' + (opLogPage <= 1 ? ' disabled' : '') + '" onclick="goOpLogPage(' + (opLogPage - 1) + ')">&laquo;</span>';
+  var startP = Math.max(1, opLogPage - 2);
+  var endP = Math.min(totalPages, startP + 4);
+  if (endP - startP < 4) startP = Math.max(1, endP - 4);
+  for (var p = startP; p <= endP; p++) {
+    html += '<span class="page-btn' + (p === opLogPage ? ' active' : '') + '" onclick="goOpLogPage(' + p + ')">' + p + '</span>';
+  }
+  html += '<span class="page-btn' + (opLogPage >= totalPages ? ' disabled' : '') + '" onclick="goOpLogPage(' + (opLogPage + 1) + ')">&raquo;</span>';
+  pager.innerHTML = html;
+}
+function goOpLogPage(page) {
+  var total = (app && app.versions || []).length;
+  var totalPages = Math.max(1, Math.ceil(total / OP_LOG_PAGE_SIZE));
+  if (page < 1 || page > totalPages || page === opLogPage) return;
+  opLogPage = page;
+  renderOpLog();
 }
 
 render();

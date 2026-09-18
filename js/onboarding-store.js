@@ -24,36 +24,100 @@
 
   // ========== 业务字典 ==========
 
-  // 入驻模式：仅 DP 需要选择品牌
+  // 入驻模式：所有模式均需选择品牌（单选）与入驻平台（单选）
   var MODES = [
-    { value: 'DP', label: 'DP', desc: '完整准入、规划、合同与保证金流程', needsBrand: true },
-    { value: '客户KOC', label: '客户 KOC', desc: '客户自有 KOC 资源合作', needsBrand: false },
-    { value: '达播达人', label: '达播达人', desc: '达人主体直接进入供应商与合同流程', needsBrand: false },
-    { value: '联营KOC', label: '联营 KOC', desc: '双方联合运营 KOC 项目', needsBrand: false },
-    { value: '达播机构', label: '达播机构', desc: '机构主体补充达人矩阵与履约能力', needsBrand: false },
-    { value: '素人KOC', label: '素人 KOC', desc: '个人内容创作者轻量入驻', needsBrand: false }
+    { value: '账号代运营', label: '账号代运营', desc: '客户保留店铺主体，由我方代运营账号', needsBrand: true },
+    { value: '整店代运营', label: '整店代运营', desc: '整店托管，含商品、供应链与客服', needsBrand: true },
+    { value: '达人', label: '达人', desc: '达人主体直接进入供应商与合同流程', needsBrand: true },
+    { value: '机构', label: '机构', desc: '机构主体补充达人矩阵与履约能力', needsBrand: true },
+    { value: '联营KOC', label: '联营KOC', desc: '双方联合运营 KOC 项目', needsBrand: true },
+    { value: '素人KOC', label: '素人KOC', desc: '个人内容创作者轻量入驻', needsBrand: true },
+    { value: '客户KOC', label: '客户KOC', desc: '客户自有 KOC 资源合作', needsBrand: true },
+    { value: '马卡乐合伙人', label: '马卡乐合伙人', desc: '马卡乐品牌合伙经营合作模式', needsBrand: true }
   ];
 
   var BRANDS = ['巴拉', '迷你', '森马'];
   var PLATFORMS = ['抖音', '视频号', '小红书', '快手'];
 
-  // 13 个入驻流程阶段
+  // 马卡乐合伙人品牌固定为「马卡乐」，其余模式使用通用品牌字典
+  var MAKALE_MODE = '马卡乐合伙人';
+  var MAKALE_BRANDS = ['马卡乐'];
+  function isMakaleMode(mode) { return mode === MAKALE_MODE; }
+  function brandsForMode(mode) { return isMakaleMode(mode) ? MAKALE_BRANDS.slice() : BRANDS.slice(); }
+
+  // 13 个入驻流程阶段（默认模板，适用于账号代运营/整店代运营/机构/马卡乐合伙人）
   var STAGES = [
     { no: 1, name: '客户注册' },
-    { no: 2, name: '选模式/品牌' },
-    { no: 3, name: '填企业信息' },
-    { no: 4, name: '审企业信息' },
-    { no: 5, name: '手机号申请' },
-    { no: 6, name: '项目规划' },
-    { no: 7, name: '审+BPM' },
-    { no: 8, name: '网签合同' },
-    { no: 9, name: '保证金' },
-    { no: 10, name: '授权书' },
-    { no: 11, name: '账号录入' },
-    { no: 12, name: '内部软件' },
-    { no: 13, name: '规则宣导' },
-    { no: 14, name: '入驻完毕' }
+    { no: 2, name: '选择入驻模式' },
+    { no: 3, name: '填写企业信息' },
+    { no: 4, name: '运营审核企业' },
+    { no: 5, name: '项目规划填写' },
+    { no: 6, name: 'BPM供应商创建' },
+    { no: 7, name: '网签合同' },
+    { no: 8, name: '保证金缴纳' },
+    { no: 9, name: '授权书签署' },
+    { no: 10, name: '账号信息录入' },
+    { no: 11, name: '内部软件开通' },
+    { no: 12, name: '规则宣导培训' },
+    { no: 13, name: '入驻完毕' }
   ];
+
+  // 分模式的流程模板：
+  //   default       → 13 阶段（同 STAGES），适用于账号代运营 / 整店代运营 / 机构 / 马卡乐合伙人
+  //   influencer    → 8 阶段，适用于达人
+  //   customer_koc  → 10 阶段，适用于客户KOC（达人基础上多开软件 + 品牌规则两个环节）
+  //   koc_lite      → 6 阶段，适用于素人KOC / 联营KOC
+  var STAGE_TEMPLATES = {
+    default: STAGES,
+    influencer: [
+      { no: 1, name: '客户注册' },
+      { no: 2, name: '选择入驻模式' },
+      { no: 3, name: '供应商信息录入' },
+      { no: 4, name: 'BPM供应商创建' },
+      { no: 5, name: '网签合同' },
+      { no: 6, name: '授权书签署' },
+      { no: 7, name: '账号信息录入' },
+      { no: 8, name: '入驻完毕' }
+    ],
+    customer_koc: [
+      { no: 1, name: '客户注册' },
+      { no: 2, name: '选择入驻模式' },
+      { no: 3, name: '供应商信息录入' },
+      { no: 4, name: 'BPM供应商创建' },
+      { no: 5, name: '网签合同' },
+      { no: 6, name: '授权书签署' },
+      { no: 7, name: '账号信息录入' },
+      { no: 8, name: '软件开通' },
+      { no: 9, name: '签署品牌规则' },
+      { no: 10, name: '入驻完毕' }
+    ],
+    koc_lite: [
+      { no: 1, name: '客户注册' },
+      { no: 2, name: '选择入驻模式' },
+      { no: 3, name: '账号信息录入' },
+      { no: 4, name: '内部软件开通' },
+      { no: 5, name: '签署品牌规则' },
+      { no: 6, name: '入驻完毕' }
+    ]
+  };
+
+  // 入驻模式 → 流程模板 key；历史模式向后兼容
+  var FLOW_GROUPS = {
+    '账号代运营': 'default',
+    '整店代运营': 'default',
+    '机构': 'default',
+    '马卡乐合伙人': 'default',
+    '达人': 'influencer',
+    '客户KOC': 'customer_koc',
+    '素人KOC': 'koc_lite',
+    '联营KOC': 'koc_lite',
+    'DP': 'default',
+    '达播达人': 'influencer',
+    '达播机构': 'default'
+  };
+  function flowKeyOfMode(mode) { return FLOW_GROUPS[mode] || 'default'; }
+  function stagesForMode(mode) { return clone(STAGE_TEMPLATES[flowKeyOfMode(mode)]); }
+  function stagesForApp(app) { return stagesForMode(app && app.mode); }
 
   // 状态流转：待提交 → 已提交 → 已审核（已审核前均可编辑，已审核后只读）
   var STATUS = {
@@ -77,12 +141,16 @@
   };
 
   // 状态 -> 流程阶段映射：当前所处阶段（1 基）
-  // unsubmit=填企业信息(3)；submitted=审企业信息(4)；reviewed=进入手机号申请(5)
+  // 优先取显式 stageNo（手工流转写入）；否则按状态默认（三种模板下 stage 1-2 同名，
+  // stage 3 = 客户信息录入；stage 4 = 中间处理环节；stage 5 = 后续处理环节）
   function currentStageOf(app) {
     if (!app) return 1;
-    if (app.status === STATUS.SUBMITTED) return 4;
-    if (app.status === STATUS.REVIEWED) return 5;
-    return 3;
+    var stages = STAGE_TEMPLATES[flowKeyOfMode(app.mode)];
+    var s = app.stageNo;
+    if (typeof s === 'number' && s >= 1 && s <= stages.length) return s;
+    if (app.status === STATUS.SUBMITTED) return Math.min(4, stages.length);
+    if (app.status === STATUS.REVIEWED) return Math.min(5, stages.length);
+    return Math.min(3, stages.length);
   }
 
   // ========== 表单字段定义（4 步） ==========
@@ -135,6 +203,51 @@
 
   // 月度分解目标：1-12 月（万元）
   var MONTH_KEYS = ['m1','m2','m3','m4','m5','m6','m7','m8','m9','m10','m11','m12'];
+
+  // ========== 马卡乐合伙人专属表单字段（流程节点不变，仅字段集不同） ==========
+  // 分两个区块：企业信息 / 业务能力；月度分解目标在「业务能力·年度目标」后单独渲染
+  var MAKALE_STEPS = [
+    { key: 'enterprise', label: '企业信息' },
+    { key: 'capability', label: '业务能力' }
+  ];
+  var MAKALE_FIELD_DEFS = {
+    enterprise: [
+      { key: 'entName', label: '企业与机构名称（营业执照）', type: 'text', required: true, placeholder: '请输入营业执照上的企业与机构名称' },
+      { key: 'address', label: '客户经营详细地址', type: 'text', required: false, placeholder: '请输入客户经营详细地址' },
+      { key: 'shortName', label: '客户简称', type: 'text', required: false, placeholder: '请输入客户简称' },
+      { key: 'custPhone', label: '客户电话', type: 'text', required: false, placeholder: '请输入客户电话' },
+      { key: 'contact', label: '客户联系人', type: 'text', required: false, placeholder: '请输入客户联系人' },
+      { key: 'contactPhone', label: '联系人电话', type: 'text', required: false, placeholder: '请输入联系人电话' },
+      { key: 'taxpayerType', label: '纳税人类别', type: 'select', required: false, options: ['一般纳税人', '小规模纳税人', '个人', '其他'] },
+      { key: 'bankAccountName', label: '客户银行账号名称', type: 'text', required: false, placeholder: '请输入银行账号名称（开户名）' },
+      { key: 'bankAccountNo', label: '银行账号', type: 'text', required: false, placeholder: '请输入银行账号' },
+      { key: 'bankName', label: '开户银行', type: 'text', required: false, placeholder: '请输入开户银行' },
+      { key: 'bankBranch', label: '开户支行', type: 'text', required: false, placeholder: '请输入开户支行' },
+      { key: 'unionBankNo', label: '联行号', type: 'text', required: false, placeholder: '请输入联行号（CNAPS）' }
+    ],
+    capability: [
+      { key: 'channelAbility', label: '渠道能力', type: 'textarea', required: false, placeholder: '请说明可运营的渠道资源与能力' },
+      { key: 'intentPlatform', label: '意向平台', type: 'select', required: false, options: ['抖音', '视频号', '小红书', '快手'] },
+      { key: 'annualTarget', label: '年度目标', type: 'number', required: false, unit: '万元', placeholder: '请输入年度目标（万元）' },
+      { key: 'mainCategory', label: '主营品类', type: 'text', required: false, placeholder: '请输入主营品类' },
+      { key: 'supplyStatus', label: '货源情况', type: 'textarea', required: false, placeholder: '请说明货源渠道与稳定性' },
+      { key: 'commonGoods', label: '通货情况', type: 'textarea', required: false, placeholder: '请说明通货备货与供应情况' },
+      { key: 'designAbility', label: '款式开发能力', type: 'textarea', required: false, placeholder: '请说明款式开发能力' },
+      { key: 'reorderAbility', label: '追单能力', type: 'textarea', required: false, placeholder: '请说明追单响应与交付能力' },
+      { key: 'goodsPrice', label: '货品价格', type: 'text', required: false, placeholder: '请输入货品价格区间' },
+      { key: 'fundAbility', label: '公司资金能力', type: 'text', required: false, placeholder: '请说明公司资金实力' },
+      { key: 'authHistory', label: '授权历史', type: 'textarea', required: false, placeholder: '请说明历史品牌授权情况' },
+      { key: 'otherBrands', label: '现有其他品牌', type: 'text', required: false, placeholder: '请输入现有运营的其他品牌' },
+      { key: 'bestStoreSales', label: '最好单店销售数据', type: 'text', required: false, placeholder: '请输入最好单店销售数据' },
+      { key: 'avgStoreSales', label: '单品牌平均单店销售数据', type: 'text', required: false, placeholder: '请输入单品牌平均单店销售数据' },
+      { key: 'teamSize', label: '运营团队人数', type: 'number', required: false, placeholder: '请输入运营团队人数' },
+      { key: 'visualMode', label: '视觉模式', type: 'text', required: false, placeholder: '请说明视觉/内容呈现模式' },
+      { key: 'paidRatio', label: '付费费比', type: 'text', required: false, placeholder: '请输入付费费比（如 15%）' },
+      { key: 'returnRate', label: '退货率', type: 'text', required: false, placeholder: '请输入退货率（如 20%）' },
+      { key: 'storeMode', label: '店铺模式', type: 'text', required: false, placeholder: '请说明店铺运营模式' },
+      { key: 'storeLink', label: '目前店铺链接', type: 'text', required: false, placeholder: '请输入目前经营的店铺链接' }
+    ]
+  };
 
   // ========== 工具函数 ==========
 
@@ -300,7 +413,20 @@
 
   // ========== 业务操作 ==========
 
-  function emptyForm() {
+  function emptyForm(mode) {
+    // 马卡乐合伙人：使用「企业信息 + 业务能力」专属字段集（流程节点仍为 default 13 阶段）
+    if (isMakaleMode(mode)) {
+      var mkForm = { enterprise: {}, capability: {}, accounts: [] };
+      MAKALE_STEPS.forEach(function(step) {
+        MAKALE_FIELD_DEFS[step.key].forEach(function(def) {
+          mkForm[step.key][def.key] = '';
+        });
+      });
+      var mkMonthly = {};
+      MONTH_KEYS.forEach(function(mk) { mkMonthly[mk] = ''; });
+      mkForm.capability.monthly = mkMonthly;
+      return mkForm;
+    }
     var monthly = {};
     MONTH_KEYS.forEach(function(mk) { monthly[mk] = ''; });
     return {
@@ -310,7 +436,10 @@
       finance: {
         fullName: '', shortName: '', region: 'domestic', street: '', taxNo: '',
         bankName: '', province: '', city: '', branch: '', taxpayerType: '', accountHolder: '', accountNo: ''
-      }
+      },
+      // 账号信息录入（多行），仅 influencer / customer_koc / koc_lite 流程页面写入；
+      // default 13 阶段流程目前不展示该面板，因此保持空数组无副作用
+      accounts: []
     };
   }
 
@@ -323,10 +452,11 @@
       brand: options.brand || null,
       platforms: options.platforms || [],
       bdContact: '',
+      stageNo: null,
       status: STATUS.UNSUBMIT,
       ownerPhone: user.phone || '',
       ownerName: user.name || '',
-      form: emptyForm(),
+      form: emptyForm(options.mode),
       versions: [],
       createdAt: nowText(),
       updatedAt: nowText(),
@@ -362,8 +492,27 @@
   }
 
   // 对比两份表单，返回发生变化的字段中文名列表
-  function diffFormLabels(oldForm, newForm) {
+  // mode 为马卡乐合伙人时，按专属「企业信息/业务能力」字段集 diff
+  function diffFormLabels(oldForm, newForm, mode) {
     var labels = [];
+    if (isMakaleMode(mode)) {
+      MAKALE_STEPS.forEach(function(step) {
+        var osec = (oldForm && oldForm[step.key]) || {};
+        var nsec = (newForm && newForm[step.key]) || {};
+        MAKALE_FIELD_DEFS[step.key].forEach(function(def) {
+          if (esc(osec[def.key]) !== esc(nsec[def.key])) labels.push(def.label);
+        });
+        if (step.key === 'capability') {
+          var om = (osec.monthly || {});
+          var nm = (nsec.monthly || {});
+          for (var i = 0; i < MONTH_KEYS.length; i++) {
+            var mk = MONTH_KEYS[i];
+            if (esc(om[mk]) !== esc(nm[mk])) labels.push('月度分解目标（' + (i + 1) + '月）');
+          }
+        }
+      });
+      return labels;
+    }
     STEPS.forEach(function(step) {
       var defs = FIELD_DEFS[step.key];
       defs.forEach(function(def) {
@@ -454,7 +603,7 @@
       if (app.status === STATUS.REVIEWED) {
         return { ok: false, error: '当前状态（' + statusLabel(app.status) + '）不允许编辑' };
       }
-      var changes = diffFormLabels(app.form, form);
+      var changes = diffFormLabels(app.form, form, app.mode);
       app.form = clone(form);
       app.updatedAt = nowText();
       if (!options.silent) {
@@ -517,6 +666,52 @@
       return { ok: true, app: clone(app) };
     }
     return { ok: false, error: '申请不存在' };
+  }
+
+  // 手工流转入驻节点：仅支持当前阶段 +1（适用于 BPM/保证金/授权书/培训等线下或独立事项）
+  // 仅“已审核”状态可手工流转；前 4 个节点由系统链路驱动
+  // opts: { reason: string(必填), operator: string }
+  function advanceStage(id, opts) {
+    opts = opts || {};
+    var list = readAll();
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id !== id) continue;
+      var app = list[i];
+      if (app.status !== STATUS.REVIEWED) {
+        return { ok: false, error: '仅已审核的申请可手工流转节点（前面的阶段由提交/审核链路驱动）' };
+      }
+      var stages = STAGE_TEMPLATES[flowKeyOfMode(app.mode)];
+      var total = stages.length;
+      var from = currentStageOf(app);
+      if (from >= total) {
+        return { ok: false, error: '当前已是最后一个节点（' + stages[total - 1].name + '），无需手工流转' };
+      }
+      var reason = String(opts.reason || '').trim();
+      if (!reason) return { ok: false, error: '请填写流转备注（作为审计凭据）' };
+      if (reason.length > 200) return { ok: false, error: '流转备注不超过 200 字' };
+      var to = from + 1;
+      var fromName = stages[from - 1].name;
+      var toName = stages[to - 1].name;
+      app.stageNo = to;
+      app.updatedAt = nowText();
+      pushVersion(app, '手工流转节点：' + fromName + ' → ' + toName,
+        ['节点：' + from + '/' + total + ' ' + fromName + ' → ' + to + '/' + total + ' ' + toName,
+         '备注：' + reason], opts.operator);
+      var last = app.versions[app.versions.length - 1];
+      last.kind = 'stage';
+      last.stageFrom = from;
+      last.stageTo = to;
+      last.stageReason = reason;
+      writeAll(list);
+      return { ok: true, app: clone(app) };
+    }
+    return { ok: false, error: '申请不存在' };
+  }
+
+  // 提取入驻节点手工流转历史（仅供列表/详情页展示）
+  function stageHistoryOf(app) {
+    if (!app || !Array.isArray(app.versions)) return [];
+    return app.versions.filter(function(v) { return v && v.kind === 'stage'; });
   }
 
   function remove(id) {
@@ -653,16 +848,93 @@
   }
 
   // 入驻类型：按入驻模式归类推导（客户合作管理展示用）
-  var TYPE_GROUPS = { 'DP': 'DP', '客户KOC': 'KOC', '联营KOC': 'KOC', '素人KOC': 'KOC', '达播达人': '达播', '达播机构': '达播' };
+  var TYPE_GROUPS = {
+    '账号代运营': '代运营',
+    '整店代运营': '代运营',
+    '达人': '达播',
+    '机构': '达播',
+    '联营KOC': 'KOC',
+    '素人KOC': 'KOC',
+    '客户KOC': 'KOC',
+    '马卡乐合伙人': '合伙人',
+    // 历史模式向后兼容（旧数据仍能正常展示类型）
+    'DP': 'DP',
+    '达播达人': '达播',
+    '达播机构': '达播'
+  };
   function typeOfMode(mode) {
     return TYPE_GROUPS[mode] || '-';
+  }
+
+  // ========== 账号信息录入（客户视角菜单）业务字典 ==========
+
+  // 入驻模式 → 账号信息字段集：KOC 类（客户KOC/素人KOC/联营KOC）走轻量字段集，其余模式走直播账号完整字段集
+  var ACCOUNT_ENTRY_KINDS = {
+    '客户KOC': 'koc',
+    '素人KOC': 'koc',
+    '联营KOC': 'koc'
+  };
+  function accountEntryKindOfMode(mode) {
+    return ACCOUNT_ENTRY_KINDS[mode] || 'standard';
+  }
+
+  // 账号运营模式（全品牌直播账号管理系统字典，单一数据源，编码统一为 AO + 序号）
+  // inEntry: 客户视角「账号信息录入」新增时可选的运营模式（10 项）；
+  // 未标 inEntry 的三项仅「直播账号管理」使用，存量数据仍能正常回显
+  var ACCOUNT_OPERATION_MODES = [
+    { code: 'AO001', label: '自播', inEntry: true },
+    { code: 'AO004', label: '达人播', inEntry: true },
+    { code: 'AO006', label: '代播', inEntry: true },
+    { code: 'AO007', label: '分销', inEntry: true },
+    { code: 'AO008', label: '其他', inEntry: true },
+    { code: 'AO015', label: '商品卡', inEntry: true },
+    { code: 'AO016', label: '分销一组', inEntry: true },
+    { code: 'AO017', label: '分销二组', inEntry: true },
+    { code: 'AO018', label: '短视频', inEntry: true },
+    { code: 'AO019', label: '头部达人', inEntry: true },
+    { code: 'AO020', label: '头达矩阵号' },
+    { code: 'AO021', label: '新锐达人' },
+    { code: 'AO022', label: '达人机构' }
+  ];
+  function accountEntryOperationModes() {
+    return clone(ACCOUNT_OPERATION_MODES).filter(function(o) { return o.inEntry; });
+  }
+
+  // 主销品牌与账号定位联动：定位取值由主销品牌决定
+  var ACCOUNT_BRANDS = ['森马', '巴拉巴拉', '迷你巴拉'];
+  var ACCOUNT_POSITIONINGS = {
+    '森马': ['男装', '女装'],
+    '巴拉巴拉': ['中童', '幼童', '婴童'],
+    '迷你巴拉': ['婴童']
+  };
+  function positioningsOfBrand(brand) {
+    return (ACCOUNT_POSITIONINGS[brand] || []).slice();
   }
 
   return {
     MODES: clone(MODES),
     BRANDS: clone(BRANDS),
     PLATFORMS: clone(PLATFORMS),
+    MAKALE_MODE: MAKALE_MODE,
+    MAKALE_BRANDS: clone(MAKALE_BRANDS),
+    isMakaleMode: isMakaleMode,
+    brandsForMode: brandsForMode,
+    MAKALE_STEPS: clone(MAKALE_STEPS),
+    MAKALE_FIELD_DEFS: {
+      enterprise: clone(MAKALE_FIELD_DEFS.enterprise),
+      capability: clone(MAKALE_FIELD_DEFS.capability)
+    },
     STAGES: clone(STAGES),
+    STAGE_TEMPLATES: {
+      default: clone(STAGE_TEMPLATES.default),
+      influencer: clone(STAGE_TEMPLATES.influencer),
+      customer_koc: clone(STAGE_TEMPLATES.customer_koc),
+      koc_lite: clone(STAGE_TEMPLATES.koc_lite)
+    },
+    FLOW_GROUPS: clone(FLOW_GROUPS),
+    flowKeyOfMode: flowKeyOfMode,
+    stagesForMode: stagesForMode,
+    stagesForApp: stagesForApp,
     STATUS: clone(STATUS),
     STEPS: clone(STEPS),
     FIELD_DEFS: clone(FIELD_DEFS),
@@ -686,7 +958,16 @@
     statusLabel: statusLabel,
     modeByValue: modeByValue,
     typeOfMode: typeOfMode,
+    ACCOUNT_ENTRY_KINDS: clone(ACCOUNT_ENTRY_KINDS),
+    accountEntryKindOfMode: accountEntryKindOfMode,
+    ACCOUNT_OPERATION_MODES: clone(ACCOUNT_OPERATION_MODES),
+    accountEntryOperationModes: accountEntryOperationModes,
+    ACCOUNT_BRANDS: clone(ACCOUNT_BRANDS),
+    ACCOUNT_POSITIONINGS: clone(ACCOUNT_POSITIONINGS),
+    positioningsOfBrand: positioningsOfBrand,
     updateBdContact: updateBdContact,
+    advanceStage: advanceStage,
+    stageHistoryOf: stageHistoryOf,
     encryptText: encryptText,
     decryptText: decryptText,
     _writeAll: writeAll,

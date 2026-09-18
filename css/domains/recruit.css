@@ -1,0 +1,3 @@
+/* 分销枢纽域共享样式：列表、详情和流程页共用。 */
+.recruit-domain-muted { color: var(--text-tertiary); }
+.recruit-domain-highlight { color: var(--primary); font-weight: 600; }
