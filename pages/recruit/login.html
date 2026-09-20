@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>达人入驻登记 - 注册 / 登录</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>入驻登记 - 注册 / 登录</title>
   <link rel="stylesheet" href="../../css/style.css">
   <style>
     body {
@@ -102,8 +105,8 @@
     </div>
     <span>内容电商 · 分销枢纽</span>
   </div>
-  <div class="login-title">达人入驻登记</div>
-  <div class="login-sub">仅限达人客户使用 · 注册后即可提交入驻申请</div>
+  <div class="login-title">入驻登记</div>
+  <div class="login-sub"> 注册后即可提交入驻申请</div>
 
   <div class="login-tabs">
     <button class="login-tab active" id="tabLogin" onclick="switchMode('login')">登录</button>
@@ -237,7 +240,7 @@ function doLogin() {
   localStorage.setItem('recruit_talents', JSON.stringify(talents));
   setTalentSession(phone, talents[phone].name);
   showToast('登录成功', 'success');
-  setTimeout(function() { location.href = 'mine.html'; }, 400);
+  setTimeout(function() { location.href = '../../index.html'; }, 400);
 }
 
 // 注册：手机号 + 姓名 + 对接商务 + 验证码，注册成功后自动登录
@@ -283,7 +286,7 @@ function doRegister() {
   localStorage.setItem('recruit_talents', JSON.stringify(talents));
   setTalentSession(phone, name);
   showToast('注册成功，已自动登录', 'success');
-  setTimeout(function() { location.href = 'mine.html'; }, 400);
+  setTimeout(function() { location.href = '../../index.html'; }, 400);
 }
 
 function quickDemo() {
@@ -300,7 +303,7 @@ function quickDemo() {
   localStorage.setItem('recruit_talents', JSON.stringify(talents));
   setTalentSession(demoPhone, demoName);
   showToast('演示账号已登录（' + demoName + '）', 'success');
-  setTimeout(function() { location.href = 'mine.html'; }, 400);
+  setTimeout(function() { location.href = '../../index.html'; }, 400);
 }
 
 function nowStr(){ return new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'); }
