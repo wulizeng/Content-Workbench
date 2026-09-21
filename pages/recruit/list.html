@@ -16,25 +16,6 @@
     .stage-badge .stage-no { color: var(--primary); font-weight: 700; }
     .stage-cell { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .stage-final-tip { font-size: 12px; color: #16a34a; }
-    /* 手工流转弹窗 */
-    .stg-overlay { position: fixed; inset: 0; z-index: 210; background: rgba(15,23,42,.5); display: flex; align-items: center; justify-content: center; padding: 16px; }
-    .stg-overlay[hidden] { display: none; }
-    .stg-modal { width: 520px; max-width: 100%; background: #fff; border-radius: 16px; padding: 20px 22px; box-shadow: 0 20px 60px rgba(15,23,42,.2); }
-    .stg-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-    .stg-head h3 { margin: 0; font-size: 17px; font-weight: 700; color: var(--text); }
-    .stg-close { width: 30px; height: 30px; border: none; border-radius: 8px; background: #f4f6fb; font-size: 18px; color: #94a3b8; cursor: pointer; line-height: 1; }
-    .stg-sub { font-size: 12px; color: var(--text-tertiary); margin-bottom: 14px; }
-    .stg-info { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; font-size: 13px; }
-    .stg-info .lbl { color: var(--text-secondary); min-width: 96px; }
-    .stg-info .val { color: var(--text); font-weight: 600; word-break: break-all; }
-    .stg-arrow { color: var(--primary); font-weight: 700; margin: 0 6px; }
-    .stg-tip { background: #fff7ed; color: #9a3412; padding: 8px 12px; border-radius: 8px; font-size: 12px; margin: 12px 0; line-height: 1.6; }
-    .stg-form label { display: block; margin-bottom: 6px; font-size: 13px; color: var(--text-secondary); }
-    .stg-form .req { color: #ef4444; }
-    .stg-form textarea { width: 100%; min-height: 80px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 13px; box-sizing: border-box; resize: vertical; }
-    .stg-form textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(91,108,245,.15); }
-    .stg-err { color: #ef4444; font-size: 12px; margin-top: 4px; min-height: 16px; }
-    .stg-foot { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; }
     /* 移动端（<1024px）：卡片流 + 底部抽屉筛选 + 加载更多 */
     .card-list, .load-more-bar, .filter-fab, .filter-sheet-overlay { display: none; }
     @media (max-width: 1023px) {
@@ -118,8 +99,8 @@
         <input type="text" id="sName" placeholder="请输入企业全称关键词">
       </div>
       <div class="search-item">
-        <label>入驻类型：</label>
-        <select id="sType"><option value="">全部</option><option value="DP">DP</option><option value="KOC">KOC</option><option value="达播">达播</option></select>
+        <label>品牌：</label>
+        <select id="sBrand"><option value="">全部</option></select>
       </div>
       <div class="search-item">
         <label>入驻平台：</label>
@@ -149,7 +130,7 @@
           <tr>
             <th>序号</th>
             <th>客户名称</th>
-            <th>入驻类型</th>
+            <th>品牌</th>
             <th>入驻模式</th>
             <th>入驻平台</th>
             <th>对接商务</th>
@@ -189,7 +170,7 @@
       </div>
       <div class="filter-sheet-body">
         <div class="search-item"><label>客户名称：</label><input type="text" id="mSName" placeholder="请输入企业全称关键词"></div>
-        <div class="search-item"><label>入驻类型：</label><select id="mSType"><option value="">全部</option><option value="DP">DP</option><option value="KOC">KOC</option><option value="达播">达播</option></select></div>
+        <div class="search-item"><label>品牌：</label><select id="mSBrand"><option value="">全部</option></select></div>
         <div class="search-item"><label>入驻平台：</label><select id="mSPlatform"><option value="">全部</option></select></div>
         <div class="search-item"><label>状态：</label><select id="mSStatus"><option value="">全部</option><option value="submitted">已提交</option><option value="reviewed">已审核</option></select></div>
       </div>
@@ -200,28 +181,7 @@
     </div>
   </div>
 
-  <!-- 手工流转入驻节点弹窗 -->
-  <div class="stg-overlay" id="stageModal" hidden onclick="if(event.target===this) closeStageModal()">
-    <div class="stg-modal" role="dialog" aria-modal="true" aria-labelledby="stageModalTitle">
-      <div class="stg-head">
-        <h3 id="stageModalTitle">手工流转入驻节点</h3>
-        <button type="button" class="stg-close" onclick="closeStageModal()" aria-label="关闭">&times;</button>
-      </div>
-      <div class="stg-sub">适用于 BPM/保证金/授权书/培训等线下或独立事项，无法自动联动时人工推进。</div>
-      <div class="stg-info"><span class="lbl">客户名称：</span><span class="val" id="stgAppName">-</span></div>
-      <div class="stg-info"><span class="lbl">节点变化：</span><span class="val"><span id="stgFromName">-</span><span class="stg-arrow">→</span><span id="stgToName">-</span></span></div>
-      <div class="stg-tip">仅向下一个节点流转（+1），将写入操作日志作为审计记录；客户端（达人）可见节点变化，不可见备注内容。</div>
-      <div class="stg-form">
-        <label>流转备注 <span class="req">*</span></label>
-        <textarea id="stgReason" maxlength="200" placeholder="例如：保证金 10,000 元已到账，财务张三 09-15 确认"></textarea>
-        <div class="stg-err" id="stgReasonError"></div>
-      </div>
-      <div class="stg-foot">
-        <button type="button" class="btn" onclick="closeStageModal()">取消</button>
-        <button type="button" class="btn btn-primary" onclick="confirmStageAdvance()">确认流转</button>
-      </div>
-    </div>
-  </div>
+  <!-- 手工流转入口已收敛至详情页（detail.html），列表页不再提供弹窗 -->
 
 <script>
 var Store = OnboardingStore;
@@ -237,7 +197,7 @@ var allData = loadData();
 // 手工流转仅开放运营侧（operator / bd / admin）；达人菜单不展示本页，同时作前端防御
 var canOperateStage = !!currentUser && ['operator', 'bd', 'admin'].indexOf(currentUser.role) > -1;
 // 记录上一次搜索条件，刷新时无需手动重新录入
-var lastQuery = { name: '', type: '', platform: '', status: '' };
+var lastQuery = { name: '', brand: '', platform: '', status: '' };
 function refresh() {
   allData = loadData();
   renderView(applyFilter(allData, lastQuery));
@@ -259,13 +219,22 @@ function updaterOf(app) {
 function modeLabel(app) { var m = Store.modeByValue(app.mode); return m ? m.label : (app.mode || '-'); }
 function platText(app) { return (app.platforms && app.platforms.length) ? app.platforms.join('、') : '-'; }
 
-// 平台下拉选项（桌面 + 移动端）
-(function fillPlatformSelects() {
+// 平台/品牌下拉选项（桌面 + 移动端）；品牌含马卡乐专属品牌
+(function fillSelectOptions() {
+  var brands = Store.BRANDS.concat(Store.MAKALE_BRANDS || []);
   ['sPlatform', 'mSPlatform'].forEach(function(id) {
     var sel = document.getElementById(id);
     Store.PLATFORMS.forEach(function(p) {
       var opt = document.createElement('option');
       opt.value = p; opt.textContent = p;
+      sel.appendChild(opt);
+    });
+  });
+  ['sBrand', 'mSBrand'].forEach(function(id) {
+    var sel = document.getElementById(id);
+    brands.forEach(function(b) {
+      var opt = document.createElement('option');
+      opt.value = b; opt.textContent = b;
       sel.appendChild(opt);
     });
   });
@@ -275,22 +244,20 @@ function st(s) {
   var m = { submitted: 'reviewing', reviewed: 'approved' };
   return '<span class="status-tag ' + (m[s] || '') + '">' + esc(Store.statusLabel(s)) + '</span>';
 }
-// 与客户入驻申请页保持同一表现：【stage-badge】 X/N · 阶段名（N 基于模式对应的流程模板：13/8/7）
+// 与客户入驻申请页保持同一表现：【stage-badge】 X/N · 阶段名（N 基于模式对应的流程模板：default12/makale11/customer_koc10/influencer8/koc_lite6）
 function stageBadge(app) {
   var stages = Store.stagesForApp(app);
   var no = Store.currentStageOf(app) || 1;
   var stage = stages[no - 1] || { name: '-' };
   return '<span class="stage-badge"><span class="stage-no">' + no + '/' + stages.length + '</span>' + esc(stage.name || '-') + '</span>';
 }
-// 单元格：徐章 + （运营侧可见）手工流转入口；仅已审核且未到达最后一个节点时展示链接
+// 单元格：徐章 + 终态提示；节点流转操作入口已收敛至详情页，列表不再展示
 function stageCell(app) {
   var no = Store.currentStageOf(app) || 1;
   var total = Store.stagesForApp(app).length;
   var html = '<div class="stage-cell">' + stageBadge(app);
   if (canOperateStage) {
-    if (app.status === Store.STATUS.REVIEWED && no < total) {
-      html += '<a class="link-action" href="javascript:void(0)" onclick="openStageModal(\'' + encodeURIComponent(app.id) + '\')">更新节点</a>';
-    } else if (app.status === Store.STATUS.REVIEWED && no >= total) {
+    if (app.status === Store.STATUS.REVIEWED && no >= total) {
       html += '<span class="stage-final-tip">已入驻完毕</span>';
     }
   }
@@ -306,7 +273,7 @@ function renderTable(data) {
       html += '<tr>';
       html += '<td>' + (index + 1) + '</td>';
       html += '<td>' + esc(customerName(row) || '-') + '</td>';
-      html += '<td>' + esc(Store.typeOfMode(row.mode)) + '</td>';
+      html += '<td>' + esc(row.brand || '-') + '</td>';
       html += '<td>' + esc(modeLabel(row)) + '</td>';
       html += '<td>' + esc(platText(row)) + '</td>';
       html += '<td>' + esc(row.bdContact || '-') + '</td>';
@@ -329,7 +296,8 @@ function renderTable(data) {
 function applyFilter(list, q) {
   return list.filter(function(x) {
     if (q.name && customerName(x).toLowerCase().indexOf(q.name.toLowerCase()) < 0) return false;
-    if (q.type && Store.typeOfMode(x.mode) !== q.type) return false;
+    // 品牌为多选拼接字符串（如「巴拉、森马」），按包含匹配
+    if (q.brand && (x.brand || '').split('、').indexOf(q.brand) < 0) return false;
     if (q.platform && (x.platforms || []).indexOf(q.platform) < 0) return false;
     if (q.status && x.status !== q.status) return false;
     return true;
@@ -339,7 +307,7 @@ function applyFilter(list, q) {
 function doSearch() {
   var q = {
     name: document.getElementById('sName').value.trim(),
-    type: document.getElementById('sType').value,
+    brand: document.getElementById('sBrand').value,
     platform: document.getElementById('sPlatform').value,
     status: document.getElementById('sStatus').value
   };
@@ -349,15 +317,15 @@ function doSearch() {
 }
 function resetSearch() {
   document.getElementById('sName').value = '';
-  document.getElementById('sType').value = '';
+  document.getElementById('sBrand').value = '';
   document.getElementById('sPlatform').value = '';
   document.getElementById('sStatus').value = '';
-  lastQuery = { name: '', type: '', platform: '', status: '' };
+  lastQuery = { name: '', brand: '', platform: '', status: '' };
   renderView(allData);
   showSearchTags();
 }
 function showSearchTags() {
-  var map = { sName: '客户名称', sType: '入驻类型', sPlatform: '入驻平台', sStatus: '状态' };
+  var map = { sName: '客户名称', sBrand: '品牌', sPlatform: '入驻平台', sStatus: '状态' };
   var tags = [];
   Object.keys(map).forEach(function(id) {
     var el = document.getElementById(id);
@@ -401,7 +369,8 @@ function renderCards(data) {
       html += '<div class="recruit-card">';
       html += '<div class="recruit-card-head"><span class="name">' + esc(customerName(row) || '-') + '</span>' + st(row.status) + '</div>';
       html += '<div class="recruit-card-body">';
-      html += '<div>入驻类型 / 模式：' + esc(Store.typeOfMode(row.mode)) + ' / ' + esc(modeLabel(row)) + '</div>';
+      html += '<div>品牌：' + esc(row.brand || '-') + '</div>';
+      html += '<div>入驻模式：' + esc(modeLabel(row)) + '</div>';
       html += '<div>入驻平台：' + esc(platText(row)) + '</div>';
       html += '<div>对接商务：' + esc(row.bdContact || '-') + '</div>';
       html += '<div>创建人：' + esc(creatorOf(row)) + '</div>';
@@ -440,7 +409,7 @@ function toggleFilterSheet() {
 function doMobileSearch() {
   var q = {
     name: document.getElementById('mSName').value.trim(),
-    type: document.getElementById('mSType').value,
+    brand: document.getElementById('mSBrand').value,
     platform: document.getElementById('mSPlatform').value,
     status: document.getElementById('mSStatus').value
   };
@@ -452,10 +421,10 @@ function doMobileSearch() {
 
 function resetMobileSearch() {
   document.getElementById('mSName').value = '';
-  document.getElementById('mSType').value = '';
+  document.getElementById('mSBrand').value = '';
   document.getElementById('mSPlatform').value = '';
   document.getElementById('mSStatus').value = '';
-  lastQuery = { name: '', type: '', platform: '', status: '' };
+  lastQuery = { name: '', brand: '', platform: '', status: '' };
   mobileShownCount = MOBILE_PAGE_SIZE;
   renderView(allData);
 }
@@ -463,49 +432,7 @@ function resetMobileSearch() {
 window.addEventListener('resize', function() { renderView(currentFiltered); });
 
 renderView(allData);
-
-// ===== 手工流转入驻节点 =====
-var currentStageAppId = null;
-function operatorName() { return (currentUser && (currentUser.name || currentUser.phone)) || '运营'; }
-function openStageModal(encId) {
-  var id = decodeURIComponent(String(encId || ''));
-  var app = Store.get(id);
-  if (!app) { showToast('申请不存在', 'error'); return; }
-  var stages = Store.stagesForApp(app);
-  var total = stages.length;
-  var no = Store.currentStageOf(app);
-  if (no >= total) { showToast('当前已是最后一个节点，无需手工流转', 'info'); return; }
-  currentStageAppId = id;
-  document.getElementById('stgAppName').textContent = customerName(app) || app.id;
-  document.getElementById('stgFromName').textContent = '第 ' + no + '/' + total + ' · ' + stages[no - 1].name;
-  document.getElementById('stgToName').textContent = '第 ' + (no + 1) + '/' + total + ' · ' + stages[no].name;
-  document.getElementById('stgReason').value = '';
-  document.getElementById('stgReasonError').textContent = '';
-  document.getElementById('stageModal').hidden = false;
-  setTimeout(function() { var el = document.getElementById('stgReason'); if (el) el.focus(); }, 30);
-}
-function closeStageModal() {
-  document.getElementById('stageModal').hidden = true;
-  currentStageAppId = null;
-}
-function confirmStageAdvance() {
-  if (!currentStageAppId) { closeStageModal(); return; }
-  var reason = String(document.getElementById('stgReason').value || '').trim();
-  var errEl = document.getElementById('stgReasonError');
-  errEl.textContent = '';
-  if (!reason) { errEl.textContent = '请填写流转备注，作为审计依据'; return; }
-  var appBefore = Store.get(currentStageAppId);
-  var res = Store.advanceStage(currentStageAppId, { reason: reason, operator: operatorName() });
-  if (!res.ok) { errEl.textContent = res.error || '流转失败'; return; }
-  var stagesAfter = Store.stagesForApp(res.app || appBefore);
-  var newNo = res.app.stageNo || Store.currentStageOf(res.app);
-  closeStageModal();
-  showToast('已推进至「' + ((stagesAfter[newNo - 1] || {}).name || '-') + '」', 'success');
-  refresh();
-}
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape' && currentStageAppId) { closeStageModal(); }
-});
+// 手工流转入驻节点已收敛至详情页（detail.html）操作，列表页仅展示节点徽章
 </script>
 <!-- 设备效果预览切换器：电脑 / 手机 -->
 <script>

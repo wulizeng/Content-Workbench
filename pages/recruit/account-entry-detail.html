@@ -95,6 +95,13 @@ var recordId = parseInt(g('id')) || 0;
 // 无值字段统一显示为空
 function val(v) { return (v === null || v === undefined) ? '' : String(v); }
 
+// 记录状态：与列表页同源字典（待提交 initial / 已提交 submitted）
+function statusTagOf(record) {
+  var s = record.status === 'submitted' ? 'submitted' : 'initial';
+  var label = s === 'submitted' ? '已提交' : '待提交';
+  return '<span class="status-tag ' + s + '">' + label + '</span>';
+}
+
 function renderGrid(containerId, items) {
   var html = items.map(function(it) {
     return '<div class="detail-item' + (it.span ? ' span-2' : '') + '">' +
@@ -114,6 +121,7 @@ function init() {
 
   renderGrid('baseGrid', [
     { label: '入驻模式', raw: true, value: record.mode ? '<span class="type-tag">' + esc(record.mode) + '</span>' : '' },
+    { label: '状态', raw: true, value: statusTagOf(record) },
     { label: '字段集类型', value: koc ? 'KOC 轻量字段集' : '直播账号完整字段集' },
     { label: '创建人', value: record.creator },
     { label: '创建时间', value: record.created_at },

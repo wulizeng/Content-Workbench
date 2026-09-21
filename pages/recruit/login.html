@@ -233,6 +233,11 @@ function doLogin() {
     switchMode('register');
     return;
   }
+  // 被禁用的账号不可登录（启用/禁用由运营侧「客户注册账号」页维护）
+  if (talents[phone].status === 'disabled') {
+    showToast('该账号已被禁用，请联系对接商务', 'error');
+    return;
+  }
   // 登录成功：刷新最近登录时间，同时兼容历史数据补齐 updated_at
   var now = nowStr();
   talents[phone].last_login_at = now;
@@ -280,13 +285,14 @@ function doRegister() {
   }
   talents[phone] = {
     phone: phone, name: name, bdContact: bdContact,
-    talent_id: 'T' + Date.now(),
+    talent_id: 'T' + Date.now(), status: 'enabled',
     created_at: nowStr(), updated_at: nowStr(), last_login_at: nowStr()
   };
   localStorage.setItem('recruit_talents', JSON.stringify(talents));
   setTalentSession(phone, name);
   showToast('注册成功，已自动登录', 'success');
-  setTimeout(function() { location.href = '../../index.html'; }, 400);
+  // 首次注册落点到专属成功页（引导发起入驻），不直进工作台全景图；登录/演示快捷仍直进工作台
+  setTimeout(function() { location.href = 'register-success.html'; }, 400);
 }
 
 function quickDemo() {
@@ -295,7 +301,7 @@ function quickDemo() {
   var talents = JSON.parse(localStorage.getItem('recruit_talents') || '{}');
   var now = nowStr();
   if (!talents[demoPhone]) {
-    talents[demoPhone] = { phone: demoPhone, name: demoName, talent_id: 'T_DEMO_001', created_at: now, updated_at: now, last_login_at: now };
+    talents[demoPhone] = { phone: demoPhone, name: demoName, talent_id: 'T_DEMO_001', status: 'enabled', created_at: now, updated_at: now, last_login_at: now };
   } else {
     talents[demoPhone].last_login_at = now;
     if (!talents[demoPhone].updated_at) talents[demoPhone].updated_at = talents[demoPhone].created_at || now;

@@ -88,6 +88,8 @@
             <th>创建时间</th>
             <th>更新时间</th>
             <th>最近登录时间</th>
+            <th>状态</th>
+            <th>操作</th>
           </tr>
         </thead>
         <tbody id="tableBody"></tbody>
@@ -107,6 +109,17 @@ var MOBILE_PAGE_SIZE = 10;
 var mobileShownCount = MOBILE_PAGE_SIZE;
 var currentFiltered = [];
 
+// 账号状态：注册成功默认启用；仅运营侧（operator/bd/admin）可启用/禁用
+var PROFILE_STATUS = { enabled: '启用', disabled: '禁用' };
+var PROFILE_STATUS_CLS = { enabled: 'approved', disabled: 'cancelled' };
+var canManageStatus = !!(currentUser && ['operator', 'bd', 'admin'].indexOf(currentUser.role) >= 0);
+function profileStatusOf(t) { return t.status === 'disabled' ? 'disabled' : 'enabled'; }
+function profileStatusHtml(t) {
+  var s = profileStatusOf(t);
+  return '<span class="status-tag ' + PROFILE_STATUS_CLS[s] + '">' + PROFILE_STATUS[s] + '</span>';
+}
+function nowText() { return new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-'); }
+
 function esc(s) { if (s === null || s === undefined) return ''; var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
 
 // ===== 数据加载 =====
@@ -116,9 +129,10 @@ function loadTalents() {
   try { map = JSON.parse(localStorage.getItem(TALENTS_KEY) || '{}'); } catch (e) { map = {}; }
   var list = Object.keys(map).map(function(k) {
     var t = map[k] || {};
-    // 兼容历史数据：无 updated_at 时回退到 created_at；无 last_login_at 时显示为 '-'
+    // 兼容历史数据：无 updated_at 时回退到 created_at；无 last_login_at 时显示为 '-'；无状态字段默认启用
     if (!t.updated_at) t.updated_at = t.created_at || '';
     if (!t.last_login_at) t.last_login_at = '';
+    t.status = profileStatusOf(t);
     return t;
   });
   if (currentUser && currentUser.role === 'talent') {
@@ -135,7 +149,7 @@ function renderTable(data) {
   var tbody = document.getElementById('tableBody');
   var html = '';
   if (data.length === 0) {
-    html = '<tr><td colspan="8" class="empty-state"><span class="empty-icon">&#128100;</span><div class="empty-text">暂无数据</div><div class="empty-hint">' + (currentUser && currentUser.role === 'talent' ? '暂无我的账号档案' : '暂无客户注册记录') + '</div></td></tr>';
+    html = '<tr><td colspan="10" class="empty-state"><span class="empty-icon">&#128100;</span><div class="empty-text">暂无数据</div><div class="empty-hint">' + (currentUser && currentUser.role === 'talent' ? '暂无我的账号档案' : '暂无客户注册记录') + '</div></td></tr>';
   } else {
     data.forEach(function(row, index) {
       html += '<tr>';
@@ -147,6 +161,10 @@ function renderTable(data) {
       html += '<td>' + esc(row.created_at || '-') + '</td>';
       html += '<td>' + esc(row.updated_at || '-') + '</td>';
       html += '<td>' + esc(row.last_login_at || '-') + '</td>';
+      html += '<td>' + profileStatusHtml(row) + '</td>';
+      html += '<td class="col-actions">' + (canManageStatus
+        ? '<a class="link-action" href="javascript:void(0)" onclick="toggleStatus(\'' + esc(row.phone).replace(/'/g, '') + '\')">' + (profileStatusOf(row) === 'enabled' ? '禁用' : '启用') + '</a>'
+        : '') + '</td>';
       html += '</tr>';
     });
   }
@@ -165,7 +183,7 @@ function renderCards(data) {
   } else {
     slice.forEach(function(row) {
       html += '<div class="profile-card">';
-      html += '<div class="profile-card-head"><span class="name">' + esc(row.name || '-') + '</span><span class="talent-id">' + esc(row.talent_id || '') + '</span></div>';
+      html += '<div class="profile-card-head"><span class="name">' + esc(row.name || '-') + '</span><span>' + profileStatusHtml(row) + '</span></div>';
       html += '<div class="profile-card-body">';
       html += '<div>手机号：' + esc(row.phone || '-') + '</div>';
       html += '<div>对接商务：' + esc(row.bdContact || '-') + '</div>';
@@ -173,7 +191,9 @@ function renderCards(data) {
       html += '<div>更新时间：' + esc(row.updated_at || '-') + '</div>';
       html += '<div>最近登录：' + esc(row.last_login_at || '-') + '</div>';
       html += '</div>';
-      html += '<div class="profile-card-foot">账号编号 ' + esc(row.talent_id || '-') + '</div>';
+      html += '<div class="profile-card-foot">' + (canManageStatus
+        ? '<button type="button" class="btn" style="height:36px;margin-right:8px;" onclick="toggleStatus(\'' + esc(row.phone).replace(/'/g, '') + '\')">' + (profileStatusOf(row) === 'enabled' ? '禁用' : '启用') + '</button>'
+        : '') + '账号编号 ' + esc(row.talent_id || '-') + '</div>';
       html += '</div>';
     });
   }
@@ -199,13 +219,15 @@ function applyFilter(list, q) {
   });
 }
 function doSearch() {
-  var q = {
+  mobileShownCount = MOBILE_PAGE_SIZE;
+  renderView(applyFilter(allData, currentQuery()));
+}
+function currentQuery() {
+  return {
     name: document.getElementById('sName').value.trim(),
     phone: document.getElementById('sPhone').value.trim(),
     bd: document.getElementById('sBd').value.trim()
   };
-  mobileShownCount = MOBILE_PAGE_SIZE;
-  renderView(applyFilter(allData, q));
 }
 function resetSearch() {
   document.getElementById('sName').value = '';
@@ -213,6 +235,23 @@ function resetSearch() {
   document.getElementById('sBd').value = '';
   mobileShownCount = MOBILE_PAGE_SIZE;
   renderView(allData);
+}
+
+// 启用/禁用切换（仅运营侧）；禁用后客户在入驻登记页无法登录
+function toggleStatus(phone) {
+  var map = {};
+  try { map = JSON.parse(localStorage.getItem(TALENTS_KEY) || '{}'); } catch (e) { map = {}; }
+  var t = map[phone];
+  if (!t) { showToast('账号档案不存在', 'error'); return; }
+  var next = profileStatusOf(t) === 'enabled' ? 'disabled' : 'enabled';
+  if (!window.confirm(next === 'disabled' ? '确认禁用该客户账号？禁用后将无法登录入驻登记。' : '确认启用该客户账号？')) return;
+  t.status = next;
+  t.updated_at = nowText();
+  map[phone] = t;
+  localStorage.setItem(TALENTS_KEY, JSON.stringify(map));
+  allData = loadTalents();
+  renderView(applyFilter(allData, currentQuery()));
+  showToast(next === 'disabled' ? '已禁用' : '已启用', 'success');
 }
 
 window.addEventListener('resize', function() { renderView(currentFiltered); });

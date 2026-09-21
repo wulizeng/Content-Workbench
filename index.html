@@ -702,7 +702,7 @@
         var talents = JSON.parse(localStorage.getItem('recruit_talents') || '{}');
         var nowStr = new Date().toLocaleString('zh-CN', {hour12:false}).replace(/\//g, '-');
         if (!talents[acc.phone]) {
-          talents[acc.phone] = { phone: acc.phone, name: acc.name, talent_id: 'T_DEMO_001', created_at: nowStr, updated_at: nowStr, last_login_at: nowStr };
+          talents[acc.phone] = { phone: acc.phone, name: acc.name, talent_id: 'T_DEMO_001', status: 'enabled', created_at: nowStr, updated_at: nowStr, last_login_at: nowStr };
         } else {
           talents[acc.phone].last_login_at = nowStr;
           if (!talents[acc.phone].updated_at) talents[acc.phone].updated_at = talents[acc.phone].created_at || nowStr;

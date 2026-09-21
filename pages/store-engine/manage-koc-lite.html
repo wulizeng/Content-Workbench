@@ -126,7 +126,6 @@
     <section class="stage-wrap" aria-label="入驻流程进度（6 阶段）">
       <div class="stage-head">
         <div><span class="stage-title">入驻流程进度</span><span class="stage-hint" id="stageHeadHint"></span></div>
-        <button type="button" class="btn btn-primary" id="btnAdvanceStage" onclick="openStageModal()" style="display:none;">更新节点</button>
       </div>
       <ol class="stage-strip" id="dStageStrip"></ol>
       <div class="stage-legend" aria-hidden="true">
@@ -181,26 +180,6 @@
     </div>
   </div>
 
-  <!-- 手工流转弹窗 -->
-  <div class="ob-modal-overlay" id="stageModal" hidden onclick="if(event.target===this) closeStageModal()" style="position:fixed;inset:0;z-index:210;background:rgba(15,23,42,.5);display:flex;align-items:center;justify-content:center;padding:16px;">
-    <div style="width:520px;max-width:100%;background:#fff;border-radius:16px;padding:20px 22px;box-shadow:0 20px 60px rgba(15,23,42,.2);">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-        <h3 style="margin:0;font-size:17px;font-weight:700;color:var(--text);">手工流转入驻节点</h3>
-        <button type="button" onclick="closeStageModal()" style="width:30px;height:30px;border:none;border-radius:8px;background:#f4f6fb;font-size:18px;color:#94a3b8;cursor:pointer;">&times;</button>
-      </div>
-      <div style="font-size:12px;color:#94a3b8;margin-bottom:14px;">适用于内部软件开通/品牌规则签署等线下或独立事项。</div>
-      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px;font-size:13px;"><span style="color:var(--text-secondary);min-width:96px;">客户名称：</span><span id="stgAppName" style="font-weight:600;">-</span></div>
-      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px;font-size:13px;"><span style="color:var(--text-secondary);min-width:96px;">节点变化：</span><span id="stgFromName" style="font-weight:600;">-</span><span style="color:var(--primary);font-weight:700;margin:0 6px;">→</span><span id="stgToName" style="font-weight:600;">-</span></div>
-      <div style="background:#fff7ed;color:#9a3412;padding:8px 12px;border-radius:8px;font-size:12px;margin:12px 0;line-height:1.6;">仅向下一个节点流转（+1），将写入操作日志作为审计记录；客户端（达人）可见节点变化，不可见备注内容。</div>
-      <label style="display:block;margin-bottom:6px;font-size:13px;color:var(--text-secondary);">流转备注 <span style="color:#ef4444;">*</span></label>
-      <textarea id="stgReason" maxlength="200" placeholder="例如：品牌规则已签署完毕，法务王六确认" style="width:100%;min-height:80px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box;"></textarea>
-      <div id="stgReasonError" style="color:#ef4444;font-size:12px;margin-top:4px;min-height:16px;"></div>
-      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:14px;">
-        <button type="button" class="btn" onclick="closeStageModal()">取消</button>
-        <button type="button" class="btn btn-primary" onclick="confirmStageAdvance()">确认流转</button>
-      </div>
-    </div>
-  </div>
   <style>.ob-modal-overlay[hidden] { display: none !important; }</style>
 
 </div>
@@ -233,7 +212,6 @@ function st(s) {
 function operatorName() { return (currentUser && (currentUser.name || currentUser.phone)) || '运营'; }
 function goBack() { location.href = 'manage.html'; }
 
-var canOperateStage = !!currentUser && ['operator', 'bd', 'admin'].indexOf(currentUser.role) > -1;
 var OP_LOG_PAGE_SIZE = 10;
 var opLogPage = 1;
 
@@ -253,7 +231,6 @@ function render() {
   renderModeInfo();
   renderStages();
   renderOpLog();
-  updateAdvanceEntry();
 }
 
 function renderStages() {
@@ -272,14 +249,6 @@ function renderStages() {
   strip.innerHTML = html;
   var hint = document.getElementById('stageHeadHint');
   if (hint) hint.textContent = '当前：第 ' + current + '/' + stages.length + ' · ' + ((stages[current - 1] || {}).name || '-');
-}
-
-function updateAdvanceEntry() {
-  var btn = document.getElementById('btnAdvanceStage');
-  var stages = Store.stagesForApp(app);
-  var no = Store.currentStageOf(app);
-  var show = canOperateStage && app.status === Store.STATUS.REVIEWED && no < stages.length;
-  if (btn) btn.style.display = show ? '' : 'none';
 }
 
 // ===== 入驻信息展示 + 修改入驻模式（跨流程自动跳转对应页面） =====
@@ -354,37 +323,6 @@ function confirmModeChange() {
   renderAccountRows();
   renderModeInfo();
   showToast('入驻模式已更新，页面结构已重新加载', 'success');
-}
-
-function openStageModal() {
-  if (!app) return;
-  var stages = Store.stagesForApp(app);
-  var total = stages.length;
-  var no = Store.currentStageOf(app);
-  if (app.status !== Store.STATUS.REVIEWED) { showToast('仅已审核的申请可手工流转节点', 'error'); return; }
-  if (no >= total) { showToast('当前已是最后一个节点，无需手工流转', 'info'); return; }
-  var fin = (app.form && app.form.finance) || {};
-  document.getElementById('stgAppName').textContent = fin.fullName || app.id;
-  document.getElementById('stgFromName').textContent = '第 ' + no + '/' + total + ' · ' + stages[no - 1].name;
-  document.getElementById('stgToName').textContent = '第 ' + (no + 1) + '/' + total + ' · ' + stages[no].name;
-  document.getElementById('stgReason').value = '';
-  document.getElementById('stgReasonError').textContent = '';
-  document.getElementById('stageModal').hidden = false;
-}
-function closeStageModal() { document.getElementById('stageModal').hidden = true; }
-function confirmStageAdvance() {
-  if (!app) { closeStageModal(); return; }
-  var reason = String(document.getElementById('stgReason').value || '').trim();
-  var errEl = document.getElementById('stgReasonError');
-  errEl.textContent = '';
-  if (!reason) { errEl.textContent = '请填写流转备注，作为审计依据'; return; }
-  var res = Store.advanceStage(app.id, { reason: reason, operator: operatorName() });
-  if (!res.ok) { errEl.textContent = res.error || '流转失败'; return; }
-  app = res.app;
-  opLogPage = 1;
-  closeStageModal();
-  render();
-  showToast('节点已更新', 'success');
 }
 
 function renderOpLog() {
@@ -479,9 +417,6 @@ document.getElementById('btnSubmit').onclick = function() {
 if (window.parent && window.parent !== window) {
   window.parent.postMessage({ type: 'breadcrumb', text: '店铺管理 <span>/</span> 素人KOC / 联营KOC 入驻申请' }, '*');
 }
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') { var m = document.getElementById('stageModal'); if (m && !m.hidden) closeStageModal(); }
-});
 
 // ===== 脏数据标记（账号信息录入使用） =====
 var dirty = false;

@@ -64,35 +64,40 @@ test('store provides 8 onboarding modes and all require brand', () => {
   assert.deepEqual(Store.PLATFORMS, ['抖音', '视频号', '小红书', '快手']);
 });
 
-test('13 workflow stages match the PRD sequence', () => {
+test('12 workflow stages match the PRD sequence (已去除项目规划填写)', () => {
   const names = Store.STAGES.map(s => s.name);
-  assert.equal(names.length, 13);
+  assert.equal(names.length, 12);
   assert.deepEqual(names, [
-    '客户注册', '选择入驻模式', '填写企业信息', '运营审核企业', '项目规划填写',
-    'BPM供应商创建', '网签合同', '保证金缴纳', '授权书签署', '账号信息录入',
-    '内部软件开通', '规则宣导培训', '入驻完毕'
+    '客户注册', '选择入驻模式', '填写企业信息', '运营审核企业',
+    'BPM审批建档', '签署合作合同', '保证金缴纳', '授权书签署', '账号信息录入',
+    '内部软件开通', '签署品牌规则', '入驻完毕'
   ]);
 });
 
-test('stage templates: default(13) / influencer(8) / customer_koc(10) / koc_lite(6), mode → template routing', () => {
-  assert.equal(Store.STAGE_TEMPLATES.default.length, 13);
+test('stage templates: default(12) / makale(11) / influencer(8) / customer_koc(10) / koc_lite(6)，模式 → 模板路由', () => {
+  assert.equal(Store.STAGE_TEMPLATES.default.length, 12);
+  assert.equal(Store.STAGE_TEMPLATES.makale.length, 11);
   assert.equal(Store.STAGE_TEMPLATES.influencer.length, 8);
   assert.equal(Store.STAGE_TEMPLATES.customer_koc.length, 10);
   assert.equal(Store.STAGE_TEMPLATES.koc_lite.length, 6);
+  assert.deepEqual(Store.STAGE_TEMPLATES.makale.map(s => s.name), [
+    '客户注册', '选择入驻模式', '填写企业信息', '运营审核企业', 'BPM审批建档',
+    '签署合作合同', '保证金缴纳', '授权书签署', '账号信息录入', '签署品牌规则', '入驻完毕'
+  ]);
   assert.deepEqual(Store.STAGE_TEMPLATES.influencer.map(s => s.name), [
-    '客户注册', '选择入驻模式', '供应商信息录入', 'BPM供应商创建', '网签合同', '授权书签署', '账号信息录入', '入驻完毕'
+    '客户注册', '选择入驻模式', '供应商信息录入', 'BPM审批建档', '签署合作合同', '授权书签署', '账号信息录入', '入驻完毕'
   ]);
   assert.deepEqual(Store.STAGE_TEMPLATES.customer_koc.map(s => s.name), [
-    '客户注册', '选择入驻模式', '供应商信息录入', 'BPM供应商创建', '网签合同', '授权书签署', '账号信息录入', '软件开通', '签署品牌规则', '入驻完毕'
+    '客户注册', '选择入驻模式', '供应商信息录入', 'BPM审批建档', '签署合作合同', '授权书签署', '账号信息录入', '软件开通', '签署品牌规则', '入驻完毕'
   ]);
   assert.deepEqual(Store.STAGE_TEMPLATES.koc_lite.map(s => s.name), [
     '客户注册', '选择入驻模式', '账号信息录入', '内部软件开通', '签署品牌规则', '入驻完毕'
   ]);
-  // 8 个模式的模板归属
+  // 9 个模式入口的模板归属（含马卡乐专属 makale）
   assert.equal(Store.flowKeyOfMode('账号代运营'), 'default');
   assert.equal(Store.flowKeyOfMode('整店代运营'), 'default');
   assert.equal(Store.flowKeyOfMode('机构'), 'default');
-  assert.equal(Store.flowKeyOfMode('马卡乐合伙人'), 'default');
+  assert.equal(Store.flowKeyOfMode('马卡乐合伙人'), 'makale');
   assert.equal(Store.flowKeyOfMode('达人'), 'influencer');
   assert.equal(Store.flowKeyOfMode('客户KOC'), 'customer_koc');
   assert.equal(Store.flowKeyOfMode('素人KOC'), 'koc_lite');
@@ -102,8 +107,10 @@ test('stage templates: default(13) / influencer(8) / customer_koc(10) / koc_lite
   // stagesForMode / stagesForApp 返回对应模板副本
   assert.equal(Store.stagesForMode('达人').length, 8);
   assert.equal(Store.stagesForMode('客户KOC').length, 10);
+  assert.equal(Store.stagesForMode('马卡乐合伙人').length, 11);
   assert.equal(Store.stagesForApp({ mode: '素人KOC' }).length, 6);
-  assert.equal(Store.stagesForApp({ mode: '整店代运营' }).length, 13);
+  assert.equal(Store.stagesForApp({ mode: '整店代运营' }).length, 12);
+  assert.equal(Store.stagesForApp({ mode: '马卡乐合伙人' }).length, 11);
   // currentStageOf 会基于模板默认（unsubmit=3 / submitted=4 / reviewed=5）
   assert.equal(Store.currentStageOf({ mode: '达人', status: 'unsubmit' }), 3);
   assert.equal(Store.currentStageOf({ mode: '客户KOC', status: 'submitted' }), 4);
@@ -160,7 +167,7 @@ test('submit no longer blocked by form validation; validateForm still reports fi
   assert.equal(ok.app.status, 'submitted');
   assert.equal(Store.currentStageOf(ok.app), 4, '已提交阶段应为第 4 步：运营审核企业');
 
-  // 审核后进入第 5 步（项目规划填写）
+  // 审核后进入第 5 步（BPM审批建档）
   const reviewed = Store.review(app.id, '', '张运营');
   assert.equal(reviewed.ok, true);
   assert.equal(reviewed.app.status, 'reviewed');
@@ -190,23 +197,28 @@ test('submitted applications remain editable; reviewed becomes read-only', () =>
   assert.equal(Store.submit(app.id, '王强').ok, false, '已审核后应禁止重复提交');
 });
 
-test('uniqueness: same fullName + mode + brand can only be submitted once', () => {
+test('uniqueness: 客户名称 + 品牌 + 入驻模式 + 入驻平台 组合只能提交一次', () => {
   global.localStorage = new MemoryStorage();
   const a = Store.createDraft({ mode: 'DP', brand: '巴拉', owner: { phone: '138****2231', name: '李潮' } });
   const b = Store.createDraft({ mode: 'DP', brand: '巴拉', owner: { phone: '159****8820', name: '王强' } });
 
-  // validForm 的企业全称相同：第二个申请提交应被唯一校验拦截
+  // validForm 的客户名称相同：第二个申请提交应被唯一校验拦截
   Store.saveDraft(a.id, validForm(), '李潮', { silent: true });
   assert.equal(Store.submit(a.id, '李潮').ok, true);
   Store.saveDraft(b.id, validForm(), '王强', { silent: true });
   const dup = Store.submit(b.id, '王强');
-  assert.equal(dup.ok, false, '相同企业全称+模式+品牌不允许重复提交');
-  assert.match(dup.error, /重复/);
+  assert.equal(dup.ok, false, '相同客户名称+品牌+模式+平台不允许重复提交');
+  assert.match(dup.error, /客户名称 \+ 品牌 \+ 入驻模式 \+ 入驻平台/);
 
   // 品牌不同则不冲突
   const c = Store.createDraft({ mode: 'DP', brand: '森马', owner: { phone: '137****0001', name: '赵六' } });
   Store.saveDraft(c.id, validForm(), '赵六', { silent: true });
   assert.equal(Store.submit(c.id, '赵六').ok, true);
+
+  // 入驻平台不同则不冲突（唯一键含平台）
+  const d = Store.createDraft({ mode: 'DP', brand: '巴拉', platforms: ['抖音'], owner: { phone: '136****0002', name: '孙七' } });
+  Store.saveDraft(d.id, validForm(), '孙七', { silent: true });
+  assert.equal(Store.submit(d.id, '孙七').ok, true, '同名称品牌模式但平台不同应可提交');
 });
 
 test('legacy four-state data migrates to the new three-state model on read', () => {
@@ -429,13 +441,14 @@ test('index sidebar mounts 客户注册账号 under 运营视角 (not visible to
 test('cooperation list page reads onboarding store with new column set', () => {
   const html = read('pages/recruit/list.html');
   assert.match(html, /onboarding-store\.js/, '应引入入驻申请数据模块');
-  ['客户名称', '入驻类型', '入驻模式', '入驻平台', '对接商务', '创建时间', '创建人', '更新人', '更新时间', '入驻节点', '节点状态'].forEach(col => {
+  ['客户名称', '品牌', '入驻模式', '入驻平台', '对接商务', '创建时间', '创建人', '更新人', '更新时间', '入驻节点', '节点状态'].forEach(col => {
     assert.ok(html.includes(`<th>${col}</th>`), `列表应包含列 ${col}`);
   });
   assert.doesNotMatch(html, /<th>状态<\/th>/, '旧的“状态”列应重命名为“节点状态”');
+  assert.doesNotMatch(html, /<th>入驻类型<\/th>|sType|mSType|typeOfMode/, '入驻类型字段已删除，筛选改为品牌');
   assert.doesNotMatch(html, /recruit_applications/, '不应再读取旧数据');
   assert.doesNotMatch(html, /recruit_talents/, '不应再读取旧达人映射');
-  assert.match(html, /typeOfMode/);
+  assert.ok(html.includes('id="sBrand"') && html.includes('id="mSBrand"'), '桌面/移动端应提供品牌筛选');
   // 入驻节点展示参考客户入驻申请页：相同阶段编号 + 阶段名 的 stage-badge 小徽章
   assert.match(html, /function\s+stageBadge\s*\(/, '应定义 stageBadge 渲染函数');
   assert.match(html, /Store\.currentStageOf\(app\)/, 'stageBadge 应读取当前阶段');
@@ -503,9 +516,10 @@ test('currentStageOf prefers explicit stageNo over status derivation', () => {
   const base = { status: 'reviewed' }; // 默认 stage 5
   assert.equal(Store.currentStageOf(base), 5);
   assert.equal(Store.currentStageOf({ ...base, stageNo: 8 }), 8);
-  assert.equal(Store.currentStageOf({ ...base, stageNo: 13 }), 13);
-  // 非法值回落
+  assert.equal(Store.currentStageOf({ ...base, stageNo: 12 }), 12);
+  // 非法值回落（default 模板现为 12 阶段，13 越界）
   assert.equal(Store.currentStageOf({ ...base, stageNo: 0 }), 5);
+  assert.equal(Store.currentStageOf({ ...base, stageNo: 13 }), 5);
   assert.equal(Store.currentStageOf({ ...base, stageNo: 99 }), 5);
   assert.equal(Store.currentStageOf({ ...base, stageNo: null }), 5);
 });
@@ -529,7 +543,7 @@ test('advanceStage: only reviewed +1 with mandatory reason, writes kind=stage ve
   assert.equal(res.ok, false);
   assert.match(res.error, /备注/);
   // 正常推进 5→6
-  res = Store.advanceStage(app.id, { reason: 'BPM已创建供应商S123456', operator: '王五' });
+  res = Store.advanceStage(app.id, { reason: 'BPM审批建档完成，供应商档案号S123456', operator: '王五' });
   assert.equal(res.ok, true);
   assert.equal(res.app.stageNo, 6);
   assert.equal(Store.currentStageOf(res.app), 6);
@@ -538,15 +552,15 @@ test('advanceStage: only reviewed +1 with mandatory reason, writes kind=stage ve
   assert.equal(stageVersions.length, 1);
   assert.equal(stageVersions[0].stageFrom, 5);
   assert.equal(stageVersions[0].stageTo, 6);
-  assert.equal(stageVersions[0].stageReason, 'BPM已创建供应商S123456');
+  assert.equal(stageVersions[0].stageReason, 'BPM审批建档完成，供应商档案号S123456');
   assert.equal(stageVersions[0].operator, '王五');
-  // 继续推进 6→...→13，共 7 次推进（包含上一句 5→6，累计 8 次）
-  for (let i = 0; i < 7; i++) {
+  // 继续推进 6→...→12（default 模板 12 阶段），共 6 次推进（包含上一句 5→6，累计 7 次）
+  for (let i = 0; i < 6; i++) {
     const r = Store.advanceStage(app.id, { reason: '自动推进', operator: '王五' });
     assert.equal(r.ok, true, `第 ${i + 2} 次推进应成功`);
   }
   const done = Store.get(app.id);
-  assert.equal(done.stageNo, 13, '应到达最后一个节点');
+  assert.equal(done.stageNo, 12, '应到达最后一个节点');
   const final = Store.advanceStage(app.id, { reason: '再推进一次', operator: '王五' });
   assert.equal(final.ok, false, '已为最后节点时拒绝推进');
   assert.match(final.error, /最后一个节点|无需/);
@@ -554,20 +568,24 @@ test('advanceStage: only reviewed +1 with mandatory reason, writes kind=stage ve
   assert.equal(Store.advanceStage('SQ_NOT_EXIST', { reason: 'x' }).ok, false);
 });
 
-test('cooperation list page exposes manual stage advance link and modal', () => {
+test('合作管理：手工流转入口收敛至详情页，列表页不再提供更新节点', () => {
   const html = read('pages/recruit/list.html');
-  assert.match(html, /id="stageModal"/, '应包含手工流转弹窗');
-  assert.match(html, /id="stgReason"/, '弹窗内应有备注输入');
-  assert.match(html, /id="stgFromName"/, '弹窗应展示当前节点');
-  assert.match(html, /id="stgToName"/, '弹窗应展示目标节点');
-  assert.match(html, /function\s+openStageModal\s*\(/, '应定义 openStageModal');
-  assert.match(html, /function\s+closeStageModal\s*\(/, '应定义 closeStageModal');
-  assert.match(html, /function\s+confirmStageAdvance\s*\(/, '应定义 confirmStageAdvance');
-  assert.match(html, /Store\.advanceStage\(/, '应调用 Store.advanceStage');
-  assert.match(html, /更新节点/, '行内链接文案应为“更新节点”');
-  assert.match(html, /canOperateStage\s*=\s*!!currentUser/, '应仅向 operator\/bd\/admin 展示链接');
-  assert.match(html, /app\.status === Store\.STATUS\.REVIEWED && no < total/, '仅已审核 & 未到末节点时展示链接');
+  // 列表页：无流转弹窗与操作链接，仅保留节点徽章与终态提示
+  assert.doesNotMatch(html, /id="stageModal"|stgReason|openStageModal|confirmStageAdvance|更新节点/, '列表页不应存在更新节点入口与流转弹窗');
+  assert.match(html, /function\s+stageBadge\s*\(/, '列表页仍展示节点徽章');
+  assert.match(html, /已入驻完毕/, '列表页保留终态提示');
   compileInlineScripts('pages/recruit/list.html');
+
+  // 详情页：流转弹窗与入口完整保留
+  const detail = read('pages/recruit/detail.html');
+  assert.match(detail, /id="btnAdvanceStage"/, '详情页手工流转入口按钮应存在');
+  assert.match(detail, /id="stageModal"/, '详情页应包含手工流转弹窗');
+  assert.match(detail, /id="stgReason"/, '弹窗内应有备注输入');
+  assert.match(detail, /function\s+openStageModal\s*\(/, '详情页应定义 openStageModal');
+  assert.match(detail, /function\s+confirmStageAdvance\s*\(/, '详情页应定义 confirmStageAdvance');
+  assert.match(detail, /Store\.advanceStage\(/, '详情页应调用 Store.advanceStage');
+  assert.match(detail, /app\.status === Store\.STATUS\.REVIEWED && no < total/, '仅已审核 & 未到末节点时展示按钮');
+  compileInlineScripts('pages/recruit/detail.html');
 });
 
 test('cooperation detail page also exposes manual stage advance button and modal', () => {
@@ -612,7 +630,8 @@ test('manage-influencer framework page: 同时承载达人(8) / 客户KOC(10)，
   assert.match(html, /Store\.stagesForApp\(app\)/, '阶段列表应基于实际模式读取');
   assert.match(html, /Store\.saveDraft\(/, '提供保存能力');
   assert.match(html, /Store\.submit\(/, '提供提交能力');
-  assert.match(html, /Store\.advanceStage\(/, '提供手工流转能力');
+  // 已审核态编辑页不再提供更新节点入口，手工流转统一收敛到「客户合作管理」
+  assert.doesNotMatch(html, /Store\.advanceStage\(|btnAdvanceStage|stageModal|更新节点/, 'influencer 编辑页不应存在更新节点入口');
   assert.match(html, /id="dOpLogBody"/, '包含操作日志');
   compileInlineScripts('pages/store-engine/manage-influencer.html');
 });
@@ -634,7 +653,8 @@ test('manage-koc-lite framework page: 6 stages，无供应商信息录入，仅�
   assert.match(html, /return 'manage-influencer\.html'/, 'flowTarget 将 influencer/customer_koc → manage-influencer.html');
   assert.match(html, /return 'manage\.html'/, 'flowTarget 默认→ manage.html');
   assert.match(html, /Store\.stagesForApp\(app\)/, '阶段列表应基于实际模式读取');
-  assert.match(html, /Store\.advanceStage\(/, '提供手工流转能力');
+  // 已审核态编辑页不再提供更新节点入口，手工流转统一收敛到「客户合作管理」
+  assert.doesNotMatch(html, /Store\.advanceStage\(|btnAdvanceStage|stageModal|更新节点/, 'koc_lite 编辑页不应存在更新节点入口');
   assert.match(html, /id="dOpLogBody"/, '包含操作日志');
   compileInlineScripts('pages/store-engine/manage-koc-lite.html');
 });
@@ -821,9 +841,14 @@ test('马卡乐合伙人：品牌默认仅「马卡乐」，其余模式沿用�
   assert.deepEqual(Store.BRANDS, ['巴拉', '迷你', '森马']);
 });
 
-test('马卡乐合伙人：流程节点仍为 default 13 阶段（流程节点不变）', () => {
-  assert.equal(Store.flowKeyOfMode('马卡乐合伙人'), 'default');
-  assert.equal(Store.stagesForMode('马卡乐合伙人').length, 13);
+test('马卡乐合伙人：专属 makale 流程模板 11 阶段', () => {
+  assert.equal(Store.flowKeyOfMode('马卡乐合伙人'), 'makale');
+  assert.equal(Store.stagesForMode('马卡乐合伙人').length, 11);
+  // 与 default 12 阶段的关系：去掉「内部软件开通」，其余顺序一致
+  assert.deepEqual(Store.stagesForMode('马卡乐合伙人').map(s => s.name), [
+    '客户注册', '选择入驻模式', '填写企业信息', '运营审核企业', 'BPM审批建档',
+    '签署合作合同', '保证金缴纳', '授权书签署', '账号信息录入', '签署品牌规则', '入驻完毕'
+  ]);
 });
 
 test('马卡乐合伙人：emptyForm 产出「企业信息 + 业务能力」两段结构并含 12 月分解', () => {
@@ -888,6 +913,43 @@ test('达人(influencer)流程页面隐藏账号信息录入模块，客户KOC �
   compileInlineScripts('pages/store-engine/manage-influencer.html');
 });
 
+test('新增申请弹窗：品牌复选框多选；马卡乐合伙人弹窗不显示入驻平台', () => {
+  const html = read('pages/store-engine/manage.html');
+  assert.match(html, /id="brandGrid"/, '品牌应为复选框网格容器');
+  assert.ok(!/id="brandSelect"/.test(html), '不应再有单选下拉 brandSelect');
+  assert.match(html, /type="checkbox" name="obBrand"/, '品牌应为 checkbox 多选');
+  assert.match(html, /选择品牌（多选）/, '品牌标题应标注多选');
+  assert.match(html, /请至少选择一个入驻品牌/, '应提示至少勾选一个品牌');
+  assert.match(html, /function\s+collectBrandSelection\s*\(/, '应定义多选品牌收集函数');
+  assert.match(html, /brandVals\.join\('、'\)/, '多选品牌应以、连接存入 brand 字段');
+  // 马卡乐：弹窗不展示入驻平台（隐藏整行），平台改在编辑页「企业信息」填写
+  assert.match(html, /platRow\.hidden = isMakale/, '选中马卡乐合伙人时应隐藏平台行');
+  assert.match(html, /document\.getElementById\('platformRow'\)\.hidden = Store\.isMakaleMode\(app\.mode\)/, '修改弹窗打开时应按马卡乐隐藏平台行');
+  assert.equal((html.match(/if \(!Store\.isMakaleMode\(mode\)\) \{/g) || []).length, 2, 'confirmMode 与 confirmChangeMode 均应跳过马卡乐平台必选');
+  assert.ok(!/platformInput/.test(html), '弹窗不应再有平台输入框或文本输入方案残留');
+  compileInlineScripts('pages/store-engine/manage.html');
+});
+
+test('马卡乐合伙人：企业信息不含「入驻平台」（仅保留意向平台文本输入）', () => {
+  const ent = Store.MAKALE_FIELD_DEFS.enterprise;
+  assert.ok(!ent.some(d => d.key === 'onboardPlatform' || d.label === '入驻平台'), '企业信息不应再有入驻平台字段');
+  assert.equal(ent[ent.length - 1].label, '联行号', '企业信息应以联行号收尾');
+  const intent = Store.MAKALE_FIELD_DEFS.capability.find(d => d.key === 'intentPlatform');
+  assert.equal(intent.type, 'text', '意向平台应为文本输入框');
+  assert.ok(!intent.options, '意向平台不应再有下拉选项');
+
+  // 马卡乐保存不再同步 platforms（弹窗不选平台，列表/详情展示为 -）
+  global.localStorage = new MemoryStorage();
+  const app = Store.createDraft({ mode: '马卡乐合伙人', brand: '马卡乐', platforms: [], owner: { phone: '13800000009', name: '王五' } });
+  const f = Store.emptyForm('马卡乐合伙人');
+  assert.ok(!('onboardPlatform' in f.enterprise), 'emptyForm 企业信息不再含 onboardPlatform');
+  f.capability.intentPlatform = '微信小商店';
+  const res = Store.saveDraft(app.id, f, '王五', { silent: true });
+  assert.ok(res.ok);
+  assert.deepEqual(res.app.platforms, [], '保存不应产生 platforms 同步副作用');
+  assert.equal(res.app.form.capability.intentPlatform, '微信小商店');
+});
+
 test('manage.html 与 recruit/detail.html 已支持马卡乐字段集与品牌联动', () => {
   const manage = read('pages/store-engine/manage.html');
   assert.match(manage, /function\s+renderBrandOptions\s*\(/, 'manage.html 应定义按模式渲染品牌的函数');
@@ -901,4 +963,69 @@ test('manage.html 与 recruit/detail.html 已支持马卡乐字段集与品牌�
   assert.match(detail, /Store\.isMakaleMode\(app\.mode\)/, '详情页应按马卡乐模式只读展示');
   assert.match(detail, /Store\.MAKALE_STEPS\.forEach/, '详情页应渲染马卡乐两段字段');
   compileInlineScripts('pages/recruit/detail.html');
+});
+
+// ================= 账号信息录入：状态与导出；客户注册账号：启用/禁用 =================
+
+test('账号信息录入：新增状态列（待提交/已提交），已提交锁定编辑，支持导出全部列表字段', () => {
+  const list = read('pages/recruit/account-entry.html');
+  const edit = read('pages/recruit/account-entry-edit.html');
+  const detail = read('pages/recruit/account-entry-detail.html');
+
+  // 列表：状态列 + 状态字典（与全站 status-tag 样式一致）
+  assert.ok(list.includes('<th>状态</th>'), '列表应含状态列');
+  assert.match(list, /ENTRY_STATUS\s*=\s*\{\s*unsubmit: '待提交', submitted: '已提交'\s*\}/, '状态字典应为待提交/已提交');
+  assert.match(list, /function\s+entryStatusOf\s*\(/, '应有状态归一函数（无状态视为待提交）');
+  // 已提交隐藏编辑/提交入口，仅保留查看；待提交可编辑并可提交
+  assert.match(list, /var editable = entryStatusOf\(row\) === 'unsubmit'/, '行操作应按状态控制编辑入口');
+  assert.match(list, /function\s+submitEntry\s*\(/, '应提供提交操作（待提交→已提交）');
+  // 导出当前列表全部字段（CSV 带 BOM 兼容 Excel）
+  assert.match(list, /function\s+exportCSV\s*\(/, '应提供导出功能');
+  assert.ok(list.includes('uFEFF'), 'CSV 应带 BOM 头');
+
+  // 编辑页：新增默认待提交；已提交记录加载与保存双重拦截
+  assert.match(edit, /data\.status = 'unsubmit'/, '新增记录默认待提交');
+  const blocks = edit.match(/已提交的账号信息不允许编辑/g) || [];
+  assert.equal(blocks.length, 2, '编辑页应有加载+保存两道已提交拦截');
+
+  // 详情页展示状态（同口径标签）
+  assert.match(detail, /function\s+statusTagOf\s*\(/, '详情页应展示状态标签');
+  assert.ok(detail.includes("label: '状态'"), '基本信息应含状态行');
+
+  ['pages/recruit/account-entry.html', 'pages/recruit/account-entry-edit.html', 'pages/recruit/account-entry-detail.html'].forEach(compileInlineScripts);
+});
+
+test('客户注册账号：启用/禁用状态，注册默认启用，禁用后不可登录', () => {
+  const profile = read('pages/recruit/profile-list.html');
+  const login = read('pages/recruit/login.html');
+
+  // 档案台账：状态列 + 运营侧切换
+  assert.ok(profile.includes('<th>状态</th>'), '列表应含状态列');
+  assert.match(profile, /PROFILE_STATUS\s*=\s*\{\s*enabled: '启用', disabled: '禁用'\s*\}/, '状态字典应为启用/禁用');
+  assert.match(profile, /function\s+profileStatusOf\s*\(/, '无状态历史数据应默认启用');
+  assert.match(profile, /function\s+toggleStatus\s*\(/, '应提供启用/禁用切换');
+  assert.match(profile, /\['operator', 'bd', 'admin'\]\.indexOf\(currentUser\.role\)/, '切换入口仅限运营侧角色');
+
+  // 注册成功默认启用；登录拦截禁用账号
+  assert.equal((login.match(/status: 'enabled'/g) || []).length, 2, '注册与演示建档均应默认启用');
+  assert.match(login, /该账号已被禁用/, '禁用账号登录应被拦截');
+
+  ['pages/recruit/profile-list.html', 'pages/recruit/login.html'].forEach(compileInlineScripts);
+});
+
+test('注册成功落点：专属成功页引导发起入驻，登录/演示仍直进工作台', () => {
+  const login = read('pages/recruit/login.html');
+  const success = read('pages/recruit/register-success.html');
+
+  // 注册成功 → 成功页；登录成功与演示快捷 → 工作台
+  assert.match(login, /location\.href = 'register-success\.html'/, '注册成功应落点注册成功页');
+  assert.equal((login.match(/location\.href = '\.\.\/\.\.\/index\.html'/g) || []).length, 2, '登录与演示快捷仍直进工作台');
+
+  // 成功页：主 CTA 指向客户入驻申请，含流程引导与登录守卫
+  assert.ok(success.includes('注册成功'), '应有注册成功标题');
+  assert.match(success, /href="\.\.\/store-engine\/manage\.html"[\s\S]{0,60}去发起客户入驻申请/, '主 CTA 应指向客户入驻申请');
+  assert.match(success, /注册完成不代表入驻完成/, '应明确注册≠入驻的认知引导');
+  assert.match(success, /Auth\.requireAuth\(\)/, '应有登录守卫');
+  assert.match(success, /recruit_talents/, '应回显注册档案信息');
+  compileInlineScripts('pages/recruit/register-success.html');
 });

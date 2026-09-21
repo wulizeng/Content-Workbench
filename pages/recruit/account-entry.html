@@ -68,6 +68,7 @@
   <div class="page-title" style="display:flex;align-items:center;gap:12px;">
     <span>账号信息录入列表</span>
     <a class="btn btn-primary" style="margin-left:auto;padding:6px 16px;font-size:13px;" href="account-entry-edit.html?mode=add">新增</a>
+    <button type="button" class="btn" style="padding:6px 16px;font-size:13px;" onclick="exportCSV()">导出 CSV</button>
   </div>
 
   <div class="search-area">
@@ -122,6 +123,7 @@
             <th>账号定位</th>
             <th>账号负责人</th>
             <th>创建时间</th>
+            <th>状态</th>
             <th>操作</th>
           </tr>
         </thead>
@@ -142,6 +144,16 @@
 <script>
 var STORAGE_KEY = 'recruit_account_entries';
 var SEARCH_IDS = ['sNickname', 'sUid', 'sMode', 'sBrand', 'sCooperationCode'];
+
+// 记录状态：待提交可编辑/可提交，已提交锁定仅可查看（与全站状态字典样式一致）
+var ENTRY_STATUS = { unsubmit: '待提交', submitted: '已提交' };
+var ENTRY_STATUS_CLS = { unsubmit: 'initial', submitted: 'submitted' };
+function entryStatusOf(row) { return row.status === 'submitted' ? 'submitted' : 'unsubmit'; }
+function entryStatusHtml(row) {
+  var s = entryStatusOf(row);
+  return '<span class="status-tag ' + ENTRY_STATUS_CLS[s] + '">' + ENTRY_STATUS[s] + '</span>';
+}
+function nowText() { return new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-'); }
 
 var mockData = AppStorage.load(STORAGE_KEY, []);
 
@@ -167,9 +179,10 @@ function renderTable(data) {
   var tbody = document.getElementById('tableBody');
   var html = '';
   if (data.length === 0) {
-    html = '<tr><td colspan="12" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无数据</div><div class="empty-hint">暂无符合条件的账号信息</div></td></tr>';
+    html = '<tr><td colspan="13" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无数据</div><div class="empty-hint">暂无符合条件的账号信息</div></td></tr>';
   } else {
     data.forEach(function(row, index) {
+      var editable = entryStatusOf(row) === 'unsubmit';
       html += '<tr>';
       html += '<td>' + (index + 1) + '</td>';
       html += '<td>' + (row.mode ? '<span class="type-tag">' + esc(row.mode) + '</span>' : '') + '</td>';
@@ -182,8 +195,12 @@ function renderTable(data) {
       html += '<td>' + esc(row.positioning) + '</td>';
       html += '<td>' + esc(row.owner) + '</td>';
       html += '<td>' + esc(row.created_at) + '</td>';
+      html += '<td>' + entryStatusHtml(row) + '</td>';
       html += '<td class="col-actions">';
-      html += '<a class="link-action link-action-icon" title="编辑" href="account-entry-edit.html?mode=edit&id=' + row.id + '"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>编辑</a>';
+      if (editable) {
+        html += '<a class="link-action link-action-icon" title="编辑" href="account-entry-edit.html?mode=edit&id=' + row.id + '"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>编辑</a>';
+        html += '<a class="link-action link-action-icon" title="提交" href="javascript:void(0)" onclick="submitEntry(' + row.id + ')" style="margin-left:8px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>提交</a>';
+      }
       html += '<a class="link-action link-action-icon" title="查看详情" href="account-entry-detail.html?id=' + row.id + '" style="margin-left:8px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>查看</a>';
       html += '</td></tr>';
     });
@@ -199,9 +216,10 @@ function renderCards(data) {
     html = '<div class="ae-card"><div class="ae-card-body">暂无符合条件的账号信息</div></div>';
   } else {
     data.forEach(function(row) {
+      var editable = entryStatusOf(row) === 'unsubmit';
       html += '<div class="ae-card">';
       html += '<div class="ae-card-head"><span class="name">' + esc(row.nickname) + '</span>' +
-        (row.mode ? '<span class="type-tag">' + esc(row.mode) + '</span>' : '') + '</div>';
+        (row.mode ? '<span class="type-tag">' + esc(row.mode) + '</span>' : '') + entryStatusHtml(row) + '</div>';
       html += '<div class="ae-card-body">';
       html += '<div>账号UID：' + esc(row.uid) + '</div>';
       // KOC 类展示合作码，其余模式展示平台与运营模式
@@ -214,7 +232,8 @@ function renderCards(data) {
       }
       html += '</div>';
       html += '<div class="ae-card-foot">' +
-        '<a class="btn" style="height:48px;line-height:48px;padding:0 16px;margin-right:8px;" href="account-entry-edit.html?mode=edit&id=' + row.id + '">编辑</a>' +
+        (editable ? '<a class="btn" style="height:48px;line-height:48px;padding:0 16px;margin-right:8px;" href="account-entry-edit.html?mode=edit&id=' + row.id + '">编辑</a>' +
+          '<button type="button" class="btn" style="height:48px;line-height:48px;padding:0 16px;margin-right:8px;" onclick="submitEntry(' + row.id + ')">提交</button>' : '') +
         '<a class="btn btn-primary" style="height:48px;line-height:48px;padding:0 16px;" href="account-entry-detail.html?id=' + row.id + '">查看详情</a>' +
         '</div>';
       html += '</div>';
@@ -291,6 +310,47 @@ function clearSearchTag(id) {
 }
 
 window.addEventListener('resize', function() { renderView(currentFiltered); });
+
+// ===== 提交（待提交 → 已提交，提交后锁定不可编辑） =====
+function submitEntry(id) {
+  if (!window.confirm('提交后该账号信息将不可再编辑，确认提交？')) return;
+  var list = AppStorage.load(STORAGE_KEY, []);
+  var hit = false;
+  list.forEach(function(r) {
+    if (r.id === id && entryStatusOf(r) === 'unsubmit') { r.status = 'submitted'; r.updated_at = nowText(); hit = true; }
+  });
+  if (!hit) { showToast('记录不存在或已提交', 'error'); return; }
+  AppStorage.save(STORAGE_KEY, list);
+  mockData = list;
+  renderView(filterData());
+  showToast('已提交', 'success');
+}
+
+// ===== 导出当前列表全部字段（CSV，带 BOM 兼容 Excel） =====
+function csvCell(v) {
+  var s = (v === null || v === undefined) ? '' : String(v);
+  if (/[",\n]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+function exportCSV() {
+  var data = currentFiltered;
+  if (!data.length) { showToast('当前列表无数据，无法导出', 'info'); return; }
+  var lines = [['序号', '入驻模式', '账号昵称', '账号UID', '合作码', '账号所属平台', '账号运营模式', '主销品牌', '账号定位', '账号负责人', '创建时间', '状态'].join(',')];
+  data.forEach(function(row, i) {
+    lines.push([i + 1, row.mode, row.nickname, row.uid, row.cooperation_code, row.platform, row.operation_mode,
+      row.brand, row.positioning, row.owner, row.created_at, ENTRY_STATUS[entryStatusOf(row)]].map(csvCell).join(','));
+  });
+  var d = new Date();
+  function p(n) { return (n < 10 ? '0' : '') + n; }
+  var stamp = '' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
+  var blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = '账号信息录入_' + stamp + '.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+  showToast('已导出 ' + data.length + ' 条记录', 'success');
+}
 
 // 从新增/编辑页返回时自动刷新数据
 window.addEventListener('pageshow', function() {

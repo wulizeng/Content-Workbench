@@ -45,36 +45,49 @@
   function isMakaleMode(mode) { return mode === MAKALE_MODE; }
   function brandsForMode(mode) { return isMakaleMode(mode) ? MAKALE_BRANDS.slice() : BRANDS.slice(); }
 
-  // 13 个入驻流程阶段（默认模板，适用于账号代运营/整店代运营/机构/马卡乐合伙人）
+  // 12 个入驻流程阶段（默认模板，适用于账号代运营/整店代运营/机构）
   var STAGES = [
     { no: 1, name: '客户注册' },
     { no: 2, name: '选择入驻模式' },
     { no: 3, name: '填写企业信息' },
     { no: 4, name: '运营审核企业' },
-    { no: 5, name: '项目规划填写' },
-    { no: 6, name: 'BPM供应商创建' },
-    { no: 7, name: '网签合同' },
-    { no: 8, name: '保证金缴纳' },
-    { no: 9, name: '授权书签署' },
-    { no: 10, name: '账号信息录入' },
-    { no: 11, name: '内部软件开通' },
-    { no: 12, name: '规则宣导培训' },
-    { no: 13, name: '入驻完毕' }
+    { no: 5, name: 'BPM审批建档' },
+    { no: 6, name: '签署合作合同' },
+    { no: 7, name: '保证金缴纳' },
+    { no: 8, name: '授权书签署' },
+    { no: 9, name: '账号信息录入' },
+    { no: 10, name: '内部软件开通' },
+    { no: 11, name: '签署品牌规则' },
+    { no: 12, name: '入驻完毕' }
   ];
 
   // 分模式的流程模板：
-  //   default       → 13 阶段（同 STAGES），适用于账号代运营 / 整店代运营 / 机构 / 马卡乐合伙人
+  //   default       → 12 阶段（同 STAGES），适用于账号代运营 / 整店代运营 / 机构
+  //   makale        → 11 阶段，适用于马卡乐合伙人（default 基础上去掉「内部软件开通」）
   //   influencer    → 8 阶段，适用于达人
   //   customer_koc  → 10 阶段，适用于客户KOC（达人基础上多开软件 + 品牌规则两个环节）
   //   koc_lite      → 6 阶段，适用于素人KOC / 联营KOC
   var STAGE_TEMPLATES = {
     default: STAGES,
+    makale: [
+      { no: 1, name: '客户注册' },
+      { no: 2, name: '选择入驻模式' },
+      { no: 3, name: '填写企业信息' },
+      { no: 4, name: '运营审核企业' },
+      { no: 5, name: 'BPM审批建档' },
+      { no: 6, name: '签署合作合同' },
+      { no: 7, name: '保证金缴纳' },
+      { no: 8, name: '授权书签署' },
+      { no: 9, name: '账号信息录入' },
+      { no: 10, name: '签署品牌规则' },
+      { no: 11, name: '入驻完毕' }
+    ],
     influencer: [
       { no: 1, name: '客户注册' },
       { no: 2, name: '选择入驻模式' },
       { no: 3, name: '供应商信息录入' },
-      { no: 4, name: 'BPM供应商创建' },
-      { no: 5, name: '网签合同' },
+      { no: 4, name: 'BPM审批建档' },
+      { no: 5, name: '签署合作合同' },
       { no: 6, name: '授权书签署' },
       { no: 7, name: '账号信息录入' },
       { no: 8, name: '入驻完毕' }
@@ -83,8 +96,8 @@
       { no: 1, name: '客户注册' },
       { no: 2, name: '选择入驻模式' },
       { no: 3, name: '供应商信息录入' },
-      { no: 4, name: 'BPM供应商创建' },
-      { no: 5, name: '网签合同' },
+      { no: 4, name: 'BPM审批建档' },
+      { no: 5, name: '签署合作合同' },
       { no: 6, name: '授权书签署' },
       { no: 7, name: '账号信息录入' },
       { no: 8, name: '软件开通' },
@@ -106,7 +119,7 @@
     '账号代运营': 'default',
     '整店代运营': 'default',
     '机构': 'default',
-    '马卡乐合伙人': 'default',
+    '马卡乐合伙人': 'makale',
     '达人': 'influencer',
     '客户KOC': 'customer_koc',
     '素人KOC': 'koc_lite',
@@ -227,7 +240,7 @@
     ],
     capability: [
       { key: 'channelAbility', label: '渠道能力', type: 'textarea', required: false, placeholder: '请说明可运营的渠道资源与能力' },
-      { key: 'intentPlatform', label: '意向平台', type: 'select', required: false, options: ['抖音', '视频号', '小红书', '快手'] },
+      { key: 'intentPlatform', label: '意向平台', type: 'text', required: false, placeholder: '请输入意向平台' },
       { key: 'annualTarget', label: '年度目标', type: 'number', required: false, unit: '万元', placeholder: '请输入年度目标（万元）' },
       { key: 'mainCategory', label: '主营品类', type: 'text', required: false, placeholder: '请输入主营品类' },
       { key: 'supplyStatus', label: '货源情况', type: 'textarea', required: false, placeholder: '请说明货源渠道与稳定性' },
@@ -414,7 +427,7 @@
   // ========== 业务操作 ==========
 
   function emptyForm(mode) {
-    // 马卡乐合伙人：使用「企业信息 + 业务能力」专属字段集（流程节点仍为 default 13 阶段）
+    // 马卡乐合伙人：使用「企业信息 + 业务能力」专属字段集（流程为 makale 专属 11 阶段模板）
     if (isMakaleMode(mode)) {
       var mkForm = { enterprise: {}, capability: {}, accounts: [] };
       MAKALE_STEPS.forEach(function(step) {
@@ -627,18 +640,23 @@
       var app = list[i];
       if (app.status === STATUS.SUBMITTED) return { ok: false, error: '申请已提交，请等待审核' };
       if (app.status === STATUS.REVIEWED) return { ok: false, error: '申请已审核，无需再次提交' };
-      // 唯一校验：同一 企业名称 + 入驻模式 + 品牌 只能发起一次申请
+      // 唯一校验：同一 客户名称 + 品牌 + 入驻模式 + 入驻平台 只能发起一次申请
+      // 客户名称与列表口径一致：finance.fullName 优先，马卡乐取 enterprise.entName
       var fin = (app.form && app.form.finance) || {};
-      var fullName = String(fin.fullName || '').trim();
-      if (fullName) {
+      var ent0 = (app.form && app.form.enterprise) || {};
+      var custName = String(fin.fullName || ent0.entName || '').trim();
+      if (custName) {
+        var platKey = (app.platforms || []).join('、');
         var dup = list.some(function(o) {
           if (o.id === id) return false;
           var oFin = (o.form && o.form.finance) || {};
-          return String(oFin.fullName || '').trim() === fullName &&
+          var oEnt = (o.form && o.form.enterprise) || {};
+          return String(oFin.fullName || oEnt.entName || '').trim() === custName &&
+                 (o.brand || '') === (app.brand || '') &&
                  o.mode === app.mode &&
-                 (o.brand || '') === (app.brand || '');
+                 (o.platforms || []).join('、') === platKey;
         });
-        if (dup) return { ok: false, error: '已存在相同「企业名称 + 入驻模式 + 品牌」的申请，不能重复发起' };
+        if (dup) return { ok: false, error: '已存在相同「客户名称 + 品牌 + 入驻模式 + 入驻平台」的申请，不能重复发起' };
       }
       app.status = STATUS.SUBMITTED;
       app.submittedAt = nowText();
@@ -927,6 +945,7 @@
     STAGES: clone(STAGES),
     STAGE_TEMPLATES: {
       default: clone(STAGE_TEMPLATES.default),
+      makale: clone(STAGE_TEMPLATES.makale),
       influencer: clone(STAGE_TEMPLATES.influencer),
       customer_koc: clone(STAGE_TEMPLATES.customer_koc),
       koc_lite: clone(STAGE_TEMPLATES.koc_lite)

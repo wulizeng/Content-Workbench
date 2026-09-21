@@ -86,7 +86,7 @@
   .ob-chip-edit:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
   .ob-save-hint { margin-left: auto; font-size: 12px; color: var(--text-tertiary); }
 
-  /* ================= 13 阶段流程指示器 ================= */
+  /* ================= 流程阶段指示器（default 12 / makale 11 阶段，按模式模板渲染） ================= */
   .stage-wrap {
     background: #fff; border: 1px solid var(--border); border-radius: 12px;
     padding: 18px 14px 14px; margin-top: 14px;
@@ -219,7 +219,7 @@
   .ob-mode-desc { font-size: 12px; color: var(--text-tertiary); line-height: 1.5; }
   .ob-brand-row { margin-top: 14px; padding: 13px 14px; border: 1px dashed var(--border); border-radius: 12px; background: #fafbff; }
   .ob-brand-row[hidden] { display: none; }
-  .ob-brand-row label { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+  .ob-brand-row > label { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
   .ob-brand-row label .req { color: var(--danger); margin-left: 2px; }
   .ob-brand-row select { width: 100%; height: 40px; border: 1px solid var(--border); border-radius: 8px; padding: 0 10px; font-size: 14px; color: var(--text); background: #fff; }
   .ob-brand-row select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(91,108,245,.12); }
@@ -495,17 +495,15 @@
       <h3 id="modeModalTitle">选择入驻模式</h3>
       <button type="button" class="ob-modal-close" onclick="closeModeModal()" aria-label="关闭弹窗">&times;</button>
     </div>
-    <p class="ob-modal-sub">请选择本次入驻的业务模式；任一模式均需选择品牌（单选）与入驻平台（单选）。</p>
+    <p class="ob-modal-sub">请选择本次入驻的业务模式；品牌可多选；入驻平台单选（马卡乐合伙人无需选择入驻平台，平台意向可在编辑页「业务能力-意向平台」填写）。</p>
     <div class="ob-mode-grid" role="radiogroup" aria-label="入驻模式" id="modeGrid"></div>
     <div class="ob-brand-row" id="brandRow">
-      <label for="brandSelect">选择品牌（单选）<span class="req">*</span></label>
-      <select id="brandSelect" aria-describedby="brandError">
-        <option value="">请选择品牌</option>
-      </select>
-      <div class="ob-field-error" id="brandError">请选择入驻品牌</div>
+      <label class="ob-platform-label">选择品牌（多选）<span class="req">*</span></label>
+      <div class="ob-platform-grid" id="brandGrid" role="group" aria-label="入驻品牌"></div>
+      <div class="ob-field-error" id="brandError">请至少选择一个入驻品牌</div>
     </div>
     <div class="ob-platform-row" id="platformRow">
-      <label class="ob-platform-label">入驻平台（单选）<span class="req">*</span></label>
+      <label class="ob-platform-label" id="platformLabel">入驻平台（单选）<span class="req">*</span></label>
       <div class="ob-platform-grid" id="platformGrid" role="radiogroup" aria-label="入驻平台"></div>
       <div class="ob-field-error" id="platformError">请选择入驻平台</div>
     </div>
@@ -661,6 +659,7 @@ function openModeModal() {
   modal.hidden = false;
   renderModeGrid();
   renderPlatformGrid([]);
+  document.getElementById('platformRow').hidden = false;
   // 品牌行默认展示未选模式时的通用品牌（未选模式前不锁定为马卡乐）
   renderBrandOptions('', null);
   document.getElementById('brandError').classList.remove('show');
@@ -681,11 +680,12 @@ function openEditModeModal() {
   var currentRadio = modal.querySelector('input[name="obMode"][value="' + app.mode + '"]');
   if (currentRadio) {
     currentRadio.checked = true;
-    // 品牌选项按当前模式联动，并预选当前品牌
+    // 品牌选项按当前模式联动，并预选当前已选品牌
     renderBrandOptions(app.mode, app.brand);
   }
-  // 预选当前平台
+  // 预选当前平台；马卡乐合伙人无需选择平台，隐藏整行（平台意向由编辑页「业务能力-意向平台」承载）
   renderPlatformGrid(app.platforms || []);
+  document.getElementById('platformRow').hidden = Store.isMakaleMode(app.mode);
   document.getElementById('platformError').classList.remove('show');
   document.getElementById('modeConfirmBtn').textContent = '保存修改';
   document.getElementById('modeConfirmBtn').onclick = confirmChangeMode;
@@ -700,22 +700,50 @@ function closeModeModal() {
 }
 
 function onModeChange() {
-  // 品牌选项随入驻模式联动：马卡乐合伙人仅「马卡乐」（唯一选项自动选中），其余模式使用通用品牌
+  // 品牌选项随入驻模式联动：马卡乐合伙人仅「马卡乐」且默认勾选
   var checked = document.querySelector('input[name="obMode"]:checked');
-  renderBrandOptions(checked ? checked.value : '', null);
+  var mode = checked ? checked.value : '';
+  var isMakale = Store.isMakaleMode(mode);
+  renderBrandOptions(mode, isMakale ? ['马卡乐'] : null);
+  // 马卡乐合伙人无需选择入驻平台：整行隐藏并清除残留校验提示（平台意向由「业务能力-意向平台」承载）
+  var platRow = document.getElementById('platformRow');
+  if (platRow) platRow.hidden = isMakale;
+  if (isMakale) document.getElementById('platformError').classList.remove('show');
   document.getElementById('brandError').classList.remove('show');
 }
 
-// 按模式渲染品牌下拉：单品牌时自动选中，多品牌时保留 placeholder 与已选值
+// 按模式渲染品牌复选框：马卡乐合伙人仅「马卡乐」一项；selected 支持数组或以「、」连接的字符串
 function renderBrandOptions(mode, selected) {
-  var sel = document.getElementById('brandSelect');
-  if (!sel) return;
+  var grid = document.getElementById('brandGrid');
+  if (!grid) return;
   var brands = Store.brandsForMode(mode);
-  var html = brands.length > 1 ? '<option value="">请选择品牌</option>' : '';
+  var sel = Array.isArray(selected) ? selected
+    : (selected ? String(selected).split('、') : []);
+  var html = '';
   brands.forEach(function(b) {
-    html += '<option value="' + esc(b) + '"' + (b === selected ? ' selected' : '') + '>' + esc(b) + '</option>';
+    var isActive = sel.indexOf(b) > -1;
+    html += '<label class="ob-platform-item' + (isActive ? ' checked' : '') + '">' +
+      '<input type="checkbox" name="obBrand" value="' + esc(b) + '"' + (isActive ? ' checked' : '') + ' onchange="onBrandChange(this)">' +
+      '<span>' + esc(b) + '</span>' +
+      '</label>';
   });
-  sel.innerHTML = html;
+  grid.innerHTML = html;
+}
+
+// 复选框选中态与胶囊样式同步
+function onBrandChange(el) {
+  var label = el.closest('.ob-platform-item');
+  if (label) label.classList.toggle('checked', el.checked);
+  document.getElementById('brandError').classList.remove('show');
+}
+
+// 收集已勾选的品牌（多选）
+function collectBrandSelection() {
+  var vals = [];
+  document.querySelectorAll('input[name="obBrand"]:checked').forEach(function(cb) {
+    vals.push(cb.value);
+  });
+  return vals;
 }
 
 function confirmMode() {
@@ -723,23 +751,26 @@ function confirmMode() {
   if (!checked) { showToast('请先选择入驻模式', 'error'); return; }
   var mode = checked.value;
   var needsBrand = checked.getAttribute('data-needs-brand') === '1';
+  // 品牌多选：勾选结果以「、」连接存入 brand 字段
   var brand = '';
   if (needsBrand) {
-    brand = document.getElementById('brandSelect').value;
-    if (!brand) {
+    var brandVals = collectBrandSelection();
+    if (!brandVals.length) {
       document.getElementById('brandError').classList.add('show');
-      document.getElementById('brandSelect').focus();
       return;
     }
+    brand = brandVals.join('、');
   }
-  // 收集平台选择
+  // 马卡乐合伙人无需选择入驻平台（平台意向由编辑页「业务能力-意向平台」承载）；其余模式仍须单选一项
   var platforms = [];
-  document.querySelectorAll('input[name="obPlatform"]:checked').forEach(function(cb) {
-    platforms.push(cb.value);
-  });
-  if (!platforms.length) {
-    document.getElementById('platformError').classList.add('show');
-    return;
+  if (!Store.isMakaleMode(mode)) {
+    document.querySelectorAll('input[name="obPlatform"]:checked').forEach(function(cb) {
+      platforms.push(cb.value);
+    });
+    if (!platforms.length) {
+      document.getElementById('platformError').classList.add('show');
+      return;
+    }
   }
   // 创建申请（待提交）并按流程模板路由到对应页面
   var user = Auth.getCurrentUser() || {};
@@ -757,23 +788,26 @@ function confirmChangeMode() {
   if (!checked) { showToast('请先选择入驻模式', 'error'); return; }
   var mode = checked.value;
   var needsBrand = checked.getAttribute('data-needs-brand') === '1';
+  // 品牌多选：勾选结果以「、」连接
   var brand = '';
   if (needsBrand) {
-    brand = document.getElementById('brandSelect').value;
-    if (!brand) {
+    var brandVals = collectBrandSelection();
+    if (!brandVals.length) {
       document.getElementById('brandError').classList.add('show');
-      document.getElementById('brandSelect').focus();
       return;
     }
+    brand = brandVals.join('、');
   }
-  // 收集平台选择
+  // 马卡乐合伙人无需平台；其余模式仍须单选一项
   var platforms = [];
-  document.querySelectorAll('input[name="obPlatform"]:checked').forEach(function(cb) {
-    platforms.push(cb.value);
-  });
-  if (!platforms.length) {
-    document.getElementById('platformError').classList.add('show');
-    return;
+  if (!Store.isMakaleMode(mode)) {
+    document.querySelectorAll('input[name="obPlatform"]:checked').forEach(function(cb) {
+      platforms.push(cb.value);
+    });
+    if (!platforms.length) {
+      document.getElementById('platformError').classList.add('show');
+      return;
+    }
   }
   var user = Auth.getCurrentUser() || {};
   var wasMakale = Store.isMakaleMode(app.mode);
@@ -1071,12 +1105,12 @@ function confirmReview() {
   }, 300);
 }
 
-// ================= 13 阶段流程指示器 =================
+// ================= 流程阶段指示器（按当前申请的模式模板渲染：default 12 / makale 11） =================
 function renderStages() {
   var current = Store.currentStageOf(app);
   var strip = document.getElementById('stageStrip');
   var html = '';
-  Store.STAGES.forEach(function(stage) {
+  Store.stagesForApp(app).forEach(function(stage) {
     var cls = 'todo';
     if (stage.no < current) cls = 'done';
     else if (stage.no === current) cls = 'current';
@@ -1238,7 +1272,7 @@ function buildMonthlyGrid(stepKey) {
 function buildPanels() {
   var container = document.getElementById('panelContainer');
   container.innerHTML = '';
-  // 马卡乐合伙人：企业信息 + 业务能力 两区块（流程节点不变）
+  // 马卡乐合伙人：企业信息 + 业务能力 两区块（流程为 makale 专属 11 阶段模板）
   if (app && Store.isMakaleMode(app.mode)) {
     Store.MAKALE_STEPS.forEach(function(step) {
       var panel = document.createElement('fieldset');

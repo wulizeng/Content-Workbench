@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>注册成功 - 内容电商分销</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    body {
+      background: linear-gradient(160deg, #eef0ff 0%, #f5f7fb 55%, #ffffff 100%);
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+      padding: 24px 16px; box-sizing: border-box;
+    }
+    .rs-shell {
+      width: 520px; max-width: 94vw; background: #fff; border-radius: 20px;
+      box-shadow: var(--shadow-xl); padding: 40px 36px;
+    }
+    .rs-icon {
+      width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 18px;
+      background: #f0fdf4; border: 2px solid #bbf7d0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .rs-title { font-size: 22px; font-weight: 700; color: var(--text); text-align: center; margin-bottom: 6px; }
+    .rs-sub { font-size: 13px; color: var(--text-tertiary); text-align: center; margin-bottom: 26px; line-height: 1.7; }
+    .rs-profile {
+      background: #f8fafc; border: 1px solid var(--border-light); border-radius: 12px;
+      padding: 14px 18px; margin-bottom: 22px; display: grid;
+      grid-template-columns: 1fr 1fr; gap: 8px 20px; font-size: 13px;
+    }
+    .rs-profile .k { color: var(--text-tertiary); }
+    .rs-profile .v { color: var(--text); font-weight: 600; word-break: break-all; }
+    .rs-steps-title { font-size: 13px; font-weight: 700; color: var(--text-secondary); margin-bottom: 12px; }
+    .rs-steps { list-style: none; margin: 0 0 26px; padding: 0; counter-reset: step; }
+    .rs-steps li {
+      position: relative; padding: 0 0 14px 34px; font-size: 13px; color: var(--text-secondary); line-height: 1.6;
+    }
+    .rs-steps li::before {
+      counter-increment: step; content: counter(step);
+      position: absolute; left: 0; top: 0; width: 22px; height: 22px; border-radius: 50%;
+      background: #eef0ff; color: var(--primary); font-size: 12px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .rs-steps li:not(:last-child)::after {
+      content: ''; position: absolute; left: 10px; top: 26px; bottom: 2px; width: 2px; background: var(--border-light);
+    }
+    .rs-steps strong { color: var(--text); }
+    .rs-cta {
+      display: block; width: 100%; height: 46px; line-height: 46px; text-align: center;
+      background: var(--primary); color: #fff; border: none; border-radius: 12px;
+      font-size: 15px; font-weight: 700; text-decoration: none; font-family: inherit; cursor: pointer;
+      transition: opacity .18s; box-sizing: border-box;
+    }
+    .rs-cta:hover { opacity: .9; }
+    .rs-alt { text-align: center; margin-top: 14px; font-size: 12.5px; color: var(--text-tertiary); }
+    .rs-alt a { color: var(--primary); text-decoration: none; }
+    @media (max-width: 480px) { .rs-profile { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<div class="rs-shell">
+  <div class="rs-icon">
+    <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+  </div>
+  <div class="rs-title">注册成功</div>
+  <div class="rs-sub">您的客户账号已创建并自动登录。<br>注册完成不代表入驻完成，还需发起入驻申请并通过审核。</div>
+
+  <div class="rs-profile">
+    <div><span class="k">姓名：</span><span class="v" id="rsName">-</span></div>
+    <div><span class="k">手机号：</span><span class="v" id="rsPhone">-</span></div>
+    <div><span class="k">账号编号：</span><span class="v" id="rsTid">-</span></div>
+    <div><span class="k">对接商务：</span><span class="v" id="rsBd">-</span></div>
+  </div>
+
+  <div class="rs-steps-title">接下来完成以下入驻步骤</div>
+  <ol class="rs-steps">
+    <li><strong>发起入驻申请</strong>：选择入驻模式、品牌与平台</li>
+    <li><strong>填写资料并提交</strong>：企业信息等申报材料，支持保存草稿</li>
+    <li><strong>运营审核</strong>：审核通过后进入签约环节</li>
+    <li><strong>合同与账号</strong>：签署合作合同、缴纳保证金、录入账号信息，完成入驻</li>
+  </ol>
+
+  <a class="rs-cta" href="../store-engine/manage.html" id="rsCta">去发起客户入驻申请</a>
+  <div class="rs-alt">也可稍后从工作台左侧「客户入驻申请」进入 · <a href="../../index.html">先进入工作台看看</a></div>
+</div>
+
+<script src="../../js/auth.js"></script>
+<script src="../../js/shared/escape-html.js"></script>
+<script>
+  // 本页依赖注册/登录写入的会话；未登录回登录页
+  if (!Auth.requireAuth()) { /* requireAuth 已跳转 */ }
+  (function init() {
+    var phone = localStorage.getItem('recruit_current_phone') || (Auth.getCurrentUser() && Auth.getCurrentUser().phone) || '';
+    var talents = {};
+    try { talents = JSON.parse(localStorage.getItem('recruit_talents') || '{}'); } catch (e) { talents = {}; }
+    var t = talents[phone] || {};
+    function set(id, v) { document.getElementById(id).textContent = v || '-'; }
+    set('rsName', t.name); set('rsPhone', phone); set('rsTid', t.talent_id); set('rsBd', t.bdContact);
+  })();
+</script>
+</body>
+</html>

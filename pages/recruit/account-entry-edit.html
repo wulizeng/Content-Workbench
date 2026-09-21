@@ -402,6 +402,12 @@ function init() {
       onModeChange();
       return;
     }
+    // 已提交记录锁定：不允许进入编辑
+    if (record.status === 'submitted') {
+      showToast('已提交的账号信息不允许编辑', 'error');
+      setTimeout(goBack, 600);
+      return;
+    }
     var modeSel = document.getElementById('mode');
     modeSel.value = record.mode || '';
     // 入驻模式决定字段集，编辑时不允许改模式
@@ -483,7 +489,10 @@ function doSubmit() {
   if (mode === 'edit' && editId > 0) {
     var idx = list.findIndex(function(r) { return r.id === editId; });
     if (idx >= 0) {
+      // 二次防线：列表已隐藏编辑入口，直接访问 URL 时在此拦截
+      if (list[idx].status === 'submitted') { showToast('已提交的账号信息不允许编辑', 'error'); return; }
       data.id = editId;
+      data.status = list[idx].status || 'unsubmit';
       data.creator = list[idx].creator;
       data.creator_phone = list[idx].creator_phone;
       data.created_at = list[idx].created_at;
@@ -492,6 +501,7 @@ function doSubmit() {
     }
   } else {
     data.id = list.length > 0 ? Math.max.apply(null, list.map(function(r) { return r.id; })) + 1 : 1;
+    data.status = 'unsubmit'; // 新增默认待提交，可在列表页提交后锁定
     data.creator = currentUser ? currentUser.name : '';
     data.creator_phone = currentUser ? (currentUser.phone || '') : '';
     data.created_at = now();
