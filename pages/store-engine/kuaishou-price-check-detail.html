@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>核价任务详情</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    .detail-wrap { width:100%; margin:0 auto; padding:16px 20px 24px; box-sizing:border-box; }
+    .detail-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .detail-header .page-title { margin-bottom:0; font-size:16px; }
+    .task-no-chip {
+      font-family:"SF Mono","Menlo",monospace; font-size:12px; font-weight:600;
+      color:var(--primary); background:var(--primary-50); border:1px solid #dce0f8;
+      padding:2px 10px; border-radius:6px;
+    }
+    .section {
+      background:var(--bg-white); border-radius:10px;
+      box-shadow:0 1px 3px rgba(15,23,42,0.06); border:1px solid var(--border);
+      margin-bottom:12px; overflow:hidden;
+    }
+    .section:last-child { margin-bottom:0; }
+    .section-head {
+      display:flex; align-items:center; gap:8px;
+      padding:10px 16px; border-bottom:1px solid var(--border); background:#f8fafc;
+    }
+    .section-head h3 { margin:0; font-size:13px; font-weight:700; color:var(--ink); display:flex; align-items:center; gap:7px; }
+    .section-head .sec-badge { font-size:12px; color:var(--text-tertiary); font-weight:400; }
+    .btn-retry {
+      margin-left:auto; display:inline-flex; align-items:center; gap:5px;
+      padding:6px 14px; font-size:12px; font-weight:600;
+    }
+    .btn-retry svg { width:13px; height:13px; }
+    .btn-retry:disabled { opacity:.45; cursor:not-allowed; }
+    #retryCount { margin-left:2px; }
+    .section-body { padding:12px 16px; }
+    .info-grid { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:8px 24px; }
+    .info-item { display:inline-flex; align-items:center; gap:0; min-width:0; }
+    .info-label { font-size:13px; color:var(--text-tertiary); white-space:nowrap; }
+    .info-value { font-size:13px; font-weight:600; color:var(--ink); word-break:break-all; }
+
+    /* ===== 统计条（总数/成功/失败） ===== */
+    .stat-bar { display:flex; gap:16px; margin-bottom:12px; }
+    .stat-card {
+      flex:1; display:flex; align-items:center; gap:14px;
+      background:var(--bg-white); border:1px solid var(--border); border-radius:10px;
+      padding:14px 18px; box-shadow:0 1px 3px rgba(15,23,42,0.06);
+    }
+    .stat-icon {
+      width:40px; height:40px; border-radius:10px; flex-shrink:0;
+      display:grid; place-items:center;
+    }
+    .stat-icon svg { width:20px; height:20px; }
+    .stat-icon.total { background:#eef2ff; color:#4f46e5; }
+    .stat-icon.success { background:#d1fae5; color:#059669; }
+    .stat-icon.fail { background:#fee2e2; color:#dc2626; }
+    .stat-meta { display:flex; flex-direction:column; min-width:0; }
+    .stat-num { font-size:22px; font-weight:700; line-height:1.2; color:var(--ink); font-family:"SF Mono","Menlo",monospace; }
+    .stat-num.success { color:#059669; }
+    .stat-num.fail { color:#dc2626; }
+    .stat-label { font-size:12px; color:var(--text-tertiary); margin-top:2px; }
+
+    /* ===== 核价明细表格 ===== */
+    .pkg-table { width:100%; border-collapse:separate; border-spacing:0; font-size:13px; }
+    .pkg-table thead th {
+      background:#f8fafc; padding:8px 12px; text-align:center;
+      font-weight:600; font-size:12px; color:var(--text-secondary);
+      border-bottom:1px solid var(--border); white-space:nowrap;
+    }
+    .pkg-table tbody td {
+      padding:8px 12px; border-bottom:1px solid var(--border-light); font-size:13px;
+      color:var(--text-primary); text-align:center; white-space:nowrap;
+    }
+    .pkg-table tbody tr:last-child td { border-bottom:none; }
+    .pkg-table tbody tr:hover td { background:#f8fafc; }
+    .price-cur { font-family:"SF Mono","Menlo",monospace; font-size:12px; }
+    .price-check { font-family:"SF Mono","Menlo",monospace; font-size:12px; font-weight:600; color:var(--primary); }
+    .fail-reason { font-size:12px; color:#dc2626; }
+
+    /* ===== 状态标签 ===== */
+    .status-tag { display:inline-flex; align-items:center; gap:4px; padding:2px 9px; border-radius:10px; font-size:12px; font-weight:500; }
+    .status-tag.done { background:#d1fae5; color:#059669; }
+    .status-tag.fail { background:#fee2e2; color:#dc2626; }
+    .status-tag.pending { background:#fef3c7; color:#d97706; }
+    .status-tag.running { background:#dbeafe; color:#2563eb; }
+    .status-tag.partial { background:#ffedd5; color:#ea580c; }
+
+    .empty-box { text-align:center; padding:60px 0; color:var(--text-tertiary); font-size:13px; }
+
+    /* ===== Toast 提示 ===== */
+    .toast-container { position:fixed; top:20px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:8px; }
+    .toast { padding:10px 18px; border-radius:8px; font-size:13px; font-weight:500; box-shadow:0 4px 12px rgba(0,0,0,.12); animation:toastIn .25s ease; }
+    .toast-info { background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe; }
+    .toast-success { background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; }
+    .toast-warning { background:#fffbeb; color:#d97706; border:1px solid #fde68a; }
+    .toast-error { background:#fef2f2; color:#dc2626; border:1px solid #fecaca; }
+    .toast-hide { animation:toastOut .2s ease forwards; }
+    @keyframes toastIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes toastOut { from { opacity:1; } to { opacity:0; transform:translateY(-8px); } }
+  </style>
+</head>
+<body>
+  <div class="detail-wrap">
+    <div id="toastContainer" class="toast-container"></div>
+    <div class="detail-header">
+      <div class="page-title">核价任务详情 <span class="task-no-chip" id="taskNoChip"></span></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn" onclick="downloadResult()">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          下载核价结果
+        </button>
+        <button class="btn" onclick="goBack()">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;">
+            <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+          </svg>
+          关闭
+        </button>
+      </div>
+    </div>
+
+    <div id="contentArea">
+      <!-- 基本信息 -->
+      <div class="section">
+        <div class="section-head"><h3>📋 基本信息</h3><span class="sec-badge">核价任务信息</span></div>
+        <div class="section-body">
+          <div class="info-grid" id="infoGrid"></div>
+        </div>
+      </div>
+
+      <!-- 统计概览：总数 / 成功 / 失败 -->
+      <div class="stat-bar" id="statBar"></div>
+
+      <!-- 核价明细 -->
+      <div class="section">
+        <div class="section-head">
+          <h3>📦 核价明细</h3>
+          <span class="sec-badge" id="detailCountBadge"></span>
+          <button class="btn btn-primary btn-retry" id="batchRetryBtn" onclick="retrySelected()" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            批量重新执行<span id="retryCount"></span>
+          </button>
+        </div>
+        <div class="section-body" style="padding:0;">
+          <div style="overflow-x:auto;">
+            <table class="pkg-table">
+              <thead>
+                <tr>
+                  <th style="width:40px;"><input type="checkbox" id="detailCheckAll" onclick="toggleDetailAll(this)"></th>
+                  <th style="width:50px;">序号</th>
+                  <th style="width:110px;">店铺编码</th>
+                  <th style="width:110px;">店铺名称</th>
+                  <th style="width:120px;">商品款号</th>
+                  <th style="width:200px;">商品名称</th>
+                  <th style="width:220px;">平台商品标题</th>
+                  <th style="width:140px;">平台商品ID</th>
+                  <th style="width:90px;">当前售价</th>
+                  <th style="width:90px;">正确价格</th>
+                  <th style="width:90px;">价格差值</th>
+                  <th style="width:80px;">执行状态</th>
+                  <th style="width:80px;">核价结果</th>
+                  <th style="width:200px;">失败原因</th>
+                  <th style="width:90px;">操作</th>
+                </tr>
+              </thead>
+              <tbody id="detailBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+function getUrlParam(name) {
+  var reg = new RegExp('(^|&)' + name + '=([^&]*)(&|$)');
+  var r = window.location.search.substr(1).match(reg);
+  if (r) return decodeURIComponent(r[2]);
+  return '';
+}
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg, type) {
+  var c = document.getElementById('toastContainer');
+  var t = document.createElement('div');
+  t.className = 'toast toast-' + (type || 'info');
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(function() { t.classList.add('toast-hide'); }, 2500);
+  setTimeout(function() { t.remove(); }, 3000);
+}
+
+// ===== Mock 核价任务数据 =====
+var mockTasks = {
+  'KSHJ20261018001': {
+    taskNo:'KSHJ20261018001', storeCode:'KS-S001', storeName:'旗舰店A', productStatus:'在售', fileName:'快手核价_旗舰店A_1018.xlsx',
+    total:320, success:320, fail:0, status:'成功', creator:'张运营', createTime:'2026-10-18 09:30:00',
+    items:[
+      { itemNo:'KN-2026-A01', productName:'2026春季新款蓝色休闲衬衫男', platformTitle:'2026春季新款男士蓝色休闲衬衫长袖免烫商务潮流外套', ksProductId:'KS_100238001', curPrice:'199.00', checkPrice:'199.00', result:'成功', failReason:'' },
+      { itemNo:'KN-2026-A02', productName:'2026春季新款白色休闲衬衫男', platformTitle:'2026春季新款男士白色休闲衬衫纯棉免烫修身长袖上衣', ksProductId:'KS_100238002', curPrice:'199.00', checkPrice:'189.00', result:'成功', failReason:'' },
+      { itemNo:'TS-2026-C02', productName:'卡通印花纯棉T恤 白色', platformTitle:'夏季新款卡通印花纯棉T恤男女同款白色宽松短袖体恤', ksProductId:'KS_100238003', curPrice:'129.00', checkPrice:'119.00', result:'成功', failReason:'' },
+      { itemNo:'JK-2026-D01', productName:'秋季防风运动夹克 黑色', platformTitle:'秋季新款防风运动夹克男黑色立领休闲外套跑步上衣', ksProductId:'KS_100238004', curPrice:'459.00', checkPrice:'439.00', result:'成功', failReason:'' }
+    ]
+  },
+  'KSHJ20261018002': {
+    taskNo:'KSHJ20261018002', storeCode:'KS-S002', storeName:'专营店B', productStatus:'在售', fileName:'快手核价_专营店B_1018.xlsx',
+    total:150, success:142, fail:8, status:'部分成功', creator:'李核价', createTime:'2026-10-18 11:05:00',
+    items:[
+      { itemNo:'DR-2026-B03', productName:'夏季新款红色连衣裙女', platformTitle:'夏季新款法式红色连衣裙女收腰显瘦气质碎花长裙', ksProductId:'KS_200456001', curPrice:'299.00', checkPrice:'279.00', result:'成功', failReason:'' },
+      { itemNo:'DR-2026-B04', productName:'夏季新款蓝色连衣裙女', platformTitle:'夏季新款蓝色连衣裙女法式收腰显瘦气质度假长裙', ksProductId:'KS_200456002', curPrice:'299.00', checkPrice:'299.00', result:'成功', failReason:'' },
+      { itemNo:'SK-2026-E01', productName:'高腰A字半身裙 卡其色', platformTitle:'高腰A字半身裙女卡其色显瘦百搭中长款伞裙', ksProductId:'', curPrice:'239.00', checkPrice:'219.00', result:'失败', failReason:'平台商品ID不存在，无法核价' },
+      { itemNo:'SK-2026-E02', productName:'高腰百褶半身裙 黑色', platformTitle:'高腰百褶半身裙女黑色垂感显瘦中长款A字裙', ksProductId:'KS_200456004', curPrice:'239.00', checkPrice:'249.00', result:'失败', failReason:'正确价格高于当前售价，平台不允许上调' }
+    ]
+  },
+  'KSHJ20261019001': {
+    taskNo:'KSHJ20261019001', storeCode:'KS-S003', storeName:'奥莱店C', productStatus:'待上架', fileName:'快手核价_奥莱店C_1019.xlsx',
+    total:86, success:52, fail:2, status:'执行中', creator:'张运营', createTime:'2026-10-19 14:20:00',
+    items:[
+      { itemNo:'OT-2026-F01', productName:'奥莱特卖卫衣 灰色', platformTitle:'奥莱特卖卫衣男女同款灰色宽松加绒连帽套头上衣', ksProductId:'KS_300789001', curPrice:'159.00', checkPrice:'139.00', result:'成功', failReason:'' },
+      { itemNo:'OT-2026-F02', productName:'奥莱特卖卫衣 黑色', platformTitle:'奥莱特卖卫衣男女同款黑色宽松加绒连帽套头上衣', ksProductId:'KS_300789002', curPrice:'159.00', checkPrice:'169.00', result:'失败', failReason:'正确价格高于当前售价，平台不允许上调' },
+      { itemNo:'OT-2026-F03', productName:'奥莱特卖运动卫裤 灰色', platformTitle:'奥莱特卖运动卫裤男女同款灰色宽松束脚运动长裤', ksProductId:'KS_300789003', curPrice:'119.00', checkPrice:'99.00', result:'未执行', failReason:'' },
+      { itemNo:'OT-2026-F04', productName:'奥莱特卖运动卫裤 黑色', platformTitle:'奥莱特卖运动卫裤男女同款黑色宽松束脚运动长裤', ksProductId:'KS_300789004', curPrice:'119.00', checkPrice:'119.00', result:'未执行', failReason:'' }
+    ]
+  },
+  'KSHJ20261019002': {
+    taskNo:'KSHJ20261019002', storeCode:'KS-S001', storeName:'旗舰店A', productStatus:'在售', fileName:'快手核价_旗舰店A_1019.xlsx',
+    total:210, success:0, fail:210, status:'失败', creator:'王店长', createTime:'2026-10-19 16:45:00',
+    items:[
+      { itemNo:'KN-2026-A01', productName:'2026春季新款蓝色休闲衬衫男', platformTitle:'2026春季新款男士蓝色休闲衬衫长袖免烫商务潮流外套', ksProductId:'KS_100238001', curPrice:'189.00', checkPrice:'179.00', result:'失败', failReason:'店铺核价权限已过期，请联系平台运营' },
+      { itemNo:'KN-2026-A02', productName:'2026春季新款白色休闲衬衫男', platformTitle:'2026春季新款男士白色休闲衬衫纯棉免烫修身长袖上衣', ksProductId:'KS_100238002', curPrice:'189.00', checkPrice:'179.00', result:'失败', failReason:'店铺核价权限已过期，请联系平台运营' }
+    ]
+  },
+  'KSHJ20261020001': {
+    taskNo:'KSHJ20261020001', storeCode:'KS-S004', storeName:'海外店D', productStatus:'在售', fileName:'快手核价_海外店D_1020.xlsx',
+    total:98, success:98, fail:0, status:'成功', creator:'李核价', createTime:'2026-10-20 10:00:00',
+    items:[
+      { itemNo:'HW-2026-G01', productName:'海外新款风衣 米色', platformTitle:'海外新款中长款风衣女米色双排扣系带气质外套', ksProductId:'KS_400123001', curPrice:'699.00', checkPrice:'699.00', result:'成功', failReason:'' },
+      { itemNo:'HW-2026-G02', productName:'海外新款风衣 藏青', platformTitle:'海外新款中长款风衣女藏青双排扣系带气质外套', ksProductId:'KS_400123002', curPrice:'699.00', checkPrice:'659.00', result:'成功', failReason:'' },
+      { itemNo:'HW-2026-G03', productName:'海外新款针织开衫 燕麦', platformTitle:'海外新款针织开衫女燕麦色慵懒风宽松外搭毛衣', ksProductId:'KS_400123003', curPrice:'399.00', checkPrice:'369.00', result:'成功', failReason:'' }
+    ]
+  },
+  'KSHJ20261020002': {
+    taskNo:'KSHJ20261020002', storeCode:'KS-S002', storeName:'专营店B', productStatus:'在售', fileName:'快手核价_专营店B_1020.xlsx',
+    total:120, success:0, fail:0, status:'待执行', creator:'王店长', createTime:'2026-10-20 11:30:00',
+    items:[]
+  }
+};
+
+function getTask(id) {
+  return mockTasks[id] || null;
+}
+
+// ===== 渲染状态标签（任务状态：待执行/执行中/成功/部分成功/失败；明细执行状态：未执行/成功/失败） =====
+function renderStatus(status) {
+  var cls = 'pending';
+  switch(status) {
+    case '待执行': cls = 'pending'; break;
+    case '未执行': cls = 'pending'; break;
+    case '执行中': cls = 'running'; break;
+    case '成功': cls = 'done'; break;
+    case '部分成功': cls = 'partial'; break;
+    case '失败': cls = 'fail'; break;
+  }
+  return '<span class="status-tag ' + cls + '">' + esc(status) + '</span>';
+}
+
+// ===== 渲染基本信息 =====
+function renderInfo(task) {
+  document.getElementById('taskNoChip').textContent = task.taskNo;
+  var fields = [
+    { label: '任务编号', value: task.taskNo, mono: true },
+    { label: '店铺编码', value: task.storeCode },
+    { label: '商品状态', value: task.productStatus },
+    { label: '上传文件', value: task.fileName },
+    { label: '状态', html: renderStatus(task.status) },
+    { label: '创建人', value: task.creator },
+    { label: '创建时间', value: task.createTime }
+  ];
+  var html = '';
+  fields.forEach(function(f) {
+    html += '<div class="info-item">';
+    html += '<span class="info-label">' + f.label + '：</span>';
+    if (f.html) {
+      html += '<span class="info-value">' + f.html + '</span>';
+    } else {
+      var val = esc(f.value || '');
+      if (f.mono) val = '<span style="font-family:\'SF Mono\',Menlo,monospace;font-size:12px;color:var(--primary);">' + val + '</span>';
+      html += '<span class="info-value">' + val + '</span>';
+    }
+    html += '</div>';
+  });
+  document.getElementById('infoGrid').innerHTML = html;
+}
+
+// ===== 渲染统计条（总数/成功/失败，独立于明细上方） =====
+function renderStats(task) {
+  var cards = [
+    {
+      cls: 'total', label: '总数', num: task.total, numCls: '',
+      icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>'
+    },
+    {
+      cls: 'success', label: '成功', num: task.success, numCls: 'success',
+      icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+    },
+    {
+      cls: 'fail', label: '失败', num: task.fail, numCls: 'fail',
+      icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'
+    }
+  ];
+  var html = '';
+  cards.forEach(function(c) {
+    html += '<div class="stat-card">';
+    html += '<div class="stat-icon ' + c.cls + '">' + c.icon + '</div>';
+    html += '<div class="stat-meta">';
+    html += '<span class="stat-num ' + c.numCls + '">' + (c.num || 0) + '</span>';
+    html += '<span class="stat-label">' + c.label + '</span>';
+    html += '</div>';
+    html += '</div>';
+  });
+  document.getElementById('statBar').innerHTML = html;
+}
+
+// ===== 渲染价格差值（当前售价 - 正确价格） =====
+function renderDiff(diff) {
+  if (diff === 0) return '<span style="color:var(--text-tertiary);">0.00</span>';
+  var sign = diff > 0 ? '+' : '';
+  var color = diff > 0 ? '#d97706' : '#2563eb';
+  return '<span style="font-family:\'SF Mono\',Menlo,monospace;font-size:12px;font-weight:600;color:' + color + ';">' + sign + diff.toFixed(2) + '</span>';
+}
+
+// ===== 渲染核价结果（未执行→—；正常：差值为0；异常：差值不为0） =====
+function renderCheckResult(diff, result) {
+  if (result === '未执行') return '<span style="color:var(--text-tertiary);">—</span>';
+  return diff === 0
+    ? '<span class="status-tag done">正常</span>'
+    : '<span class="status-tag partial">异常</span>';
+}
+
+// ===== 渲染核价明细 =====
+function renderDetail(task) {
+  var tbody = document.getElementById('detailBody');
+  var items = task.items || [];
+  var failCount = items.filter(function(r) { return r.result === '失败'; }).length;
+  document.getElementById('detailCountBadge').textContent = '共 ' + items.length + ' 条明细，失败 ' + failCount + ' 条';
+  var html = '';
+  if (items.length === 0) {
+    html = '<tr><td colspan="15" class="empty-box">暂无核价明细数据</td></tr>';
+  } else {
+    items.forEach(function(row, i) {
+      var isFail = row.result === '失败';
+      // 价格差值 = 当前售价 - 正确价格
+      var diff = (parseFloat(row.curPrice) || 0) - (parseFloat(row.checkPrice) || 0);
+      diff = Math.round(diff * 100) / 100;
+      html += '<tr>';
+      // 复选框：仅失败行可勾选
+      html += '<td>' + (isFail
+        ? '<input type="checkbox" class="detail-check" data-index="' + i + '" onclick="toggleDetailRow(this)">'
+        : '') + '</td>';
+      html += '<td>' + (i + 1) + '</td>';
+      html += '<td>' + esc(task.storeCode) + '</td>';
+      html += '<td>' + esc(task.storeName) + '</td>';
+      html += '<td>' + esc(row.itemNo) + '</td>';
+      html += '<td style="text-align:left;">' + esc(row.productName) + '</td>';
+      html += '<td style="text-align:left;">' + (row.platformTitle ? esc(row.platformTitle) : '<span style="color:var(--text-tertiary);">—</span>') + '</td>';
+      html += '<td style="font-family:\'SF Mono\',Menlo,monospace;font-size:12px;">' + (row.ksProductId ? esc(row.ksProductId) : '<span style="color:var(--text-tertiary);">—</span>') + '</td>';
+      html += '<td><span class="price-cur">¥' + esc(row.curPrice) + '</span></td>';
+      html += '<td><span class="price-check">¥' + esc(row.checkPrice) + '</span></td>';
+      html += '<td>' + renderDiff(diff) + '</td>';
+      html += '<td>' + renderStatus(row.result) + '</td>';
+      html += '<td>' + renderCheckResult(diff, row.result) + '</td>';
+      html += '<td class="fail-reason" style="text-align:left;">' + (row.failReason ? esc(row.failReason) : '<span style="color:var(--text-tertiary);">—</span>') + '</td>';
+      // 操作列：仅失败行可重新执行
+      html += '<td>' + (isFail
+        ? '<a class="link-action" href="javascript:void(0)" onclick="retryRow(' + i + ')">重新执行</a>'
+        : '<span style="color:var(--text-tertiary);">—</span>') + '</td>';
+      html += '</tr>';
+    });
+  }
+  tbody.innerHTML = html;
+  // 无失败行时禁用全选框
+  var checkAll = document.getElementById('detailCheckAll');
+  if (checkAll) { checkAll.checked = false; checkAll.disabled = failCount === 0; }
+  updateBatchBtn();
+}
+
+// ===== 明细勾选 =====
+function toggleDetailAll(el) {
+  document.querySelectorAll('.detail-check').forEach(function(c) { c.checked = el.checked; });
+  updateBatchBtn();
+}
+function toggleDetailRow(el) {
+  var all = document.querySelectorAll('.detail-check');
+  var checked = document.querySelectorAll('.detail-check:checked');
+  var checkAll = document.getElementById('detailCheckAll');
+  if (checkAll) checkAll.checked = all.length > 0 && all.length === checked.length;
+  updateBatchBtn();
+}
+function updateBatchBtn() {
+  var btn = document.getElementById('batchRetryBtn');
+  if (!btn) return;
+  var checked = document.querySelectorAll('.detail-check:checked');
+  btn.disabled = checked.length === 0;
+  document.getElementById('retryCount').textContent = checked.length > 0 ? '（' + checked.length + '）' : '';
+}
+
+// ===== 重新执行（支持单行与批量） =====
+function retrySelected() {
+  var checked = document.querySelectorAll('.detail-check:checked');
+  if (checked.length === 0) { showToast('请先勾选需要重新执行的失败明细', 'warning'); return; }
+  var indices = [];
+  checked.forEach(function(c) { indices.push(parseInt(c.getAttribute('data-index'), 10)); });
+  doRetry(indices);
+}
+function retryRow(index) {
+  doRetry([index]);
+}
+function doRetry(indices) {
+  if (!currentTask) return;
+  var items = currentTask.items || [];
+  var retried = 0;
+  indices.forEach(function(idx) {
+    var row = items[idx];
+    if (row && row.result === '失败') {
+      row.result = '成功';
+      row.failReason = '';
+      currentTask.success = (currentTask.success || 0) + 1;
+      currentTask.fail = Math.max(0, (currentTask.fail || 0) - 1);
+      retried++;
+    }
+  });
+  if (retried === 0) { showToast('没有可重新执行的失败明细', 'warning'); return; }
+  currentTask.status = computeTaskStatus(currentTask);
+  renderInfo(currentTask);
+  renderStats(currentTask);
+  renderDetail(currentTask);
+  showToast('已重新执行 ' + retried + ' 条明细，核价成功', 'success');
+}
+function computeTaskStatus(task) {
+  var success = task.success || 0;
+  var fail = task.fail || 0;
+  if (fail === 0 && success > 0) return '成功';
+  if (success === 0 && fail > 0) return '失败';
+  if (success > 0 && fail > 0) return '部分成功';
+  return task.status;
+}
+
+// ===== 下载核价结果 =====
+function downloadResult() {
+  showToast('核价结果文件下载中...', 'info');
+}
+
+// ===== 返回列表 =====
+function goBack() {
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({
+      type: 'openTab',
+      page: 'pages/store-engine/kuaishou-price-check.html',
+      title: '快手核价'
+    }, '*');
+  } else {
+    location.href = 'kuaishou-price-check.html';
+  }
+}
+
+// ===== 初始化 =====
+var currentTask = null;
+function init() {
+  var id = getUrlParam('id');
+  var task = id ? getTask(id) : null;
+  if (!task) {
+    document.getElementById('contentArea').innerHTML = '<div class="empty-box">未找到核价任务' + (id ? '（任务编号: ' + esc(id) + '）' : '') + '</div>';
+    return;
+  }
+  currentTask = task;
+  renderInfo(task);
+  renderStats(task);
+  renderDetail(task);
+}
+
+init();
+</script>
+</body>
+</html>

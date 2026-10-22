@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>快手核价</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+  .data-table thead th,
+  .data-table tbody td {
+    text-align: center;
+    white-space: nowrap;
+  }
+  .data-table .col-actions { text-align: center; }
+  .task-no { font-family:"SF Mono","Menlo",monospace; font-size:12px; color:var(--primary); font-weight:600; }
+  .file-link { display:inline-flex; align-items:center; gap:4px; color:var(--primary); font-size:12px; cursor:pointer; }
+  .file-link svg { flex-shrink:0; }
+  .num-success { color:#059669; font-weight:600; }
+  .num-fail { color:#dc2626; font-weight:600; }
+  /* 状态标签补充：全局样式仅含 initial/submitted/cancelled，此处补齐任务状态枚举对应色 */
+  .status-tag.pending { background:#fef3c7; color:#d97706; }
+  .status-tag.running { background:#dbeafe; color:#2563eb; }
+  .status-tag.partial { background:#ffedd5; color:#ea580c; }
+
+  /* ===== 流程说明 ===== */
+  .flow-section {
+    background: linear-gradient(135deg, #eef0ff 0%, #f8f9ff 100%);
+    border: 1px solid #dce0f8;
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 12px;
+  }
+  .flow-header { display:flex; align-items:center; gap:6px; margin-bottom:10px; }
+  .flow-header svg { color:var(--primary); }
+  .flow-header h3 { margin:0; font-size:14px; font-weight:700; color:var(--ink); }
+  .flow-steps { display:flex; align-items:stretch; gap:0; }
+  .flow-step {
+    display:flex; align-items:center; gap:8px;
+    padding:8px 14px; background:#fff; border-radius:6px;
+    border:1px solid #e4e9f1; flex:1; transition:all .2s;
+  }
+  .flow-step:hover { border-color:var(--primary); box-shadow:0 2px 8px rgba(91,108,245,.12); }
+  .flow-step-icon {
+    width:28px; height:28px; border-radius:6px;
+    display:grid; place-items:center; font-size:14px;
+    flex-shrink:0; background:var(--primary-50); color:var(--primary);
+  }
+  .flow-step-info { flex:1; min-width:0; }
+  .flow-step-title { font-size:12px; font-weight:650; color:var(--ink); }
+  .flow-step-desc { font-size:11px; color:var(--text-tertiary); margin-top:1px; }
+  .flow-arrow { flex-shrink:0; color:#cbd5e1; padding:0 4px; display:flex; align-items:center; }
+
+  /* ===== 新增弹窗 ===== */
+  .modal-overlay {
+    position:fixed; top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,.45); z-index:9999;
+    display:flex; align-items:center; justify-content:center;
+    animation:modalFadeIn .25s ease;
+  }
+  @keyframes modalFadeIn { from{opacity:0} to{opacity:1} }
+  .modal {
+    background:#fff; border-radius:12px; width:560px; max-width:92vw;
+    max-height:90vh; box-shadow:0 24px 60px rgba(0,0,0,.2);
+    display:flex; flex-direction:column; animation:modalSlideIn .3s ease;
+  }
+  @keyframes modalSlideIn { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+  .modal-head {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:20px 24px 16px; border-bottom:1px solid #e4e9f1;
+  }
+  .modal-head h3 { margin:0; font-size:17px; font-weight:700; color:#0f172a; }
+  .modal-close {
+    width:28px; height:28px; border:none; background:transparent;
+    border-radius:6px; cursor:pointer; display:grid; place-items:center;
+    color:#647084; font-size:18px; transition:background .15s;
+  }
+  .modal-close:hover { background:#f0f2f5; }
+  .modal-body { padding:20px 24px; overflow-y:auto; flex:1; min-height:0; }
+  .modal-foot {
+    display:flex; justify-content:flex-end; gap:10px;
+    padding:16px 24px 20px; border-top:1px solid #e4e9f1;
+  }
+  .modal-foot .btn { min-width:80px; }
+  .form-field { margin-bottom:16px; }
+  .form-field:last-child { margin-bottom:0; }
+  .form-label { font-size:13px; font-weight:600; color:var(--text-secondary); display:block; margin-bottom:6px; }
+  .form-label .req { color:#dc2626; margin-left:2px; }
+  .form-select {
+    width:100%; padding:10px 14px; border:1px solid var(--border);
+    border-radius:8px; font:inherit; font-size:13px; outline:none;
+    background:#f8fafc; cursor:pointer; appearance:auto; transition:border-color .18s;
+  }
+  .form-select:focus { border-color:var(--primary); background:#fff; }
+  .form-select.err { border-color:#dc2626; }
+
+  /* 上传区 */
+  .upload-zone {
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    padding:28px; border:2px dashed #cbd5e1; border-radius:12px;
+    cursor:pointer; transition:all .18s; background:#fafbfd; text-align:center;
+  }
+  .upload-zone:hover { border-color:var(--primary); background:var(--primary-50); }
+  .upload-zone.err { border-color:#dc2626; }
+  .upload-zone svg { width:34px; height:34px; color:var(--primary); }
+  .upload-zone .uz-title { font-size:14px; font-weight:600; color:#475569; }
+  .upload-zone .uz-hint { font-size:12px; color:var(--text-tertiary); }
+  .file-preview {
+    display:none; align-items:center; justify-content:space-between; gap:10px;
+    margin-top:10px; padding:10px 14px; background:#ecfdf5;
+    border:1px solid #a7f3d0; border-radius:10px; font-size:13px; color:#059669;
+  }
+  .file-preview .fp-name { font-weight:600; word-break:break-all; }
+  .file-preview .fp-meta { font-size:12px; color:#047857; font-weight:400; margin-top:2px; }
+  .file-preview .fp-remove {
+    flex-shrink:0; border:none; background:transparent; cursor:pointer;
+    color:#059669; font-size:18px; line-height:1; padding:0 4px;
+  }
+  .file-preview .fp-remove:hover { color:#dc2626; }
+  .tpl-bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .tpl-download {
+    font-size:12px; color:var(--primary); font-weight:600; text-decoration:none;
+    display:inline-flex; align-items:center; gap:4px; cursor:pointer;
+  }
+  .tpl-download:hover { text-decoration:underline; }
+  .form-hint { font-size:11px; color:var(--text-tertiary); margin-top:6px; }
+  .err-tip { display:none; font-size:11px; color:#dc2626; margin-top:5px; }
+  .err-tip.show { display:block; }
+  </style>
+</head>
+<body>
+<div class="page-container">
+  <div id="toastContainer" class="toast-container"></div>
+  <script>
+    if (window.parent) {
+      window.parent.postMessage({type:'breadcrumb', text:'基础运营 <span>/</span> 快手核价'}, '*');
+    }
+  </script>
+
+  <div class="page-title">快手核价</div>
+
+  <!-- ===== 流程说明 ===== -->
+  <div class="flow-section">
+    <div class="flow-header">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+        <line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/>
+      </svg>
+      <h3>流程说明</h3>
+    </div>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="flow-step-icon">📥</div>
+        <div class="flow-step-info">
+          <div class="flow-step-title">用户导入货表</div>
+          <div class="flow-step-desc">上传本地核价货表（平台商品ID、款号、价格）</div>
+        </div>
+      </div>
+      <div class="flow-arrow"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="flow-step">
+        <div class="flow-step-icon">🛒</div>
+        <div class="flow-step-info">
+          <div class="flow-step-title">获取平台商品列表</div>
+          <div class="flow-step-desc">拉取快手平台在售商品清单</div>
+        </div>
+      </div>
+      <div class="flow-arrow"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="flow-step">
+        <div class="flow-step-icon">🔗</div>
+        <div class="flow-step-info">
+          <div class="flow-step-title">平台商品匹配商品款号</div>
+          <div class="flow-step-desc">将平台商品与货表款号一一对应</div>
+        </div>
+      </div>
+      <div class="flow-arrow"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="flow-step">
+        <div class="flow-step-icon">⚖️</div>
+        <div class="flow-step-info">
+          <div class="flow-step-title">货表与平台价格比对</div>
+          <div class="flow-step-desc">比对货表核价价格与平台当前售价</div>
+        </div>
+      </div>
+      <div class="flow-arrow"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="flow-step">
+        <div class="flow-step-icon">📊</div>
+        <div class="flow-step-info">
+          <div class="flow-step-title">输出核价结果</div>
+          <div class="flow-step-desc">生成总数/成功/失败明细结果</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 搜索区域 -->
+  <div class="search-area">
+    <div class="search-row">
+      <div class="search-item">
+        <label>任务编号：</label>
+        <input type="text" id="searchTaskNo" placeholder="请输入任务编号">
+      </div>
+      <div class="search-item">
+        <label>店铺编码：</label>
+        <input type="text" id="searchStoreCode" placeholder="请输入店铺编码">
+      </div>
+      <div class="search-item">
+        <label>状态：</label>
+        <select id="searchStatus">
+          <option value="">全部</option>
+          <option value="待执行">待执行</option>
+          <option value="执行中">执行中</option>
+          <option value="成功">成功</option>
+          <option value="部分成功">部分成功</option>
+          <option value="失败">失败</option>
+        </select>
+      </div>
+      <div class="search-item">
+        <label>创建时间：</label>
+        <input type="date" id="searchTimeStart"> <span style="margin:0 4px;color:var(--text-tertiary);">至</span> <input type="date" id="searchTimeEnd">
+      </div>
+    </div>
+    <div class="search-actions">
+      <button class="btn btn-primary" onclick="doSearch()">查询</button>
+      <button class="btn" onclick="resetSearch()">重置</button>
+    </div>
+  </div>
+
+  <!-- 表格区域 -->
+  <div class="table-area">
+    <div class="table-toolbar">
+      <button class="btn btn-primary" onclick="addNew()">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        新增
+      </button>
+    </div>
+    <div class="table-scroll">
+      <table class="data-table" id="dataTable">
+        <thead>
+          <tr>
+            <th style="width:50px;">序号</th>
+            <th style="width:150px;">任务编号</th>
+            <th style="width:110px;">店铺编码</th>
+            <th style="width:120px;">店铺名称</th>
+            <th style="width:90px;">商品状态</th>
+            <th style="width:200px;">上传文件</th>
+            <th style="width:70px;">总数</th>
+            <th style="width:70px;">成功</th>
+            <th style="width:70px;">失败</th>
+            <th style="width:90px;">状态</th>
+            <th style="width:100px;">创建人</th>
+            <th style="width:150px;">创建时间</th>
+            <th style="width:80px;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="pagination">
+      <span class="page-info">共 <strong id="totalCount">0</strong> 条</span>
+      <span class="page-btn disabled">&laquo;</span>
+      <span class="page-btn active">1</span>
+      <span class="page-btn">&raquo;</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 新增核价任务弹窗 ===== -->
+<div id="addModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeAddModal()">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="addModalTitle">
+    <div class="modal-head">
+      <h3 id="addModalTitle">新增核价任务</h3>
+      <button type="button" class="modal-close" onclick="closeAddModal()" aria-label="关闭">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label class="form-label" for="formStore">店铺<span class="req">*</span></label>
+        <select id="formStore" class="form-select">
+          <option value="">请选择店铺</option>
+          <option value="KS-S001">KS-S001 旗舰店A</option>
+          <option value="KS-S002">KS-S002 专营店B</option>
+          <option value="KS-S003">KS-S003 奥莱店C</option>
+          <option value="KS-S004">KS-S004 海外店D</option>
+        </select>
+        <div class="err-tip" id="errStore">请选择店铺</div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="formProductStatus">商品状态<span class="req">*</span></label>
+        <select id="formProductStatus" class="form-select">
+          <option value="">请选择商品状态</option>
+          <option value="上架">上架</option>
+          <option value="下架">下架</option>
+          <option value="封禁">封禁</option>
+        </select>
+        <div class="err-tip" id="errProductStatus">请选择商品状态</div>
+      </div>
+      <div class="form-field">
+        <div class="tpl-bar">
+          <label class="form-label" style="margin-bottom:0;">核价文件<span class="req">*</span></label>
+          <a class="tpl-download" href="javascript:void(0)" onclick="downloadTemplate()">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            下载模板
+          </a>
+        </div>
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div class="uz-title">点击选择本地 Excel 文件</div>
+          <div class="uz-hint">支持 .xlsx / .xls，字段：平台商品ID、款号、价格</div>
+          <input type="file" id="fileInput" style="display:none" accept=".xlsx,.xls" onchange="handleFile(this.files)">
+        </div>
+        <div class="file-preview" id="filePreview">
+          <div>
+            <div class="fp-name" id="fpName"></div>
+            <div class="fp-meta" id="fpMeta"></div>
+          </div>
+          <button type="button" class="fp-remove" onclick="removeFile()" aria-label="移除文件">&times;</button>
+        </div>
+        <div class="err-tip" id="errFile">请上传核价文件</div>
+        <div class="form-hint">模板字段说明：平台商品ID（快手商品唯一标识）、款号（商品款号）、价格（核价目标价格）。</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeAddModal()">取消</button>
+      <button class="btn btn-primary" onclick="submitAddTask()">提交</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var mockData = [
+  { id:1, taskNo:'KSHJ20261018001', storeCode:'KS-S001', storeName:'旗舰店A', productStatus:'上架', fileName:'快手核价_旗舰店A_1018.xlsx', total:320, success:320, fail:0, status:'成功', creator:'张运营', createTime:'2026-10-18 09:30:00' },
+  { id:2, taskNo:'KSHJ20261018002', storeCode:'KS-S002', storeName:'专营店B', productStatus:'上架', fileName:'快手核价_专营店B_1018.xlsx', total:150, success:142, fail:8, status:'部分成功', creator:'李核价', createTime:'2026-10-18 11:05:00' },
+  { id:3, taskNo:'KSHJ20261019001', storeCode:'KS-S003', storeName:'奥莱店C', productStatus:'下架', fileName:'快手核价_奥莱店C_1019.xlsx', total:86, success:52, fail:2, status:'执行中', creator:'张运营', createTime:'2026-10-19 14:20:00' },
+  { id:4, taskNo:'KSHJ20261019002', storeCode:'KS-S001', storeName:'旗舰店A', productStatus:'封禁', fileName:'快手核价_旗舰店A_1019.xlsx', total:210, success:0, fail:210, status:'失败', creator:'王店长', createTime:'2026-10-19 16:45:00' },
+  { id:5, taskNo:'KSHJ20261020001', storeCode:'KS-S004', storeName:'海外店D', productStatus:'上架', fileName:'快手核价_海外店D_1020.xlsx', total:98, success:98, fail:0, status:'成功', creator:'李核价', createTime:'2026-10-20 10:00:00' },
+  { id:6, taskNo:'KSHJ20261020002', storeCode:'KS-S002', storeName:'专营店B', productStatus:'上架', fileName:'快手核价_专营店B_1020.xlsx', total:120, success:0, fail:0, status:'待执行', creator:'王店长', createTime:'2026-10-20 11:30:00' }
+];
+
+function renderTable(data) {
+  var tbody = document.getElementById('tableBody');
+  var html = '';
+  if (data.length === 0) {
+    html = '<tr><td colspan="13" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无数据</div><div class="empty-hint">点击「新增」上传核价文件创建任务</div></td></tr>';
+  } else {
+    data.forEach(function(row, index) {
+      html += '<tr>';
+      html += '<td>' + (index + 1) + '</td>';
+      html += '<td><span class="task-no">' + escapeHtml(row.taskNo) + '</span></td>';
+      html += '<td>' + escapeHtml(row.storeCode) + '</td>';
+      html += '<td>' + escapeHtml(row.storeName) + '</td>';
+      html += '<td>' + escapeHtml(row.productStatus) + '</td>';
+      html += '<td><a class="file-link" href="javascript:void(0)" onclick="downloadFile(\'' + escapeHtml(row.fileName) + '\')">'
+            + '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
+            + escapeHtml(row.fileName) + '</a></td>';
+      html += '<td>' + row.total + '</td>';
+      html += '<td><span class="num-success">' + row.success + '</span></td>';
+      html += '<td><span class="' + (row.fail > 0 ? 'num-fail' : '') + '">' + row.fail + '</span></td>';
+      html += '<td>' + getStatusTag(row.status) + '</td>';
+      html += '<td>' + escapeHtml(row.creator) + '</td>';
+      html += '<td>' + escapeHtml(row.createTime) + '</td>';
+      html += '<td class="col-actions"><a class="link-action" href="javascript:void(0)" onclick="viewDetail(' + row.id + ')">查看</a></td>';
+      html += '</tr>';
+    });
+  }
+  tbody.innerHTML = html;
+  document.getElementById('totalCount').textContent = data.length;
+}
+
+function getStatusTag(status) {
+  var cls = 'pending';
+  switch(status) {
+    case '待执行': cls = 'pending'; break;
+    case '执行中': cls = 'running'; break;
+    case '成功': cls = 'submitted'; break;
+    case '部分成功': cls = 'partial'; break;
+    case '失败': cls = 'cancelled'; break;
+  }
+  return '<span class="status-tag ' + cls + '">' + escapeHtml(status) + '</span>';
+}
+function escapeHtml(str) {
+  if (!str) return '';
+  var div = document.createElement('div'); div.textContent = str; return div.innerHTML;
+}
+
+function doSearch() {
+  var taskNo = document.getElementById('searchTaskNo').value.trim();
+  var storeCode = document.getElementById('searchStoreCode').value.trim();
+  var status = document.getElementById('searchStatus').value;
+  var timeStart = document.getElementById('searchTimeStart').value;
+  var timeEnd = document.getElementById('searchTimeEnd').value;
+  var filtered = mockData.filter(function(r) {
+    if (taskNo && r.taskNo.indexOf(taskNo) === -1) return false;
+    if (storeCode && r.storeCode.indexOf(storeCode) === -1) return false;
+    if (status && r.status !== status) return false;
+    if (timeStart && r.createTime.slice(0, 10) < timeStart) return false;
+    if (timeEnd && r.createTime.slice(0, 10) > timeEnd) return false;
+    return true;
+  });
+  renderTable(filtered);
+}
+function resetSearch() {
+  document.getElementById('searchTaskNo').value = '';
+  document.getElementById('searchStoreCode').value = '';
+  document.getElementById('searchStatus').value = '';
+  document.getElementById('searchTimeStart').value = '';
+  document.getElementById('searchTimeEnd').value = '';
+  renderTable(mockData);
+}
+
+function addNew() { openAddModal(); }
+function downloadFile(fileName) { showToast('文件下载中：' + fileName, 'info'); }
+
+// ===== 新增核价任务弹窗 =====
+var selectedFile = null;   // { name, size, rows }
+
+function openAddModal() {
+  document.getElementById('formStore').value = '';
+  document.getElementById('formProductStatus').value = '';
+  document.getElementById('formStore').classList.remove('err');
+  document.getElementById('formProductStatus').classList.remove('err');
+  document.getElementById('uploadZone').classList.remove('err');
+  clearErrors();
+  removeFile();
+  document.getElementById('addModal').style.display = '';
+}
+
+function closeAddModal() {
+  document.getElementById('addModal').style.display = 'none';
+}
+
+function clearErrors() {
+  ['errStore','errProductStatus','errFile'].forEach(function(id) {
+    document.getElementById(id).classList.remove('show');
+  });
+}
+
+function handleFile(files) {
+  if (!files || !files.length) return;
+  var file = files[0];
+  var ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+  if (ext !== '.xlsx' && ext !== '.xls') {
+    showToast('请选择 .xlsx 或 .xls 格式的文件', 'error');
+    document.getElementById('fileInput').value = '';
+    return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = new Uint8Array(e.target.result);
+      var wb = XLSX.read(data, { type: 'array' });
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      var rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+      if (!rows.length) {
+        showToast('文件中没有数据', 'error');
+        document.getElementById('fileInput').value = '';
+        return;
+      }
+      selectedFile = { name: file.name, size: file.size, rows: rows };
+      renderFilePreview();
+      document.getElementById('uploadZone').classList.remove('err');
+      document.getElementById('errFile').classList.remove('show');
+    } catch (err) {
+      showToast('文件解析失败，请检查格式', 'error');
+      document.getElementById('fileInput').value = '';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function renderFilePreview() {
+  if (!selectedFile) return;
+  document.getElementById('fpName').textContent = selectedFile.name;
+  document.getElementById('fpMeta').textContent = '已解析 ' + selectedFile.rows.length + ' 条核价数据 · ' + formatSize(selectedFile.size);
+  document.getElementById('filePreview').style.display = 'flex';
+  document.getElementById('uploadZone').style.display = 'none';
+}
+
+function removeFile() {
+  selectedFile = null;
+  document.getElementById('fileInput').value = '';
+  document.getElementById('filePreview').style.display = 'none';
+  document.getElementById('uploadZone').style.display = '';
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+}
+
+// ===== 下载导入模板（字段：平台商品ID、款号、价格） =====
+function downloadTemplate() {
+  var headers = ['平台商品ID', '款号', '价格'];
+  var examples = [
+    ['KS_100238001', 'KN-2026-A01', '189.00'],
+    ['KS_200456001', 'DR-2026-B03', '279.00'],
+    ['KS_300789001', 'OT-2026-F01', '139.00']
+  ];
+  var ws = XLSX.utils.aoa_to_sheet([headers].concat(examples));
+  ws['!cols'] = [{ wch: 18 }, { wch: 16 }, { wch: 12 }];
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '核价清单');
+  XLSX.writeFile(wb, '快手核价导入模板.xlsx');
+  showToast('模板已开始下载', 'success');
+}
+
+// ===== 提交新增任务 =====
+function submitAddTask() {
+  clearErrors();
+  var store = document.getElementById('formStore');
+  var productStatus = document.getElementById('formProductStatus');
+  var valid = true;
+  if (!store.value) {
+    store.classList.add('err');
+    document.getElementById('errStore').classList.add('show');
+    valid = false;
+  } else { store.classList.remove('err'); }
+  if (!productStatus.value) {
+    productStatus.classList.add('err');
+    document.getElementById('errProductStatus').classList.add('show');
+    valid = false;
+  } else { productStatus.classList.remove('err'); }
+  if (!selectedFile) {
+    document.getElementById('uploadZone').classList.add('err');
+    document.getElementById('errFile').classList.add('show');
+    valid = false;
+  }
+  if (!valid) { showToast('请完整填写店铺、商品状态并上传核价文件', 'warning'); return; }
+
+  var now = new Date();
+  var pad = function(n) { return String(n).padStart(2, '0'); };
+  var dateStr = now.getFullYear() + pad(now.getMonth() + 1) + pad(now.getDate());
+  var seq = pad(mockData.length + 1);
+  var taskNo = 'KSHJ' + dateStr + seq;
+  var newId = mockData.length ? Math.max.apply(null, mockData.map(function(r) { return r.id; })) + 1 : 1;
+  var storeName = store.options[store.selectedIndex].text.replace(store.value, '').trim();
+  mockData.unshift({
+    id: newId,
+    taskNo: taskNo,
+    storeCode: store.value,
+    storeName: storeName,
+    productStatus: productStatus.value,
+    fileName: selectedFile.name,
+    total: selectedFile.rows.length,
+    success: 0,
+    fail: 0,
+    status: '待执行',
+    creator: '当前用户',
+    createTime: now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds())
+  });
+  closeAddModal();
+  renderTable(mockData);
+  showToast('核价任务已创建：' + taskNo + '（共 ' + selectedFile.rows.length + ' 条）', 'success');
+}
+
+function viewDetail(id) {
+  var row = mockData.filter(function(r) { return r.id === id; })[0];
+  if (!row) return;
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({
+      type: 'openTab',
+      page: 'pages/store-engine/kuaishou-price-check-detail.html?id=' + row.taskNo,
+      title: '核价任务详情 - ' + row.taskNo
+    }, '*');
+  } else {
+    location.href = 'kuaishou-price-check-detail.html?id=' + row.taskNo;
+  }
+}
+
+function showToast(msg, type) {
+  var c = document.getElementById('toastContainer');
+  var t = document.createElement('div'); t.className = 'toast toast-' + (type||'info'); t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(function(){ t.classList.add('toast-hide'); }, 2500);
+  setTimeout(function(){ t.remove(); }, 3000);
+}
+renderTable(mockData);
+</script>
+</body>
+</html>
