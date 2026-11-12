@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>挽单商品池</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+  :root { --ink:#0f172a; }
+  .data-table thead th, .data-table tbody td { text-align:center; white-space:nowrap; }
+  .data-table .col-left { text-align:left; }
+  .sku-no { font-family:"SF Mono","Menlo",monospace; font-size:12px; color:var(--primary); font-weight:600; cursor:pointer; }
+  .sku-no:hover { text-decoration:underline; }
+  .num-hi { color:#dc2626; font-weight:700; }
+  .num-ok { color:#059669; font-weight:700; }
+  .num-warn { color:#d97706; font-weight:700; }
+
+  /* ===== 数据周期条 ===== */
+  .pool-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    background:linear-gradient(135deg,#eef0ff 0%,#f8f9ff 100%); border:1px solid #dce0f8; border-radius:10px; padding:12px 18px; margin-bottom:12px; }
+  .ph-refresh { font-size:12px; color:var(--text-secondary); }
+  .ph-refresh code { font-family:"SF Mono","Menlo",monospace; font-size:11.5px; color:var(--primary); background:#fff; padding:2px 8px; border-radius:6px; border:1px solid #dce0f8; }
+  .ph-btns { display:flex; gap:8px; flex-wrap:wrap; }
+
+  /* ===== 统计条 ===== */
+  .pool-stats { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:12px; }
+  .ps-card { background:var(--bg-white); border:1px solid var(--border); border-radius:10px; padding:13px 16px; min-width:0; }
+  .ps-label { font-size:11.5px; color:var(--text-tertiary); }
+  .ps-val { font-size:23px; font-weight:700; color:var(--ink); margin-top:6px; line-height:1.1; }
+  .ps-val.txt { font-size:14px; white-space:nowrap; letter-spacing:.2px; }
+  .ps-val small { font-size:12px; font-weight:600; color:var(--text-secondary); margin-left:3px; }
+  .ps-foot { font-size:11px; color:var(--text-tertiary); margin-top:6px; line-height:1.5; }
+  .ps-card.in { border-color:#c7cdf9; background:linear-gradient(180deg,#f4f5ff 0,#fff 60%); }
+  .ps-card.new { border-color:#a7f3d0; background:linear-gradient(180deg,#ecfdf5 0,#fff 60%); }
+  .ps-card.out { border-color:#e2e8f0; }
+  .ps-card.warn { border-color:#fed7aa; background:linear-gradient(180deg,#fff7ed 0,#fff 60%); }
+  .tier-bar { display:flex; height:6px; border-radius:3px; overflow:hidden; margin-top:8px; }
+  .tier-bar i { display:block; height:100%; }
+
+  /* ===== 视图切换 + 快捷筛选 ===== */
+  .pool-toolbar { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+  .view-toggle { display:inline-flex; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+  .view-toggle button { border:none; background:#fff; padding:7px 14px; font-size:12.5px; cursor:pointer; color:var(--text-secondary); }
+  .view-toggle button.on { background:var(--primary); color:#fff; font-weight:600; }
+  .quick-filters { display:flex; gap:8px; flex-wrap:wrap; align-items:center; font-size:12px; color:var(--text-secondary); }
+  .qf { border:1px solid var(--border); background:#fff; border-radius:14px; padding:4px 12px; font-size:11.5px; cursor:pointer; color:var(--text-secondary); }
+  .qf:hover { border-color:var(--primary); color:var(--primary); }
+  .qf.on { background:#eef0ff; border-color:#c7cdf9; color:var(--primary); font-weight:600; }
+
+  /* 可排序表头 */
+  th.sortable { cursor:pointer; user-select:none; }
+  th.sortable:hover { color:var(--primary); }
+  th.sortable .arr { font-size:10px; color:var(--text-disabled); margin-left:2px; }
+  th.sortable.act .arr { color:var(--primary); }
+
+  .change-tag { display:inline-block; padding:2px 8px; border-radius:5px; font-size:11px; font-weight:600; }
+  .ch-维持 { background:#f1f5f9; color:#475569; }
+  .ch-转挽单 { background:#ecfdf5; color:#059669; }
+  .ch-转不挽 { background:#fef2f2; color:#dc2626; }
+
+  /* 挽单标签（业务结论列） */
+  .wd-tag { display:inline-flex; align-items:center; gap:5px; padding:3px 12px; border-radius:14px; font-size:12.5px; font-weight:700; }
+  .wd-tag::before { content:''; width:6px; height:6px; border-radius:50%; background:currentColor; }
+  .tag-wd { background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; }
+  .tag-nowd { background:#f1f5f9; color:#647084; border:1px solid #e2e8f0; }
+  .explain-link { color:var(--primary); cursor:pointer; font-size:12px; }
+  .explain-link:hover { text-decoration:underline; }
+  .data-table tbody tr.row-dim > td { color:var(--text-muted); background:#f6f8fb; }
+  .data-table tbody tr.row-dim > td .sku-no { color:var(--text-muted); }
+
+  /* ===== 判据抽屉 ===== */
+  .drawer-mask { position:fixed; inset:0; background:rgba(15,23,42,.42); z-index:9998; display:none; }
+  .drawer-mask.show { display:block; animation:modalFadeIn .2s ease; }
+  @keyframes modalFadeIn { from{opacity:0} to{opacity:1} }
+  .drawer { position:fixed; top:0; right:0; bottom:0; width:620px; max-width:94vw; z-index:9999; background:#fff; box-shadow:-16px 0 48px rgba(0,0,0,.18); display:flex; flex-direction:column; transform:translateX(100%); transition:transform .28s cubic-bezier(.4,0,.2,1); }
+  .drawer.show { transform:translateX(0); }
+  .drawer-head { display:flex; justify-content:space-between; align-items:flex-start; padding:20px 24px 14px; border-bottom:1px solid #e4e9f1; }
+  .drawer-head h3 { margin:0; font-size:16px; font-weight:700; color:#0f172a; }
+  .drawer-head .dh-sub { font-size:12px; color:var(--text-tertiary); margin-top:4px; }
+  .drawer-close { width:28px; height:28px; border:none; background:transparent; border-radius:6px; cursor:pointer; display:grid; place-items:center; color:#647084; font-size:18px; }
+  .drawer-close:hover { background:#f0f2f5; }
+  .drawer-body { flex:1; overflow-y:auto; padding:18px 24px 24px; }
+  .drawer-foot { padding:14px 24px; border-top:1px solid #e4e9f1; display:flex; justify-content:flex-end; gap:10px; }
+  .dl-section { margin-bottom:18px; }
+  .dl-section:last-child { margin-bottom:0; }
+  .dl-title { font-size:13px; font-weight:700; color:var(--ink); margin-bottom:8px; }
+  .dl-kv { display:grid; grid-template-columns:130px 1fr; gap:0; border:1px solid var(--border-light); border-radius:8px; overflow:hidden; }
+  .dl-kv > div { padding:8px 12px; font-size:12.5px; border-bottom:1px solid var(--border-light); }
+  .dl-kv > div:nth-child(odd) { background:#fafbfd; color:var(--text-secondary); font-weight:600; }
+  .dl-kv > div:nth-child(even) { color:var(--ink); }
+  .dl-kv > div:nth-last-child(-n+2) { border-bottom:none; }
+  .dl-note { padding:10px 12px; border-radius:8px; font-size:11.5px; line-height:1.65; }
+  .dl-note.info { background:#eef0ff; color:#3f4a9e; border:1px solid #dce0f8; }
+  .dl-note.warn { background:#fffbeb; color:#92400e; border:1px solid #fde68a; }
+  /* 逐步骤判定过屏 */
+  .ev-conc { display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:12px 14px; border-radius:9px; border:1px solid #dce0f8; background:#f7f9ff; }
+  .ev-conc .tag-big { font-size:15px; font-weight:700; padding:4px 14px; border-radius:16px; }
+  .ev-conc .kv { font-size:12px; color:var(--text-secondary); }
+  .ev-conc .kv b { color:var(--ink); font-weight:700; }
+  .ev-step { border:1px solid var(--border-light); border-radius:9px; margin-bottom:10px; overflow:hidden; }
+  .ev-step.blocked { opacity:.72; }
+  .ev-head { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 12px; background:#fafbfd; border-bottom:1px solid var(--border-light); }
+  .ev-title { font-size:12.5px; font-weight:700; color:var(--ink); }
+  .ev-badge { font-size:11px; font-weight:700; padding:2px 10px; border-radius:11px; white-space:nowrap; }
+  .ev-badge.pass { background:#ecfdf5; color:#059669; }
+  .ev-badge.stop { background:#fef2f2; color:#dc2626; }
+  .ev-badge.idle { background:#f1f5f9; color:#86909c; }
+  .ev-kv { display:grid; grid-template-columns:150px 1fr; }
+  .ev-kv > div { padding:7px 12px; font-size:12px; border-bottom:1px solid #f4f6fa; }
+  .ev-kv > div:nth-child(odd) { color:var(--text-secondary); background:#fcfdfe; }
+  .ev-kv > div:nth-child(even) { color:var(--ink); }
+  .ev-kv > div:nth-last-child(-n+2) { border-bottom:none; }
+  .ev-kv b { color:var(--primary); }
+  .ev-kv .hit { color:#059669; font-weight:700; }
+  .ev-rule { font-size:11.5px; color:var(--text-tertiary); margin-top:2px; line-height:1.6; }
+  </style>
+</head>
+<body>
+<div class="page-container">
+  <div id="toastContainer" class="toast-container"></div>
+  <script>
+    if (window.parent) { window.parent.postMessage({type:'breadcrumb', text:'售后挽单 <span>/</span> 挽单商品池'}, '*'); }
+  </script>
+
+  <div class="page-title">挽单商品池</div>
+
+  <!-- 数据周期与入口 -->
+  <div class="pool-head">
+    <div class="ph-refresh">数据周期 <code id="mWeek"></code> ｜ 下次更新 <code id="mNext"></code></div>
+    <div class="ph-btns">
+      <button class="btn btn-sm" onclick="gotoRule()">商品判定策略</button>
+      <button class="btn btn-sm" onclick="manalRun()">手动补跑本周</button>
+    </div>
+  </div>
+
+  <!-- 统计条 -->
+  <div class="pool-stats" id="poolStats"></div>
+
+  <!-- 查询区 -->
+  <div class="search-area">
+    <div class="search-row">
+      <div class="search-item">
+        <label>款号：</label>
+        <input type="text" id="fSku" placeholder="款号/货号">
+      </div>
+      <div class="search-item">
+        <label>品牌：</label>
+        <select id="fBrand"><option value="">全部</option></select>
+      </div>
+      <div class="search-item">
+        <label>中类：</label>
+        <select id="fMid"><option value="">全部</option></select>
+      </div>
+      <div class="search-item">
+        <label>商品状态：</label>
+        <select id="fStatus"><option value="">全部</option><option value="在售">在售</option><option value="清仓">清仓</option><option value="下架">下架</option></select>
+      </div>
+      <div class="search-item">
+        <label>销售件数 ≥：</label>
+        <input type="number" id="fShip" step="50" min="0" placeholder="如 200" style="width:90px;">
+      </div>
+      <div class="search-item">
+        <label>退货率 ≥（%）：</label>
+        <input type="number" id="fRate" step="0.5" min="0" placeholder="如 10" style="width:80px;">
+      </div>
+      <div class="search-item">
+        <label>毛利率 ≥（%）：</label>
+        <input type="number" id="fMargin" step="1" min="0" placeholder="如 45" style="width:70px;">
+      </div>
+      <div class="search-item">
+        <label>是否挽单：</label>
+        <select id="fTag">
+          <option value="">全部</option>
+          <option value="WD">挽单</option>
+          <option value="NOWD">不挽</option>
+        </select>
+      </div>
+      <div class="search-item">
+        <label>本周动态：</label>
+        <select id="fFlip">
+          <option value="">全部</option>
+          <option value="转挽单">转挽单</option>
+          <option value="转不挽">转不挽</option>
+          <option value="维持">维持</option>
+        </select>
+      </div>
+    </div>
+    <div class="search-actions">
+      <button class="btn btn-primary" onclick="doSearch()">查询</button>
+      <button class="btn" onclick="resetSearch()">重置</button>
+    </div>
+  </div>
+
+  <!-- 表格 -->
+  <div class="table-area">
+    <div class="table-toolbar pool-toolbar">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <button class="btn" onclick="exportCsv()">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          导出商品池
+        </button>
+        <div class="quick-filters">
+          <span>快捷：</span>
+          <span class="qf" data-q="toWd" onclick="quick(this)">本周转挽单</span>
+          <span class="qf" data-q="toNowd" onclick="quick(this)">本周转不挽</span>
+          <span class="qf" data-q="highRate" onclick="quick(this)">高退货率 ≥ 15%</span>
+          <span class="qf" data-q="lowMargin" onclick="quick(this)">挽单且毛利率 &lt; 50%</span>
+        </div>
+      </div>
+      <div class="view-toggle">
+        <button id="btnIn" class="on" onclick="setView('in')">只看挽单商品</button>
+        <button id="btnAll" onclick="setView('all')">全部商品（含不挽）</button>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width:46px;">序号</th>
+            <th class="col-left" style="width:128px;">款号</th>
+            <th style="width:68px;">品牌</th>
+            <th style="width:92px;">中类</th>
+            <th style="width:78px;">商品状态</th>
+            <th class="sortable" data-k="ship" style="width:86px;">销售件数<span class="arr">↕</span></th>
+            <th style="width:86px;">退货件数</th>
+            <th class="sortable" data-k="retRate" style="width:86px;">退货率<span class="arr">↕</span></th>
+            <th class="sortable" data-k="margin" style="width:86px;">毛利率<span class="arr">↕</span></th>
+            <th style="width:86px;">是否挽单</th>
+            <th style="width:86px;">本周动态</th>
+            <th style="width:72px;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <span class="page-info">共 <strong id="totalCount">0</strong> 条</span>
+      <span class="page-btn disabled">&laquo;</span>
+      <span class="page-btn active">1</span>
+      <span class="page-btn">&raquo;</span>
+    </div>
+  </div>
+</div>
+
+<!-- 判据抽屉 -->
+<div class="drawer-mask" id="drawerMask" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <div>
+      <h3 id="dlTitle">判据</h3>
+      <div class="dh-sub" id="dlSub"></div>
+    </div>
+    <button type="button" class="drawer-close" onclick="closeDrawer()" aria-label="关闭">&times;</button>
+  </div>
+  <div class="drawer-body" id="dlBody"></div>
+  <div class="drawer-foot">
+    <button class="btn" onclick="closeDrawer()">关闭</button>
+    <button class="btn btn-warning" onclick="excludeSku()">人工改标为不挽（黑名单）</button>
+    <button class="btn" onclick="forceWd()">强制改标为挽单（白名单）</button>
+    <button class="btn btn-primary" onclick="copyBasis()">复制判据</button>
+  </div>
+</div>
+
+<script src="../../js/wd/retention-data.js"></script>
+<script>
+var view = 'in';
+var sortKey = 'retRate';
+var sortDir = -1;
+var quickKey = '';
+var current = [];
+var currentRow = null;
+var currentEval = null;
+
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML;
+}
+function n(v) { return (v || 0).toLocaleString(); }
+function pct(v, dft) { return v ? (v * 100).toFixed(2) + '%' : (dft || ''); }
+
+// ===== 元信息 =====
+var P = WD.POOL;
+document.getElementById('mWeek').textContent = P.week;
+document.getElementById('mNext').textContent = P.nextRun;
+
+function gotoRule() {
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({type:'openTab', page:'pages/store-engine/wd-tag-rule.html', title:'商品判定策略'}, '*');
+  } else { location.href = 'wd-tag-rule.html'; }
+}
+
+// ===== 统计条 =====
+(function() {
+  var td = P.tierDist, sum = td.YH + td.YM + td.L;
+  var nd = P.nowdDist;
+  var actRules = WD.TAG_RULES.filter(function(x) { return x.status === 'ACTIVE'; });
+  function rangeOf(key, sub, unit, dec) {
+    var vals = actRules.map(function(x) { return x.dims[key][sub]; })
+      .filter(function(v) { return v !== null && v !== undefined; });
+    if (!vals.length) return '未配置';
+    var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+    var f = function(v) { return dec ? Number(v).toFixed(dec) : String(v); };
+    return lo === hi ? f(lo) + unit : f(lo) + '~' + f(hi) + unit;
+  }
+  var rateLo = rangeOf('rate', 'lo', '×', 2), salesLo = rangeOf('sales', 'lo', '件', 0);
+  var topReason = Object.keys(nd).sort(function(a, b) { return nd[b] - nd[a]; }).slice(0, 3)
+    .map(function(k) { return k + ' ' + nd[k]; }).join(' / ');
+  var cards = [
+    { cls:'in', label:'挽单款数', val:P.wdCnt, unit:'款', foot:'全量在售 ' + n(P.totalSku) + ' 款，占比 ' + (P.wdCnt / P.totalSku * 100).toFixed(1) + '%；档位分布 YH/YM/L',
+      bar:'<div class="tier-bar"><i style="width:' + (td.YH/sum*100) + '%;background:#5b6cf5;"></i><i style="width:' + (td.YM/sum*100) + '%;background:#7c6cf5;"></i><i style="width:' + (td.L/sum*100) + '%;background:#cbd5e1;"></i></div>' },
+    { cls:'out', label:'不挽款数', val:P.nowdCnt, unit:'款', foot:'主要原因：' + topReason },
+    { cls:'new', label:'本周转挽单', val:P.toWd, unit:'款', foot:'退货率下界 ' + rateLo + '（按店铺策略）｜销售件数下界 ' + salesLo },
+    { cls:'warn', label:'本周转不挽', val:P.toNowd, unit:'款', foot:'退货率跌出区间下界，或销量与毛利率不在区间内' },
+    { cls:'', label:'待补平台商品映射', val:P.needMapping, unit:'款', foot:'无映射不得静默入标，需业务补建' }
+  ];
+  document.getElementById('poolStats').innerHTML = cards.map(function(c) {
+    return '<div class="ps-card ' + c.cls + '"><div class="ps-label">' + esc(c.label) + '</div>'
+      + '<div class="ps-val' + (c.txt ? ' txt' : '') + '">' + (typeof c.val === 'number' ? n(c.val) : esc(c.val)) + (c.unit ? '<small>' + esc(c.unit) + '</small>' : '') + '</div>'
+      + (c.bar || '') + '<div class="ps-foot">' + esc(c.foot) + '</div></div>';
+  }).join('');
+})();
+
+// ===== 筛选器初始化 =====
+(function initFilters() {
+  var bSel = document.getElementById('fBrand');
+  WD.BRANDS.forEach(function(b) { bSel.insertAdjacentHTML('beforeend', '<option value="' + esc(b) + '">' + esc(b) + '</option>'); });
+  var mids = [];
+  WD.SKU_LABELS.forEach(function(r) { if (mids.indexOf(r.mid) === -1) mids.push(r.mid); });
+  var mSel = document.getElementById('fMid');
+  mids.forEach(function(m) { mSel.insertAdjacentHTML('beforeend', '<option value="' + esc(m) + '">' + esc(m) + '</option>'); });
+  document.querySelectorAll('th.sortable').forEach(function(th) {
+    th.onclick = function() {
+      var k = th.dataset.k;
+      if (sortKey === k) { sortDir = -sortDir; } else { sortKey = k; sortDir = -1; }
+      document.querySelectorAll('th.sortable').forEach(function(x) {
+        x.classList.toggle('act', x.dataset.k === sortKey);
+        x.querySelector('.arr').textContent = x.dataset.k === sortKey ? (sortDir < 0 ? '↓' : '↑') : '↕';
+      });
+      apply();
+    };
+  });
+})();
+
+function flipOf(r) { return r.tag !== r.prevTag ? (r.tag === 'WD' ? '转挽单' : '转不挽') : '维持'; }
+function srcTxt(src) { return { normal: '同品类基准', fallback: '全店分位退化', missing: '基准缺失' }[src] || ''; }
+
+// 挽单标签（业务结论）
+function tagHtml(r) {
+  var t = WD.POOL_TAG[r.tag];
+  return '<span class="wd-tag ' + t.cls + '">' + esc(t.text) + '</span>';
+}
+
+// ===== 取数 + 渲染 =====
+function apply() {
+  var sku = document.getElementById('fSku').value.trim();
+  var brand = document.getElementById('fBrand').value;
+  var mid = document.getElementById('fMid').value;
+  var status = document.getElementById('fStatus').value;
+  var fS = parseFloat(document.getElementById('fShip').value);
+  var fRate = parseFloat(document.getElementById('fRate').value);
+  var fM = parseFloat(document.getElementById('fMargin').value);
+  var tag = document.getElementById('fTag').value;
+  var flip = document.getElementById('fFlip').value;
+
+  current = WD.SKU_LABELS.filter(function(r) {
+    if (view === 'in' && r.tag !== 'WD') return false;
+    if (sku && r.sku.indexOf(sku) === -1) return false;
+    if (brand && r.brand !== brand) return false;
+    if (mid && r.mid !== mid) return false;
+    if (status && r.status !== status) return false;
+    if (tag && r.tag !== tag) return false;
+    if (flip && flipOf(r) !== flip) return false;
+    if (!isNaN(fS) && r.ship < fS) return false;
+    if (!isNaN(fRate) && r.retRate * 100 < fRate) return false;
+    if (!isNaN(fM) && r.margin < fM) return false;
+    if (quickKey === 'toWd' && flipOf(r) !== '转挽单') return false;
+    if (quickKey === 'toNowd' && flipOf(r) !== '转不挽') return false;
+    if (quickKey === 'highRate' && !(r.retRate * 100 >= 15)) return false;
+    if (quickKey === 'lowMargin' && !(r.tag === 'WD' && r.margin < 50)) return false;
+    return true;
+  });
+  current.sort(function(a, b) { return (a[sortKey] - b[sortKey]) * sortDir; });
+  render();
+}
+
+function render() {
+  var tb = document.getElementById('tableBody');
+  if (!current.length) {
+    tb.innerHTML = '<tr><td colspan="12" class="empty-state"><span class="empty-icon">&#128230;</span><div class="empty-text">当前条件下无商品</div><div class="empty-hint">切换「全部商品（含不挽）」或放宽阈值后重试</div></td></tr>';
+  } else {
+    tb.innerHTML = current.map(function(r, i) {
+      var dim = r.tag === 'WD' ? '' : ' class="row-dim"';
+      var flip = flipOf(r);
+      return '<tr' + dim + '>'
+        + '<td>' + (i + 1) + '</td>'
+        + '<td class="col-left"><span class="sku-no" onclick="openDrawer(\'' + esc(r.sku) + '\')">' + esc(r.sku) + '</span></td>'
+        + '<td>' + esc(r.brand) + '</td>'
+        + '<td>' + esc(r.mid) + '</td>'
+        + '<td>' + esc(r.status) + '</td>'
+        + '<td>' + n(r.ship) + '</td>'
+        + '<td>' + n(r.retDone) + '</td>'
+        + '<td class="' + (r.retRate >= 0.15 ? 'num-hi' : '') + '">' + pct(r.retRate) + '</td>'
+        + '<td>' + (r.margin ? r.margin.toFixed(1) + '%' : '') + '</td>'
+        + '<td>' + tagHtml(r) + '</td>'
+        + '<td><span class="change-tag ch-' + esc(flip) + '">' + esc(flip) + '</span></td>'
+        + '<td><span class="explain-link" onclick="openDrawer(\'' + esc(r.sku) + '\')">判据</span></td>'
+        + '</tr>';
+    }).join('');
+  }
+  document.getElementById('totalCount').textContent = current.length;
+}
+
+function setView(v) {
+  view = v;
+  document.getElementById('btnIn').classList.toggle('on', v === 'in');
+  document.getElementById('btnAll').classList.toggle('on', v === 'all');
+  apply();
+}
+function quick(el) {
+  var k = el.dataset.q;
+  quickKey = quickKey === k ? '' : k;
+  document.querySelectorAll('.qf').forEach(function(x) { x.classList.toggle('on', x.dataset.q === quickKey); });
+  if (quickKey) { view = 'all'; document.getElementById('btnIn').classList.remove('on'); document.getElementById('btnAll').classList.add('on'); }
+  apply();
+}
+function doSearch() { apply(); toast('命中 ' + current.length + ' 款', 'info'); }
+function resetSearch() {
+  ['fSku','fBrand','fMid','fStatus','fShip','fRate','fMargin','fTag','fFlip'].forEach(function(id) { document.getElementById(id).value = ''; });
+  quickKey = '';
+  document.querySelectorAll('.qf').forEach(function(x) { x.classList.remove('on'); });
+  view = 'in';
+  document.getElementById('btnIn').classList.add('on');
+  document.getElementById('btnAll').classList.remove('on');
+  sortKey = 'retRate'; sortDir = -1;
+  document.querySelectorAll('th.sortable').forEach(function(x) {
+    x.classList.toggle('act', x.dataset.k === sortKey);
+    x.querySelector('.arr').textContent = x.dataset.k === sortKey ? '↓' : '↕';
+  });
+  apply();
+  toast('已重置', 'info');
+}
+function manalRun() {
+  toast('已提交补跑本周快照（仅支持补最近 1 周）', 'info');
+}
+
+// ===== 判据抽屉：按真实维度的规则逐步骤复现判定过程 =====
+function shopCodeOf(brand) {
+  var s = WD.shopByBrand(brand);
+  return s ? s.code : '';
+}
+function ruleFor(r) {
+  var code = shopCodeOf(r.brand);
+  var list = WD.TAG_RULES.filter(function(x) { return x.shopCode === code; });
+  var ru = list.filter(function(x) { return x.status === 'ACTIVE'; })[0] || list[0] || null;
+  return { shopCode: code, shopName: (WD.shopByBrand(r.brand) || {}).name || '', rule: ru, d: ru ? ru.dims : WD.tagDims() };
+}
+function tierOf(code) {
+  return WD.TIERS.filter(function(t) { return t.code === code; })[0] || null;
+}
+function rangeTxt(lo, hi, unit) {
+  var f = function(v) { return unit === '×' ? Number(v).toFixed(2) : String(v); };
+  return f(lo) + unit + ' ~ ' + (hi === null || hi === undefined || hi === '' ? '无上限' : f(hi) + unit);
+}
+function evaluate(r) {
+  var ctx = ruleFor(r), d = ctx.d, ru = ctx.rule;
+  var steps = [], blocked = false;
+  function add(title, rows, verdict, tone) {
+    steps.push({ title: title, rows: rows, verdict: verdict, tone: tone });
+    if (tone === 'stop') blocked = true;
+  }
+  function idle(title) {
+    steps.push({ title: title, rows: [{ k: '说明', v: '前置步骤已拦截，本步未参与判定' }], verdict: '未参与', tone: 'idle' });
+  }
+
+  /* 第1步 适用范围（店铺归属 + 商品状态 + 中类包含排除 + 平台映射） */
+  var inc = (d.midCat && d.midCat.include) || [], exc = (d.midCat && d.midCat.exclude) || [];
+  var s1 = [
+    { k: '策略归属店铺', v: esc(ctx.shopCode) + ' ' + esc(ctx.shopName) + '（品牌 ' + esc(r.brand) + '）' },
+    { k: '商品状态', v: esc(r.status) },
+    { k: '中类', v: esc(r.mid) + '　包含范围：' + (inc.length ? esc(inc.join('、')) : '不限') + '　排除：' + (exc.length ? esc(exc.join('、')) : '无') },
+    { k: '平台商品映射', v: r.skip === 'NO_PLATFORM_ITEM' ? '未建立映射' : '已建立映射' }
+  ];
+  if (r.skip === 'BLACKLIST') add('第 1 步 · 适用范围', s1, '业务黑名单排除', 'stop');
+  else if (r.skip === 'NO_PLATFORM_ITEM') add('第 1 步 · 适用范围', s1, '无平台商品映射', 'stop');
+  else if (exc.indexOf(r.mid) > -1) add('第 1 步 · 适用范围', s1, '中类已排除', 'stop');
+  else if (inc.length && inc.indexOf(r.mid) === -1) add('第 1 步 · 适用范围', s1, '中类不在包含范围', 'stop');
+  else if (!ru) add('第 1 步 · 适用范围', s1, '该店铺无生效策略', 'stop');
+  else add('第 1 步 · 适用范围', s1, '在范围内', 'pass');
+
+  /* 第2步 基准可用性 */
+  if (blocked) idle('第 2 步 · 同品类基准');
+  else {
+    var s2 = [
+      { k: '基准来源', v: srcTxt(r.src) },
+      { k: '同品类基准退货率', v: pct(r.baseline) }
+    ];
+    if (r.src === 'missing') { s2.push({ k: '结论', v: '无同品类基准，无法算出倍数，不进入判定区间' }); add('第 2 步 · 同品类基准', s2, '基准缺失', 'stop'); }
+    else if (r.src === 'fallback') { s2.push({ k: '结论', v: '同品类样本不足，改用全店分位作基准' }); add('第 2 步 · 同品类基准', s2, '分位退化', 'pass'); }
+    else { s2.push({ k: '结论', v: '基准可用，继续判三个区间' }); add('第 2 步 · 同品类基准', s2, '基准可用', 'pass'); }
+  }
+
+  /* 第3步 销售件数判定区间 */
+  if (blocked) idle('第 3 步 · 销售件数');
+  else {
+    var s3 = [
+      { k: '销售件数（发货口径）', v: n(r.ship) + ' 件' },
+      { k: '判定区间', v: rangeTxt(d.sales.lo, d.sales.hi, '件') },
+      { k: '成交件数', v: n(r.paid) + '（仅旁证，不作圈款口径）' }
+    ];
+    if (r.ship < d.sales.lo) { s3.push({ k: '结论', v: '销量过低，退货率没有统计意义' }); add('第 3 步 · 销售件数', s3, '低于区间下界', 'stop'); }
+    else if (d.sales.hi !== null && d.sales.hi !== undefined && r.ship > d.sales.hi) { s3.push({ k: '结论', v: '销量高于区间上限，不依赖补偿' }); add('第 3 步 · 销售件数', s3, '高于区间上限', 'stop'); }
+    else { s3.push({ k: '结论', v: '销量在区间内，继续判退货率' }); add('第 3 步 · 销售件数', s3, '在区间内', 'pass'); }
+  }
+
+  /* 第4步 退货率判定区间 */
+  if (blocked) idle('第 4 步 · 退货率');
+  else {
+    var ratio = r.ratio || (r.baseline ? r.retRate / r.baseline : r.retRate / 0.09);
+    var s4 = [
+      { k: '剔挽退货率', v: pct(r.retRate) + '　同品类基准 ' + pct(r.baseline) },
+      { k: '基准倍数', v: '<b>' + ratio.toFixed(2) + '×</b>' },
+      { k: '判定区间', v: rangeTxt(d.rate.lo, d.rate.hi, '×') }
+    ];
+    if (d.rate.hi !== null && d.rate.hi !== undefined && ratio >= d.rate.hi) { s4.push({ k: '结论', v: '退货率远高于基准，先排查商品与直播表达，不投补偿' }); add('第 4 步 · 退货率', s4, '高于区间上限', 'stop'); }
+    else if (ratio < d.rate.lo) { s4.push({ k: '结论', v: '退货率低于区间下界，不投补偿' }); add('第 4 步 · 退货率', s4, '低于区间下界', 'stop'); }
+    else { s4.push({ k: '结论', v: '倍数在区间内，继续判毛利率' }); add('第 4 步 · 退货率', s4, '在区间内', 'pass'); }
+  }
+
+  /* 第5步 毛利率判定区间 */
+  if (blocked) idle('第 5 步 · 毛利率');
+  else {
+    var tier = tierOf(r.tier);
+    var s5 = [
+      { k: '毛利率（实付口径）', v: (r.margin ? r.margin.toFixed(1) + '%' : '') },
+      { k: '判定区间', v: rangeTxt(d.margin.lo, d.margin.hi, '%') },
+      { k: '命中档位', v: tier ? '<span class="hit">' + esc(tier.code) + ' 档</span>（' + tier.marginLower + '%~' + (tier.marginUpper === null ? '无上限' : tier.marginUpper + '%') + '）' : '无档位归属' }
+    ];
+    if (r.margin < d.margin.lo) { s5.push({ k: '结论', v: '毛利率低于区间下界，不值得挽' }); add('第 5 步 · 毛利率', s5, '低于区间下界', 'stop'); }
+    else if (d.margin.hi !== null && d.margin.hi !== undefined && r.margin >= d.margin.hi) { s5.push({ k: '结论', v: '毛利率高于区间上限，不投补偿' }); add('第 5 步 · 毛利率', s5, '高于区间上限', 'stop'); }
+    else if (!tier) { s5.push({ k: '结论', v: '未命中任何毛利率档位，不参与批处理' }); add('第 5 步 · 毛利率', s5, '无档位归属', 'stop'); }
+    else { s5.push({ k: '结论', v: '归入 ' + tier.code + ' 档，继续算价格带与补偿额' }); add('第 5 步 · 毛利率', s5, '命中 ' + tier.code + ' 档', 'pass'); }
+  }
+
+  /* 第6步 价格带与补偿额 */
+  if (blocked) idle('第 6 步 · 价格带与补偿额');
+  else {
+    var t2 = tierOf(r.tier);
+    var s6 = [
+      { k: '实付金额分位', v: r.paidP50 ? 'P25 ' + r.paidP25 + ' / <b>P50 ' + r.paidP50 + '</b> / P75 ' + r.paidP75 : '' },
+      { k: '命中策略带', v: esc(r.band || '') },
+      { k: '带内保守上限', v: r.capBand === null ? '' : '¥' + r.capBand + '（= 安全系数 0.80 × 平台上限 × 带下界）' },
+      { k: '档位目标补偿', v: (t2 && t2.target !== undefined && t2.target !== null) ? '¥' + t2.target + '（' + esc(t2.code) + ' 档）' : '' },
+      { k: '建议补偿上限', v: r.cap === null ? '' : '<b>¥' + r.cap.toFixed(2) + '</b>' },
+      { k: '有感校验', v: r.cap === null ? '' : (r.cap < 5 ? '低于有感下限 5 元 → 本期不生成挽单策略'
+          : (r.cap <= 5 ? '恰在有感下限且与相邻低档同值 → 已告警并合并档位' : '通过')) }
+    ];
+    add('第 6 步 · 价格带与补偿额', s6, r.cap === null ? '未生成' : (r.cap < 5 ? '补偿额过小' : '补偿额成立'), r.cap === null || r.cap < 5 ? 'idle' : 'pass');
+  }
+
+  return { ctx: ctx, steps: steps, blocked: blocked };
+}
+
+/* 结论行：根据本次区间实时生成，不沿用快照静态文案 */
+function summaryOf(ev, r, stopStep) {
+  var d = ev.ctx.d;
+  var ratio = r.ratio || (r.baseline ? r.retRate / r.baseline : 0);
+  var hit = ev.steps.filter(function(s) { return s.title.indexOf('销售件数') > -1 || s.title.indexOf('退货率') > -1 || s.title.indexOf('毛利率') > -1; });
+  var detail = hit.map(function(s) {
+    return s.title.replace(/^第 \d+ 步 · /, '') + '：' + s.verdict;
+  }).join('、');
+  // 只有已判到退货率（第 4 步及之后）才输出倍数，否则无意义
+  var stopNo = stopStep ? Number((/第 (\d+) 步/.exec(stopStep.title) || [])[1] || 0) : 99;
+  var rateJudged = stopNo >= 4;
+  if (stopStep) {
+    return '拦截于<b>' + esc(stopStep.title) + '</b>（' + esc(stopStep.verdict) + '）'
+      + (rateJudged ? '　｜　退货率 ' + ratio.toFixed(2) + '× 对应判定区间 ' + rangeTxt(d.rate.lo, d.rate.hi, '×') : '')
+      + '　｜　' + esc(detail);
+  }
+  return '三个区间全部命中：退货率 ' + ratio.toFixed(2) + '× 在 '
+    + rangeTxt(d.rate.lo, d.rate.hi, '×') + ' 内　｜　' + esc(detail);
+}
+
+function openDrawer(sku) {
+  var r = WD.SKU_LABELS.filter(function(x) { return x.sku === sku; })[0];
+  if (!r) return;
+  currentRow = r;
+  var ev = evaluate(r);
+  var ru = ev.ctx.rule;
+  currentEval = ev;
+
+  document.getElementById('dlTitle').textContent = r.tag === 'WD' ? '为什么这款标为挽单' : '为什么这款不挽单';
+  document.getElementById('dlSub').innerHTML = '款号 ' + esc(r.sku) + ' · ' + esc(r.brand) + ' · ' + esc(r.mid)
+    + ' ｜ 数据周期 ' + esc(P.week) + ' ｜ 按「' + esc(ru ? ru.name : '默认策略') + '」逐步骤复现';
+
+  var stopStep = ev.steps.filter(function(s) { return s.tone === 'stop'; })[0];
+  var dd = ev.ctx.d;
+  var html = '';
+  html += '<div class="dl-section"><div class="dl-title">判定结论</div>'
+    + '<div class="ev-conc">'
+    + '<span class="tag-big wd-tag ' + WD.POOL_TAG[r.tag].cls + '">' + esc(WD.POOL_TAG[r.tag].text) + '</span>'
+    + '<span class="kv">归属档位：<b>' + esc(r.tier || '') + '</b></span>'
+    + '<span class="kv">建议补偿上限：<b>' + (r.cap === null ? '未生成' : '¥' + r.cap.toFixed(2)) + '</b></span>'
+    + '<span class="kv">本周动态：<b>' + esc(flipOf(r)) + '</b></span>'
+    + '<div style="width:100%;" class="kv">' + summaryOf(ev, r, stopStep) + '</div>'
+    + '</div></div>';
+
+  html += '<div class="dl-section"><div class="dl-title">逐维度判定过程</div>'
+    + ev.steps.map(function(s) {
+        return '<div class="ev-step' + (s.tone === 'idle' ? ' blocked' : '') + '">'
+          + '<div class="ev-head"><span class="ev-title">' + esc(s.title) + '</span>'
+          + '<span class="ev-badge ' + s.tone + '">' + esc(s.verdict) + '</span></div>'
+          + '<div class="ev-kv">' + s.rows.map(function(x) { return '<div>' + x.k + '</div><div>' + x.v + '</div>'; }).join('') + '</div></div>';
+      }).join('')
+    + '<div class="ev-rule">判定顺序固定：适用范围（店铺归属、商品状态、中类包含排除、平台映射）→ 同品类基准可用性 → 销售件数区间 → 退货率区间 → 毛利率区间 → 价格带与补偿额；三个区间必须同时命中才判挽单，任一步拦截即不挽单。</div>'
+    + '</div>';
+
+  html += '<div class="dl-section"><div class="dl-title">规则来源与标签周期</div><div class="dl-kv">'
+    + '<div>判定策略</div><div>' + (ru ? '<code>' + esc(ru.id) + '</code> ' + esc(ru.name) : '未匹配到策略，用默认区间') + '</div>'
+    + '<div>判定区间</div><div>退货率 ' + rangeTxt(dd.rate.lo, dd.rate.hi, '×')
+      + '　｜　销售件数 ' + rangeTxt(dd.sales.lo, dd.sales.hi, '件')
+      + '　｜　毛利率 ' + rangeTxt(dd.margin.lo, dd.margin.hi, '%') + '</div>'
+    + '<div>中类范围</div><div>包含：' + (dd.midCat && dd.midCat.include.length ? esc(dd.midCat.include.join('、')) : '不限')
+      + '　排除：' + (dd.midCat && dd.midCat.exclude.length ? esc(dd.midCat.exclude.join('、')) : '无') + '</div>'
+    + '<div>打标时间</div><div>' + esc(P.tagUpdatedAt) + '（每周一 04:00 与快照同批重算）</div>'
+    + '<div>下次更新</div><div>' + esc(P.tagNextAt) + '；周内不翻转，人工改标走黑/白名单且下周生效</div>'
+    + '<div>上期→本期</div><div>' + esc(WD.POOL_TAG[r.prevTag].text) + ' → ' + esc(WD.POOL_TAG[r.tag].text) + '（' + esc(flipOf(r)) + '）</div>'
+    + '</div></div>';
+
+  if (r.skip) {
+    html += '<div class="dl-section"><div class="dl-note warn">人工处理提示：' + esc(r.tagReason || '') + '。该款不会静默进入商品池，已计入本周待处理清单。</div></div>';
+  }
+  document.getElementById('dlBody').innerHTML = html;
+  document.getElementById('drawerMask').classList.add('show');
+  document.getElementById('drawer').classList.add('show');
+}
+function closeDrawer() {
+  document.getElementById('drawerMask').classList.remove('show');
+  document.getElementById('drawer').classList.remove('show');
+}
+function excludeSku() {
+  if (!currentRow) return;
+  if (currentRow.tag === 'NOWD') { toast('该款本周期已是不挽，无需重复改标', 'info'); return; }
+  toast('已提交黑名单：' + currentRow.sku + '，下周期起改标为「不挽」', 'success');
+  closeDrawer();
+}
+function forceWd() {
+  if (!currentRow) return;
+  if (currentRow.tag === 'WD') { toast('该款本周期已是挽单，无需重复改标', 'info'); return; }
+  toast('已提交白名单：' + currentRow.sku + '，下周期起重算为「挽单」（仍需过门检才能入策略）', 'success');
+  closeDrawer();
+}
+function copyBasis() {
+  if (!currentRow) return;
+  var ev = currentEval || evaluate(currentRow);
+  var ru = ev.ctx.rule;
+  var strip = function(h) { return h.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&'); };
+  var txt = JSON.stringify({
+    sku: currentRow.sku, week: P.week,
+    tag: WD.POOL_TAG[currentRow.tag].text, prevTag: WD.POOL_TAG[currentRow.prevTag].text, flip: flipOf(currentRow),
+    tier: currentRow.tier || null, suggestCap: currentRow.cap, band: currentRow.band || null,
+    rule: ru ? { id: ru.id, name: ru.name, shop: ev.ctx.shopCode } : null,
+    steps: ev.steps.map(function(s) {
+      return { step: s.title, verdict: s.verdict, detail: s.rows.map(function(x) { return x.k + ': ' + strip(x.v); }) };
+    })
+  }, null, 2);
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(txt).then(function() { toast('判据已复制到剪贴板', 'success'); }, function() { toast('复制失败，请手动选择文本', 'error'); });
+  } else { toast('当前环境不支持剪贴板', 'info'); }
+}
+
+function exportCsv() {
+  var head = ['序号','款号','品牌','中类','商品状态','销售件数','退货件数','退货率','毛利率','是否挽单','本周动态','数据周期'];
+  var rows = current.map(function(r, i) {
+    return [i + 1, r.sku, r.brand, r.mid, r.status, r.ship, r.retDone, r.retRate, r.margin,
+            WD.POOL_TAG[r.tag].text, flipOf(r), P.week];
+  });
+  var csv = '\uFEFF' + [head].concat(rows).map(function(a) { return a.join(','); }).join('\n');
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '挽单商品池_' + P.week + '.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('已导出 ' + current.length + ' 款', 'success');
+}
+
+function toast(msg, type) {
+  var c = document.getElementById('toastContainer');
+  var t = document.createElement('div'); t.className = 'toast toast-' + (type || 'info'); t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(function(){ t.classList.add('toast-hide'); }, 3400);
+  setTimeout(function(){ t.remove(); }, 3900);
+}
+
+document.querySelector('th.sortable[data-k="retRate"]').classList.add('act');
+document.querySelector('th.sortable[data-k="retRate"] .arr').textContent = '↓';
+apply();
+</script>
+</body>
+</html>

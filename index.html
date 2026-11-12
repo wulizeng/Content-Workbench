@@ -217,7 +217,7 @@
           </a>
           <a class="sidebar-item sidebar-child" data-page="pages/store-engine/kuaishou-price-check.html" onclick="switchSidebar(this)">
             <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><line x1="12" y1="6" x2="12" y2="8"/><line x1="12" y1="16" x2="12" y2="18"/></svg>
-            <span>快手核价</span>
+            <span>平台核价</span>
           </a>
           <a class="sidebar-item sidebar-child" data-page="pages/store-engine/channel-product.html" onclick="switchSidebar(this)">
             <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
@@ -276,6 +276,29 @@
           <a class="sidebar-item sidebar-child" data-page="pages/store-engine/product-diagnose.html" onclick="switchSidebar(this)">
             <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
             <span>产品诊断</span>
+          </a>
+        </div>
+        <div class="sidebar-parent" onclick="toggleSubmenu(this)">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 11l2 2 4-4"/></svg>
+          <span>售后挽单</span>
+          <svg class="arrow" viewBox="0 0 24 24" width="12" height="12"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+        <div class="sidebar-children">
+          <a class="sidebar-item sidebar-child" data-page="pages/store-engine/wd-overview.html" onclick="switchSidebar(this)">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <span>挽单总览</span>
+          </a>
+          <a class="sidebar-item sidebar-child" data-page="pages/store-engine/wd-sku-label.html" onclick="switchSidebar(this)">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+            <span>挽单商品池</span>
+          </a>
+          <a class="sidebar-item sidebar-child" data-page="pages/store-engine/wd-tag-rule.html" onclick="switchSidebar(this)">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            <span>商品判定策略</span>
+          </a>
+          <a class="sidebar-item sidebar-child" data-page="pages/store-engine/wd-strategy.html" onclick="switchSidebar(this)">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+            <span>挽单方案</span>
           </a>
         </div>
         <div class="sidebar-parent" onclick="toggleSubmenu(this)">
@@ -599,6 +622,13 @@
         '<span>客户注册账号</span>' +
         '</div>';
 
+      // 客户档案库（运营视角，仅运营侧 operator/bd/admin 可见）
+      var customerProfileLibItem =
+        '<div class="sidebar-parent" data-page="pages/recruit/customer-profile-library.html" onclick="switchSidebar(this)">' +
+        '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4z"/><path d="M4 4v14"/><path d="M8 9h6"/><path d="M8 13h4"/></svg>' +
+        '<span>客户档案库</span>' +
+        '</div>';
+
       // 运营视角菜单项（与分组标题同级，一级菜单样式）
       function operatorItems(label) {
         return '<div class="sidebar-parent" data-page="pages/recruit/list.html" onclick="switchSidebar(this)">' +
@@ -643,16 +673,16 @@
         recruitMenu.innerHTML = customerPanoramaItem + sectionLabel('客户视角', clientIcon) + clientItems + draftBlock(draftItems);
       } else if (role === 'operator') {
         // 运营：分销全景图（顶部） + 运营视角（客户注册账号 + 客户合作管理） + 草稿（含入驻流程/分销管理/客户合作签约）
-        recruitMenu.innerHTML = customerPanoramaItem + sectionLabel('运营视角', operatorIcon) + profileItem + operatorItems('客户合作管理') + draftBlock(operatorDraftItems);
+        recruitMenu.innerHTML = customerPanoramaItem + sectionLabel('运营视角', operatorIcon) + profileItem + customerProfileLibItem + operatorItems('客户合作管理') + draftBlock(operatorDraftItems);
       } else if (role === 'bd') {
         // BD：分销全景图（顶部） + 运营视角（客户注册账号 + 申请列表） + 草稿（含入驻流程/分销管理/客户合作签约）
-        recruitMenu.innerHTML = customerPanoramaItem + sectionLabel('运营视角', operatorIcon) + profileItem + operatorItems('申请列表') + draftBlock(operatorDraftItems);
+        recruitMenu.innerHTML = customerPanoramaItem + sectionLabel('运营视角', operatorIcon) + profileItem + customerProfileLibItem + operatorItems('申请列表') + draftBlock(operatorDraftItems);
       } else if (role === 'admin') {
         // 管理员：分销全景图（顶部） + 客户视角 + 客户菜单 + 运营视角（客户注册账号 + 客户合作管理） + 草稿（含入驻流程/分销管理/客户合作签约）
         recruitMenu.innerHTML =
           customerPanoramaItem +
           sectionLabel('客户视角', clientIcon) + clientItems +
-          sectionLabel('运营视角', operatorIcon) + profileItem + operatorItems('客户合作管理') +
+          sectionLabel('运营视角', operatorIcon) + profileItem + customerProfileLibItem + operatorItems('客户合作管理') +
           draftBlock(operatorDraftItems);
       }
     }

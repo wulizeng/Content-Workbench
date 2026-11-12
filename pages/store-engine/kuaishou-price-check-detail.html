@@ -247,6 +247,23 @@ var mockTasks = {
     taskNo:'KSHJ20261020002', storeCode:'KS-S002', storeName:'专营店B', productStatus:'在售', fileName:'快手核价_专营店B_1020.xlsx',
     total:120, success:0, fail:0, status:'待执行', creator:'王店长', createTime:'2026-10-20 11:30:00',
     items:[]
+  },
+  'KSHJ20261021001': {
+    taskNo:'KSHJ20261021001', storeCode:'SPH-S001', storeName:'视频号旗舰店E', productStatus:'上架', fileName:'视频号核价_旗舰店E_1021.xlsx',
+    total:60, success:60, fail:0, status:'成功', creator:'陈运营', createTime:'2026-10-21 10:00:00',
+    items:[
+      { itemNo:'SP-2026-H01', productName:'视频号新款针织衫 白', platformTitle:'视频号新款圆领针织衫女白色修身套头毛衣', ksProductId:'SPH_500001001', curPrice:'259.00', checkPrice:'259.00', result:'成功', failReason:'' },
+      { itemNo:'SP-2026-H02', productName:'视频号新款阔腿裤 黑', platformTitle:'视频号新款高腰阔腿裤女黑色垂感拖地长裤', ksProductId:'SPH_500001002', curPrice:'199.00', checkPrice:'189.00', result:'成功', failReason:'' }
+    ]
+  },
+  'KSHJ20261021002': {
+    taskNo:'KSHJ20261021002', storeCode:'XHS-S001', storeName:'小红书品牌店G', productStatus:'上架', fileName:'小红书核价_品牌店G_1021.xlsx',
+    total:45, success:40, fail:5, status:'部分成功', creator:'周红', createTime:'2026-10-21 15:30:00',
+    items:[
+      { itemNo:'XHS-2026-I01', productName:'小红书爆款羽绒服 米', platformTitle:'小红书爆款面包服羽绒服女米色宽松保暖外套', ksProductId:'XHS_600001001', curPrice:'599.00', checkPrice:'569.00', result:'成功', failReason:'' },
+      { itemNo:'XHS-2026-I02', productName:'小红书爆款卫衣 灰', platformTitle:'小红书爆款oversize卫衣男女同款灰色加绒', ksProductId:'', curPrice:'179.00', checkPrice:'159.00', result:'失败', failReason:'平台商品ID不存在，无法核价' },
+      { itemNo:'XHS-2026-I03', productName:'小红书爆款半身裙 黑', platformTitle:'小红书爆款高腰半身裙女黑色A字包臀裙', ksProductId:'XHS_600001003', curPrice:'209.00', checkPrice:'219.00', result:'失败', failReason:'正确价格高于当前售价，平台不允许上调' }
+    ]
   }
 };
 
@@ -268,12 +285,21 @@ function renderStatus(status) {
   return '<span class="status-tag ' + cls + '">' + esc(status) + '</span>';
 }
 
+// ===== 平台映射（由店铺编码前缀推导） =====
+var PLATFORM_MAP = { 'KS':'快手', 'SPH':'视频号', 'XHS':'小红书' };
+function platformOf(storeCode) {
+  var p = (storeCode || '').split('-')[0];
+  return PLATFORM_MAP[p] || '—';
+}
+
 // ===== 渲染基本信息 =====
 function renderInfo(task) {
   document.getElementById('taskNoChip').textContent = task.taskNo;
   var fields = [
     { label: '任务编号', value: task.taskNo, mono: true },
+    { label: '平台', value: platformOf(task.storeCode) },
     { label: '店铺编码', value: task.storeCode },
+    { label: '店铺名称', value: task.storeName },
     { label: '商品状态', value: task.productStatus },
     { label: '上传文件', value: task.fileName },
     { label: '状态', html: renderStatus(task.status) },
@@ -460,7 +486,7 @@ function goBack() {
     window.parent.postMessage({
       type: 'openTab',
       page: 'pages/store-engine/kuaishou-price-check.html',
-      title: '快手核价'
+      title: '平台核价'
     }, '*');
   } else {
     location.href = 'kuaishou-price-check.html';

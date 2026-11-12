@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>商品判定策略明细</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+  :root { --ink:#0f172a; }
+  .back-bar { margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .back-link { display:inline-flex; align-items:center; gap:5px; font-size:13px; color:var(--primary); cursor:pointer; font-weight:600; }
+  .back-link:hover { text-decoration:underline; }
+  .head-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .mode-tag { font-size:11.5px; padding:3px 10px; border-radius:12px; background:#eef0ff; color:#5b6cf5; font-weight:600; }
+  .mode-tag.edit { background:#fff7ed; color:#ea580c; }
+
+  .card { background:var(--bg-white); border:1px solid var(--border); border-radius:10px; margin-bottom:12px; overflow:hidden; }
+  .card-head { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; padding:12px 18px; border-bottom:1px solid var(--border-light); background:#fafbfd; }
+  .card-head h3 { margin:0; font-size:14px; font-weight:700; color:var(--ink); display:flex; align-items:center; gap:6px; }
+  .card-head h3 svg { color:var(--primary); }
+  .card-head .ch-sub { font-size:11.5px; color:var(--text-tertiary); }
+  .card-body { padding:16px 18px; }
+
+  .info-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px 18px; }
+  .ig-item { min-width:0; }
+  .ig-label { font-size:11.5px; color:var(--text-tertiary); }
+  .ig-value { font-size:13px; color:var(--ink); font-weight:600; margin-top:4px; word-break:break-all; }
+  .ig-value code { font-family:"SF Mono","Menlo",monospace; font-size:12px; color:var(--primary); }
+  .ig-value input, .ig-value select { width:100%; padding:6px 9px; border:1px solid var(--border); border-radius:6px; font-size:12.5px; outline:none; font-weight:500; }
+  .ig-value input:focus, .ig-value select:focus { border-color:var(--primary); }
+  .ig-value .ro { display:block; padding:6px 0; }
+
+  .st-tag { display:inline-flex; align-items:center; padding:3px 12px; border-radius:14px; font-size:12px; font-weight:600; }
+  .st-DRAFT { background:#f1f5f9; color:#475569; }
+  .st-ACTIVE { background:#ecfdf5; color:#059669; }
+  .st-PENDING { background:#fef3c7; color:#d97706; }
+  .st-DISABLED { background:#f1f5f9; color:#94a3b8; }
+
+  /* 判定维度参数表：每个维度一行，参数值为区间 */
+  .dim-tbl { width:100%; border-collapse:collapse; }
+  .dim-tbl th, .dim-tbl td { border-bottom:1px solid var(--border-light); padding:11px 12px; font-size:12.5px; text-align:left; vertical-align:middle; }
+  .dim-tbl th { background:#fafbfd; color:var(--text-secondary); font-weight:600; white-space:nowrap; }
+  .dim-tbl tr:last-child td { border-bottom:none; }
+  .dim-tbl td.dim-name { font-weight:700; color:var(--ink); white-space:nowrap; width:120px; }
+  .dim-tbl td.p-name { width:190px; color:var(--ink); }
+  .dim-tbl td.p-val { width:300px; }
+  .dim-tbl td.p-note { color:var(--text-tertiary); font-size:11.5px; line-height:1.65; }
+  .pv { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .pv input[type=number] { width:104px; padding:6px 8px; border:1px solid var(--border); border-radius:6px; font-size:12.5px; outline:none; font-weight:600; color:var(--ink); }
+  .pv input[type=number]:focus { border-color:var(--primary); }
+  .pv input:disabled { background:#f1f5f9; color:var(--text-muted); cursor:not-allowed; }
+  .pv .unit { font-size:11.5px; color:var(--text-tertiary); }
+  .pv .tilde { font-size:13px; color:var(--text-secondary); margin:0 2px; }
+  .pv .ro { font-size:13px; color:var(--ink); font-weight:700; }
+  .pv .ro .none { font-weight:400; color:var(--text-tertiary); font-size:11.5px; }
+  .pv input[type=text] { flex:1; min-width:110px; padding:6px 8px; border:1px solid var(--border); border-radius:6px; font-size:12.5px; outline:none; font-weight:500; color:var(--ink); }
+  .pv input[type=text]:focus { border-color:var(--primary); }
+  .pv .lbl { font-size:11.5px; color:var(--text-tertiary); flex-shrink:0; width:30px; }
+  .pv.list-wrap { flex-direction:column; align-items:stretch; gap:6px; }
+  .pv .list-row { display:flex; align-items:center; gap:6px; }
+
+  .warn-bar { margin-top:12px; padding:10px 14px; border-radius:8px; font-size:12px; line-height:1.65; }
+  .warn-bar.err { background:#fef2f2; border:1px solid #fecaca; color:#991b1b; }
+  .warn-bar.ok { background:#ecfdf5; border:1px solid #a7f3d0; color:#065f46; }
+
+  .timeline { position:relative; padding-left:22px; }
+  .timeline::before { content:''; position:absolute; left:6px; top:6px; bottom:6px; width:2px; background:var(--border-light); }
+  .tl-item { position:relative; padding-bottom:14px; }
+  .tl-item:last-child { padding-bottom:0; }
+  .tl-dot { position:absolute; left:-22px; top:4px; width:12px; height:12px; border-radius:50%; background:#fff; border:2px solid var(--primary); }
+  .tl-title { font-size:12.5px; font-weight:600; color:var(--ink); }
+  .tl-meta { font-size:11.5px; color:var(--text-tertiary); margin-top:3px; line-height:1.6; }
+  .foot-bar { display:flex; justify-content:flex-end; gap:10px; padding:14px 18px; background:var(--bg-white); border:1px solid var(--border); border-radius:10px; }
+  </style>
+</head>
+<body>
+<div class="page-container">
+  <div id="toastContainer" class="toast-container"></div>
+  <script>
+    if (window.parent) { window.parent.postMessage({type:'breadcrumb', text:'售后挽单 <span>/</span> 商品判定策略 <span>/</span> 策略明细'}, '*'); }
+  </script>
+
+  <div class="back-bar">
+    <span class="back-link" onclick="goBack()">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      返回策略列表
+    </span>
+    <div class="head-actions">
+      <span class="mode-tag" id="modeTag">查看</span>
+      <button class="btn btn-primary" id="btnEdit" onclick="enterEdit()">编辑</button>
+      <button class="btn" id="btnCancel" style="display:none;" onclick="cancelEdit()">取消</button>
+      <button class="btn btn-primary" id="btnSave" style="display:none;" onclick="saveRule()">保存</button>
+      <button class="btn btn-warning" id="btnToggle" onclick="toggleStatus()">停用</button>
+    </div>
+  </div>
+
+  <div class="page-title" id="pgTitle">商品判定策略明细</div>
+
+  <!-- 1 基本信息 -->
+  <div class="card">
+    <div class="card-head">
+      <h3><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>基本信息</h3>
+      <span class="ch-sub">一条策略只对一个店铺生效，店铺编码即该策略的同步目标</span>
+    </div>
+    <div class="card-body"><div class="info-grid" id="baseGrid"></div></div>
+  </div>
+
+  <!-- 2 判定维度参数 -->
+  <div class="card">
+    <div class="card-head">
+      <h3><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>判定维度参数</h3>
+      <span class="ch-sub">退货率 / 销售件数 / 毛利率 三个数值维度各维护一个区间，商品中类维护包含/排除名单；四项同时命中才判挽单，任一不命中即不挽单</span>
+    </div>
+    <div class="card-body">
+      <table class="dim-tbl">
+        <thead><tr>
+          <th style="width:120px;">维度</th>
+          <th style="width:190px;">参数项</th>
+          <th style="width:300px;">参数值（区间 / 包含排除）</th>
+          <th>参数作用</th>
+        </tr></thead>
+        <tbody id="dimBody"></tbody>
+      </table>
+      <div class="warn-bar" id="guardBar" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- 3 操作日志 -->
+  <div class="card">
+    <div class="card-head">
+      <h3><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>操作日志</h3>
+      <span class="ch-sub">记录每次保存的参数变动流水，新记录在上</span>
+    </div>
+    <div class="card-body"><div class="timeline" id="timeline"></div></div>
+  </div>
+
+  <div class="foot-bar">
+    <button class="btn" id="btnCancel2" style="display:none;" onclick="cancelEdit()">取消</button>
+    <button class="btn btn-primary" id="btnSave2" style="display:none;" onclick="saveRule()">保存</button>
+  </div>
+</div>
+
+<script src="../../js/wd/retention-data.js"></script>
+<script>
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML;
+}
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
+function nowStr() {
+  var d = new Date(), p = function(x){ return String(x).padStart(2, '0'); };
+  return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+function qs(k) {
+  var m = new RegExp('[?&]' + k + '=([^&]*)').exec(location.search);
+  return m ? decodeURIComponent(m[1]) : '';
+}
+
+var CURRENT_USER = '当前用户（业务运营）';
+var id = qs('id');
+var editing = qs('mode') === 'edit';
+var rule, base, draft;
+
+if (id === 'new' || !id) {
+  // 策略编号规则：PD + 年月日 + 3位流水（当日已有最大流水 +1）
+  var d = new Date();
+  var day = String(d.getFullYear()) + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+  var prefix = 'PD' + day;
+  var maxSeq = WD.TAG_RULES.reduce(function(acc, r) {
+    var m = /^PD(\d{8})(\d{3})$/.exec(String(r.id));
+    return Math.max(acc, m && m[1] === day ? Number(m[2]) : 0);
+  }, 0);
+  rule = clone(WD.TAG_RULE_TPL);
+  rule.id = prefix + String(maxSeq + 1).padStart(3, '0');
+  rule.isNew = true;
+} else {
+  rule = clone(WD.TAG_RULES.filter(function(r) { return r.id === id; })[0] || WD.TAG_RULE_TPL);
+}
+base = clone(rule);
+draft = clone(rule);
+
+/* 维度定义：每维度一个区间参数 */
+var DIMS = [
+  { key: 'rate',   dim: '退货率',   name: '退货率判定区间', unit: '×', step: 0.01, dec: 2,
+    note: '该款剔挽退货率与同品类基准的倍数落在区间内才判挽单；上限用于排除退货率异常款（先排查商品与直播表达，不投补偿）' },
+  { key: 'sales',  dim: '销售件数', name: '销售件数判定区间', unit: '件', step: 1, dec: 0,
+    note: '按发货口径统计的近 30 天销售件数落在区间内才挽单；上限用于排除销量过高、无需补偿的款' },
+  { key: 'margin', dim: '毛利率',   name: '毛利率判定区间', unit: '%', step: 1, dec: 0,
+    note: '毛利率不低于区间下界才值得挽；上限用于排除价格失真的高毛利清仓盘' },
+  { key: 'midCat', dim: '商品中类', name: '中类包含/排除规则', type: 'list',
+    note: '仅包含列表内的商品中类参与判定（包含留空表示不限中类）；排除列表内的中类一律不挽单，排除优先于包含' }
+];
+
+function splitList(s) {
+  var seen = {}, out = [];
+  String(s || '').split(/[,，、;；\s]+/).forEach(function(t) {
+    t = t.trim();
+    if (t && !seen[t]) { seen[t] = 1; out.push(t); }
+  });
+  return out;
+}
+function listText(g) {
+  var v = draft.dims[g.key] || {};
+  var inc = (v.include && v.include.length) ? esc(v.include.join('、')) : '<span class="none">不限</span>';
+  var exc = (v.exclude && v.exclude.length) ? esc(v.exclude.join('、')) : '<span class="none">无</span>';
+  return '包含：' + inc + '；排除：' + exc;
+}
+function listCtl(g) {
+  if (!editing) return '<span class="ro">' + listText(g) + '</span>';
+  var v = draft.dims[g.key] || { include: [], exclude: [] };
+  return '<div class="pv list-wrap">'
+    + '<div class="list-row"><span class="lbl">包含</span><input type="text" data-path="' + g.key + '.include" value="' + esc((v.include || []).join('、')) + '" placeholder="留空不限中类，多个用、分隔"></div>'
+    + '<div class="list-row"><span class="lbl">排除</span><input type="text" data-path="' + g.key + '.exclude" value="' + esc((v.exclude || []).join('、')) + '" placeholder="多个用、分隔，排除优先"></div>'
+    + '</div>';
+}
+
+function fmtNum(v, dec) {
+  if (v === null || v === undefined || v === '') return '';
+  return dec ? Number(v).toFixed(dec) : String(Math.round(Number(v)));
+}
+/* 区间边界统一写法：数值紧接单位；无上限不拼单位 */
+function bound(v, unit, dec) {
+  if (v === null || v === undefined || v === '') return '无上限';
+  return fmtNum(v, dec) + unit;
+}
+function rangeText(g) {
+  var v = draft.dims[g.key];
+  var lo = fmtNum(v.lo, g.dec) + g.unit;
+  var hi = (v.hi === null || v.hi === undefined || v.hi === '') ? '<span class="none">无上限</span>' : fmtNum(v.hi, g.dec) + g.unit;
+  return lo + ' ~ ' + hi;
+}
+
+function rangeCtl(g) {
+  if (!editing) return '<span class="ro">' + rangeText(g) + '</span>';
+  var v = draft.dims[g.key];
+  return '<div class="pv">'
+    + '<input type="number" data-path="' + g.key + '.lo" value="' + fmtNum(v.lo, g.dec) + '" step="' + g.step + '">'
+    + '<span class="unit">' + g.unit + '</span><span class="tilde">~</span>'
+    + '<input type="number" data-path="' + g.key + '.hi" value="' + fmtNum(v.hi, g.dec) + '" step="' + g.step + '" placeholder="无上限">'
+    + '<span class="unit">' + g.unit + '</span></div>';
+}
+
+function shopNameOf(code) {
+  var s = WD.TAG_SHOPS.filter(function(x) { return x.code === code; })[0];
+  return s ? s.name : '';
+}
+
+function renderBase() {
+  var editable = editing;
+  var shopCtl = editable
+    ? '<select id="shopSel"><option value="">请选择店铺</option>' + WD.TAG_SHOPS.map(function(s) {
+        return '<option value="' + esc(s.code) + '"' + (s.code === draft.shopCode ? ' selected' : '') + '>' + esc(s.code) + ' ' + esc(s.name) + '</option>';
+      }).join('') + '</select>'
+    : '<code>' + esc(draft.shopCode || '') + '</code>';
+  var items = [
+    ['策略编号', '<code>' + esc(draft.id) + '</code>'],
+    ['策略名称', editable ? '<input type="text" id="nameIn" value="' + esc(draft.name) + '" maxlength="40">' : esc(draft.name)],
+    ['店铺编码', shopCtl],
+    ['店铺名称', '<span class="ro">' + esc(shopNameOf(draft.shopCode)) + '</span>'],
+    ['状态', '<span class="st-tag st-' + draft.status + '">' + esc(WD.TAG_STATUS[draft.status]) + '</span>'],
+    ['覆盖款数', draft.skuCnt ? draft.skuCnt.toLocaleString() + ' 款' : ''],
+    ['备注', editable ? '<input type="text" id="remarkIn" value="' + esc(draft.remark || '') + '" maxlength="60">' : esc(draft.remark || '')],
+    ['创建人', esc(draft.createdBy || '')],
+    ['创建时间', esc(draft.createdAt || '')],
+    ['更新人', esc(draft.updatedBy || '')],
+    ['更新时间', esc(draft.updatedAt || '')]
+  ];
+  document.getElementById('baseGrid').innerHTML = items.map(function(r) {
+    return '<div class="ig-item"><div class="ig-label">' + esc(r[0]) + '</div><div class="ig-value">' + r[1] + '</div></div>';
+  }).join('');
+}
+
+function renderDims() {
+  document.getElementById('dimBody').innerHTML = DIMS.map(function(g) {
+    return '<tr><td class="dim-name">' + esc(g.dim) + '</td>'
+      + '<td class="p-name">' + esc(g.name) + '</td>'
+      + '<td class="p-val">' + (g.type === 'list' ? listCtl(g) : rangeCtl(g)) + '</td>'
+      + '<td class="p-note">' + esc(g.note) + '</td></tr>';
+  }).join('');
+}
+
+/* 日志中的变动对象统一转为中文（不得出现内部字段名） */
+var OBJ_LABEL = { 'dims.rate': '退货率', 'dims.sales': '销售件数', 'dims.margin': '毛利率', 'dims.midCat': '商品中类', base: '基本信息', status: '方案状态' };
+function renderTimeline() {
+  var list = draft.audit || [];
+  document.getElementById('timeline').innerHTML = list.length ? list.map(function(a) {
+    return '<div class="tl-item"><span class="tl-dot"></span>'
+      + '<div class="tl-title">' + esc(OBJ_LABEL[a.obj] || a.obj || '变更') + '　' + esc(a.txt) + '</div>'
+      + '<div class="tl-meta">' + esc(a.at) + '　' + esc(a.by) + '</div></div>';
+  }).join('') : '<div style="font-size:12px;color:var(--text-tertiary);">暂无操作记录</div>';
+}
+
+function renderHead() {
+  document.getElementById('modeTag').textContent = editing ? '编辑' : '查看';
+  document.getElementById('modeTag').className = 'mode-tag' + (editing ? ' edit' : '');
+  document.getElementById('btnEdit').style.display = editing ? 'none' : '';
+  ['btnSave', 'btnCancel', 'btnSave2', 'btnCancel2'].forEach(function(i) {
+    var el = document.getElementById(i); if (el) el.style.display = editing ? '' : 'none';
+  });
+  var tb = document.getElementById('btnToggle');
+  tb.textContent = draft.status === 'ACTIVE' ? '停用' : '启用';
+  tb.style.display = editing ? 'none' : '';
+}
+
+/* 参数区间自检：下界>0、上限若填写必须大于下界 */
+function checkGuards() {
+  var errs = [];
+  DIMS.forEach(function(g) {
+    var v = draft.dims[g.key];
+    if (g.type === 'list') {
+      var inc = (v && v.include) || [], exc = (v && v.exclude) || [];
+      var conflict = inc.filter(function(x) { return exc.indexOf(x) >= 0; });
+      if (conflict.length) errs.push(g.dim + '「' + conflict.join('、') + '」同时出现在包含与排除中，请移除其一');
+      return;
+    }
+    if (!(Number(v.lo) > 0)) errs.push(g.dim + '区间下界必须大于 0');
+    if (v.hi !== null && v.hi !== undefined && v.hi !== '' && !(Number(v.hi) > Number(v.lo))) {
+      errs.push(g.dim + '区间上限（' + bound(v.hi, g.unit, g.dec) + '）必须大于下界（' + bound(v.lo, g.unit, g.dec) + '），或留空表示无上限');
+    }
+  });
+  var bar = document.getElementById('guardBar');
+  if (!editing) { bar.style.display = 'none'; return errs; }
+  bar.style.display = 'block';
+  if (errs.length) {
+    bar.className = 'warn-bar err';
+    bar.innerHTML = '区间自检未通过，保存已拦截：<br>' + errs.map(function(e) { return '· ' + esc(e); }).join('<br>');
+  } else {
+    bar.className = 'warn-bar ok';
+    bar.textContent = '自检通过：三个数值维度下界均大于 0、上限留空或严格大于下界；商品中类包含/排除无冲突。';
+  }
+  return errs;
+}
+
+function renderAll() {
+  renderHead();
+  renderBase();
+  renderDims();
+  renderTimeline();
+  checkGuards();
+}
+
+function enterEdit() {
+  if (!WD.TAG_RULES.filter(function(r) { return r.id === rule.id; }).length) {
+    WD.TAG_RULES.push(clone(rule));
+    WD.persistTagRules();
+  }
+  editing = true; base = clone(rule); draft = clone(rule);
+  renderAll();
+  toast('已进入编辑态', 'info');
+}
+function cancelEdit() {
+  if (rule.isNew) { discardNew(); return; }
+  editing = false; draft = clone(rule);
+  renderAll();
+  toast('已取消编辑', 'info');
+}
+function discardNew() {
+  var i = WD.TAG_RULES.findIndex(function(r) { return r.id === rule.id; });
+  if (i > -1) { WD.TAG_RULES.splice(i, 1); WD.persistTagRules(); }
+  toast('未保存，已删除该草稿策略', 'info');
+  setTimeout(goBack, 700);
+}
+
+function diffDraft() {
+  var out = [];
+  DIMS.forEach(function(g) {
+    var a = base.dims[g.key], b = draft.dims[g.key];
+    if (g.type === 'list') {
+      var ai = ((a || {}).include || []).join('、'), bi = ((b || {}).include || []).join('、');
+      var ae = ((a || {}).exclude || []).join('、'), be = ((b || {}).exclude || []).join('、');
+      if (ai !== bi || ae !== be) {
+        out.push({ obj: 'dims.' + g.key, txt: g.dim + ' 包含[' + (ai || '不限') + '] 排除[' + (ae || '无') + '] → 包含[' + (bi || '不限') + '] 排除[' + (be || '无') + ']' });
+      }
+      return;
+    }
+    if (a.lo !== b.lo || a.hi !== b.hi) {
+      out.push({ obj: 'dims.' + g.key, txt: g.dim + '判定区间 ' + bound(a.lo, g.unit, g.dec) + ' ~ ' + bound(a.hi, g.unit, g.dec)
+        + ' → ' + bound(b.lo, g.unit, g.dec) + ' ~ ' + bound(b.hi, g.unit, g.dec) });
+    }
+  });
+  if (base.name !== draft.name) out.push({ obj: 'base', txt: '策略名称「' + base.name + '」→「' + draft.name + '」' });
+  if (base.shopCode !== draft.shopCode) out.push({ obj: 'base', txt: '适用店铺 ' + (base.shopCode || '未指定') + ' → ' + (draft.shopCode || '未指定') });
+  if ((base.remark || '') !== (draft.remark || '')) out.push({ obj: 'base', txt: '备注「' + (base.remark || '') + '」→「' + (draft.remark || '') + '」' });
+  return out;
+}
+
+function saveRule() {
+  if (!draft.name) { toast('请填写策略名称', 'error'); return; }
+  if (!draft.shopCode) { toast('请选择适用店铺（一条策略只对一个店铺生效）', 'error'); return; }
+  var dup = WD.TAG_RULES.filter(function(r) {
+    return r.id !== draft.id && r.shopCode === draft.shopCode && (r.status === 'ACTIVE' || r.status === 'PENDING');
+  })[0];
+  if (dup) { toast('该店铺已存在生效中/待生效策略 ' + dup.id + '，请先停用后再保存', 'error'); return; }
+  var errs = checkGuards();
+  if (errs.length) { toast('区间自检未通过，请先修正', 'error'); return; }
+  var ch = diffDraft();
+  if (!ch.length) { toast('无参数变更', 'info'); return; }
+
+  var ts = nowStr();
+  rule.name = draft.name;
+  rule.shopCode = draft.shopCode;
+  rule.shopName = draft.shopName || shopNameOf(draft.shopCode);
+  rule.remark = draft.remark;
+  rule.dims = clone(draft.dims);
+  if (rule.status === 'ACTIVE') rule.status = 'PENDING';
+  rule.updatedBy = CURRENT_USER;
+  rule.updatedAt = ts;
+  if (!rule.createdBy) { rule.createdBy = CURRENT_USER; rule.createdAt = ts; }
+  if (!rule.audit) rule.audit = [];
+  ch.slice().reverse().forEach(function(c) { rule.audit.unshift({ at: ts, by: CURRENT_USER, obj: c.obj, txt: c.txt }); });
+  base = clone(rule);
+  draft = clone(rule);
+  editing = false;
+  var idx = WD.TAG_RULES.findIndex(function(r) { return r.id === rule.id; });
+  if (idx > -1) WD.TAG_RULES[idx] = rule; else WD.TAG_RULES.push(rule);
+  WD.persistTagRules();
+  renderAll();
+  if (rule.isNew) {
+    rule.isNew = false;
+    if (history.replaceState) history.replaceState(null, '', location.pathname + '?id=' + encodeURIComponent(rule.id));
+  }
+  toast('保存成功，下周一批处理按新区间重算标签', 'success');
+}
+
+function toggleStatus() {
+  if (!rule.shopCode) { toast('草稿策略必须先选择适用店铺才能生效', 'error'); return; }
+  var ts = nowStr();
+  var fromLabel = WD.TAG_STATUS[rule.status];
+  if (rule.status === 'ACTIVE') {
+    rule.status = 'DISABLED';
+    rule.audit.unshift({ at: ts, by: CURRENT_USER, obj: 'status', txt: '生效中 → 已停用' });
+  } else {
+    var dup = WD.TAG_RULES.filter(function(r) { return r.id !== rule.id && r.shopCode === rule.shopCode && r.status === 'ACTIVE'; })[0];
+    if (dup) { toast('该店铺已有生效中策略 ' + dup.id + '，不能重复生效', 'error'); return; }
+    rule.status = 'ACTIVE';
+    rule.audit.unshift({ at: ts, by: CURRENT_USER, obj: 'status', txt: fromLabel + ' → 生效中' });
+  }
+  rule.updatedBy = CURRENT_USER; rule.updatedAt = ts;
+  draft = clone(rule); base = clone(rule);
+  var idx = WD.TAG_RULES.findIndex(function(r) { return r.id === rule.id; });
+  if (idx > -1) WD.TAG_RULES[idx] = rule; else WD.TAG_RULES.push(rule);
+  WD.persistTagRules();
+  renderAll();
+  toast(rule.status === 'ACTIVE' ? '已启用，下周一批处理按新区间重算标签' : '已停用', 'success');
+}
+
+function goBack() {
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type:'breadcrumb', text:'售后挽单 <span>/</span> 商品判定策略' }, '*');
+    window.parent.postMessage({ type:'closeTab' }, '*');
+    window.parent.postMessage({ type:'openTab', page:'pages/store-engine/wd-tag-rule.html', title:'商品判定策略' }, '*');
+  } else { location.href = 'wd-tag-rule.html'; }
+}
+
+function toast(msg, type) {
+  var c = document.getElementById('toastContainer');
+  var t = document.createElement('div'); t.className = 'toast toast-' + (type || 'info'); t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(function(){ t.classList.add('toast-hide'); }, 2600);
+  setTimeout(function(){ t.remove(); }, 3100);
+}
+
+/* 事件委托：重渲染不丢绑定 */
+document.getElementById('dimBody').addEventListener('change', function(e) {
+  var el = e.target.closest ? e.target.closest('[data-path]') : null;
+  if (!el || !editing) return;
+  var ks = el.dataset.path.split('.');
+  var g = DIMS.filter(function(x) { return x.key === ks[0]; })[0];
+  if (g && g.type === 'list') draft.dims[ks[0]][ks[1]] = splitList(el.value);
+  else draft.dims[ks[0]][ks[1]] = el.value === '' ? null : parseFloat(el.value);
+  renderDims();
+  checkGuards();
+});
+document.getElementById('baseGrid').addEventListener('input', function(e) {
+  if (!editing) return;
+  if (e.target.id === 'nameIn') draft.name = e.target.value;
+  if (e.target.id === 'remarkIn') draft.remark = e.target.value;
+});
+document.getElementById('baseGrid').addEventListener('change', function(e) {
+  if (!editing || e.target.id !== 'shopSel') return;
+  draft.shopCode = e.target.value;
+  draft.shopName = shopNameOf(e.target.value);
+  renderBase();
+});
+
+document.getElementById('pgTitle').textContent = rule.isNew ? '新建商品判定策略' : '商品判定策略明细';
+renderAll();
+
+window.addEventListener('storage', function(e) {
+  if (e.key !== 'wd_tag_rules' || editing) return;
+  WD.reloadTagRules();
+  var fresh = WD.TAG_RULES.filter(function(r) { return r.id === rule.id; })[0];
+  if (fresh) { rule = clone(fresh); base = clone(rule); draft = clone(rule); renderAll(); }
+});
+</script>
+</body>
+</html>

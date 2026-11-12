@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>挽单方案</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+  :root { --ink:#0f172a; }
+  .data-table thead th, .data-table tbody td { text-align:center; white-space:nowrap; font-size:12.5px; }
+  .data-table .col-left { text-align:left; }
+  .plan-no { font-family:"SF Mono","Menlo",monospace; font-size:12px; color:var(--primary); font-weight:600; cursor:pointer; }
+  .plan-no:hover { text-decoration:underline; }
+  .plan-name { font-size:12.5px; color:var(--ink); font-weight:600; }
+  .plan-src { font-size:11px; color:var(--text-tertiary); margin-top:3px; }
+  .pri-badge { display:inline-block; min-width:34px; padding:2px 8px; border-radius:6px; background:#eef0ff; color:#5b6cf5; font-weight:700; font-size:12px; }
+  .rt-chip { display:inline-block; padding:1px 7px; border-radius:4px; background:#f2f3f5; color:#4e5969; font-size:11px; margin:1px 3px 1px 0; }
+  .rt-chip.bad { background:#fef2f2; color:#dc2626; }
+  .ratio-cell { text-align:left; }
+  .ratio-cell .r { font-size:11.5px; color:var(--text-secondary); }
+  .ratio-cell .r b { color:#059669; font-family:"SF Mono","Menlo",monospace; }
+  .ratio-cell .r.over b { color:#dc2626; }
+  .money { color:#059669; font-weight:700; }
+  .money.na { color:var(--text-disabled); font-weight:400; }
+  .rt-type { display:inline-block; padding:2px 9px; border-radius:12px; font-size:11.5px; font-weight:600; }
+  .rt-custom { background:#e8f3ff; color:#3b82f6; }
+  .rt-smart { background:#fff7ed; color:#ea580c; }
+  .st-tag { display:inline-block; padding:2px 10px; border-radius:12px; font-size:11.5px; font-weight:600; }
+  .ps-tag { display:inline-flex; align-items:center; gap:6px; padding:3px 12px; border-radius:13px; font-size:11.5px; font-weight:700; cursor:pointer; border:1px solid transparent; }
+  .ps-tag::before { content:''; width:6px; height:6px; border-radius:50%; background:currentColor; }
+  .ps-on { background:#ecfdf5; color:#059669; border-color:#a7f3d0; }
+  .ps-off { background:#f1f5f9; color:#647084; border-color:#e2e8f0; }
+  .ps-tag:hover { box-shadow:0 2px 6px rgba(0,0,0,.08); }
+  .ps-tag.sy-pending { background:#fef3c7; color:#d97706; border-color:#fde68a; }
+  .ps-tag.sy-doing { background:#dbeafe; color:#2563eb; border-color:#bfdbfe; }
+  .ps-tag.sy-done { background:#ecfdf5; color:#059669; border-color:#a7f3d0; }
+  .ps-tag.sy-fail { background:#fef2f2; color:#dc2626; border-color:#fecaca; }
+  .ps-tag.ro { cursor:default; }
+  .ps-tag.ro:hover { box-shadow:none; }
+  .fail-reason { font-size:11.5px; color:#dc2626; line-height:1.55; }
+  .shop-code { font-family:"SF Mono","Menlo",monospace; font-size:11.5px; color:var(--primary); font-weight:600; }
+  .st-draft { background:#f1f5f9; color:#475569; }
+  .st-guard-passed { background:#dbeafe; color:#2563eb; }
+  .st-pending-sync { background:#fef3c7; color:#d97706; }
+  .st-syncing { background:#dbeafe; color:#2563eb; }
+  .st-unverified { background:#ffedd5; color:#ea580c; }
+  .st-active { background:#ecfdf5; color:#059669; }
+  .st-verify-fail { background:#fef2f2; color:#dc2626; }
+  .st-disabled { background:#f1f5f9; color:#647084; }
+  .op-link { color:var(--primary); cursor:pointer; font-size:12px; }
+  .op-link:hover { text-decoration:underline; }
+  .op-sep { color:var(--border); margin:0 5px; }
+
+  .view-toggle { display:inline-flex; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+  .view-toggle button { border:none; background:#fff; padding:7px 14px; font-size:12.5px; cursor:pointer; color:var(--text-secondary); }
+  .view-toggle button.on { background:var(--primary); color:#fff; font-weight:600; }
+  .table-toolbar { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+  .tb-left { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .tb-note { font-size:11.5px; color:var(--text-tertiary); }
+
+  .matrix-wrap { overflow-x:auto; padding:4px 0 10px; }
+  .matrix { border-collapse:separate; border-spacing:6px; width:100%; min-width:900px; }
+  .matrix th { font-size:12px; color:var(--text-secondary); font-weight:600; padding:6px 4px; }
+  .matrix th.row-h { text-align:right; padding-right:10px; color:var(--ink); font-size:12.5px; }
+  .mx-cell { border-radius:8px; padding:8px 10px; text-align:center; border:1px solid var(--border-light); background:#fafbfd; }
+  .mx-cell.on { background:#eef0ff; border-color:#c7cdf9; cursor:pointer; }
+  .mx-cell.on:hover { box-shadow:0 2px 8px rgba(91,108,245,.16); }
+  .mx-cell.legacy { background:#fff7ed; border-color:#fed7aa; }
+  .mx-id { font-size:11px; font-weight:700; color:var(--primary); font-family:"SF Mono","Menlo",monospace; }
+  .mx-meta { font-size:11px; color:var(--text-tertiary); margin-top:2px; }
+  .mx-empty { color:var(--text-disabled); font-size:12px; }
+
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:9999; display:none; align-items:center; justify-content:center; }
+  .modal-overlay.show { display:flex; }
+  .modal { background:#fff; border-radius:12px; width:640px; max-width:94vw; max-height:88vh; display:flex; flex-direction:column; box-shadow:0 24px 60px rgba(0,0,0,.2); }
+  .modal-head { display:flex; justify-content:space-between; align-items:center; padding:16px 22px 12px; border-bottom:1px solid #e4e9f1; }
+  .modal-head h3 { margin:0; font-size:15px; font-weight:700; color:var(--ink); }
+  .modal-close { width:28px; height:28px; border:none; background:transparent; border-radius:6px; cursor:pointer; color:#647084; font-size:18px; }
+  .modal-body { padding:16px 22px; overflow-y:auto; flex:1; }
+  .modal-foot { display:flex; justify-content:flex-end; gap:10px; padding:14px 22px 18px; border-top:1px solid #e4e9f1; }
+  .pri-item { display:flex; align-items:center; gap:10px; padding:9px 12px; border:1px solid var(--border-light); border-radius:8px; margin-bottom:8px; background:#fff; }
+  .pri-item code { font-size:11.5px; color:var(--primary); font-weight:700; font-family:"SF Mono","Menlo",monospace; }
+  .pri-item .pi-meta { flex:1; font-size:12px; color:var(--text-secondary); }
+  .pri-item input[type=number] { width:76px; padding:6px 8px; border:1px solid var(--border); border-radius:6px; font-size:12.5px; outline:none; }
+  .modal-note { font-size:11.5px; color:#92400e; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:9px 12px; margin-bottom:12px; line-height:1.6; }
+  </style>
+</head>
+<body>
+<div class="page-container">
+  <div id="toastContainer" class="toast-container"></div>
+  <script>
+    if (window.parent) { window.parent.postMessage({type:'breadcrumb', text:'售后挽单 <span>/</span> 挽单方案'}, '*'); }
+  </script>
+
+  <div class="page-title">挽单方案</div>
+
+  <div class="search-area">
+    <div class="search-row">
+      <div class="search-item">
+        <label>方案编号：</label>
+        <input type="text" id="fId" placeholder="如 WD20261026001">
+      </div>
+      <div class="search-item">
+        <label>方案名称：</label>
+        <input type="text" id="fName" placeholder="请输入方案名称">
+      </div>
+      <div class="search-item">
+        <label>品牌：</label>
+        <select id="fBrand"><option value="">全部</option></select>
+      </div>
+      <div class="search-item">
+        <label>店铺：</label>
+        <select id="fShop"><option value="">全部</option></select>
+      </div>
+      <div class="search-item">
+        <label>挽回类型：</label>
+        <select id="fRecover"><option value="">全部</option><option value="custom">自定义挽单</option><option value="smart">智能挽单</option></select>
+      </div>
+      <div class="search-item">
+        <label>状态：</label>
+        <select id="fStatus"><option value="">全部</option></select>
+      </div>
+      <div class="search-item">
+        <label>同步平台状态：</label>
+        <select id="fSync"><option value="">全部</option></select>
+      </div>
+      <div class="search-item">
+        <label>更新时间：</label>
+        <input type="date" id="fFrom"> <span style="margin:0 4px;color:var(--text-tertiary);">至</span> <input type="date" id="fTo">
+      </div>
+    </div>
+    <div class="search-actions">
+      <button class="btn btn-primary" onclick="runFilter(true)">查询</button>
+      <button class="btn" onclick="resetSearch()">重置</button>
+    </div>
+  </div>
+
+  <div class="table-area">
+    <div class="table-toolbar">
+      <div class="tb-left">
+        <button class="btn btn-primary" onclick="addNew()">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          新增
+        </button>
+        <button class="btn" onclick="openPriModal()">优先级排序</button>
+        <span class="tb-note">方案由每周一批处理生成，也可手工新建草稿；<span class="op-link" onclick="resetDemo()">恢复演示数据</span></span>
+      </div>
+      <div class="view-toggle">
+        <button id="btnList" class="on" onclick="switchView('list')">列表视图</button>
+        <button id="btnMatrix" onclick="switchView('matrix')">档×带×品牌矩阵</button>
+      </div>
+    </div>
+
+    <div class="table-scroll" id="listView">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width:46px;">序号</th>
+            <th style="width:120px;">方案编号</th>
+            <th style="width:96px;">店铺编码</th>
+            <th style="width:120px;">店铺名称</th>
+            <th style="width:120px;">平台方案ID</th>
+            <th class="col-left" style="width:250px;">方案名称</th>
+            <th style="width:76px;">品牌</th>
+            <th style="width:96px;">挽回类型</th>
+            <th style="width:130px;">挽单场景</th>
+            <th class="col-left" style="width:170px;">生效售后原因</th>
+            <th style="width:110px;">商品范围</th>
+            <th class="col-left" style="width:190px;">订单金额范围</th>
+            <th class="col-left" style="width:210px;">最大挽留比例</th>
+            <th style="width:104px;">每日成本上限</th>
+            <th style="width:66px;">优先级</th>
+            <th style="width:104px;">状态</th>
+            <th style="width:118px;">同步平台状态</th>
+            <th class="col-left" style="width:230px;">同步失败原因</th>
+            <th style="width:126px;">更新时间</th>
+            <th style="width:96px;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="matrix-wrap" id="matrixView" style="display:none;"></div>
+
+    <div class="pagination">
+      <span class="page-info">共 <strong id="totalCount">0</strong> 条</span>
+      <span class="page-btn disabled">&laquo;</span>
+      <span class="page-btn active">1</span>
+      <span class="page-btn">&raquo;</span>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="priModal" onclick="if(event.target===this)closePriModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>平台方案优先级排序</h3>
+      <button type="button" class="modal-close" onclick="closePriModal()" aria-label="关闭">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-note">多方案命中优先级由<b>抖店</b>判定：本系统必须输出显式 priority，否则命中权交给创建时间。数值越小优先级越高；保存后需人工在抖店后台同步，回读校验一致才生效。</div>
+      <div id="priList"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closePriModal()">取消</button>
+      <button class="btn btn-primary" onclick="savePriority()">保存优先级</button>
+    </div>
+  </div>
+</div>
+
+<script src="../../js/wd/retention-data.js"></script>
+<script>
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML;
+}
+WD.initPlans();
+function parseMin(str) {
+  var m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})$/.exec(str || '');
+  return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]).getTime() : NaN;
+}
+function cleanUnnamedDrafts() {
+  var now = Date.now();
+  var kept = WD.STRATEGIES.filter(function(s) {
+    if (!(s.status === 'DRAFT' && (!s.plan || !s.plan.name))) return true;
+    // 「新增」刚创建、详情页可能仍在编辑：10 分钟内不回收，避免 focus 竞态误删
+    if (s.pendingNew) {
+      var t = parseMin(s.createdAt);
+      if (!isNaN(t) && now - t < 10 * 60 * 1000) return true;
+    }
+    return false;
+  });
+  if (kept.length !== WD.STRATEGIES.length) {
+    WD.STRATEGIES.length = 0;
+    kept.forEach(function(s) { WD.STRATEGIES.push(s); });
+    WD.persistPlans();
+  }
+}
+cleanUnnamedDrafts();
+var current = WD.STRATEGIES.slice();
+var viewMode = 'list';
+
+var SCENE_TXT = { after_sale:'消费者申请售后后', feige:'飞鸽进线有退款诉求' };
+var SCOPE_TXT = { all:'不限制商品', include:'指定支持商品', exclude:'指定不支持商品' };
+var RECOVER_TXT = { custom:'自定义挽单', smart:'智能挽单' };
+
+(function initFilters() {
+  var bSel = document.getElementById('fBrand');
+  WD.BRANDS.forEach(function(b) { bSel.insertAdjacentHTML('beforeend', '<option value="' + esc(b) + '">' + esc(b) + '</option>'); });
+  var sSel = document.getElementById('fStatus');
+  Object.keys(WD.PLAN_STATUS).forEach(function(k) {
+    sSel.insertAdjacentHTML('beforeend', '<option value="' + k + '">' + esc(WD.PLAN_STATUS[k]) + '</option>');
+  });
+  var ySel = document.getElementById('fSync');
+  Object.keys(WD.PLAN_SYNC_STATUS).forEach(function(k) {
+    ySel.insertAdjacentHTML('beforeend', '<option value="' + k + '">' + esc(WD.PLAN_SYNC_STATUS[k].label) + '</option>');
+  });
+  var shSel = document.getElementById('fShop');
+  WD.TAG_SHOPS.forEach(function(s) {
+    shSel.insertAdjacentHTML('beforeend', '<option value="' + esc(s.code) + '">' + esc(s.code) + ' ' + esc(s.name) + '</option>');
+  });
+})();
+
+function planOf(s) { return s.plan || (s.plan = WD.planOf(s)); }
+function money(v) { return v > 0 ? '<span class="money">¥' + v.toLocaleString() + '</span>' : '<span class="money na">不限制</span>'; }
+
+function renderTable(data) {
+  var tb = document.getElementById('tableBody');
+  if (!data.length) {
+    tb.innerHTML = '<tr><td colspan="20" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无方案</div><div class="empty-hint">点击「新增」手工新建挽单方案草稿</div></td></tr>';
+  } else {
+    tb.innerHTML = data.map(function(s, i) {
+      var p = planOf(s);
+      var ss = s.syncStatus || WD.syncStatusOf(s);
+      var fr = s.syncFailReason !== undefined ? s.syncFailReason : WD.syncFailReason(s);
+      var bands = p.amountRows.slice(0, 4).map(function(r) {
+        return '<span class="rt-chip">' + esc(r.lower + '–' + (r.upper === null ? '∞' : r.upper)) + '</span>';
+      }).join('') + (p.amountRows.length > 4 ? '<span class="rt-chip">+' + (p.amountRows.length - 4) + '</span>' : '');
+      var clampedCnt = p.amountRows.filter(function(r){ return r.clamped; }).length;
+      var ratios = p.amountRows.slice(0, 3).map(function(r) {
+        var note = r.clamped ? '<span style="color:#d97706;">（目标 ' + r.raw + '% 已压回上限 ' + r.capPct + '%）</span>' : '（上限 ' + r.capPct + '%）';
+        return '<div class="r' + (r.suggest > r.capPct ? ' over' : '') + '">' + esc(r.lower + '–' + (r.upper === null ? '∞' : r.upper)) + ' 元：<b>' + r.suggest + '%</b>' + note + '</div>';
+      }).join('')
+        + (clampedCnt && !p.amountRows.slice(0, 3).some(function(r){ return r.clamped; })
+            ? '<div class="r" style="color:#d97706;">含 ' + clampedCnt + ' 档目标比例超平台上限，已压回（详见比例表）</div>' : '')
+        + (p.amountRows.length > 3 ? '<div class="r" style="color:var(--text-tertiary);">共 ' + p.amountRows.length + ' 档，详情页可展开全部</div>' : '');
+      return '<tr>'
+        + '<td>' + (i + 1) + '</td>'
+        + '<td><span class="plan-no" onclick="viewDetail(\'' + esc(s.id) + '\')">' + esc(s.id) + '</span></td>'
+        + '<td><span class="shop-code">' + esc(s.shopCode || '') + '</span></td>'
+        + '<td>' + esc(s.shopName || '') + '</td>'
+        + '<td><span class="rt-chip">' + esc(s.schemeId || '') + '</span></td>'
+        + '<td class="col-left"><div class="plan-name">' + esc(p.name) + '</div>'
+        + '<div class="plan-src">' + esc(p.source) + '</div></td>'
+        + '<td>' + esc(s.brand) + '</td>'
+        + '<td><span class="rt-type rt-' + p.recoverType + '">' + esc(RECOVER_TXT[p.recoverType]) + '</span></td>'
+        + '<td>' + esc(SCENE_TXT[p.scene]) + '</td>'
+        + '<td class="col-left" style="white-space:normal;font-size:11.5px;">' + esc(p.reasons.join('、')) + '</td>'
+        + '<td><div style="font-size:11.5px;">' + esc(SCOPE_TXT[p.productScope]) + '</div>'
+        + '<div style="font-size:11px;color:var(--text-tertiary);">' + s.itemCnt + ' 款 / ' + s.physicalCnt + ' 条物理方案</div></td>'
+        + '<td class="col-left">' + (p.amountMode === 'all' ? '<span class="rt-chip">不限制</span>' : bands) + '</td>'
+        + '<td class="ratio-cell">' + ratios + '</td>'
+        + '<td>' + money(p.costMode === 'limit' ? p.dailyBudget : 0) + '</td>'
+        + '<td><span class="pri-badge">' + s.priority + '</span></td>'
+        + '<td><span class="ps-tag ' + (s.planStatus === 'DISABLED' ? 'ps-off' : 'ps-on') + '" onclick="togglePlanStatus(\'' + esc(s.id) + '\')">' + esc(WD.PLAN_STATUS[s.planStatus] || '启用') + '</span></td>'
+        + '<td><span class="ps-tag ro ' + ss.tone + '" title="' + esc(ss.note) + '">' + esc(ss.label) + '</span></td>'
+        + '<td class="col-left" style="white-space:normal;">' + (fr ? '<span class="fail-reason">' + esc(fr) + '</span>' : '') + '</td>'
+        + '<td style="font-size:11.5px;">' + esc(s.updated) + '</td>'
+        + '<td><span class="op-link" onclick="viewDetail(\'' + esc(s.id) + '\')">查看</span>'
+        + '<span class="op-sep">|</span><span class="op-link" onclick="editDetail(\'' + esc(s.id) + '\')">编辑</span></td>'
+        + '</tr>';
+    }).join('');
+  }
+  document.getElementById('totalCount').textContent = data.length;
+}
+
+var ST_CLS = { DRAFT:'draft', GUARD_PASSED:'guard-passed', GUARD_BLOCKED:'verify-fail', PENDING_SYNC:'pending-sync',
+  SYNCING:'syncing', SYNCED_UNVERIFIED:'unverified', ACTIVE:'active', VERIFY_FAILED:'verify-fail',
+  DISABLED:'disabled', RETIRED:'draft' };
+
+function renderMatrix(data) {
+  var bands = WD.BANDS.map(function(b){ return b.label; });
+  var html = '<table class="matrix"><thead><tr><th></th>';
+  bands.forEach(function(bd) { html += '<th>' + esc(bd) + '</th>'; });
+  html += '<th style="width:120px;">存量/全店</th></tr></thead><tbody>';
+  WD.BRANDS.forEach(function(br) {
+    ['YH','YM','L'].forEach(function(t, ri) {
+      html += '<tr><th class="row-h">' + esc(br) + ' · ' + esc(t) + '</th>';
+      bands.forEach(function(bd) {
+        var s = data.filter(function(x){ return x.brand === br && x.tier === t && x.band === bd; })[0];
+        if (s) {
+          var p = planOf(s);
+          html += '<td><div class="mx-cell on" onclick="viewDetail(\'' + esc(s.id) + '\')">'
+            + '<div class="mx-id">' + esc(s.id) + '</div>'
+            + '<div class="mx-meta">' + esc(WD.PLAN_STATUS[s.planStatus] || '启用') + ' · 补偿 ¥' + s.cap.toFixed(0) + ' · P' + s.priority + '</div>'
+            + '<div class="mx-meta">' + esc(RECOVER_TXT[p.recoverType]) + ' · ' + s.itemCnt + ' 款</div></div></td>';
+        } else {
+          html += '<td><div class="mx-cell"><span class="mx-empty">—</span></div></td>';
+        }
+      });
+      var legacy = ri === 1 ? data.filter(function(x){ return x.brand === br && x.tier === '—'; })[0] : null;
+      html += legacy
+        ? '<td><div class="mx-cell legacy" onclick="viewDetail(\'' + esc(legacy.id) + '\')"><div class="mx-id">' + esc(legacy.id) + '</div><div class="mx-meta">' + esc(WD.PLAN_STATUS[legacy.planStatus] || '启用') + ' · 存量智能挽单</div><div class="mx-meta">' + legacy.itemCnt + ' 款</div></div></td>'
+        : '<td><div class="mx-cell"><span class="mx-empty">—</span></div></td>';
+      html += '</tr>';
+    });
+  });
+  html += '</tbody></table>';
+  html += '<div style="font-size:11px;color:var(--text-tertiary);margin-top:6px;">行 = 品牌 × 档位（YH→YM→L），列 = 策略带（切点取自平台价格带断点子集）；橙色为抖店存量导入方案。矩阵用于核对同一商品是否被多条方案重复覆盖（门检 G3）。</div>';
+  document.getElementById('matrixView').innerHTML = html;
+}
+
+function switchView(v) {
+  viewMode = v;
+  document.getElementById('btnList').classList.toggle('on', v === 'list');
+  document.getElementById('btnMatrix').classList.toggle('on', v === 'matrix');
+  document.getElementById('listView').style.display = v === 'list' ? '' : 'none';
+  document.getElementById('matrixView').style.display = v === 'matrix' ? '' : 'none';
+  if (v === 'matrix') renderMatrix(current);
+}
+
+function runFilter(showToast) {
+  var id = document.getElementById('fId').value.trim();
+  var name = document.getElementById('fName').value.trim();
+  var brand = document.getElementById('fBrand').value;
+  var shop = document.getElementById('fShop').value;
+  var recover = document.getElementById('fRecover').value;
+  var status = document.getElementById('fStatus').value;
+  var sync = document.getElementById('fSync').value;
+  var from = document.getElementById('fFrom').value, to = document.getElementById('fTo').value;
+  current = WD.STRATEGIES.filter(function(s) {
+    var p = planOf(s);
+    if (id && s.id.indexOf(id) === -1) return false;
+    if (name && p.name.indexOf(name) === -1) return false;
+    if (brand && s.brand !== brand) return false;
+    if (shop && s.shopCode !== shop) return false;
+    if (recover && p.recoverType !== recover) return false;
+    if (status && s.planStatus !== status) return false;
+    var ss = s.syncStatus || WD.syncStatusOf(s);
+    if (sync && ss.code !== sync) return false;
+    var day = s.updated.slice(0, 10);
+    if (from && day < from) return false;
+    if (to && day > to) return false;
+    return true;
+  });
+  renderTable(current);
+  if (viewMode === 'matrix') renderMatrix(current);
+  if (showToast) toast('查询完成，命中 ' + current.length + ' 条方案', 'info');
+}
+function resetSearch() {
+  ['fId','fName','fBrand','fShop','fRecover','fStatus','fSync','fFrom','fTo'].forEach(function(i) { document.getElementById(i).value = ''; });
+  current = WD.STRATEGIES.slice();
+  renderTable(current);
+  if (viewMode === 'matrix') renderMatrix(current);
+}
+
+function openDetail(qs) {
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type:'openTab', page:'pages/store-engine/wd-strategy-detail.html' + qs, title:'方案详情' }, '*');
+  } else { location.href = 'wd-strategy-detail.html' + qs; }
+}
+function viewDetail(id) {
+  var s = WD.STRATEGIES.filter(function(x){ return x.id === id; })[0];
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type:'openTab', page:'pages/store-engine/wd-strategy-detail.html?id=' + encodeURIComponent(id),
+      title:'方案详情 - ' + (s ? planOf(s).name : id) }, '*');
+  } else { location.href = 'wd-strategy-detail.html?id=' + encodeURIComponent(id); }
+}
+function editDetail(id) { openDetail('?id=' + encodeURIComponent(id) + '&mode=edit'); }
+function addNew() {
+  var d = new Date(), pad = function(x){ return String(x).padStart(2, '0'); };
+  var day = String(d.getFullYear()) + pad(d.getMonth() + 1) + pad(d.getDate());
+  var prefix = 'WD' + day;
+  // 方案编号规则：WD + 年月日 + 3 位流水（按当日已有方案数递增）
+  var maxSeq = WD.STRATEGIES.reduce(function(a, s) {
+    var m = String(s.id).match(/^WD(\d{8})(\d{3})$/);
+    return Math.max(a, m && m[1] === day ? parseInt(m[2], 10) : 0);
+  }, 0);
+  var ts = d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  var s = { id: prefix + String(maxSeq + 1).padStart(3, '0'),
+    brand: '森马', tier: 'YM', band: '100-200元', priority: 50, ratio: 8, cap: 15, dailyBudget: 3000,
+    freq: '1_per_after_sale_order', reasons: ['无理由'], group: 'NONE', status: 'DRAFT',
+    itemCnt: 0, physicalCnt: 0, prevId: '', guard: false, reason: '手工新建草稿', planStatus: 'DISABLED', pendingNew: true,
+    shopCode: 'DY-S001', shopName: '森马旗舰店', schemeId: '',
+    createdBy: '当前用户（业务运营）', createdAt: ts, updatedBy: '当前用户（业务运营）', updated: ts };
+  s.plan = WD.planOf(s);
+  s.plan.name = '';
+  s.logs = [{ at: ts, by: '当前用户（业务运营）', act: '创建方案', detail: '手工新建挽单方案草稿，待填写后保存' }];
+  WD.STRATEGIES.push(s);
+  WD.persistPlans(s.id);
+  runFilter(false);
+  openDetail('?id=' + encodeURIComponent(s.id) + '&mode=edit&new=1');
+}
+function togglePlanStatus(id) {
+  // 先拉最新存储再改，避免详情页并行修改被过期内存数组覆盖
+  WD.reloadPlans();
+  WD.initPlans();
+  var s = WD.STRATEGIES.filter(function(x){ return x.id === id; })[0];
+  if (!s) { runFilter(false); return; }
+  var on = s.planStatus !== 'DISABLED';
+  if (on && !confirm('禁用方案「' + (s.plan ? s.plan.name : id) + '」？禁用后抖店侧不再向消费者触发挽留。')) return;
+  s.planStatus = on ? 'DISABLED' : 'ENABLED';
+  s.updated = nowStr2();
+  var prevSync = (s.syncStatus || WD.syncStatusOf(s)).label;
+  // 与详情页保持同一口径：已生效方案被禁用后需人工到抖店下线，回到待同步
+  var ss0 = s.syncStatus || WD.syncStatusOf(s);
+  if (on && (ss0.code === 'SUCCESS' || ss0.code === 'SYNCING' || ss0.code === 'FAILED')) {
+    s.syncStatus = { code: 'PENDING', label: WD.PLAN_SYNC_STATUS.PENDING.label, tone: 'sy-pending',
+      note: '方案已禁用，需人工在抖店下线该方案', at: s.updated };
+    s.syncFailReason = '';
+  } else {
+    s.syncStatus = WD.syncStatusOf(s);
+    s.syncFailReason = WD.syncFailReason(s);
+  }
+  if (!s.logs) s.logs = [];
+  s.logs.push({ at: s.updated, by: '当前用户（业务运营）', act: on ? '禁用方案' : '启用方案',
+    detail: '方案状态：' + (on ? '启用 → 禁用' : '禁用 → 启用') + '；同步平台状态：' + prevSync + ' → ' + s.syncStatus.label
+      + (on ? '；需人工在抖店下线该方案' : '；需确认抖店侧方案已开启') });
+  WD.persistPlans(id);
+  runFilter(false);
+  toast(on ? '已禁用 ' + id : '已启用 ' + id, on ? 'warning' : 'success');
+}
+function nowStr2() {
+  var d = new Date(), p = function(x){ return String(x).padStart(2, '0'); };
+  return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+function resetDemo() {
+  if (!confirm('将丢弃本地保存的方案编辑，恢复为初始演示数据。是否继续？')) return;
+  WD.resetPlans();
+  location.reload();
+}
+
+function openPriModal() {
+  var act = WD.STRATEGIES.filter(function(s){ return s.planStatus !== 'DISABLED'; })
+    .sort(function(a, b){ return a.priority - b.priority; });
+  document.getElementById('priList').innerHTML = act.map(function(s) {
+    var p = planOf(s);
+    return '<div class="pri-item"><code>' + esc(s.id) + '</code>'
+      + '<span class="pi-meta">' + esc(p.name) + '（' + esc(WD.PLAN_STATUS[s.planStatus] || '启用') + '）</span>'
+      + '<input type="number" min="1" max="99" value="' + s.priority + '" data-id="' + esc(s.id) + '"></div>';
+  }).join('');
+  document.getElementById('priModal').classList.add('show');
+}
+function closePriModal() { document.getElementById('priModal').classList.remove('show'); }
+function savePriority() {
+  var changed = [];
+  document.querySelectorAll('#priList input[type=number]').forEach(function(inp) {
+    var s = WD.STRATEGIES.filter(function(x){ return x.id === inp.dataset.id; })[0];
+    if (s && String(s.priority) !== inp.value) { s.priority = parseInt(inp.value, 10) || s.priority; changed.push(s.id); }
+  });
+  closePriModal();
+  if (changed.length) {
+    changed.forEach(function(id) { WD.persistPlans(id); });
+    runFilter(false);
+    toast('已更新 ' + changed.length + ' 条优先级并本地保存；需人工在抖店后台调整优先级，回读校验一致才生效', 'success');
+  } else { toast('优先级未发生变化', 'info'); }
+}
+
+function toast(msg, type) {
+  var c = document.getElementById('toastContainer');
+  var t = document.createElement('div'); t.className = 'toast toast-' + (type || 'info'); t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(function(){ t.classList.add('toast-hide'); }, 3400);
+  setTimeout(function(){ t.remove(); }, 3900);
+}
+
+runFilter(false);
+window.addEventListener('storage', function(e) {
+  if (e.key !== 'wd_plans') return;
+  WD.reloadPlans();
+  WD.initPlans();
+  cleanUnnamedDrafts();
+  runFilter(false);
+  toast('已同步详情页保存的方案变更', 'info');
+});
+window.addEventListener('focus', function() {
+  WD.reloadPlans();
+  WD.initPlans();
+  cleanUnnamedDrafts();
+  runFilter(false);
+});
+</script>
+</body>
+</html>

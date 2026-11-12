@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>快手核价</title>
+  <title>平台核价</title>
   <link rel="stylesheet" href="../../css/style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
@@ -18,6 +18,12 @@
   .file-link svg { flex-shrink:0; }
   .num-success { color:#059669; font-weight:600; }
   .num-fail { color:#dc2626; font-weight:600; }
+  /* 平台标签 */
+  .platform-tag { display:inline-flex; align-items:center; padding:2px 9px; border-radius:10px; font-size:12px; font-weight:500; }
+  .platform-tag.ks { background:#fff0e6; color:#ff6a00; }
+  .platform-tag.sph { background:#e7f8ed; color:#07c160; }
+  .platform-tag.xhs { background:#ffe8ec; color:#ff2442; }
+  .platform-tag.na { background:#f1f5f9; color:#94a3b8; }
   /* 状态标签补充：全局样式仅含 initial/submitted/cancelled，此处补齐任务状态枚举对应色 */
   .status-tag.pending { background:#fef3c7; color:#d97706; }
   .status-tag.running { background:#dbeafe; color:#2563eb; }
@@ -133,11 +139,11 @@
   <div id="toastContainer" class="toast-container"></div>
   <script>
     if (window.parent) {
-      window.parent.postMessage({type:'breadcrumb', text:'基础运营 <span>/</span> 快手核价'}, '*');
+      window.parent.postMessage({type:'breadcrumb', text:'基础运营 <span>/</span> 平台核价'}, '*');
     }
   </script>
 
-  <div class="page-title">快手核价</div>
+  <div class="page-title">平台核价</div>
 
   <!-- ===== 流程说明 ===== -->
   <div class="flow-section">
@@ -161,7 +167,7 @@
         <div class="flow-step-icon">🛒</div>
         <div class="flow-step-info">
           <div class="flow-step-title">获取平台商品列表</div>
-          <div class="flow-step-desc">拉取快手平台在售商品清单</div>
+          <div class="flow-step-desc">拉取平台在售商品清单</div>
         </div>
       </div>
       <div class="flow-arrow"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
@@ -203,6 +209,15 @@
         <input type="text" id="searchStoreCode" placeholder="请输入店铺编码">
       </div>
       <div class="search-item">
+        <label>平台：</label>
+        <select id="searchPlatform">
+          <option value="">全部</option>
+          <option value="快手">快手</option>
+          <option value="视频号">视频号</option>
+          <option value="小红书">小红书</option>
+        </select>
+      </div>
+      <div class="search-item">
         <label>状态：</label>
         <select id="searchStatus">
           <option value="">全部</option>
@@ -238,6 +253,7 @@
           <tr>
             <th style="width:50px;">序号</th>
             <th style="width:150px;">任务编号</th>
+            <th style="width:80px;">平台</th>
             <th style="width:110px;">店铺编码</th>
             <th style="width:120px;">店铺名称</th>
             <th style="width:90px;">商品状态</th>
@@ -272,25 +288,21 @@
     </div>
     <div class="modal-body">
       <div class="form-field">
-        <label class="form-label" for="formStore">店铺<span class="req">*</span></label>
-        <select id="formStore" class="form-select">
-          <option value="">请选择店铺</option>
-          <option value="KS-S001">KS-S001 旗舰店A</option>
-          <option value="KS-S002">KS-S002 专营店B</option>
-          <option value="KS-S003">KS-S003 奥莱店C</option>
-          <option value="KS-S004">KS-S004 海外店D</option>
+        <label class="form-label" for="formPlatform">平台<span class="req">*</span></label>
+        <select id="formPlatform" class="form-select" onchange="onPlatformChange()">
+          <option value="">请选择平台</option>
+          <option value="快手">快手</option>
+          <option value="视频号">视频号</option>
+          <option value="小红书">小红书</option>
         </select>
-        <div class="err-tip" id="errStore">请选择店铺</div>
+        <div class="err-tip" id="errPlatform">请先选择平台</div>
       </div>
       <div class="form-field">
-        <label class="form-label" for="formProductStatus">商品状态<span class="req">*</span></label>
-        <select id="formProductStatus" class="form-select">
-          <option value="">请选择商品状态</option>
-          <option value="上架">上架</option>
-          <option value="下架">下架</option>
-          <option value="封禁">封禁</option>
+        <label class="form-label" for="formStore">店铺<span class="req">*</span></label>
+        <select id="formStore" class="form-select" disabled>
+          <option value="">请先选择平台</option>
         </select>
-        <div class="err-tip" id="errProductStatus">请选择商品状态</div>
+        <div class="err-tip" id="errStore">请选择店铺</div>
       </div>
       <div class="form-field">
         <div class="tpl-bar">
@@ -314,7 +326,7 @@
           <button type="button" class="fp-remove" onclick="removeFile()" aria-label="移除文件">&times;</button>
         </div>
         <div class="err-tip" id="errFile">请上传核价文件</div>
-        <div class="form-hint">模板字段说明：平台商品ID（快手商品唯一标识）、款号（商品款号）、价格（核价目标价格）。</div>
+        <div class="form-hint">模板字段说明：平台商品ID（各平台商品唯一标识）、款号（商品款号）、价格（核价目标价格）。</div>
       </div>
     </div>
     <div class="modal-foot">
@@ -331,19 +343,29 @@ var mockData = [
   { id:3, taskNo:'KSHJ20261019001', storeCode:'KS-S003', storeName:'奥莱店C', productStatus:'下架', fileName:'快手核价_奥莱店C_1019.xlsx', total:86, success:52, fail:2, status:'执行中', creator:'张运营', createTime:'2026-10-19 14:20:00' },
   { id:4, taskNo:'KSHJ20261019002', storeCode:'KS-S001', storeName:'旗舰店A', productStatus:'封禁', fileName:'快手核价_旗舰店A_1019.xlsx', total:210, success:0, fail:210, status:'失败', creator:'王店长', createTime:'2026-10-19 16:45:00' },
   { id:5, taskNo:'KSHJ20261020001', storeCode:'KS-S004', storeName:'海外店D', productStatus:'上架', fileName:'快手核价_海外店D_1020.xlsx', total:98, success:98, fail:0, status:'成功', creator:'李核价', createTime:'2026-10-20 10:00:00' },
-  { id:6, taskNo:'KSHJ20261020002', storeCode:'KS-S002', storeName:'专营店B', productStatus:'上架', fileName:'快手核价_专营店B_1020.xlsx', total:120, success:0, fail:0, status:'待执行', creator:'王店长', createTime:'2026-10-20 11:30:00' }
+  { id:6, taskNo:'KSHJ20261020002', storeCode:'KS-S002', storeName:'专营店B', productStatus:'上架', fileName:'快手核价_专营店B_1020.xlsx', total:120, success:0, fail:0, status:'待执行', creator:'王店长', createTime:'2026-10-20 11:30:00' },
+  { id:7, taskNo:'KSHJ20261021001', storeCode:'SPH-S001', storeName:'视频号旗舰店E', productStatus:'上架', fileName:'视频号核价_旗舰店E_1021.xlsx', total:60, success:60, fail:0, status:'成功', creator:'陈运营', createTime:'2026-10-21 10:00:00' },
+  { id:8, taskNo:'KSHJ20261021002', storeCode:'XHS-S001', storeName:'小红书品牌店G', productStatus:'上架', fileName:'小红书核价_品牌店G_1021.xlsx', total:45, success:40, fail:5, status:'部分成功', creator:'周红', createTime:'2026-10-21 15:30:00' }
 ];
+
+var PLATFORM_MAP = { 'KS':{name:'快手',key:'ks'}, 'SPH':{name:'视频号',key:'sph'}, 'XHS':{name:'小红书',key:'xhs'} };
+function platformOf(storeCode) {
+  var p = (storeCode || '').split('-')[0];
+  return PLATFORM_MAP[p] || { name:'—', key:'na' };
+}
 
 function renderTable(data) {
   var tbody = document.getElementById('tableBody');
   var html = '';
   if (data.length === 0) {
-    html = '<tr><td colspan="13" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无数据</div><div class="empty-hint">点击「新增」上传核价文件创建任务</div></td></tr>';
+    html = '<tr><td colspan="14" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无数据</div><div class="empty-hint">点击「新增」上传核价文件创建任务</div></td></tr>';
   } else {
     data.forEach(function(row, index) {
+      var pf = platformOf(row.storeCode);
       html += '<tr>';
       html += '<td>' + (index + 1) + '</td>';
       html += '<td><span class="task-no">' + escapeHtml(row.taskNo) + '</span></td>';
+      html += '<td><span class="platform-tag ' + pf.key + '">' + pf.name + '</span></td>';
       html += '<td>' + escapeHtml(row.storeCode) + '</td>';
       html += '<td>' + escapeHtml(row.storeName) + '</td>';
       html += '<td>' + escapeHtml(row.productStatus) + '</td>';
@@ -383,12 +405,14 @@ function escapeHtml(str) {
 function doSearch() {
   var taskNo = document.getElementById('searchTaskNo').value.trim();
   var storeCode = document.getElementById('searchStoreCode').value.trim();
+  var platform = document.getElementById('searchPlatform').value;
   var status = document.getElementById('searchStatus').value;
   var timeStart = document.getElementById('searchTimeStart').value;
   var timeEnd = document.getElementById('searchTimeEnd').value;
   var filtered = mockData.filter(function(r) {
     if (taskNo && r.taskNo.indexOf(taskNo) === -1) return false;
     if (storeCode && r.storeCode.indexOf(storeCode) === -1) return false;
+    if (platform && platformOf(r.storeCode).name !== platform) return false;
     if (status && r.status !== status) return false;
     if (timeStart && r.createTime.slice(0, 10) < timeStart) return false;
     if (timeEnd && r.createTime.slice(0, 10) > timeEnd) return false;
@@ -399,6 +423,7 @@ function doSearch() {
 function resetSearch() {
   document.getElementById('searchTaskNo').value = '';
   document.getElementById('searchStoreCode').value = '';
+  document.getElementById('searchPlatform').value = '';
   document.getElementById('searchStatus').value = '';
   document.getElementById('searchTimeStart').value = '';
   document.getElementById('searchTimeEnd').value = '';
@@ -411,11 +436,41 @@ function downloadFile(fileName) { showToast('文件下载中：' + fileName, 'in
 // ===== 新增核价任务弹窗 =====
 var selectedFile = null;   // { name, size, rows }
 
+// 按平台划分店铺候选（用于弹窗“先选平台→再选店铺”联动）
+var STORES_BY_PLATFORM = {
+  '快手': [['KS-S001','旗舰店A'],['KS-S002','专营店B'],['KS-S003','奥莱店C'],['KS-S004','海外店D']],
+  '视频号': [['SPH-S001','视频号旗舰店E'],['SPH-S002','视频号专营店F']],
+  '小红书': [['XHS-S001','小红书品牌店G'],['XHS-S002','小红书买手店H']]
+};
+
+function resetStoreSelect() {
+  var store = document.getElementById('formStore');
+  store.innerHTML = '<option value="">请先选择平台</option>';
+  store.value = '';
+  store.disabled = true;
+  store.classList.remove('err');
+}
+
+function onPlatformChange() {
+  var platform = document.getElementById('formPlatform').value;
+  var store = document.getElementById('formStore');
+  document.getElementById('formPlatform').classList.remove('err');
+  document.getElementById('errPlatform').classList.remove('show');
+  if (!platform) { resetStoreSelect(); return; }
+  var list = STORES_BY_PLATFORM[platform] || [];
+  var html = '<option value="">请选择店铺</option>';
+  list.forEach(function(s) { html += '<option value="' + s[0] + '">' + s[0] + ' ' + s[1] + '</option>'; });
+  store.innerHTML = html;
+  store.value = '';
+  store.disabled = false;
+  store.classList.remove('err');
+  document.getElementById('errStore').classList.remove('show');
+}
+
 function openAddModal() {
-  document.getElementById('formStore').value = '';
-  document.getElementById('formProductStatus').value = '';
-  document.getElementById('formStore').classList.remove('err');
-  document.getElementById('formProductStatus').classList.remove('err');
+  document.getElementById('formPlatform').value = '';
+  document.getElementById('formPlatform').classList.remove('err');
+  resetStoreSelect();
   document.getElementById('uploadZone').classList.remove('err');
   clearErrors();
   removeFile();
@@ -427,7 +482,7 @@ function closeAddModal() {
 }
 
 function clearErrors() {
-  ['errStore','errProductStatus','errFile'].forEach(function(id) {
+  ['errPlatform','errStore','errFile'].forEach(function(id) {
     document.getElementById(id).classList.remove('show');
   });
 }
@@ -498,32 +553,32 @@ function downloadTemplate() {
   ws['!cols'] = [{ wch: 18 }, { wch: 16 }, { wch: 12 }];
   var wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, '核价清单');
-  XLSX.writeFile(wb, '快手核价导入模板.xlsx');
+  XLSX.writeFile(wb, '平台核价导入模板.xlsx');
   showToast('模板已开始下载', 'success');
 }
 
 // ===== 提交新增任务 =====
 function submitAddTask() {
   clearErrors();
+  var platform = document.getElementById('formPlatform');
   var store = document.getElementById('formStore');
-  var productStatus = document.getElementById('formProductStatus');
   var valid = true;
+  if (!platform.value) {
+    platform.classList.add('err');
+    document.getElementById('errPlatform').classList.add('show');
+    valid = false;
+  } else { platform.classList.remove('err'); }
   if (!store.value) {
     store.classList.add('err');
     document.getElementById('errStore').classList.add('show');
     valid = false;
   } else { store.classList.remove('err'); }
-  if (!productStatus.value) {
-    productStatus.classList.add('err');
-    document.getElementById('errProductStatus').classList.add('show');
-    valid = false;
-  } else { productStatus.classList.remove('err'); }
   if (!selectedFile) {
     document.getElementById('uploadZone').classList.add('err');
     document.getElementById('errFile').classList.add('show');
     valid = false;
   }
-  if (!valid) { showToast('请完整填写店铺、商品状态并上传核价文件', 'warning'); return; }
+  if (!valid) { showToast('请依次选择平台、店铺并上传核价文件', 'warning'); return; }
 
   var now = new Date();
   var pad = function(n) { return String(n).padStart(2, '0'); };
@@ -537,7 +592,6 @@ function submitAddTask() {
     taskNo: taskNo,
     storeCode: store.value,
     storeName: storeName,
-    productStatus: productStatus.value,
     fileName: selectedFile.name,
     total: selectedFile.rows.length,
     success: 0,

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>挽单总览</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+  :root { --ink:#0f172a; }
+  /* ===== 概览头部 ===== */
+  .ov-head {
+    display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+    background:linear-gradient(135deg,#eef0ff 0%,#f8f9ff 100%);
+    border:1px solid #dce0f8; border-radius:10px; padding:16px 20px; margin-bottom:12px;
+  }
+  .ov-head-left { display:flex; align-items:center; gap:12px; }
+  .ov-head-left svg { color:var(--primary); }
+  .ov-title { font-size:16px; font-weight:700; color:var(--ink); }
+  .ov-sub { font-size:12px; color:var(--text-tertiary); margin-top:3px; }
+  .ov-ver { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-secondary); }
+  .ov-ver code { font-family:"SF Mono","Menlo",monospace; font-size:12px; color:var(--primary); font-weight:600; background:#fff; padding:3px 8px; border-radius:6px; border:1px solid #dce0f8; }
+
+  /* ===== 指标卡 ===== */
+  .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:12px; }
+  .kpi-grid > *, .ov-cols > * { min-width:0; }
+  .ov-cols > .panel { overflow:hidden; }
+  .kpi-card {
+    background:var(--bg-white); border:1px solid var(--border); border-radius:10px;
+    padding:16px 18px; transition:box-shadow .2s;
+  }
+  .kpi-card:hover { box-shadow:var(--shadow-md); }
+  .kpi-label { font-size:12px; color:var(--text-tertiary); display:flex; align-items:center; gap:6px; }
+  .kpi-value { font-size:26px; font-weight:700; color:var(--ink); margin-top:8px; line-height:1.1; }
+  .kpi-value small { font-size:13px; font-weight:600; color:var(--text-secondary); margin-left:3px; }
+  .kpi-foot { font-size:11px; color:var(--text-tertiary); margin-top:8px; line-height:1.55; min-height:32px; display:flex; align-items:flex-start; gap:8px; flex-wrap:wrap; }
+  .kpi-trend.up { color:#059669; font-weight:600; }
+  .kpi-trend.down { color:#dc2626; font-weight:600; }
+  .kpi-card.warn { border-color:#fed7aa; background:linear-gradient(180deg,#fff7ed 0,#fff 60%); }
+  .kpi-card.danger { border-color:#fecaca; background:linear-gradient(180deg,#fef2f2 0,#fff 60%); }
+
+  /* ===== 门检红绿灯 ===== */
+  .ov-cols { display:grid; grid-template-columns:1.35fr 1fr; gap:12px; margin-bottom:12px; }
+  .panel { background:var(--bg-white); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+  .guard-act { color:var(--text-secondary); }
+  .panel-head {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 18px; border-bottom:1px solid var(--border-light); background:#fafbfd;
+  }
+  .panel-head h3 { margin:0; font-size:14px; font-weight:700; color:var(--ink); display:flex; align-items:center; gap:6px; }
+  .panel-head h3 svg { color:var(--primary); }
+  .panel-body { padding:6px 0; max-height:360px; overflow-y:auto; }
+  .panel-body.padded { padding:14px 18px; }
+  .guard-row { display:flex; align-items:center; gap:12px; padding:9px 18px; border-bottom:1px dashed var(--border-light); }
+  .guard-row:last-child { border-bottom:none; }
+  .lamp { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .lamp.pass { background:#10b981; box-shadow:0 0 0 3px rgba(16,185,129,.15); }
+  .lamp.warn { background:#f59e0b; box-shadow:0 0 0 3px rgba(245,158,11,.15); }
+  .lamp.diff { background:#ef4444; box-shadow:0 0 0 3px rgba(239,68,68,.15); }
+  .guard-id { font-family:"SF Mono","Menlo",monospace; font-size:12px; font-weight:700; color:var(--primary); width:26px; flex-shrink:0; }
+  .guard-main { flex:1; min-width:0; }
+  .guard-name { font-size:13px; font-weight:600; color:var(--ink); }
+  .guard-detail { font-size:11px; color:var(--text-tertiary); margin-top:2px; }
+  .guard-act { font-size:11px; color:var(--text-secondary); flex-shrink:0; max-width:150px; text-align:right; }
+
+  /* 实验分组摘要 */
+  .grp-row { padding:11px 18px; border-bottom:1px dashed var(--border-light); }
+  .grp-row:last-child { border-bottom:none; }
+  .grp-top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .grp-name { font-size:13px; font-weight:600; color:var(--ink); }
+  .grp-rate { font-size:16px; font-weight:700; }
+  .grp-rate.a { color:#5b6cf5; }
+  .grp-rate.b { color:#ea580c; }
+  .grp-rate.n { color:#647084; }
+  .grp-bar { height:6px; background:#eef0f5; border-radius:3px; margin-top:8px; overflow:hidden; }
+  .grp-bar i { display:block; height:100%; border-radius:3px; }
+  .grp-meta { font-size:11px; color:var(--text-tertiary); margin-top:6px; }
+  .roi-note {
+    margin:10px 18px 14px; padding:10px 12px; background:#fffbeb; border:1px solid #fde68a;
+    border-radius:8px; font-size:11px; color:#92400e; line-height:1.6;
+  }
+
+  /* 策略状态分布 */
+  .dist-list { padding:6px 0; }
+  .dist-row { display:flex; align-items:center; gap:10px; padding:7px 18px; }
+  .dist-name { font-size:12px; color:var(--text-secondary); width:110px; flex-shrink:0; }
+  .dist-track { flex:1; height:8px; background:#eef0f5; border-radius:4px; overflow:hidden; }
+  .dist-track i { display:block; height:100%; background:var(--primary); border-radius:4px; }
+  .dist-num { font-size:12px; font-weight:700; color:var(--ink); width:28px; text-align:right; }
+
+  /* 告警 */
+  .alert-item { display:flex; gap:10px; padding:11px 18px; border-bottom:1px dashed var(--border-light); }
+  .alert-item:last-child { border-bottom:none; }
+  .alert-dot { width:8px; height:8px; border-radius:50%; margin-top:5px; flex-shrink:0; }
+  .alert-dot.阻断 { background:#ef4444; }
+  .alert-dot.重要 { background:#f59e0b; }
+  .alert-dot.提示 { background:#94a3b8; }
+  .alert-body { flex:1; min-width:0; }
+  .alert-msg { font-size:12.5px; color:var(--ink); line-height:1.5; }
+  .alert-meta { font-size:11px; color:var(--text-tertiary); margin-top:3px; }
+  </style>
+</head>
+<body>
+<div class="page-container">
+  <div id="toastContainer" class="toast-container"></div>
+  <script>
+    if (window.parent) {
+      window.parent.postMessage({type:'breadcrumb', text:'售后挽单 <span>/</span> 挽单总览'}, '*');
+    }
+  </script>
+
+  <div class="page-title">挽单总览</div>
+
+  <!-- 本周版本条 -->
+  <div class="ov-head">
+    <div class="ov-head-left">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+      <div>
+        <div class="ov-title">本周策略版本</div>
+        <div class="ov-sub" id="ovSub"></div>
+      </div>
+    </div>
+    <div class="ov-ver">
+      <span>当前 <code id="ovVer"></code></span>
+      <span>上周 <code id="ovPrev"></code></span>
+      <button class="btn btn-sm" onclick="gotoTagRule()">查看商品判定策略</button>
+    </div>
+  </div>
+
+  <!-- 核心指标 -->
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <!-- 门检红绿灯 + 实验分组摘要 -->
+  <div class="ov-cols">
+    <div class="panel">
+      <div class="panel-head">
+        <h3><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 11l2 2 4-4"/></svg>门检红绿灯（C5）</h3>
+        <span style="font-size:11px;color:var(--text-tertiary);">G1/G2/G3/G5 未通过即阻断发布</span>
+      </div>
+      <div class="panel-body" id="guardList"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h3><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>实验分组对比摘要</h3>
+        <span style="font-size:11px;color:var(--text-tertiary);">主指标：采纳率 / 有效挽回金额</span>
+      </div>
+      <div class="panel-body" id="grpList"></div>
+      <div class="roi-note">
+        依 §9-R3：平台 ROI 在 200~400 元段数学上恒 ≥ 5.25，且补得越少 ROI 越高属反向激励，
+        故本平台<strong>不以平台 ROI 作为决策指标</strong>；净增量收益待财务成本参数（T4）回填，当前显示「暂不可算」。
+      </div>
+    </div>
+  </div>
+
+  <!-- 策略状态分布 + 告警 -->
+  <div class="ov-cols">
+    <div class="panel">
+      <div class="panel-head">
+        <h3><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>同步平台状态分布</h3>
+        <a class="link-action" style="font-size:12px;" onclick="gotoStrategy()">进入挽单方案 →</a>
+      </div>
+      <div class="panel-body"><div class="dist-list" id="distList"></div></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h3><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>告警与采纳度</h3>
+        <span style="font-size:11px;color:var(--text-tertiary);">工单堆积时长 = 采纳度仪表</span>
+      </div>
+      <div class="panel-body" id="alertList"></div>
+    </div>
+  </div>
+</div>
+
+<script src="../../js/wd/retention-data.js"></script>
+<script>
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML;
+}
+function openTab(page, title) {
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({type:'openTab', page:page, title:title}, '*');
+  } else { location.href = page.replace('pages/store-engine/', ''); }
+}
+function gotoPool() { openTab('pages/store-engine/wd-sku-label.html', '挽单商品池'); }
+function gotoTagRule() { openTab('pages/store-engine/wd-tag-rule.html', '商品判定策略'); }
+function gotoStrategy() { openTab('pages/store-engine/wd-strategy.html', '挽单方案'); }
+
+var OV = WD.OVERVIEW;
+
+// 头部
+document.getElementById('ovSub').textContent = '快照周 ' + OV.week + ' ｜ 生成于 ' + OV.generatedAt + ' ｜ 回读校验于 ' + OV.checkedAt + ' ｜ 周内锁定：ACTIVE 策略本周仅可急停，不可改值';
+document.getElementById('ovVer').textContent = OV.version;
+document.getElementById('ovPrev').textContent = OV.prevVersion;
+
+// KPI 卡
+var kpis = [
+  { label:'款级快照 / 挽单款数', value: OV.poolSku, unit:'款', foot:'快照总量 ' + OV.snapshotSku + ' 款（不挽 ' + (OV.snapshotSku - OV.poolSku) + ' 款），平台商品映射 ' + OV.platformItems + ' 个', cls:'', link:'pool' },
+  { label:'待配置工单数', value: OV.pendingTasks, unit:'张', foot:'堆积 ' + OV.taskBacklogHours + 'h（目标：一周工单 ≤ 60 分钟完成）', cls:'warn' },
+  { label:'生效中 ACTIVE 策略', value: countStatus('ACTIVE'), unit:'条', foot:'另有待同步 ' + countSync('PENDING') + ' 条、同步中 ' + countSync('SYNCING') + ' 条', cls:'' },
+  { label:'校验失败 VERIFY_FAILED', value: countStatus('VERIFY_FAILED'), unit:'条', foot:'G5 不一致已冻结下周发布', cls:'danger', link:'strategy' }
+];
+function countStatus(st) {
+  return WD.STRATEGIES.filter(function(s){ return s.status === st; }).length;
+}
+document.getElementById('kpiGrid').innerHTML = kpis.map(function(k) {
+  return '<div class="kpi-card ' + k.cls + '">'
+    + '<div class="kpi-label">' + esc(k.label) + '</div>'
+    + '<div class="kpi-value">' + k.value + '<small>' + esc(k.unit) + '</small></div>'
+    + '<div class="kpi-foot">' + esc(k.foot)
+    + (k.link ? ' <a class="link-action" style="font-size:11px;" onclick="goto' + ({strategy:'Strategy', pool:'Pool'})[k.link] + '()">' + (k.link === 'pool' ? '商品池' : '处理') + '</a>' : '')
+    + '</div></div>';
+}).join('');
+
+// 上周效果四指标（追加一行到 KPI 下方说明区）
+var effBar = document.createElement('div');
+effBar.className = 'kpi-grid';
+effBar.innerHTML = [
+  { l:'上周下发数', v: OV.lastEffect.deliver.toLocaleString(), t: OV.deliverTrend },
+  { l:'上周采纳率', v: OV.lastEffect.rate + '%', t: OV.adoptTrend },
+  { l:'上周有效挽回金额', v: '¥' + OV.lastEffect.recovered.toLocaleString(), t: OV.recoverTrend },
+  { l:'上周实际花费', v: '¥' + OV.lastEffect.spending.toLocaleString(), t: OV.spendTrend }
+].map(function(c) {
+  var up = c.t >= 0;
+  return '<div class="kpi-card"><div class="kpi-label">' + esc(c.l) + '</div>'
+    + '<div class="kpi-value" style="font-size:22px;">' + esc(c.v) + '</div>'
+    + '<div class="kpi-foot">环比 <span class="kpi-trend ' + (up ? 'up' : 'down') + '">' + (up ? '▲ +' : '▼ ') + c.t + '%</span>'
+    + '</div></div>';
+}).join('');
+document.getElementById('kpiGrid').parentNode.insertBefore(effBar, document.getElementById('kpiGrid').nextSibling);
+
+// 门检
+document.getElementById('guardList').innerHTML = WD.GUARDS.map(function(g) {
+  var lamp = g.result === 'PASS' ? 'pass' : (g.result === 'WARN' ? 'warn' : 'diff');
+  return '<div class="guard-row">'
+    + '<span class="lamp ' + lamp + '"></span>'
+    + '<span class="guard-id">' + esc(g.id) + '</span>'
+    + '<div class="guard-main"><div class="guard-name">' + esc(g.name) + '</div><div class="guard-detail">' + esc(g.detail) + '</div></div>'
+    + '<div class="guard-act">' + esc(g.action) + '</div>'
+    + '</div>';
+}).join('');
+
+// 实验分组摘要
+var maxRate = Math.max.apply(null, WD.EFFECT_GROUPS.map(function(g){ return g.rate; }));
+document.getElementById('grpList').innerHTML = WD.EFFECT_GROUPS.map(function(g) {
+  var cls = g.group === 'A_model' ? 'a' : (g.group === 'B_platform' ? 'b' : 'n');
+  var color = g.group === 'A_model' ? '#5b6cf5' : (g.group === 'B_platform' ? '#ea580c' : '#94a3b8');
+  return '<div class="grp-row">'
+    + '<div class="grp-top"><span class="grp-name">' + esc(g.name) + '</span>'
+    + '<span class="grp-rate ' + cls + '">' + g.rate + '%</span></div>'
+    + '<div class="grp-bar"><i style="width:' + Math.round(g.rate / maxRate * 100) + '%;background:' + color + ';"></i></div>'
+    + '<div class="grp-meta">下发 ' + g.deliver.toLocaleString() + ' ｜ 接受 ' + g.accept.toLocaleString()
+    + ' ｜ 有效挽回 ¥' + g.recovered.toLocaleString() + ' ｜ 花费 ¥' + g.spending.toLocaleString()
+    + ' ｜ 净增量收益 暂不可算</div>'
+    + '</div>';
+}).join('');
+
+// 同步平台状态分布（与列表、详情使用同一枚举与色位）
+var syncTone = { SUCCESS:'#059669', SYNCING:'#2563eb', PENDING:'#d97706', FAILED:'#dc2626' };
+function countSync(code) {
+  return WD.STRATEGIES.filter(function(s) {
+    var ss = s.syncStatus || WD.syncStatusOf(s);
+    return ss.code === code;
+  }).length;
+}
+var dist = ['SUCCESS','SYNCING','PENDING','FAILED'].map(function(c) {
+  return { name: WD.PLAN_SYNC_STATUS[c].label, num: countSync(c), color: syncTone[c] };
+}).filter(function(d){ return d.num > 0; });
+var maxNum = Math.max.apply(null, dist.map(function(d){ return d.num; }));
+document.getElementById('distList').innerHTML = dist.map(function(d) {
+  return '<div class="dist-row"><span class="dist-name">' + esc(d.name) + '</span>'
+    + '<div class="dist-track"><i style="width:' + Math.round(d.num / maxNum * 100) + '%;background:' + d.color + ';"></i></div>'
+    + '<span class="dist-num">' + d.num + '</span></div>';
+}).join('');
+
+// 告警
+document.getElementById('alertList').innerHTML = WD.ALERTS.map(function(a) {
+  return '<div class="alert-item"><span class="alert-dot ' + esc(a.level) + '"></span>'
+    + '<div class="alert-body"><div class="alert-msg">' + esc(a.msg) + '</div>'
+    + '<div class="alert-meta">' + esc(a.obj) + ' · ' + esc(a.level) + ' · ' + esc(a.at) + ' · 订阅：' + esc(a.sub) + '</div></div>'
+    + '</div>';
+}).join('');
+
+function showToast(msg, type) {
+  var c = document.getElementById('toastContainer');
+  var t = document.createElement('div'); t.className = 'toast toast-' + (type || 'info'); t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(function(){ t.classList.add('toast-hide'); }, 2500);
+  setTimeout(function(){ t.remove(); }, 3000);
+}
+</script>
+</body>
+</html>

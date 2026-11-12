@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>商品判定策略</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+  :root { --ink:#0f172a; }
+  .data-table thead th, .data-table tbody td { text-align:center; white-space:nowrap; font-size:12.5px; }
+  .data-table .col-left { text-align:left; }
+  .rule-no { font-family:"SF Mono","Menlo",monospace; font-size:12px; color:var(--primary); font-weight:600; cursor:pointer; }
+  .rule-no:hover { text-decoration:underline; }
+  .rule-name { font-size:12.5px; color:var(--ink); font-weight:600; }
+  .remark { font-size:11.5px; color:var(--text-secondary); max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .shop-tag { display:inline-block; padding:2px 8px; border-radius:5px; background:#f1f5f9; color:#475569; font-size:11px; margin:1px 3px 1px 0; }
+  .shop-tag.off { background:#fef2f2; color:#dc2626; }
+  .st-DRAFT { background:#f1f5f9; color:#475569; }
+  .st-ACTIVE { background:#ecfdf5; color:#059669; }
+  .st-PENDING { background:#fef3c7; color:#d97706; }
+  .st-DISABLED { background:#f1f5f9; color:#94a3b8; }
+  .op-link { color:var(--primary); cursor:pointer; font-size:12px; }
+  .op-link:hover { text-decoration:underline; }
+  .op-sep { color:var(--border); margin:0 6px; }
+  .lead { background:linear-gradient(135deg,#eef0ff 0%,#f8f9ff 100%); border:1px solid #dce0f8; border-radius:10px; padding:12px 16px; margin-bottom:12px; font-size:12px; color:#3f4a9e; line-height:1.75; }
+  .lead b { color:var(--ink); }
+  .lead code { font-family:"SF Mono","Menlo",monospace; font-size:11px; color:var(--primary); background:#fff; padding:2px 7px; border-radius:5px; border:1px solid #dce0f8; }
+  .table-toolbar { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+  .tb-note { font-size:11.5px; color:var(--text-tertiary); }
+  </style>
+</head>
+<body>
+<div class="page-container">
+  <div id="toastContainer" class="toast-container"></div>
+  <script>
+    if (window.parent) { window.parent.postMessage({type:'breadcrumb', text:'售后挽单 <span>/</span> 商品判定策略'}, '*'); }
+  </script>
+
+  <div class="page-title">商品判定策略</div>
+
+  <div class="lead">
+    本页维护<b>商品池「是否挽单」标签的生产规则</b>：每条策略只对应<b>一个店铺</b>，按<b>退货率 / 销售件数 / 毛利率</b>三维参数自动判标（品牌随店铺归属，不单独配置）。
+    列表只读汇总，<b>点击策略编号或「编辑」进入明细页</b>维护三个维度的判定区间；保存后于下周一 04:00 随快照重算标签，<b>周内不翻转</b>。
+  </div>
+
+  <!-- 查询区 -->
+  <div class="search-area">
+    <div class="search-row">
+      <div class="search-item">
+        <label>策略编号：</label>
+        <input type="text" id="fId" placeholder="策略编号包含即可，如 PD20261028">
+      </div>
+      <div class="search-item">
+        <label>策略名称：</label>
+        <input type="text" id="fName" placeholder="请输入策略名称">
+      </div>
+      <div class="search-item">
+        <label>适用店铺：</label>
+        <select id="fShop"><option value="">全部</option></select>
+      </div>
+      <div class="search-item">
+        <label>状态：</label>
+        <select id="fStatus"><option value="">全部</option></select>
+      </div>
+      <div class="search-item">
+        <label>更新时间：</label>
+        <input type="date" id="fFrom"> <span style="margin:0 4px;color:var(--text-tertiary);">至</span> <input type="date" id="fTo">
+      </div>
+    </div>
+    <div class="search-actions">
+      <button class="btn btn-primary" onclick="doSearch()">查询</button>
+      <button class="btn" onclick="resetSearch()">重置</button>
+    </div>
+  </div>
+
+  <!-- 列表 -->
+  <div class="table-area">
+    <div class="table-toolbar">
+      <button class="btn btn-primary" onclick="addNew()">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        新增
+      </button>
+      <span class="tb-note">一个店铺只允许一条生效策略，重复保存会被阻断；具体判定参数在明细中维护
+        <span class="op-link" style="margin-left:8px;font-size:11.5px;" onclick="resetDemo()">恢复演示数据</span>
+      </span>
+    </div>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width:46px;">序号</th>
+            <th style="width:130px;">策略编号</th>
+            <th class="col-left" style="width:200px;">策略名称</th>
+            <th class="col-left" style="width:240px;">备注</th>
+            <th style="width:100px;">店铺编码</th>
+            <th style="width:140px;">店铺名称</th>
+            <th style="width:80px;">状态</th>
+            <th style="width:90px;">覆盖款数</th>
+            <th style="width:130px;">更新人</th>
+            <th style="width:132px;">更新时间</th>
+            <th style="width:96px;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <span class="page-info">共 <strong id="totalCount">0</strong> 条</span>
+      <span class="page-btn disabled">&laquo;</span>
+      <span class="page-btn active">1</span>
+      <span class="page-btn">&raquo;</span>
+    </div>
+  </div>
+</div>
+
+<script src="../../js/wd/retention-data.js"></script>
+<script>
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML;
+}
+var current = WD.TAG_RULES.slice();
+
+(function initFilters() {
+  var sSel = document.getElementById('fShop');
+  WD.TAG_SHOPS.forEach(function(s) {
+    sSel.insertAdjacentHTML('beforeend', '<option value="' + esc(s.code) + '">' + esc(s.code) + ' ' + esc(s.name) + '</option>');
+  });
+  var stSel = document.getElementById('fStatus');
+  Object.keys(WD.TAG_STATUS).forEach(function(k) {
+    stSel.insertAdjacentHTML('beforeend', '<option value="' + k + '">' + esc(WD.TAG_STATUS[k]) + '</option>');
+  });
+})();
+
+function shopCell(code) {
+  if (!code) return '<span class="shop-tag off">未指定</span>';
+  return '<span class="shop-tag">' + esc(code) + '</span>';
+}
+function shopNameCell(code) {
+  if (!code) return '';
+  var s = WD.TAG_SHOPS.filter(function(x) { return x.code === code; })[0];
+  return esc(s ? s.name : '');
+}
+
+function renderTable(data) {
+  var tb = document.getElementById('tableBody');
+  if (!data.length) {
+    tb.innerHTML = '<tr><td colspan="11" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无策略</div><div class="empty-hint">点击「新增」创建商品判定策略</div></td></tr>';
+  } else {
+    tb.innerHTML = data.map(function(r, i) {
+      return '<tr>'
+        + '<td>' + (i + 1) + '</td>'
+        + '<td><span class="rule-no" onclick="viewDetail(\'' + esc(r.id) + '\')">' + esc(r.id) + '</span></td>'
+        + '<td class="col-left"><div class="rule-name">' + esc(r.name) + '</div></td>'
+        + '<td class="col-left"><div class="remark">' + esc(r.remark || '') + '</div></td>'
+        + '<td>' + shopCell(r.shopCode) + '</td>'
+        + '<td>' + shopNameCell(r.shopCode) + '</td>'
+        + '<td><span class="status-tag st-' + r.status + '">' + esc(WD.TAG_STATUS[r.status]) + '</span></td>'
+        + '<td>' + (r.skuCnt ? r.skuCnt.toLocaleString() : '') + '</td>'
+        + '<td style="font-size:11.5px;">' + esc(r.updatedBy) + '</td>'
+        + '<td style="font-size:11.5px;">' + esc(r.updatedAt) + '</td>'
+        + '<td><span class="op-link" onclick="viewDetail(\'' + esc(r.id) + '\')">查看</span>'
+        + '<span class="op-sep">|</span><span class="op-link" onclick="editDetail(\'' + esc(r.id) + '\')">编辑</span></td>'
+        + '</tr>';
+    }).join('');
+  }
+  document.getElementById('totalCount').textContent = data.length;
+}
+
+function doSearch() { runFilter(true); }
+function runFilter(showToast) {
+  var id = document.getElementById('fId').value.trim();
+  var name = document.getElementById('fName').value.trim();
+  var shop = document.getElementById('fShop').value;
+  var status = document.getElementById('fStatus').value;
+  var from = document.getElementById('fFrom').value;
+  var to = document.getElementById('fTo').value;
+  current = WD.TAG_RULES.filter(function(r) {
+    if (id && r.id.indexOf(id) === -1) return false;
+    if (name && r.name.indexOf(name) === -1) return false;
+    if (shop && r.shopCode !== shop) return false;
+    if (status && r.status !== status) return false;
+    var day = r.updatedAt.slice(0, 10);
+    if (from && day < from) return false;
+    if (to && day > to) return false;
+    return true;
+  });
+  renderTable(current);
+  if (showToast) toast('命中 ' + current.length + ' 条策略', 'info');
+}
+function resetSearch() {
+  ['fId','fName','fShop','fStatus','fFrom','fTo'].forEach(function(i) { document.getElementById(i).value = ''; });
+  current = WD.TAG_RULES.slice();
+  renderTable(current);
+}
+
+function openDetail(qs) {
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type:'openTab', page:'pages/store-engine/wd-tag-rule-detail.html' + qs, title:'商品判定策略明细' }, '*');
+  } else {
+    location.href = 'wd-tag-rule-detail.html' + qs;
+  }
+}
+function viewDetail(id) { openDetail('?id=' + encodeURIComponent(id)); }
+function editDetail(id) { openDetail('?id=' + encodeURIComponent(id) + '&mode=edit'); }
+function addNew() { openDetail('?id=new'); }
+function resetDemo() {
+  if (!confirm('将丢弃本地保存的策略编辑，恢复为初始 5 条演示数据。是否继续？')) return;
+  WD.resetTagRules();
+  location.reload();
+}
+
+function toast(msg, type) {
+  var c = document.getElementById('toastContainer');
+  var t = document.createElement('div'); t.className = 'toast toast-' + (type || 'info'); t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(function(){ t.classList.add('toast-hide'); }, 2600);
+  setTimeout(function(){ t.remove(); }, 3100);
+}
+
+renderTable(current);
+
+// 列表与详情在不同 iframe：详情页保存后通过 storage / focus 事件拉回最新主表
+window.addEventListener('storage', function(e) {
+  if (e.key !== 'wd_tag_rules') return;
+  WD.reloadTagRules();
+  runFilter(false);
+  toast('已同步详情页保存的策略变更', 'info');
+});
+window.addEventListener('focus', function() {
+  WD.reloadTagRules();
+  runFilter(false);
+});
+</script>
+</body>
+</html>
