@@ -27,6 +27,85 @@
   .lead code { font-family:"SF Mono","Menlo",monospace; font-size:11px; color:var(--primary); background:#fff; padding:2px 7px; border-radius:5px; border:1px solid #dce0f8; }
   .table-toolbar { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
   .tb-note { font-size:11.5px; color:var(--text-tertiary); }
+
+  /* 页签：策略配置 / 执行记录 */
+  .rt-tabs { display:flex; gap:2px; border-bottom:1px solid var(--border); margin-bottom:14px; }
+  .rt-tab { border:none; background:none; padding:10px 16px; font-family:inherit; font-size:13px; color:var(--text-secondary);
+    cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:color .16s, border-color .16s; }
+  .rt-tab:hover { color:var(--ink); }
+  .rt-tab.on { color:var(--primary); font-weight:600; border-bottom-color:var(--primary); }
+  .rt-tab .n { display:inline-block; margin-left:6px; padding:1px 6px; border-radius:9px; background:#f1f5f9;
+    color:#64748b; font-size:11px; font-weight:600; }
+  .rt-tab.on .n { background:#eef0ff; color:var(--primary); }
+
+  /* 执行记录 */
+  .rt-quick { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-left:12px; }
+  .rt-chip { padding:4px 11px; border:1px solid var(--border); border-radius:14px; background:#fff; font-family:inherit;
+    font-size:12px; color:var(--text-secondary); cursor:pointer; transition:all .14s; }
+  .rt-chip:hover { border-color:var(--primary); color:var(--primary); }
+  .rt-chip.on { background:var(--primary); border-color:var(--primary); color:#fff; font-weight:600; }
+  .rt-chip.bad.on { background:#dc2626; border-color:#dc2626; }
+  .btn:disabled { opacity:.5; cursor:not-allowed; }
+  .sy-SUCCESS { background:#ecfdf5; color:#059669; }
+  .sy-SYNCING { background:#eef4ff; color:#2563eb; }
+  .sy-PENDING { background:#fef3c7; color:#d97706; }
+  .sy-FAILED { background:#fef2f2; color:#dc2626; }
+  .sy-tag { display:inline-block; padding:2px 9px; border-radius:10px; font-size:11.5px; font-weight:600; white-space:nowrap; }
+  .cnt-sub { font-size:11px; color:var(--text-tertiary); margin-top:2px; }
+  .tier-cell { font-variant-numeric:tabular-nums; }
+  .tier-cell .pct { color:var(--text-tertiary); font-size:11px; }
+  .eff-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#059669; margin-right:5px; vertical-align:1px; }
+  .eff-off { background:#cbd5e1; }
+  .batch-cell { font-family:"SF Mono","Menlo",monospace; font-size:12px; color:var(--ink); font-weight:600; }
+  .batch-sub { font-size:11px; color:var(--text-tertiary); margin-top:2px; }
+  .rb-flag { display:inline-block; margin-left:6px; padding:1px 6px; border-radius:4px; background:#fff7ed; color:#c2410c; font-size:10.5px; }
+
+  /* 执行实例抽屉 */
+  .rt-mask { position:fixed; inset:0; background:rgba(15,23,42,.42); z-index:1200; opacity:0; visibility:hidden; transition:opacity .24s; }
+  .rt-mask.show { opacity:1; visibility:visible; }
+  .rt-drawer { position:fixed; top:0; right:0; bottom:0; width:660px; max-width:96vw; z-index:1201; background:#fff;
+    box-shadow:-12px 0 40px rgba(15,23,42,.16); display:flex; flex-direction:column; transform:translateX(100%); transition:transform .26s cubic-bezier(.4,0,.2,1); }
+  .rt-drawer.show { transform:none; }
+  .dw-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:16px 20px 13px; border-bottom:1px solid var(--border); }
+  .dw-head h3 { margin:0; font-size:15px; font-weight:700; color:var(--ink); }
+  .dw-sub { font-size:11.5px; color:var(--text-tertiary); margin-top:5px; line-height:1.6; }
+  .dw-close { border:none; background:none; font-size:22px; line-height:1; color:var(--text-tertiary); cursor:pointer; padding:2px 6px; border-radius:6px; }
+  .dw-close:hover { background:#f1f5f9; color:var(--ink); }
+  .dw-body { flex:1; min-height:0; overflow-y:auto; padding:16px 20px; }
+  .dw-body::-webkit-scrollbar { width:9px; }
+  .dw-body::-webkit-scrollbar-track { background:#f7f8fa; border-radius:8px; }
+  .dw-body::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:8px; border:2px solid #f7f8fa; }
+  .dw-body::-webkit-scrollbar-thumb:hover { background:var(--primary); }
+  .dw-sec { margin-bottom:18px; }
+  .dw-sec h4 { margin:0 0 9px; font-size:12.5px; font-weight:700; color:var(--ink); }
+  .dw-sec h4 .hint { font-weight:400; color:var(--text-tertiary); font-size:11.5px; margin-left:6px; }
+  .kpi-row { display:grid; grid-template-columns:repeat(7,1fr); gap:8px; }
+  .kpi-box { border:1px solid var(--border); border-radius:8px; padding:9px 10px; background:#fafbfd; }
+  .kpi-box .k { font-size:11px; color:var(--text-tertiary); }
+  .kpi-box .v { font-size:17px; font-weight:800; color:var(--ink); margin-top:3px; font-variant-numeric:tabular-nums; }
+  .kpi-box.in .v { color:#059669; }
+  .kpi-box.out .v { color:#94a3b8; }
+  .kpi-box .v .up { color:#059669; font-size:11px; font-weight:700; margin-left:4px; }
+  .kpi-box .v .down { color:#dc2626; font-size:11px; font-weight:700; margin-left:4px; }
+  .tier-row { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:8px; }
+  .tier-box { border:1px solid var(--border); border-radius:8px; padding:9px 11px; }
+  .tier-box .tn { font-size:11.5px; color:var(--text-secondary); }
+  .tier-box .tv { font-size:15px; font-weight:700; color:var(--ink); margin-top:2px; }
+  .tier-box .td { font-size:11px; color:var(--text-tertiary); margin-top:2px; }
+  .dw-table { width:100%; border-collapse:separate; border-spacing:0; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+  .dw-table th { background:#f7f8fa; font-size:11.5px; font-weight:600; color:var(--text-secondary); padding:8px; text-align:center; white-space:nowrap; }
+  .dw-table td { font-size:12px; color:var(--ink); padding:8px; text-align:center; border-top:1px solid #eef1f6; white-space:nowrap; }
+  .dw-table td.left { text-align:left; }
+  .dw-table .mono { font-family:"SF Mono","Menlo",monospace; font-size:11.5px; color:var(--primary); }
+  .dw-fail { margin-top:8px; padding:9px 12px; border-radius:8px; border:1px solid #fecaca; background:#fef2f2;
+    font-size:12px; color:#b91c1c; line-height:1.7; }
+  .dw-note { margin-top:8px; padding:9px 12px; border-radius:8px; border:1px dashed var(--border); background:#fafbfd;
+    font-size:11.5px; color:var(--text-secondary); line-height:1.7; }
+  .dw-foot { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 20px; border-top:1px solid var(--border); background:#fafbfd; }
+  .dw-foot .lft { font-size:12px; color:var(--text-secondary); }
+  .dw-btns { display:flex; gap:8px; }
+  @media (max-width:760px) { .rt-drawer { width:100%; } .kpi-row { grid-template-columns:repeat(3,1fr); } }
+  @media (prefers-reduced-motion: reduce) { .rt-drawer, .rt-mask { transition:none !important; } }
   </style>
 </head>
 <body>
@@ -39,10 +118,17 @@
   <div class="page-title">商品判定策略</div>
 
   <div class="lead">
-    本页维护<b>商品池「是否挽单」标签的生产规则</b>：每条策略只对应<b>一个店铺</b>，按<b>退货率 / 销售件数 / 毛利率</b>三维参数自动判标（品牌随店铺归属，不单独配置）。
-    列表只读汇总，<b>点击策略编号或「编辑」进入明细页</b>维护三个维度的判定区间；保存后于下周一 04:00 随快照重算标签，<b>周内不翻转</b>。
+    每条策略只对应<b>一个店铺</b>：先用商品中类 / 销售件数 / 退货率倍数判“是否挽单”，再用分档规则按毛利率定档。
+    保存后于下周一批处理重算标签，<b>周内不翻转</b>。
   </div>
 
+  <!-- 页签 -->
+  <div class="rt-tabs" role="tablist">
+    <button type="button" class="rt-tab on" id="tabCfg" role="tab" aria-selected="true" onclick="switchTab('cfg')">策略配置</button>
+    <button type="button" class="rt-tab" id="tabRuns" role="tab" aria-selected="false" onclick="switchTab('runs')">执行记录<span class="n" id="runsBadge">0</span></button>
+  </div>
+
+  <div id="paneCfg">
   <!-- 查询区 -->
   <div class="search-area">
     <div class="search-row">
@@ -80,8 +166,8 @@
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         新增
       </button>
-      <span class="tb-note">一个店铺只允许一条生效策略，重复保存会被阻断；具体判定参数在明细中维护
-        <span class="op-link" style="margin-left:8px;font-size:11.5px;" onclick="resetDemo()">恢复演示数据</span>
+      <span class="tb-note">
+        <span class="op-link" style="font-size:11.5px;" onclick="resetDemo()">恢复演示数据</span>
       </span>
     </div>
     <div class="table-scroll">
@@ -111,9 +197,100 @@
       <span class="page-btn">&raquo;</span>
     </div>
   </div>
+  </div><!-- /paneCfg -->
+
+  <!-- 执行记录 -->
+  <div id="paneRuns" style="display:none;">
+    <div class="search-area">
+      <div class="search-row">
+        <div class="search-item">
+          <label>批次：</label>
+          <select id="rBatch"></select>
+        </div>
+        <div class="search-item">
+          <label>店铺：</label>
+          <select id="rShop"><option value="">全部</option></select>
+        </div>
+        <div class="search-item">
+          <label>同步状态：</label>
+          <select id="rStatus"><option value="">全部</option></select>
+        </div>
+        <div class="search-item">
+          <label>策略编号：</label>
+          <input type="text" id="rRule" placeholder="策略编号包含即可">
+        </div>
+      </div>
+      <div class="search-actions">
+        <button class="btn btn-primary" onclick="runRunQuery()">查询</button>
+        <button class="btn" onclick="resetRunQuery()">重置</button>
+      </div>
+    </div>
+
+    <div class="table-area">
+      <div class="table-toolbar">
+        <div style="display:flex;align-items:center;flex-wrap:wrap;">
+          <button class="btn btn-danger" id="btnRetryAll" onclick="retryAllFailed()">重试全部失败</button>
+          <div class="rt-quick">
+            <button type="button" class="rt-chip on" id="qLatest" onclick="quickRuns('latest')">只看本批次</button>
+            <button type="button" class="rt-chip bad" id="qFailed" onclick="quickRuns('failed')">只看同步失败</button>
+            <button type="button" class="rt-chip" id="qAll" onclick="quickRuns('all')">全部批次</button>
+          </div>
+        </div>
+        <span class="tb-note" id="runsNote"></span>
+      </div>
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width:104px;">批次</th>
+              <th style="width:124px;">计算时间</th>
+              <th style="width:130px;">策略编号</th>
+              <th class="col-left" style="width:180px;">策略名称</th>
+              <th style="width:96px;">店铺编码</th>
+              <th class="col-left" style="width:120px;">店铺名称</th>
+              <th style="width:90px;">覆盖款数</th>
+              <th style="width:82px;">进池款数</th>
+              <th style="width:82px;">未进池</th>
+              <th style="width:92px;">低档</th>
+              <th style="width:92px;">中档</th>
+              <th style="width:92px;">高档</th>
+              <th style="width:118px;">生成方案</th>
+              <th style="width:96px;">同步状态</th>
+              <th style="width:110px;">操作</th>
+            </tr>
+          </thead>
+          <tbody id="runsBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <span class="page-info">共 <strong id="runsCount">0</strong> 条执行记录</span>
+      </div>
+    </div>
+  </div><!-- /paneRuns -->
 </div>
 
-<script src="../../js/wd/retention-data.js"></script>
+<!-- 执行实例抽屉 -->
+<div class="rt-mask" id="rtMask" onclick="closeRunDrawer()"></div>
+<div class="rt-drawer" id="rtDrawer" role="dialog" aria-modal="true" aria-labelledby="rtTitle">
+  <div class="dw-head">
+    <div>
+      <h3 id="rtTitle">执行实例</h3>
+      <div class="dw-sub" id="rtSub"></div>
+    </div>
+    <button type="button" class="dw-close" onclick="closeRunDrawer()" aria-label="关闭">&times;</button>
+  </div>
+  <div class="dw-body" id="rtBody"></div>
+  <div class="dw-foot">
+    <span class="lft" id="rtFoot"></span>
+    <div class="dw-btns">
+      <button type="button" class="btn" onclick="closeRunDrawer()">关闭</button>
+      <button type="button" class="btn" id="rtBtnRollback" onclick="doRollback()">回滚本批次</button>
+      <button type="button" class="btn btn-primary" id="rtBtnRetry" onclick="doRetry()">重试失败方案</button>
+    </div>
+  </div>
+</div>
+
+<script src="../../js/wd/retention-data.js?v=20261120b"></script>
 <script>
 function esc(s) {
   if (s === null || s === undefined) return '';
@@ -145,7 +322,7 @@ function shopNameCell(code) {
 function renderTable(data) {
   var tb = document.getElementById('tableBody');
   if (!data.length) {
-    tb.innerHTML = '<tr><td colspan="11" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无策略</div><div class="empty-hint">点击「新增」创建商品判定策略</div></td></tr>';
+    tb.innerHTML = '<tr><td colspan="11" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无策略</div></td></tr>';
   } else {
     tb.innerHTML = data.map(function(r, i) {
       return '<tr>'
@@ -194,21 +371,279 @@ function resetSearch() {
   renderTable(current);
 }
 
-function openDetail(qs) {
+function openDetail(q) {
+  var isNew = String(q).indexOf('id=new') > -1;
+  var title = isNew ? '新建商品判定策略' : '商品判定策略明细';
   if (window.parent && window.parent !== window) {
-    window.parent.postMessage({ type:'openTab', page:'pages/store-engine/wd-tag-rule-detail.html' + qs, title:'商品判定策略明细' }, '*');
+    window.parent.postMessage({ type:'openTab', page:'pages/store-engine/wd-tag-rule-detail.html' + q, title:title }, '*');
   } else {
-    location.href = 'wd-tag-rule-detail.html' + qs;
+    location.href = 'wd-tag-rule-detail.html' + q;
   }
 }
 function viewDetail(id) { openDetail('?id=' + encodeURIComponent(id)); }
 function editDetail(id) { openDetail('?id=' + encodeURIComponent(id) + '&mode=edit'); }
 function addNew() { openDetail('?id=new'); }
 function resetDemo() {
-  if (!confirm('将丢弃本地保存的策略编辑，恢复为初始 5 条演示数据。是否继续？')) return;
+  if (!confirm('将丢弃本地保存的策略编辑与执行记录操作，恢复为初始演示数据。是否继续？')) return;
   WD.resetTagRules();
+  WD.resetRunOverrides();
+  localStorage.removeItem('wd_plans');
   location.reload();
 }
+
+/* ===== 执行记录页签 ===== */
+var curTab = 'cfg', runsQuick = 'latest', drawerRunId = '';
+
+function initRunFilters() {
+  var bSel = document.getElementById('rBatch');
+  bSel.insertAdjacentHTML('beforeend', '<option value="">全部批次</option>');
+  WD.RUN_BATCHES.slice().reverse().forEach(function(b) {
+    bSel.insertAdjacentHTML('beforeend', '<option value="' + esc(b.batch) + '">' + esc(b.batch) + (b.batch === WD.WEEK ? '（本批）' : '') + '</option>');
+  });
+  bSel.value = WD.WEEK;
+  var sSel = document.getElementById('rShop');
+  WD.TAG_SHOPS.forEach(function(s) {
+    sSel.insertAdjacentHTML('beforeend', '<option value="' + esc(s.code) + '">' + esc(s.code) + ' ' + esc(s.name) + '</option>');
+  });
+  var stSel = document.getElementById('rStatus');
+  Object.keys(WD.RUN_STATUS).forEach(function(k) {
+    stSel.insertAdjacentHTML('beforeend', '<option value="' + k + '">' + esc(WD.RUN_STATUS[k].label) + '</option>');
+  });
+}
+
+function filteredRuns() {
+  var b = document.getElementById('rBatch').value;
+  var shop = document.getElementById('rShop').value;
+  var st = document.getElementById('rStatus').value;
+  var rid = document.getElementById('rRule').value.trim();
+  return WD.tagRuns().filter(function(x) {
+    if (b && x.batch !== b) return false;
+    if (shop && x.shopCode !== shop) return false;
+    if (st && x.status !== st) return false;
+    if (rid && x.ruleId.indexOf(rid) === -1) return false;
+    return true;
+  });
+}
+
+function deltaTxt(n) { return n > 0 ? '+' + n : String(n); }
+function tierCell(v, total) {
+  if (!total) return '<span class="tier-cell">' + v + '</span>';
+  return '<span class="tier-cell">' + v + ' <span class="pct">' + Math.round(v / total * 100) + '%</span></span>';
+}
+
+function renderRuns() {
+  var rows = filteredRuns();
+  var tb = document.getElementById('runsBody');
+  if (!rows.length) {
+    tb.innerHTML = '<tr><td colspan="15" class="empty-state"><span class="empty-icon">&#128203;</span>'
+      + '<div class="empty-text">暂无符合条件的执行记录</div>'
+      + '<div class="empty-hint">可放宽批次与筛选条件后重试</div></td></tr>';
+  } else {
+    tb.innerHTML = rows.map(function(x) {
+      var canRetry = x.latest && x.failCnt > 0;
+      return '<tr>'
+        + '<td><div class="batch-cell">' + (x.effective ? '<span class="eff-dot" title="当前生效批次"></span>' : '<span class="eff-dot eff-off" title="非生效批次"></span>') + esc(x.batch) + '</div>'
+        + (x.rolledBack ? '<div class="batch-sub"><span class="rb-flag">已回滚</span></div>' : '') + '</td>'
+        + '<td style="font-size:11.5px;">' + esc(x.at) + '</td>'
+        + '<td><span class="rule-no" onclick="viewDetail(\'' + esc(x.ruleId) + '\')">' + esc(x.ruleId) + '</span></td>'
+        + '<td class="col-left"><div class="rule-name">' + esc(x.ruleName) + '</div></td>'
+        + '<td>' + shopCell(x.shopCode) + '</td>'
+        + '<td class="col-left">' + shopNameCell(x.shopCode) + '</td>'
+        + '<td>' + x.coverCnt.toLocaleString() + '</td>'
+        + '<td style="color:#059669;font-weight:600;">' + x.inCnt.toLocaleString() + '</td>'
+        + '<td style="color:var(--text-tertiary);">' + x.outCnt.toLocaleString() + '</td>'
+        + '<td>' + tierCell(x.tiers.L, x.inCnt) + '</td>'
+        + '<td>' + tierCell(x.tiers.YM, x.inCnt) + '</td>'
+        + '<td>' + tierCell(x.tiers.YH, x.inCnt) + '</td>'
+        + '<td>' + x.planCnt + ' 条<div class="cnt-sub">成' + x.okCnt + ' / 失' + x.failCnt + ' / 待' + x.pendCnt + '</div></td>'
+        + '<td><span class="sy-tag sy-' + x.status + '" title="' + esc(x.statusNote) + '">' + esc(x.statusLabel) + '</span></td>'
+        + '<td><span class="op-link" onclick="openRunDrawer(\'' + esc(x.id) + '\')">查看</span>'
+        + (canRetry ? '<span class="op-sep">|</span><span class="op-link" style="color:#dc2626;" onclick="retryOne(\'' + esc(x.id) + '\')">重试</span>' : '')
+        + '</td></tr>';
+    }).join('');
+  }
+  document.getElementById('runsCount').textContent = rows.length;
+  // 页签徒章与说明条：本批次异常数 / 汇总口径
+  var latest = WD.tagRuns().filter(function(x) { return x.latest; });
+  var failN = latest.filter(function(x) { return x.failCnt > 0; }).length;
+  var badge = document.getElementById('runsBadge');
+  badge.textContent = failN ? failN : latest.length;
+  badge.title = failN ? '本批次有 ' + failN + ' 个店铺同步失败' : '本批次 ' + latest.length + ' 个店铺均无需处理';
+  var sumIn = latest.reduce(function(a, x) { return a + x.inCnt; }, 0);
+  document.getElementById('runsNote').textContent = '本批次 ' + WD.WEEK + ' · ' + latest.length + ' 个店铺 · 进池 '
+    + sumIn + ' 款 · 同步失败 ' + failN + ' 个';
+  document.getElementById('btnRetryAll').disabled = !failN;
+  ['qLatest', 'qFailed', 'qAll'].forEach(function(id) { document.getElementById(id).classList.remove('on'); });
+  // 自定义查询条件下不高亮任何快捷项，避免高亮与实际口径不一致
+  if (runsQuick) document.getElementById({ latest:'qLatest', failed:'qFailed', all:'qAll' }[runsQuick]).classList.add('on');
+}
+
+function quickRuns(k) {
+  runsQuick = k;
+  var bSel = document.getElementById('rBatch'), stSel = document.getElementById('rStatus');
+  if (k === 'latest') { bSel.value = WD.WEEK; stSel.value = ''; }
+  else if (k === 'failed') { bSel.value = ''; stSel.value = 'FAILED'; }
+  else { bSel.value = ''; stSel.value = ''; }
+  renderRuns();
+}
+function runRunQuery() {
+  runsQuick = '';
+  renderRuns();
+  toast('命中 ' + filteredRuns().length + ' 条执行记录', 'info');
+}
+function resetRunQuery() {
+  ['rShop', 'rRule'].forEach(function(i) { document.getElementById(i).value = ''; });
+  quickRuns('latest');
+}
+
+function retryOne(id) {
+  var res = WD.retryRun(id);
+  if (!res.ok) { toast(res.msg, 'warning'); return; }
+  toast(res.msg + '，回读校验已通过', 'success');
+  renderRuns();
+  if (drawerRunId === id) renderRunDrawer();
+}
+function retryAllFailed() {
+  var fails = WD.tagRuns().filter(function(x) { return x.latest && x.failCnt > 0; });
+  if (!fails.length) { toast('本批次没有同步失败的记录', 'info'); return; }
+  var fixed = 0, msgs = [];
+  fails.forEach(function(x) {
+    var r = WD.retryRun(x.id);
+    if (r.ok) { fixed += r.fixed; msgs.push(x.shopName); }
+  });
+  toast(fixed ? '已重试 ' + msgs.length + ' 个店铺共 ' + fixed + ' 个失败方案' : '没有可重试的失败方案', fixed ? 'success' : 'warning');
+  renderRuns();
+  if (drawerRunId) renderRunDrawer();
+}
+
+function openRunDrawer(id) {
+  drawerRunId = id;
+  document.getElementById('rtMask').classList.add('show');
+  document.getElementById('rtDrawer').classList.add('show');
+  renderRunDrawer();
+}
+function closeRunDrawer() {
+  drawerRunId = '';
+  document.getElementById('rtMask').classList.remove('show');
+  document.getElementById('rtDrawer').classList.remove('show');
+}
+function renderRunDrawer() {
+  var x = WD.tagRunById(drawerRunId);
+  if (!x) { closeRunDrawer(); return; }
+  var imp = WD.runImpact(x.id);
+  document.getElementById('rtTitle').textContent = x.batch + ' 执行实例 · ' + x.shopName;
+  document.getElementById('rtSub').innerHTML = esc(x.ruleId) + ' ' + esc(x.ruleName) + '｜' + esc(x.shopCode) + ' ' + esc(x.shopName)
+    + '｜计算时间 ' + esc(x.at) + '｜' + (x.effective ? '当前线上生效批次' : '历史批次')
+    + (x.rolledBack ? '｜<span style="color:#c2410c;">本批次已回滚</span>' : '');
+
+  var html = '<div class="dw-sec"><h4>批处理结果</h4>'
+    + '<div class="kpi-row">'
+    + '<div class="kpi-box"><div class="k">覆盖款数</div><div class="v">' + x.coverCnt.toLocaleString() + '</div></div>'
+    + '<div class="kpi-box"><div class="k">大数据候选</div><div class="v">' + x.candCnt + '</div></div>'
+    + '<div class="kpi-box in"><div class="k">进池款数</div><div class="v">' + x.inCnt.toLocaleString()
+      + (imp && imp.hasPrev ? '<span class="' + (imp.dIn >= 0 ? 'up' : 'down') + '">' + deltaTxt(imp.dIn) + '</span>' : '') + '</div></div>'
+    + '<div class="kpi-box out"><div class="k">未进池</div><div class="v">' + x.outCnt.toLocaleString()
+      + (imp && imp.hasPrev ? '<span class="' + (imp.dOut <= 0 ? 'up' : 'down') + '">' + deltaTxt(imp.dOut) + '</span>' : '') + '</div></div>'
+    + '<div class="kpi-box"><div class="k">生成方案</div><div class="v">' + x.planCnt + '</div></div>'
+    + '<div class="kpi-box"><div class="k">同步成功 / 失败</div><div class="v" style="font-size:15px;"><span style="color:#059669;">' + x.okCnt + '</span> / <span style="color:' + (x.failCnt ? '#dc2626' : '#94a3b8') + ';">' + x.failCnt + '</span></div></div>'
+    + '</div>'
+    + (x.noPlanNote ? '<div class="dw-note">' + esc(x.noPlanNote) + '。方案按「店铺 × 分档」自动生成，属于批处理下一环。</div>' : '')
+    + '<div class="tier-row">' + ['L', 'YM', 'YH'].map(function(k) {
+        var t = imp ? imp.tierMove.filter(function(m) { return m.name === WD.RUN_TIER_NAME[k]; })[0] : null;
+        return '<div class="tier-box"><div class="tn">' + WD.RUN_TIER_NAME[k] + '</div>'
+          + '<div class="tv">' + x.tiers[k].toLocaleString() + ' 款</div>'
+          + '<div class="td">占比 ' + (x.inCnt ? Math.round(x.tiers[k] / x.inCnt * 100) : 0) + '%'
+          + (t && imp.hasPrev ? '｜较' + esc(imp.prevBatch) + ' ' + deltaTxt(t.delta) : '') + '</div></div>';
+      }).join('') + '</div></div>';
+
+  html += '<div class="dw-sec"><h4>影响面对比<span class="hint">' + esc(x.batch) + ' vs ' + esc(imp.prevBatch || '无上一批') + '</span></h4>'
+    + (imp.hasPrev ? '<table class="dw-table"><thead><tr><th>新进池</th><th>移出池</th><th>档位迁移</th><th>低档变化</th><th>中档变化</th><th>高档变化</th></tr></thead><tbody><tr>'
+        + '<td>' + imp.newIn + ' 款</td><td>' + imp.movedOut + ' 款</td><td>' + imp.movedTierCnt + ' 款</td>'
+        + imp.tierMove.map(function(m) { return '<td style="color:' + (m.delta >= 0 ? '#059669' : '#dc2626') + ';">' + deltaTxt(m.delta) + '</td>'; }).join('')
+        + '</tr></tbody></table>'
+        + '<div class="dw-note">本周批处理结果与上周相比的变化量；档位迁移指同一款商品因毛利率变动而换档，不会改变是否挽单的结论。</div>'
+      : '<div class="dw-note">没有可对比的上一批次记录。</div>') + '</div>';
+
+  var plans = WD.STRATEGIES.filter(function(s) { return s.shopCode === x.shopCode && !s.isLegacy; });
+  html += '<div class="dw-sec"><h4>生成并同步的方案<span class="hint">执行动作：' + esc(x.action) + '</span></h4>'
+    + '<table class="dw-table"><thead><tr><th>方案编号</th><th>分档</th><th>退款规则</th><th>覆盖款数</th><th>平台方案ID</th><th>同步状态</th></tr></thead><tbody>'
+    + (plans.length ? plans.map(function(s) {
+        var st = s.syncStatus || WD.syncStatusOf(s);
+        return '<tr><td class="left"><span class="mono" style="cursor:pointer;" onclick="openPlan(\'' + esc(s.id) + '\')">' + esc(s.id) + '</span></td>'
+          + '<td>' + esc(WD.RUN_TIER_NAME[s.tier] || s.tier) + '</td><td>退款 ' + esc(s.ratio) + '%，最高 ¥' + esc(s.cap) + '</td><td>' + (s.itemCnt || 0) + '</td>'
+          + '<td><span class="mono">' + esc(s.schemeId || '') + '</span></td>'
+          + '<td><span class="sy-tag sy-' + st.code + '" title="' + esc(st.note) + '">' + esc(st.label) + '</span></td></tr>';
+      }).join('')
+      : '<tr><td colspan="6" style="color:var(--text-tertiary);">该店铺暂无由本策略生成的方案</td></tr>')
+    + '</tbody></table>'
+    + (x.failReason ? '<div class="dw-fail"><b>同步失败原因：</b>' + esc(x.failReason) + '</div>' : '') + '</div>';
+
+  html += '<div class="dw-sec"><h4>下发与重试</h4><div class="dw-note">'
+    + '同一方案编号在抖店原地更新，不会重复新建。'
+    + (x.retryCnt ? '已重试 ' + x.retryCnt + ' 次，最近一次 ' + esc(x.retryAt) + '。' : '')
+    + (x.rolledBack ? '本批次已回滚，仅影响线上生效的批版本，不修改策略参数。' : '')
+    + '</div></div>';
+  document.getElementById('rtBody').innerHTML = html;
+
+  var footTxt;
+  if (x.failCnt) footTxt = '本批次有 ' + x.failCnt + ' 个方案回读不一致';
+  else if (!x.latest) footTxt = '历史批次记录';
+  else if (!x.planCnt) footTxt = '本批次尚未生成挽单方案';
+  else if (x.pendCnt || x.doingCnt) footTxt = '本批次还有 ' + (x.pendCnt + x.doingCnt) + ' 个方案待完成同步';
+  else footTxt = '本批次无需处理';
+  document.getElementById('rtFoot').textContent = footTxt;
+  var btnR = document.getElementById('rtBtnRetry'), btnB = document.getElementById('rtBtnRollback');
+  btnR.disabled = !(x.latest && x.failCnt > 0);
+  btnR.style.display = (x.latest && x.failCnt > 0) ? '' : 'none';
+  btnB.disabled = !x.latest;
+  btnB.style.display = x.latest ? '' : 'none';
+  btnB.textContent = x.rolledBack ? '已回滚（重新生效本批）' : '回滚本批次';
+}
+function doRetry() { retryOne(drawerRunId); }
+function doRollback() {
+  var x = WD.tagRunById(drawerRunId);
+  if (!x) return;
+  if (x.rolledBack) {
+    if (!confirm('本批次已回滚，确认重新让 ' + x.batch + ' 生效？')) return;
+    WD.clearRollback(x.ruleId);   // 清除回滚标记（由数据层统一维护）
+    toast('已重新生效 ' + x.batch, 'success');
+    renderRuns(); renderRunDrawer();
+    return;
+  }
+  if (!confirm('回滚后线上继续使用 ' + WD.prevBatchOf(x.batch) + ' 的商品清单与补偿，本批次变更不生效。是否继续？')) return;
+  var res = WD.rollbackRun(x.id);
+  toast(res.msg, res.ok ? 'success' : 'warning');
+  renderRuns();
+  if (res.ok) renderRunDrawer();
+}
+function openPlan(id) {
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type:'openTab', page:'pages/store-engine/wd-strategy-detail.html?id=' + encodeURIComponent(id), title:'挽单方案详情' }, '*');
+  } else { location.href = 'wd-strategy-detail.html?id=' + encodeURIComponent(id); }
+}
+
+function switchTab(name) {
+  curTab = name;
+  var cfg = name === 'cfg';
+  document.getElementById('tabCfg').classList.toggle('on', cfg);
+  document.getElementById('tabCfg').setAttribute('aria-selected', cfg ? 'true' : 'false');
+  document.getElementById('tabRuns').classList.toggle('on', !cfg);
+  document.getElementById('tabRuns').setAttribute('aria-selected', cfg ? 'false' : 'true');
+  document.getElementById('paneCfg').style.display = cfg ? '' : 'none';
+  document.getElementById('paneRuns').style.display = cfg ? 'none' : '';
+  if (!cfg) renderRuns();
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && drawerRunId) closeRunDrawer();
+});
+['rBatch', 'rShop', 'rStatus'].forEach(function(i) {
+  document.getElementById(i).addEventListener('change', function() { runsQuick = ''; renderRuns(); });
+});
+document.getElementById('rRule').addEventListener('change', function() { runsQuick = ''; renderRuns(); });
+document.getElementById('rRule').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); runRunQuery(); }
+});
 
 function toast(msg, type) {
   var c = document.getElementById('toastContainer');
@@ -219,17 +654,28 @@ function toast(msg, type) {
 }
 
 renderTable(current);
+initRunFilters();
+renderRuns();
+
+// 支持从策略详情页「查看全部执行记录」直达：?tab=runs&rule=PDxxx
+(function deepLink() {
+  var t = (location.search.match(/[?&]tab=(\w+)/) || [])[1];
+  var rid = (location.search.match(/[?&]rule=([^&]+)/) || [])[1];
+  if (rid) document.getElementById('rRule').value = decodeURIComponent(rid);
+  if (t === 'runs') { runsQuick = rid ? '' : 'latest'; if (rid) document.getElementById('rBatch').value = ''; switchTab('runs'); }
+})();
 
 // 列表与详情在不同 iframe：详情页保存后通过 storage / focus 事件拉回最新主表
 window.addEventListener('storage', function(e) {
-  if (e.key !== 'wd_tag_rules') return;
+  if (e.key !== 'wd_tag_rules' && e.key !== 'wd_plans' && e.key !== 'wd_tag_runs') return;
   WD.reloadTagRules();
   runFilter(false);
-  toast('已同步详情页保存的策略变更', 'info');
+  renderRuns();
 });
 window.addEventListener('focus', function() {
   WD.reloadTagRules();
   runFilter(false);
+  renderRuns();
 });
 </script>
 </body>

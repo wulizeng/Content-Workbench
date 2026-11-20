@@ -11,31 +11,116 @@
   .data-table .col-left { text-align:left; }
   .sku-no { font-family:"SF Mono","Menlo",monospace; font-size:12px; color:var(--primary); font-weight:600; cursor:pointer; }
   .sku-no:hover { text-decoration:underline; }
-  .num-hi { color:#dc2626; font-weight:700; }
-  .num-ok { color:#059669; font-weight:700; }
-  .num-warn { color:#d97706; font-weight:700; }
+  .num-hi { color:var(--danger-hover); font-weight:700; }
+  .num-ok { color:var(--success-hover); font-weight:700; }
+  .num-warn { color:var(--warning-hover); font-weight:700; }
 
-  /* ===== 数据周期条 ===== */
+  /* ===== 数据周期条（扁平纯色）===== */
   .pool-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
-    background:linear-gradient(135deg,#eef0ff 0%,#f8f9ff 100%); border:1px solid #dce0f8; border-radius:10px; padding:12px 18px; margin-bottom:12px; }
+    background:var(--bg-white); border:1px solid var(--border); border-left:3px solid var(--primary);
+    border-radius:10px; padding:11px 16px; margin-bottom:12px; }
   .ph-refresh { font-size:12px; color:var(--text-secondary); }
-  .ph-refresh code { font-family:"SF Mono","Menlo",monospace; font-size:11.5px; color:var(--primary); background:#fff; padding:2px 8px; border-radius:6px; border:1px solid #dce0f8; }
+  .ph-grain { font-size:11px; color:var(--text-tertiary); margin-top:4px; line-height:1.5; }
+  .ph-refresh code { font-family:"SF Mono","Menlo",monospace; font-size:11.5px; color:var(--primary-700); background:var(--primary-50); padding:2px 8px; border-radius:6px; border:1px solid var(--primary-100); }
   .ph-btns { display:flex; gap:8px; flex-wrap:wrap; }
 
-  /* ===== 统计条 ===== */
-  .pool-stats { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:12px; }
-  .ps-card { background:var(--bg-white); border:1px solid var(--border); border-radius:10px; padding:13px 16px; min-width:0; }
-  .ps-label { font-size:11.5px; color:var(--text-tertiary); }
-  .ps-val { font-size:23px; font-weight:700; color:var(--ink); margin-top:6px; line-height:1.1; }
-  .ps-val.txt { font-size:14px; white-space:nowrap; letter-spacing:.2px; }
-  .ps-val small { font-size:12px; font-weight:600; color:var(--text-secondary); margin-left:3px; }
-  .ps-foot { font-size:11px; color:var(--text-tertiary); margin-top:6px; line-height:1.5; }
-  .ps-card.in { border-color:#c7cdf9; background:linear-gradient(180deg,#f4f5ff 0,#fff 60%); }
-  .ps-card.new { border-color:#a7f3d0; background:linear-gradient(180deg,#ecfdf5 0,#fff 60%); }
-  .ps-card.out { border-color:#e2e8f0; }
-  .ps-card.warn { border-color:#fed7aa; background:linear-gradient(180deg,#fff7ed 0,#fff 60%); }
-  .tier-bar { display:flex; height:6px; border-radius:3px; overflow:hidden; margin-top:8px; }
-  .tier-bar i { display:block; height:100%; }
+  /* ===== 指标卡（可下钻入口） ===== */
+  .kpi-grid { display:grid; grid-template-columns:1.3fr repeat(3,1fr); gap:12px; margin-bottom:12px; align-items:stretch; }
+  .kpi { position:relative; overflow:hidden; min-width:0; cursor:pointer; text-align:left; display:flex; flex-direction:column;
+    background:var(--bg-white); border:1px solid var(--border); border-radius:12px; padding:12px 13px 11px;
+    transition:transform .18s cubic-bezier(.34,1.3,.64,1), box-shadow .18s, border-color .18s; }
+  .kpi::before { content:''; position:absolute; left:0; top:0; width:100%; height:3px; background:var(--accent,#5b6cf5); opacity:.85; }
+  .kpi:hover { transform:translateY(-3px); box-shadow:0 10px 24px rgba(31,41,86,.13); border-color:var(--accent,#5b6cf5); }
+  .kpi:focus-visible { outline:2px solid var(--accent,#5b6cf5); outline-offset:2px; }
+  .kpi.on { border-color:var(--accent,#5b6cf5); box-shadow:0 0 0 3px rgba(91,108,245,.16), 0 8px 20px rgba(31,41,86,.12); }
+  .kpi.on::after { content:'✓'; position:absolute; right:9px; top:8px; font-size:11px; font-weight:800; color:var(--accent,#5b6cf5); }
+  .kpi-top { display:flex; align-items:center; gap:6px; }
+  .kpi-ico { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:6px;
+    background:#eef0ff; background:color-mix(in srgb, var(--accent,#5b6cf5) 13%, #fff); color:var(--accent,#5b6cf5); flex-shrink:0; }
+  .kpi-label { font-size:11.5px; font-weight:600; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .kpi-val { font-size:25px; font-weight:800; color:var(--ink); margin-top:7px; line-height:1.05; letter-spacing:-.4px; font-variant-numeric:tabular-nums; }
+  .kpi-val small { font-size:11.5px; font-weight:600; color:var(--text-tertiary); margin-left:3px; letter-spacing:0; }
+  .kpi-sub { font-size:10.5px; color:var(--text-tertiary); margin-top:5px; line-height:1.5; }
+  .kpi-sub b { color:var(--text-secondary); font-weight:700; }
+  .kpi-hint { font-size:10px; color:var(--accent,#5b6cf5); margin-top:auto; padding-top:7px; opacity:.55; transition:opacity .18s; }
+  .kpi:hover .kpi-hint, .kpi.on .kpi-hint { opacity:1; }
+  .kpi-delta { margin-left:auto; font-size:10px; font-weight:700; padding:1px 6px; border-radius:8px; white-space:nowrap; }
+  .kpi-delta.up { background:var(--success-light); color:var(--success-hover); }
+  .kpi-delta.down { background:var(--danger-light); color:var(--danger-hover); }
+  .kpi-delta.flat { background:#f1f5f9; color:var(--text-tertiary); }
+
+  /* 主卡：挽单商品（实心主色，白字对比约 5.3:1，无渐变与装饰）*/
+  .kpi-hero { color:#fff; border:none; padding:13px 15px 11px; background:var(--primary-600); }
+  .kpi-hero::before { display:none; }
+  .kpi-hero.on { box-shadow:0 0 0 3px rgba(91,108,245,.35); }
+  .kpi-hero .kpi-label { color:rgba(255,255,255,.92); font-size:12px; }
+  .kpi-hero .kpi-ico { background:rgba(255,255,255,.2); color:#fff; }
+  .kpi-hero .kpi-val { color:#fff; font-size:29px; margin-top:7px; }
+  .kpi-hero .kpi-val small { color:rgba(255,255,255,.85); }
+  .kpi-hero .kpi-sub { color:rgba(255,255,255,.9); font-size:11px; }
+  .kpi-hero .kpi-sub b { color:#fff; }
+  .kpi-hero .kpi-hint { color:#fff; }
+  .kpi-hero .kpi-delta.up { background:rgba(255,255,255,.22); color:#eafff4; }
+  .kpi-hero .kpi-delta.down { background:rgba(255,255,255,.22); color:#ffeaea; }
+  .kpi-hero .kpi-delta.flat { background:rgba(255,255,255,.2); color:#fff; }
+  .shop-cell { font-family:"SF Mono","Menlo",monospace; font-size:11.5px; color:var(--ink); }
+  .shop-cell-n { font-size:11px; color:var(--text-tertiary); margin-top:2px; }
+  .rule-no { font-family:"SF Mono","Menlo",monospace; font-size:11.5px; color:var(--primary); cursor:pointer; }
+  .rule-no:hover { text-decoration:underline; }
+  .tier-cell { display:inline-block; min-width:40px; padding:2px 9px 2px 8px; font-size:11.5px; font-weight:600;
+    color:var(--text-secondary); font-variant-numeric:tabular-nums; border-left:3px solid transparent; }
+  /* 档位颜色仅作左侧色条提示（非文字、不依赖色彩传达，低/中/高档文字已自明），避免彩色背景下的对比度不足 */
+  .tier-cell.t-L { border-left-color:#94a3b8; }
+  .tier-cell.t-YM { border-left-color:var(--info); }
+  .tier-cell.t-YH { border-left-color:var(--success); }
+  .ck-tier { font-size:11.5px; color:var(--text-secondary); }
+  .dl-title .dl-sub { font-size:11px; color:var(--text-tertiary); font-weight:400; margin-left:8px; }
+
+  /* 当前聚焦条 */
+  .focus-bar { display:none; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px; padding:8px 13px;
+    border-radius:9px; border:1px solid var(--primary-100); border-left:3px solid var(--primary);
+    background:var(--primary-50); font-size:11.5px; color:var(--primary-700); }
+  .focus-bar.show { display:flex; }
+  .focus-bar b { color:var(--ink); font-weight:800; }
+  .focus-bar .fb-x { margin-left:auto; cursor:pointer; font-weight:700; color:var(--primary); }
+  .focus-bar .fb-x:hover { text-decoration:underline; }
+
+  @media (max-width:1024px) { .kpi-grid { grid-template-columns:repeat(2,1fr); } .kpi-hero { grid-column:1 / -1; } }
+  @media (max-width:620px) { .kpi-grid { grid-template-columns:1fr; } }
+
+  /* ===== 分页条 ===== */
+  .pool-pager { justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .pg-summary { font-size:12px; color:var(--text-secondary); }
+  .pg-summary b { color:var(--ink); font-weight:800; font-variant-numeric:tabular-nums; }
+  .pg-summary .pg-filter { color:var(--text-tertiary); margin-left:6px; }
+  .pg-right { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .pg-size { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--text-secondary); }
+  .pg-size select { padding:5px 8px; border:1px solid var(--border); border-radius:6px; font-size:12px;
+    background:#fff; color:var(--ink); outline:none; cursor:pointer; transition:border-color .16s, box-shadow .16s; }
+  .pg-size select:hover { border-color:var(--primary); }
+  .pg-size select:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(91,108,245,.13); }
+  .pg-nav { display:flex; align-items:center; gap:6px; }
+  .pagination .page-btn { padding:0 9px; font-family:inherit; font-size:12.5px; font-variant-numeric:tabular-nums; }
+  .pagination .page-btn:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
+  .pg-ellipsis { min-width:22px; text-align:center; color:var(--text-disabled); user-select:none; }
+  .pg-jump { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--text-secondary); }
+  .pg-jump input { width:56px; padding:5px 7px; border:1px solid var(--border); border-radius:6px; font-size:12px;
+    text-align:center; outline:none; color:var(--ink); font-variant-numeric:tabular-nums; transition:border-color .16s, box-shadow .16s; }
+  .pg-jump input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(91,108,245,.13); }
+  .pg-jump input.bad { border-color:#f87171; box-shadow:0 0 0 3px rgba(248,113,113,.14); }
+  .pg-go { padding:5px 11px; border:1px solid var(--border); border-radius:6px; background:#fff; cursor:pointer;
+    font-family:inherit; font-size:12px; color:var(--text-secondary); transition:all .16s; }
+  .pg-go:hover { border-color:var(--primary); color:var(--primary); background:var(--primary-light); }
+  .data-table tbody tr.page-in { animation:rowIn .26s cubic-bezier(.22,.9,.3,1) both; }
+  @keyframes rowIn { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .data-table tbody tr.page-in { animation:none; }
+    .kpi, .pg-go { transition:none; }
+  }
+  @media (max-width:720px) {
+    .pool-pager { justify-content:flex-start; }
+    .pg-right { width:100%; justify-content:space-between; }
+  }
 
   /* ===== 视图切换 + 快捷筛选 ===== */
   .pool-toolbar { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
@@ -54,19 +139,25 @@
   th.sortable.act .arr { color:var(--primary); }
 
   .change-tag { display:inline-block; padding:2px 8px; border-radius:5px; font-size:11px; font-weight:600; }
-  .ch-维持 { background:#f1f5f9; color:#475569; }
-  .ch-转挽单 { background:#ecfdf5; color:#059669; }
-  .ch-转不挽 { background:#fef2f2; color:#dc2626; }
-
-  /* 挽单标签（业务结论列） */
+  .ch-维持 { background:#f1f5f9; color:var(--text-secondary); }
+  .ch-转挽单 { background:var(--success-light); color:var(--success-hover); }
+  .ch-转不挽 { background:var(--danger-light); color:var(--danger-hover); }
+  
+  /* 挽单标签（业务结论列）*/
   .wd-tag { display:inline-flex; align-items:center; gap:5px; padding:3px 12px; border-radius:14px; font-size:12.5px; font-weight:700; }
   .wd-tag::before { content:''; width:6px; height:6px; border-radius:50%; background:currentColor; }
-  .tag-wd { background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; }
-  .tag-nowd { background:#f1f5f9; color:#647084; border:1px solid #e2e8f0; }
+  .tag-wd { background:var(--success-light); color:var(--success-hover); border:1px solid #a7f3d0; }
+  .tag-nowd { background:#f1f5f9; color:var(--text-tertiary); border:1px solid var(--border); }
   .explain-link { color:var(--primary); cursor:pointer; font-size:12px; }
   .explain-link:hover { text-decoration:underline; }
-  .data-table tbody tr.row-dim > td { color:var(--text-muted); background:#f6f8fb; }
-  .data-table tbody tr.row-dim > td .sku-no { color:var(--text-muted); }
+  /* 15 列扫读：数字列等宽对齐 + 奇偶微异底 */
+  .data-table tbody td { font-variant-numeric:tabular-nums; }
+  .data-table tbody tr:nth-child(even) > td { background:#fafbfe; }
+  /* 不挽行：弱化但不失去可读性（正文对比约 4.6:1，≥ 4.5:1），写在 zebra 之后以覆盖偶数行 */
+  .data-table tbody tr.row-dim > td { color:var(--text-tertiary); background:#f8fafc; }
+  .data-table tbody tr.row-dim > td .sku-no, .data-table tbody tr.row-dim > td .rule-no { color:var(--text-tertiary); }
+  /* hover 写在最后（特异性与上两条相同、靠源序取胜），td 背景不会吃掉全局 tr:hover */
+  .data-table tbody tr:hover > td { background:var(--primary-50); }
 
   /* ===== 判据抽屉 ===== */
   .drawer-mask { position:fixed; inset:0; background:rgba(15,23,42,.42); z-index:9998; display:none; }
@@ -92,27 +183,196 @@
   .dl-note { padding:10px 12px; border-radius:8px; font-size:11.5px; line-height:1.65; }
   .dl-note.info { background:#eef0ff; color:#3f4a9e; border:1px solid #dce0f8; }
   .dl-note.warn { background:#fffbeb; color:#92400e; border:1px solid #fde68a; }
-  /* 逐步骤判定过屏 */
+  /* 逐维度参数校验 */
   .ev-conc { display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:12px 14px; border-radius:9px; border:1px solid #dce0f8; background:#f7f9ff; }
+  .ev-conc.ok { border-color:#a7f3d0; background:var(--success-light); }
+  .ev-conc.no { border-color:#fecaca; background:var(--danger-light); }
   .ev-conc .tag-big { font-size:15px; font-weight:700; padding:4px 14px; border-radius:16px; }
-  .ev-conc .kv { font-size:12px; color:var(--text-secondary); }
-  .ev-conc .kv b { color:var(--ink); font-weight:700; }
-  .ev-step { border:1px solid var(--border-light); border-radius:9px; margin-bottom:10px; overflow:hidden; }
-  .ev-step.blocked { opacity:.72; }
-  .ev-head { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 12px; background:#fafbfd; border-bottom:1px solid var(--border-light); }
-  .ev-title { font-size:12.5px; font-weight:700; color:var(--ink); }
-  .ev-badge { font-size:11px; font-weight:700; padding:2px 10px; border-radius:11px; white-space:nowrap; }
-  .ev-badge.pass { background:#ecfdf5; color:#059669; }
-  .ev-badge.stop { background:#fef2f2; color:#dc2626; }
+  .ev-conc .kv { font-size:12px; color:var(--text-secondary); line-height:1.6; }
+  .ev-badge { font-size:11px; font-weight:700; padding:2px 10px; border-radius:11px; white-space:nowrap; display:inline-block; }
+  .ev-badge.pass { background:var(--success-light); color:var(--success-hover); }
+  .ev-badge.stop { background:var(--danger-light); color:var(--danger-hover); }
   .ev-badge.idle { background:#f1f5f9; color:#86909c; }
-  .ev-kv { display:grid; grid-template-columns:150px 1fr; }
-  .ev-kv > div { padding:7px 12px; font-size:12px; border-bottom:1px solid #f4f6fa; }
-  .ev-kv > div:nth-child(odd) { color:var(--text-secondary); background:#fcfdfe; }
-  .ev-kv > div:nth-child(even) { color:var(--ink); }
-  .ev-kv > div:nth-last-child(-n+2) { border-bottom:none; }
-  .ev-kv b { color:var(--primary); }
-  .ev-kv .hit { color:#059669; font-weight:700; }
-  .ev-rule { font-size:11.5px; color:var(--text-tertiary); margin-top:2px; line-height:1.6; }
+
+  .ck-pre { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; border:1px solid #e8ebf7; background:#fafbff; }
+  .ck-pre.stop { border-color:#fecaca; background:#fff8f8; }
+  .ck-pre-note { font-size:11.5px; color:var(--text-secondary); line-height:1.55; }
+
+  .ck-tbl { width:100%; border-collapse:collapse; border:1px solid #e8ebf7; border-radius:9px; overflow:hidden; }
+  .ck-tbl th { background:#f7f8ff; color:var(--text-secondary); font-size:11.5px; font-weight:600; text-align:left; padding:8px 10px; border-bottom:1px solid #e8ebf7; }
+  .ck-tbl td { padding:9px 10px; font-size:12px; vertical-align:middle; border-bottom:1px solid #f2f4fb; }
+  .ck-row.stop td { background:#fffafa; }
+  .ck-row.idle td { background:#fbfcfd; color:var(--text-muted); }
+  .ck-dim { font-weight:700; color:var(--ink); white-space:nowrap; }
+  .ck-row.idle .ck-dim { color:var(--text-muted); }
+  .ck-param { font-family:"SF Mono","Menlo",monospace; font-size:11.5px; color:#3f4a9e; line-height:1.5; }
+  .ck-actual { color:var(--ink); font-weight:600; }
+  .ck-actual b { color:var(--primary); font-size:13px; }
+  .ck-actual small { display:block; font-weight:400; color:var(--text-tertiary); font-size:10.5px; margin-top:2px; line-height:1.45; }
+  .ck-note-row td { padding:0 10px 9px; font-size:11px; color:var(--text-tertiary); line-height:1.55; border-bottom:1px solid #eef1f9; background:inherit; }
+  .ck-note-row.stop td { background:#fffafa; color:#9f5252; }
+  .ck-note-row.idle td { background:#fbfcfd; }
+  .ck-tbl tbody tr:last-child td { border-bottom:none; }
+  .ck-note { margin-top:10px; font-size:11px; color:var(--text-tertiary); line-height:1.65; }
+  .ck-diff { width:100%; margin-top:4px; padding:7px 10px; border-radius:7px; background:#fffbeb; border:1px solid #fde68a;
+    font-size:11px; color:#92400e; line-height:1.6; }
+  .ck-link { display:inline-block; margin-left:8px; color:var(--primary); font-weight:600; cursor:pointer; }
+  .ck-link:hover { text-decoration:underline; }
+
+  /* ===== 新增商品弹窗 ===== */
+  .modal-mask { position:fixed; inset:0; background:rgba(15,23,42,.46); backdrop-filter:blur(2px); z-index:10000; display:none; }
+  .modal-mask.show { display:block; animation:mFade .18s ease; }
+  @keyframes mFade { from{opacity:0} to{opacity:1} }
+  .modal { position:fixed; z-index:10001; left:50%; top:50%; transform:translate(-50%,-48%) scale(.98); opacity:0;
+    width:940px; max-width:94vw; max-height:90vh; display:none; flex-direction:column;
+    background:#fff; border-radius:14px; box-shadow:0 24px 70px rgba(15,23,42,.30); overflow:hidden; }
+  .modal.show { display:flex; animation:mPop .22s cubic-bezier(.34,1.36,.64,1) forwards; }
+  @keyframes mPop { to { transform:translate(-50%,-50%) scale(1); opacity:1; } }
+  .modal-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px 22px;
+    background:var(--primary-600); color:#fff; }
+  .modal-head h3 { margin:0; font-size:15px; font-weight:700; display:flex; align-items:center; gap:8px; }
+  .modal-head .mh-sub { font-size:11.5px; opacity:.86; margin-top:3px; }
+  .modal-close { border:none; background:rgba(255,255,255,.18); color:#fff; width:28px; height:28px; border-radius:8px;
+    font-size:17px; line-height:1; cursor:pointer; transition:background .16s; }
+  .modal-close:hover { background:rgba(255,255,255,.34); }
+  .modal-body { display:grid; grid-template-columns:1.05fr .95fr; gap:0; overflow:hidden; min-height:0; }
+  .fm-pane { padding:18px 22px; overflow-y:auto; min-width:0; }
+  .pv-pane { padding:18px 20px; overflow-y:auto; min-width:0; background:#f7f8ff; border-left:1px solid #e8ebf7; }
+  .fm-grid { display:grid; grid-template-columns:1fr 1fr; gap:13px 14px; }
+  .fm-item { min-width:0; }
+  .fm-item.full { grid-column:1 / -1; }
+  .fm-label { display:block; font-size:11.5px; font-weight:600; color:var(--text-secondary); margin-bottom:5px; }
+  .fm-label .req { color:var(--danger-hover); margin-left:2px; }
+  .fm-label .hint { font-weight:400; color:var(--text-tertiary); margin-left:5px; }
+  .fm-input { width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:8px; font-size:12.5px;
+    outline:none; background:#fff; color:var(--ink); transition:border-color .16s, box-shadow .16s; }
+  .fm-input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(91,108,245,.13); }
+  .fm-input.bad { border-color:#f87171; box-shadow:0 0 0 3px rgba(248,113,113,.13); }
+  .fm-err { display:none; font-size:11px; color:#dc2626; margin-top:4px; }
+  .fm-err.show { display:block; }
+  .fm-switch { display:flex; align-items:center; gap:9px; padding:9px 11px; border:1px solid var(--border); border-radius:8px; background:#fcfdff; cursor:pointer; }
+  .fm-switch input { width:15px; height:15px; accent-color:#5b6cf5; cursor:pointer; }
+  .fm-switch span { font-size:12px; color:var(--ink); }
+  .fm-switch small { display:block; font-size:11px; color:var(--text-tertiary); margin-top:2px; }
+
+  .pv-title { font-size:12.5px; font-weight:700; color:var(--ink); display:flex; align-items:center; gap:6px; margin-bottom:10px; }
+  .pv-title .live { font-size:10.5px; font-weight:600; padding:2px 8px; border-radius:9px; background:#e8fbf3; color:#059669; }
+  .pv-verdict { display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:10px; margin-bottom:12px;
+    border:1px solid #dce0f8; background:#fff; transition:all .2s; }
+  .pv-verdict.wd { border-color:#a7f3d0; background:var(--success-light); }
+  .pv-verdict.nowd { border-color:#fecaca; background:var(--danger-light); }
+  .pv-verdict .big { font-size:16px; font-weight:800; letter-spacing:.5px; }
+  .pv-verdict.wd .big { color:#059669; }
+  .pv-verdict.nowd .big { color:#dc2626; }
+  .pv-verdict .why { font-size:11.5px; color:var(--text-secondary); line-height:1.55; }
+  .pv-kv { display:grid; grid-template-columns:96px 1fr; background:#fff; border:1px solid #e8ebf7; border-radius:9px; overflow:hidden; margin-bottom:12px; }
+  .pv-kv > div { padding:7px 11px; font-size:11.5px; border-bottom:1px solid #f2f4fb; }
+  .pv-kv > div:nth-child(odd) { color:var(--text-secondary); background:#fafbff; }
+  .pv-kv > div:nth-child(even) { color:var(--ink); font-weight:600; }
+  .pv-kv > div:nth-last-child(-n+2) { border-bottom:none; }
+  .pv-kv b { color:var(--primary); }
+  .pv-steps { display:flex; flex-direction:column; gap:6px; }
+  .pv-step { display:flex; align-items:flex-start; gap:8px; padding:7px 10px; border-radius:8px; background:#fff; border:1px solid #eceffa; }
+  .pv-step .dot { width:7px; height:7px; border-radius:50%; margin-top:5px; flex-shrink:0; background:#cbd5e1; }
+  .pv-step.pass .dot { background:#059669; }
+  .pv-step.stop .dot { background:#dc2626; }
+  .pv-step.idle .dot { background:#d97706; }
+  .pv-step .nm { font-size:11.5px; font-weight:700; color:var(--ink); white-space:nowrap; }
+  .pv-step .vd { font-size:11px; font-weight:600; margin-left:auto; white-space:nowrap; }
+  .pv-step.pass .vd { color:#059669; }
+  .pv-step.stop .vd { color:#dc2626; }
+  .pv-step.idle .vd { color:#d97706; }
+  .pv-step .dt { font-size:11px; color:var(--text-tertiary); line-height:1.5; margin-top:2px; }
+  .modal-foot { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:13px 22px;
+    border-top:1px solid var(--border-light); background:#fafbfd; }
+  .modal-foot .mf-note { font-size:11.5px; color:var(--text-tertiary); }
+  .modal-foot .mf-btns { display:flex; gap:10px; }
+
+  .manual-chip { display:inline-block; margin-left:6px; padding:1px 7px; border-radius:9px; font-size:10px; font-weight:700;
+    background:#fff7ed; color:#ea580c; border:1px solid #fed7aa; vertical-align:1px; }
+
+  /* ===== 导入商品弹窗 ===== */
+  .imp-modal { width:1020px; }
+  .imp-body { display:flex; flex-direction:column; overflow:hidden; min-height:0; flex:1; }
+  .imp-src { display:grid; grid-template-columns:330px 1fr; gap:14px; padding:16px 22px 12px; }
+  .imp-drop { position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+    padding:18px 14px; border:1.5px dashed #c3c9ee; border-radius:10px; background:#fafbff; cursor:pointer; text-align:center;
+    transition:border-color .16s, background .16s, box-shadow .16s; }
+  .imp-drop:hover, .imp-drop:focus-visible { border-color:var(--primary); background:#f3f4ff; outline:none; }
+  .imp-drop.over { border-color:var(--primary); background:#eef0ff; box-shadow:0 0 0 3px rgba(91,108,245,.14); }
+  .imp-drop .ico { color:var(--primary); }
+  .imp-drop .t1 { font-size:12.5px; font-weight:700; color:var(--ink); }
+  .imp-drop .t2 { font-size:11px; color:var(--text-tertiary); line-height:1.55; }
+  .imp-drop input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; }
+  .imp-file { font-size:11px; color:var(--primary-700); background:var(--primary-50); border:1px solid var(--primary-100);
+    border-radius:6px; padding:2px 8px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .imp-tpl { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:9px; font-size:11.5px; color:var(--text-secondary); }
+  .imp-tpl .lnk { color:var(--primary); font-weight:600; cursor:pointer; white-space:nowrap; }
+  .imp-tpl .lnk:hover { text-decoration:underline; }
+  .imp-cols { margin-top:9px; font-size:11px; color:var(--text-tertiary); line-height:1.65; }
+  .imp-cols b { color:var(--text-secondary); font-weight:600; }
+  .imp-text { width:100%; height:132px; resize:vertical; min-height:96px; padding:9px 11px; border:1px solid var(--border); border-radius:9px;
+    font-family:"SF Mono","Menlo",monospace; font-size:11.5px; line-height:1.7; color:var(--ink); background:#fff; outline:none;
+    transition:border-color .16s, box-shadow .16s; }
+  .imp-text:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(91,108,245,.13); }
+  .imp-text::placeholder { color:#a3aacb; font-family:inherit; }
+  .imp-sum { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:0 22px 10px; }
+  .imp-chip { display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:14px; font-size:11.5px; font-weight:600;
+    border:1px solid var(--border); background:#fff; color:var(--text-secondary); font-variant-numeric:tabular-nums; }
+  .imp-chip b { font-size:13px; font-weight:800; }
+  .imp-chip.ok { background:var(--success-light); border-color:#a7f3d0; color:var(--success-hover); }
+  .imp-chip.dup { background:#fff7ed; border-color:#fed7aa; color:#ea580c; }
+  .imp-chip.bad { background:var(--danger-light); border-color:#fecaca; color:var(--danger-hover); }
+  .imp-chip.dim { background:#f8fafc; color:var(--text-tertiary); }
+  .imp-sum .ph { font-size:11.5px; color:var(--text-tertiary); }
+  .imp-tblwrap { flex:1; min-height:130px; overflow:auto; margin:0 22px; border:1px solid #e8ebf7; border-radius:9px; background:#fff; }
+  .imp-tbl { width:100%; border-collapse:collapse; }
+  .imp-tbl th { position:sticky; top:0; z-index:1; background:#f7f8ff; color:var(--text-secondary); font-size:11.5px; font-weight:600;
+    text-align:left; padding:8px 10px; border-bottom:1px solid #e8ebf7; white-space:nowrap; }
+  .imp-tbl td { padding:8px 10px; font-size:12px; border-bottom:1px solid #f2f4fb; vertical-align:top; }
+  .imp-tbl tbody tr:last-child td { border-bottom:none; }
+  .imp-tbl tr.r-bad td { background:#fffafa; }
+  .imp-tbl tr.r-dup td { background:#fffdf7; }
+  .imp-tbl .mono { font-family:"SF Mono","Menlo",monospace; font-size:11.5px; color:var(--ink); white-space:nowrap; }
+  .imp-tbl .sub { font-size:10.5px; color:var(--text-tertiary); margin-top:2px; }
+  .imp-st { display:inline-block; padding:2px 9px; border-radius:10px; font-size:11px; font-weight:700; white-space:nowrap; }
+  .imp-st.ok { background:var(--success-light); color:var(--success-hover); }
+  .imp-st.dup { background:#fff7ed; color:#ea580c; }
+  .imp-st.bad { background:var(--danger-light); color:var(--danger-hover); }
+  .imp-jd { display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:700; white-space:nowrap; }
+  .imp-jd::before { content:''; width:6px; height:6px; border-radius:50%; background:currentColor; }
+  .imp-jd.wd { color:var(--success-hover); }
+  .imp-jd.nowd { color:var(--text-tertiary); }
+  .imp-why { font-size:11px; color:var(--text-tertiary); line-height:1.55; margin-top:3px; max-width:360px; }
+  .imp-why.err { color:#b45309; }
+  .imp-empty { padding:36px 16px; text-align:center; color:var(--text-tertiary); font-size:12px; line-height:1.9; }
+  .imp-empty .ico { font-size:24px; display:block; margin-bottom:4px; }
+  .imp-note { padding:9px 22px 0; font-size:11px; color:var(--text-tertiary); line-height:1.6; }
+  .imp-tblwrap::-webkit-scrollbar, .imp-text::-webkit-scrollbar { width:9px; height:9px; }
+  .imp-tblwrap::-webkit-scrollbar-track, .imp-text::-webkit-scrollbar-track { background:#f1f3fb; border-radius:8px; }
+  .imp-tblwrap::-webkit-scrollbar-thumb, .imp-text::-webkit-scrollbar-thumb { background:#c3c9ee; border-radius:8px; border:2px solid #f1f3fb; }
+  .imp-tblwrap::-webkit-scrollbar-thumb:hover, .imp-text::-webkit-scrollbar-thumb:hover { background:#5b6cf5; }
+  @media (max-width:900px) { .imp-src { grid-template-columns:1fr; } }
+  @media (prefers-reduced-motion: reduce) { .imp-drop { transition:none; } }
+  .op-del { color:#dc2626; cursor:pointer; font-size:12px; margin-left:8px; }
+  .op-del:hover { text-decoration:underline; }
+  .toast-act { margin-left:10px; font-weight:700; text-decoration:underline; cursor:pointer; }
+  /* 提示条必须盖在弹窗与抽屉之上，否则撤销按钮点不到 */
+  .toast-container { z-index:10005; }
+  .toast.sticky { padding-right:14px; }
+  .toast-x { margin-left:8px; cursor:pointer; opacity:.7; font-size:15px; line-height:1; }
+  .toast-x:hover { opacity:1; }
+
+  /* 滚动条沿用本页配色 */
+  .fm-pane::-webkit-scrollbar, .pv-pane::-webkit-scrollbar, .drawer-body::-webkit-scrollbar, .table-scroll::-webkit-scrollbar { width:9px; height:9px; }
+  .fm-pane::-webkit-scrollbar-track, .pv-pane::-webkit-scrollbar-track, .drawer-body::-webkit-scrollbar-track, .table-scroll::-webkit-scrollbar-track { background:#f1f3fb; border-radius:8px; }
+  .fm-pane::-webkit-scrollbar-thumb, .pv-pane::-webkit-scrollbar-thumb, .drawer-body::-webkit-scrollbar-thumb, .table-scroll::-webkit-scrollbar-thumb { background:#c3c9ee; border-radius:8px; border:2px solid #f1f3fb; }
+  .fm-pane::-webkit-scrollbar-thumb:hover, .pv-pane::-webkit-scrollbar-thumb:hover, .drawer-body::-webkit-scrollbar-thumb:hover, .table-scroll::-webkit-scrollbar-thumb:hover { background:#5b6cf5; }
+  @media (max-width: 900px) {
+    .modal-body { grid-template-columns:1fr; overflow-y:auto; }
+    .pv-pane { border-left:none; border-top:1px solid #e8ebf7; }
+    .fm-grid { grid-template-columns:1fr; }
+  }
   </style>
 </head>
 <body>
@@ -126,15 +386,21 @@
 
   <!-- 数据周期与入口 -->
   <div class="pool-head">
-    <div class="ph-refresh">数据周期 <code id="mWeek"></code> ｜ 下次更新 <code id="mNext"></code></div>
+    <div>
+      <div class="ph-refresh">数据周期 <code id="mWeek"></code> ｜ 下次更新 <code id="mNext"></code></div>
+      <div class="ph-grain">判定与挽单以「店铺 × 款」为粒度：同款下各平台商品（色码）共享同一结论与分档。</div>
+    </div>
     <div class="ph-btns">
       <button class="btn btn-sm" onclick="gotoRule()">商品判定策略</button>
       <button class="btn btn-sm" onclick="manalRun()">手动补跑本周</button>
     </div>
   </div>
 
-  <!-- 统计条 -->
-  <div class="pool-stats" id="poolStats"></div>
+  <!-- 指标卡：基础统计 + 点击下钻 -->
+  <div class="kpi-grid" id="poolStats"></div>
+
+  <!-- 当前聚焦 -->
+  <div class="focus-bar" id="focusBar"></div>
 
   <!-- 查询区 -->
   <div class="search-area">
@@ -142,6 +408,10 @@
       <div class="search-item">
         <label>款号：</label>
         <input type="text" id="fSku" placeholder="款号/货号">
+      </div>
+      <div class="search-item">
+        <label>店铺：</label>
+        <select id="fShop"><option value="">全部</option></select>
       </div>
       <div class="search-item">
         <label>品牌：</label>
@@ -195,6 +465,14 @@
   <div class="table-area">
     <div class="table-toolbar pool-toolbar">
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="openAdd()">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          新增商品
+        </button>
+        <button class="btn" onclick="openImport()">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          导入商品
+        </button>
         <button class="btn" onclick="exportCsv()">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           导出商品池
@@ -205,6 +483,7 @@
           <span class="qf" data-q="toNowd" onclick="quick(this)">本周转不挽</span>
           <span class="qf" data-q="highRate" onclick="quick(this)">高退货率 ≥ 15%</span>
           <span class="qf" data-q="lowMargin" onclick="quick(this)">挽单且毛利率 &lt; 50%</span>
+          <span class="qf" data-q="manual" onclick="quick(this)">人工补录</span>
         </div>
       </div>
       <div class="view-toggle">
@@ -218,6 +497,7 @@
           <tr>
             <th style="width:46px;">序号</th>
             <th class="col-left" style="width:128px;">款号</th>
+            <th class="col-left" style="width:118px;">店铺</th>
             <th style="width:68px;">品牌</th>
             <th style="width:92px;">中类</th>
             <th style="width:78px;">商品状态</th>
@@ -225,7 +505,9 @@
             <th style="width:86px;">退货件数</th>
             <th class="sortable" data-k="retRate" style="width:86px;">退货率<span class="arr">↕</span></th>
             <th class="sortable" data-k="margin" style="width:86px;">毛利率<span class="arr">↕</span></th>
-            <th style="width:86px;">是否挽单</th>
+            <th style="width:84px;">是否挽单</th>
+            <th style="width:84px;">分档</th>
+            <th style="width:132px;">判定策略</th>
             <th style="width:86px;">本周动态</th>
             <th style="width:72px;">操作</th>
           </tr>
@@ -233,11 +515,21 @@
         <tbody id="tableBody"></tbody>
       </table>
     </div>
-    <div class="pagination">
-      <span class="page-info">共 <strong id="totalCount">0</strong> 条</span>
-      <span class="page-btn disabled">&laquo;</span>
-      <span class="page-btn active">1</span>
-      <span class="page-btn">&raquo;</span>
+    <div class="pagination pool-pager">
+      <span class="pg-summary" id="pgSummary"></span>
+      <div class="pg-right">
+        <label class="pg-size">每页
+          <select id="pageSize" aria-label="每页条数">
+            <option value="10">10</option><option value="20">20</option>
+            <option value="50">50</option><option value="100">100</option>
+          </select> 条
+        </label>
+        <div class="pg-nav" id="pgNav"></div>
+        <span class="pg-jump">跳至
+          <input type="number" id="pgJump" min="1" value="1" aria-label="页码">
+          <button type="button" class="pg-go" id="pgGo">确定</button>
+        </span>
+      </div>
     </div>
   </div>
 </div>
@@ -257,17 +549,161 @@
     <button class="btn" onclick="closeDrawer()">关闭</button>
     <button class="btn btn-warning" onclick="excludeSku()">人工改标为不挽（黑名单）</button>
     <button class="btn" onclick="forceWd()">强制改标为挽单（白名单）</button>
+    <button class="btn" id="dlDel" style="display:none;color:#dc2626;border-color:#fecaca;" onclick="deleteFromDrawer()">删除补录商品</button>
     <button class="btn btn-primary" onclick="copyBasis()">复制判据</button>
   </div>
 </div>
 
-<script src="../../js/wd/retention-data.js"></script>
+<!-- 新增商品弹窗 -->
+<div class="modal-mask" id="addMask" onclick="closeAdd()"></div>
+<div class="modal" id="addModal" role="dialog" aria-modal="true" aria-labelledby="addTitle">
+  <div class="modal-head">
+    <div>
+      <h3 id="addTitle">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        新增商品入池
+      </h3>
+      <div class="mh-sub">录入商品指标后，系统按该店铺的商品判定策略算出「是否挽单」与档位，不需人工指定标签</div>
+    </div>
+    <button type="button" class="modal-close" onclick="closeAdd()" aria-label="关闭">&times;</button>
+  </div>
+  <div class="modal-body">
+    <div class="fm-pane">
+      <div class="fm-grid">
+        <div class="fm-item">
+          <label class="fm-label" for="aSku">款号<span class="req">*</span></label>
+          <input class="fm-input" id="aSku" type="text" placeholder="如 SN-26A-9001" maxlength="24" autocomplete="off">
+          <div class="fm-err" id="eSku"></div>
+        </div>
+        <div class="fm-item">
+          <label class="fm-label" for="aShop">适用店铺<span class="req">*</span><span class="hint">指标与策略都按店铺独立</span></label>
+          <select class="fm-input" id="aShop"></select>
+        </div>
+        <div class="fm-item">
+          <label class="fm-label" for="aBrand">品牌<span class="req">*</span><span class="hint">不决定店铺，仅作商品归属</span></label>
+          <select class="fm-input" id="aBrand"></select>
+        </div>
+        <div class="fm-item">
+          <label class="fm-label" for="aMid">中类<span class="req">*</span></label>
+          <select class="fm-input" id="aMid"></select>
+        </div>
+        <div class="fm-item">
+          <label class="fm-label" for="aStatus">商品状态<span class="req">*</span></label>
+          <select class="fm-input" id="aStatus"></select>
+        </div>
+        <div class="fm-item">
+          <label class="fm-label" for="aShip">销售件数<span class="req">*</span><span class="hint">发货口径</span></label>
+          <input class="fm-input" id="aShip" type="number" min="0" step="1" placeholder="如 2600">
+          <div class="fm-err" id="eShip"></div>
+        </div>
+        <div class="fm-item">
+          <label class="fm-label" for="aRet">退货件数<span class="req">*</span><span class="hint">完成口径</span></label>
+          <input class="fm-input" id="aRet" type="number" min="0" step="1" placeholder="如 330">
+          <div class="fm-err" id="eRet"></div>
+        </div>
+        <div class="fm-item">
+          <label class="fm-label" for="aMargin">毛利率（%）<span class="req">*</span></label>
+          <input class="fm-input" id="aMargin" type="number" min="0" max="100" step="0.1" placeholder="如 66.5">
+          <div class="fm-err" id="eMargin"></div>
+        </div>
+        <div class="fm-item">
+          <label class="fm-label" for="aP50">实付金额 P50（元）<span class="hint">用于命中价格带</span></label>
+          <input class="fm-input" id="aP50" type="number" min="0" step="1" placeholder="如 268">
+          <div class="fm-err" id="eP50"></div>
+        </div>
+        <div class="fm-item full">
+          <label class="fm-switch">
+            <input type="checkbox" id="aMapping" checked>
+            <span>已建立平台商品映射<small>未建立映射的商品不得静默入池，会被判为不挽</small></span>
+          </label>
+        </div>
+        <div class="fm-item full">
+          <label class="fm-label" for="aRemark">备注</label>
+          <input class="fm-input" id="aRemark" type="text" maxlength="60" placeholder="选填，如直播专供款、补录原因">
+        </div>
+      </div>
+    </div>
+    <div class="pv-pane">
+      <div class="pv-title">判定预览 <span class="live">随输入实时重算</span></div>
+      <div id="pvBox"></div>
+    </div>
+  </div>
+  <div class="modal-foot">
+    <span class="mf-note">保存后商品进入本周商品池，判据可在列表「判据」中查看；人工补录可删除。</span>
+    <div class="mf-btns">
+      <button class="btn" onclick="closeAdd()">取消</button>
+      <button class="btn btn-primary" id="aSave" onclick="saveAdd()">保存并入池</button>
+    </div>
+  </div>
+</div>
+
+<!-- 导入商品弹窗 -->
+<div class="modal-mask" id="impMask" onclick="closeImport()"></div>
+<div class="modal imp-modal" id="impModal" role="dialog" aria-modal="true" aria-labelledby="impTitle">
+  <div class="modal-head">
+    <div>
+      <h3 id="impTitle">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        导入商品入池
+      </h3>
+      <div class="mh-sub">上传 CSV 或粘贴表格数据，逐行校验后按各店铺商品判定策略预算「是否挽单」与档位，确认后批量入池</div>
+    </div>
+    <button type="button" class="modal-close" onclick="closeImport()" aria-label="关闭">&times;</button>
+  </div>
+  <div class="imp-body">
+    <div class="imp-src">
+      <div>
+        <div class="imp-drop" id="impDrop" tabindex="0" role="button" aria-label="选择或拖入 CSV 文件">
+          <svg class="ico" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="11"/><polyline points="9 14 12 11 15 14"/></svg>
+          <div class="t1">点击选择或拖入 CSV 文件</div>
+          <div class="t2">支持 .csv / .txt，首行可为表头<br>也可以直接在右侧粘贴表格数据</div>
+          <span class="imp-file" id="impFileName" style="display:none;"></span>
+          <input type="file" id="impFile" accept=".csv,.txt,text/csv,text/plain" aria-label="选择 CSV 文件">
+        </div>
+        <div class="imp-tpl"><span>首次使用建议先下载模板填写</span><span class="lnk" onclick="downloadImpTpl()">下载导入模板</span></div>
+        <div class="imp-cols"><b>列顺序</b>（无表头时按此解析）：款号*、店铺*、品牌*、中类*、商品状态*、销售件数*、退货件数*、毛利率(%)*、实付P50(元)、平台映射(是/否)、备注；店铺可填编码或名称。</div>
+      </div>
+      <div>
+        <label class="fm-label" for="impText">粘贴数据<span class="hint">支持从 Excel 复制（Tab 分隔）或 CSV 文本，输入即解析</span></label>
+        <textarea class="imp-text" id="impText" spellcheck="false" placeholder="款号,店铺,品牌,中类,商品状态,销售件数,退货件数,毛利率(%),实付P50(元),平台映射,备注&#10;SN-26A-9001,DY-S001,森马,针织上衣,在售,2600,330,66.5,268,是,直播专供款&#10;SN-26B-9002,巴拉旗舰店,巴拉,连衣裙,在售,1800,240,58.2,143,是,"></textarea>
+      </div>
+    </div>
+    <div class="imp-sum" id="impSum"><span class="ph">尚未解析数据：上传文件或粘贴内容后，此处展示逐行校验与判定预览</span></div>
+    <div class="imp-tblwrap">
+      <table class="imp-tbl">
+        <thead>
+          <tr>
+            <th style="width:44px;">行号</th>
+            <th style="width:130px;">款号</th>
+            <th style="width:150px;">店铺</th>
+            <th style="width:86px;">校验结果</th>
+            <th style="width:170px;">判定预览</th>
+            <th>说明</th>
+          </tr>
+        </thead>
+        <tbody id="impBody"></tbody>
+      </table>
+    </div>
+    <div class="imp-note">判定预览与单条补录使用同一套规则引擎；入池后标签随周度批处理按最新策略参数重算。重复款号（店铺内已存在或文件内重复）与校验失败行自动跳过，不影响其余行导入。</div>
+  </div>
+  <div class="modal-foot">
+    <span class="mf-note">导入的商品按「人工补录」管理，可在列表逐条删除；单次最多导入 500 行。</span>
+    <div class="mf-btns">
+      <button class="btn" onclick="closeImport()">取消</button>
+      <button class="btn btn-primary" id="impGo" onclick="confirmImport()" disabled>确认导入</button>
+    </div>
+  </div>
+</div>
+
+<script src="../../js/wd/retention-data.js?v=20261120b"></script>
 <script>
 var view = 'in';
 var sortKey = 'retRate';
 var sortDir = -1;
 var quickKey = '';
 var current = [];
+var pageNo = 1;
+var pageSize = 10;
 var currentRow = null;
 var currentEval = null;
 
@@ -289,39 +725,130 @@ function gotoRule() {
   } else { location.href = 'wd-tag-rule.html'; }
 }
 
-// ===== 统计条 =====
-(function() {
-  var td = P.tierDist, sum = td.YH + td.YM + td.L;
-  var nd = P.nowdDist;
-  var actRules = WD.TAG_RULES.filter(function(x) { return x.status === 'ACTIVE'; });
-  function rangeOf(key, sub, unit, dec) {
-    var vals = actRules.map(function(x) { return x.dims[key][sub]; })
-      .filter(function(v) { return v !== null && v !== undefined; });
-    if (!vals.length) return '未配置';
-    var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
-    var f = function(v) { return dec ? Number(v).toFixed(dec) : String(v); };
-    return lo === hi ? f(lo) + unit : f(lo) + '~' + f(hi) + unit;
-  }
-  var rateLo = rangeOf('rate', 'lo', '×', 2), salesLo = rangeOf('sales', 'lo', '件', 0);
-  var topReason = Object.keys(nd).sort(function(a, b) { return nd[b] - nd[a]; }).slice(0, 3)
-    .map(function(k) { return k + ' ' + nd[k]; }).join(' / ');
+// ===== 指标卡（基础统计 + 可下钻入口，与表格筛选联动）=====
+var focusKey = 'wd';   // 默认聚焦挽单商品，与「只看挽单商品」视图一致
+var FOCUS_LABEL = {
+  wd: '挽单商品', nowd: '不挽商品', in: '本周转入挽单', out: '本周转出不挽'
+};
+
+// 本表（当前快照样本 + 人工补录）口径的实时计数
+function sampleCounts() {
+  var c = { wd:0, nowd:0, in:0, out:0, manual:0, manualWd:0, manualNowd:0 };
+  WD.SKU_LABELS.forEach(function(r) {
+    if (r.tag === 'WD') c.wd++; else c.nowd++;
+    var f = flipOf(r);
+    if (f === '转挽单') c.in++;
+    if (f === '转不挽') c.out++;
+    if (r.manual) { c.manual++; if (r.tag === 'WD') c.manualWd++; else c.manualNowd++; }
+  });
+  return c;
+}
+function focusMatch(r) {
+  if (!focusKey) return true;
+  if (focusKey === 'wd') return r.tag === 'WD';
+  if (focusKey === 'nowd') return r.tag !== 'WD';
+  if (focusKey === 'in') return flipOf(r) === '转挽单';
+  if (focusKey === 'out') return flipOf(r) === '转不挽';
+  return true;
+}
+function deltaChip(now, prev) {
+  var d = now - prev;
+  if (d === 0) return '<span class="kpi-delta flat">持平</span>';
+  return '<span class="kpi-delta ' + (d > 0 ? 'up' : 'down') + '">' + (d > 0 ? '+' : '') + d + ' 环比</span>';
+}
+var ICO = {
+  wd: '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg>',
+  nowd: '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="9"/><line x1="8" y1="12" x2="16" y2="12"/></svg>',
+  in: '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>',
+  out: '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>'
+};
+
+// 基础统计卡：挽单 / 不挽 / 本周转入 / 本周转出
+function renderStats() {
+  var s = sampleCounts();
+  var share = P.totalSku ? (P.wdCnt / P.totalSku * 100) : 0;
   var cards = [
-    { cls:'in', label:'挽单款数', val:P.wdCnt, unit:'款', foot:'全量在售 ' + n(P.totalSku) + ' 款，占比 ' + (P.wdCnt / P.totalSku * 100).toFixed(1) + '%；档位分布 YH/YM/L',
-      bar:'<div class="tier-bar"><i style="width:' + (td.YH/sum*100) + '%;background:#5b6cf5;"></i><i style="width:' + (td.YM/sum*100) + '%;background:#7c6cf5;"></i><i style="width:' + (td.L/sum*100) + '%;background:#cbd5e1;"></i></div>' },
-    { cls:'out', label:'不挽款数', val:P.nowdCnt, unit:'款', foot:'主要原因：' + topReason },
-    { cls:'new', label:'本周转挽单', val:P.toWd, unit:'款', foot:'退货率下界 ' + rateLo + '（按店铺策略）｜销售件数下界 ' + salesLo },
-    { cls:'warn', label:'本周转不挽', val:P.toNowd, unit:'款', foot:'退货率跌出区间下界，或销量与毛利率不在区间内' },
-    { cls:'', label:'待补平台商品映射', val:P.needMapping, unit:'款', foot:'无映射不得静默入标，需业务补建' }
+    { key:'wd', hero:true, accent:'#5b6cf5', label:'挽单商品', val:P.wdCnt, delta: deltaChip(P.wdCnt, P.prevWdCnt),
+      sub:'占在售 <b>' + share.toFixed(1) + '%</b> · 本表 <b>' + s.wd + '</b> 款',
+      hint:'点击只看挽单商品' },
+    { key:'nowd', accent:'#64748b', label:'不挽商品', val:P.nowdCnt,
+      sub:'占在售 <b>' + (100 - share).toFixed(1) + '%</b> · 本表 <b>' + s.nowd + '</b> 款',
+      hint:'点击只看商品（含不挽）' },
+    { key:'in', accent:'#059669', label:'本周转入', val:P.toWd, delta: deltaChip(P.toWd, P.prevToWd),
+      sub:'不挽 → 挽单 · 本表 <b>' + s.in + '</b> 款',
+      hint:'点击看本周新入池' },
+    { key:'out', accent:'#d97706', label:'本周转出', val:P.toNowd, delta: deltaChip(P.toNowd, P.prevToNowd),
+      sub:'挽单 → 不挽 · 本表 <b>' + s.out + '</b> 款',
+      hint:'点击看本周退出' }
   ];
   document.getElementById('poolStats').innerHTML = cards.map(function(c) {
-    return '<div class="ps-card ' + c.cls + '"><div class="ps-label">' + esc(c.label) + '</div>'
-      + '<div class="ps-val' + (c.txt ? ' txt' : '') + '">' + (typeof c.val === 'number' ? n(c.val) : esc(c.val)) + (c.unit ? '<small>' + esc(c.unit) + '</small>' : '') + '</div>'
-      + (c.bar || '') + '<div class="ps-foot">' + esc(c.foot) + '</div></div>';
+    return '<div class="kpi' + (c.hero ? ' kpi-hero' : '') + (focusKey === c.key ? ' on' : '') + '"'
+      + ' style="--accent:' + c.accent + '" role="button" tabindex="0" data-focus="' + c.key + '"'
+      + ' aria-pressed="' + (focusKey === c.key ? 'true' : 'false') + '" title="' + esc(c.hint) + '">'
+      + '<div class="kpi-top"><span class="kpi-ico">' + ICO[c.key] + '</span>'
+      + '<span class="kpi-label">' + esc(c.label) + '</span>' + (c.delta || '') + '</div>'
+      + '<div class="kpi-val">' + n(c.val) + '<small>款</small></div>'
+      + '<div class="kpi-sub">' + c.sub + '</div>'
+      + '<div class="kpi-hint">' + esc(c.hint) + '</div>'
+      + '</div>';
   }).join('');
-})();
+  renderFocusBar(s);
+}
+
+function renderFocusBar(s) {
+  var bar = document.getElementById('focusBar');
+  if (!focusKey) { bar.className = 'focus-bar'; bar.innerHTML = ''; return; }
+  var label = FOCUS_LABEL[focusKey];
+  var full = { wd:P.wdCnt, nowd:P.nowdCnt, in:P.toWd, out:P.toNowd }[focusKey];
+  bar.className = 'focus-bar show';
+  bar.innerHTML = '<span>当前聚焦：<b>' + esc(label) + '</b></span>'
+    + '<span>全量 <b>' + n(full) + '</b> 款 · 本表命中 <b>' + current.length + '</b> 款</span>'
+    + '<span style="color:var(--text-tertiary);">全量为周度批处理口径，本表为当前快照样本与人工补录</span>'
+    + '<span class="fb-x" onclick="clearFocus()">清除聚焦</span>';
+}
+
+function setFocus(key) {
+  focusKey = (focusKey === key) ? '' : key;
+  // 下钻时清空其他筛选，避免多重条件叠加导致结果为空
+  ['fSku','fBrand','fMid','fStatus','fShip','fRate','fMargin','fTag','fFlip'].forEach(function(i) {
+    var el = document.getElementById(i); if (el) el.value = '';
+  });
+  quickKey = '';
+  document.querySelectorAll('.qf').forEach(function(x) { x.classList.remove('on'); });
+  view = (focusKey === 'wd') ? 'in' : (focusKey ? 'all' : 'in');
+  document.getElementById('btnIn').classList.toggle('on', view === 'in');
+  document.getElementById('btnAll').classList.toggle('on', view === 'all');
+  apply();
+  renderStats();
+}
+function clearFocus() {
+  focusKey = '';
+  view = 'all';
+  document.getElementById('btnIn').classList.remove('on');
+  document.getElementById('btnAll').classList.add('on');
+  apply();
+  renderStats();
+}
+
+document.getElementById('poolStats').addEventListener('click', function(e) {
+  var el = e.target.closest ? e.target.closest('[data-focus]') : null;
+  if (el) setFocus(el.dataset.focus);
+});
+document.getElementById('poolStats').addEventListener('keydown', function(e) {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  var el = e.target.closest ? e.target.closest('[data-focus]') : null;
+  if (!el) return;
+  e.preventDefault();
+  setFocus(el.dataset.focus);
+});
+renderStats();
 
 // ===== 筛选器初始化 =====
 (function initFilters() {
+  var shSel = document.getElementById('fShop');
+  WD.TAG_SHOPS.forEach(function(s) {
+    shSel.insertAdjacentHTML('beforeend', '<option value="' + esc(s.code) + '">' + esc(s.code) + ' ' + esc(s.name) + '</option>');
+  });
   var bSel = document.getElementById('fBrand');
   WD.BRANDS.forEach(function(b) { bSel.insertAdjacentHTML('beforeend', '<option value="' + esc(b) + '">' + esc(b) + '</option>'); });
   var mids = [];
@@ -342,17 +869,39 @@ function gotoRule() {
 })();
 
 function flipOf(r) { return r.tag !== r.prevTag ? (r.tag === 'WD' ? '转挽单' : '转不挽') : '维持'; }
-function srcTxt(src) { return { normal: '同品类基准', fallback: '全店分位退化', missing: '基准缺失' }[src] || ''; }
 
 // 挽单标签（业务结论）
 function tagHtml(r) {
   var t = WD.POOL_TAG[r.tag];
   return '<span class="wd-tag ' + t.cls + '">' + esc(t.text) + '</span>';
 }
+function tierHtml(r) {
+  if (r.tag !== 'WD') return '';
+  var name = WD.RUN_TIER_NAME[r.tier] || r.tier || '';
+  return '<span class="tier-cell t-' + esc(r.tier) + '">' + esc(name) + '</span>';
+}
+function ruleNameOf(id) {
+  if (!id) return '';
+  var ru = WD.TAG_RULES.filter(function(x) { return x.id === id; })[0];
+  return ru ? ru.name : '';
+}
+// 判定策略列：该行由哪条店铺策略给出终判；不满足大数据前置的款不参与店铺判定，因此留空
+function ruleHtml(r) {
+  if (!r.finalRule) return '';
+  var nm = ruleNameOf(r.finalRule);
+  return '<span class="rule-no" title="' + esc(nm) + '" onclick="gotoRuleById(\'' + esc(r.finalRule) + '\')">' + esc(r.finalRule) + '</span>';
+}
+function gotoRuleById(id) {
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type:'openTab', page:'pages/store-engine/wd-tag-rule-detail.html?id=' + encodeURIComponent(id), title:'商品判定策略明细' }, '*');
+  } else { location.href = 'wd-tag-rule-detail.html?id=' + encodeURIComponent(id); }
+}
 
 // ===== 取数 + 渲染 =====
-function apply() {
+function apply(opts) {
+  if (!(opts && opts.keepPage)) pageNo = 1;
   var sku = document.getElementById('fSku').value.trim();
+  var shop = document.getElementById('fShop').value;
   var brand = document.getElementById('fBrand').value;
   var mid = document.getElementById('fMid').value;
   var status = document.getElementById('fStatus').value;
@@ -363,8 +912,10 @@ function apply() {
   var flip = document.getElementById('fFlip').value;
 
   current = WD.SKU_LABELS.filter(function(r) {
+    if (!focusMatch(r)) return false;
     if (view === 'in' && r.tag !== 'WD') return false;
     if (sku && r.sku.indexOf(sku) === -1) return false;
+    if (shop && r.shopCode !== shop) return false;
     if (brand && r.brand !== brand) return false;
     if (mid && r.mid !== mid) return false;
     if (status && r.status !== status) return false;
@@ -377,23 +928,45 @@ function apply() {
     if (quickKey === 'toNowd' && flipOf(r) !== '转不挽') return false;
     if (quickKey === 'highRate' && !(r.retRate * 100 >= 15)) return false;
     if (quickKey === 'lowMargin' && !(r.tag === 'WD' && r.margin < 50)) return false;
+    if (quickKey === 'manual' && !r.manual) return false;
     return true;
   });
   current.sort(function(a, b) { return (a[sortKey] - b[sortKey]) * sortDir; });
   render();
+  if (focusKey) renderFocusBar(sampleCounts());
+}
+
+function totalPages() { return Math.max(1, Math.ceil(current.length / pageSize)); }
+function pageSlice() {
+  var start = (pageNo - 1) * pageSize;
+  return current.slice(start, start + pageSize);
+}
+function pageOfSku(key) {
+  var i = -1;
+  current.forEach(function(r, idx) { if (rowKey(r) === key) i = idx; });
+  return i < 0 ? 1 : Math.floor(i / pageSize) + 1;
 }
 
 function render() {
   var tb = document.getElementById('tableBody');
+  if (pageNo > totalPages()) pageNo = totalPages();
+  if (pageNo < 1) pageNo = 1;
+  var rows = pageSlice();
+  var base = (pageNo - 1) * pageSize;
   if (!current.length) {
-    tb.innerHTML = '<tr><td colspan="12" class="empty-state"><span class="empty-icon">&#128230;</span><div class="empty-text">当前条件下无商品</div><div class="empty-hint">切换「全部商品（含不挽）」或放宽阈值后重试</div></td></tr>';
+    tb.innerHTML = '<tr><td colspan="15" class="empty-state"><span class="empty-icon">&#128230;</span><div class="empty-text">当前条件下无商品</div><div class="empty-hint">'
+      + (focusKey ? '当前聚焦条件下本表无命中样本，可<span class="explain-link" onclick="clearFocus()">清除聚焦</span>后查看全部商品'
+          : '切换「全部商品（含不挽）」或放宽阈值后重试') + '</div></td></tr>';
   } else {
-    tb.innerHTML = current.map(function(r, i) {
-      var dim = r.tag === 'WD' ? '' : ' class="row-dim"';
+    tb.innerHTML = rows.map(function(r, i) {
+      var dim = r.tag === 'WD' ? 'page-in' : 'row-dim page-in';
       var flip = flipOf(r);
-      return '<tr' + dim + '>'
-        + '<td>' + (i + 1) + '</td>'
-        + '<td class="col-left"><span class="sku-no" onclick="openDrawer(\'' + esc(r.sku) + '\')">' + esc(r.sku) + '</span></td>'
+      return '<tr class="' + dim + '" style="animation-delay:' + Math.min(i * 22, 220) + 'ms">'
+        + '<td>' + (base + i + 1) + '</td>'
+        + '<td class="col-left"><span class="sku-no" onclick="openDrawer(\'' + esc(rowKey(r)) + '\')">' + esc(r.sku) + '</span>'
+        + (r.manual ? '<span class="manual-chip">补录</span>' : '') + '</td>'
+        + '<td class="col-left"><div class="shop-cell">' + esc(r.shopCode || '') + '</div>'
+        + '<div class="shop-cell-n">' + esc(shopNameOf(r.shopCode)) + '</div></td>'
         + '<td>' + esc(r.brand) + '</td>'
         + '<td>' + esc(r.mid) + '</td>'
         + '<td>' + esc(r.status) + '</td>'
@@ -402,31 +975,124 @@ function render() {
         + '<td class="' + (r.retRate >= 0.15 ? 'num-hi' : '') + '">' + pct(r.retRate) + '</td>'
         + '<td>' + (r.margin ? r.margin.toFixed(1) + '%' : '') + '</td>'
         + '<td>' + tagHtml(r) + '</td>'
+        + '<td>' + tierHtml(r) + '</td>'
+        + '<td>' + ruleHtml(r) + '</td>'
         + '<td><span class="change-tag ch-' + esc(flip) + '">' + esc(flip) + '</span></td>'
-        + '<td><span class="explain-link" onclick="openDrawer(\'' + esc(r.sku) + '\')">判据</span></td>'
+        + '<td><span class="explain-link" onclick="openDrawer(\'' + esc(rowKey(r)) + '\')">判据</span>'
+        + (r.manual ? '<span class="op-del" onclick="deleteManual(\'' + esc(rowKey(r)) + '\')">删除</span>' : '') + '</td>'
         + '</tr>';
     }).join('');
   }
-  document.getElementById('totalCount').textContent = current.length;
+  renderPager(rows.length, base);
 }
+
+/* 分页：页码窗口 + 首末页 + 上下页 + 每页条数 + 跳页 */
+function pageNums(cur, total) {
+  var out = [];
+  if (total <= 7) { for (var i = 1; i <= total; i++) out.push(i); return out; }
+  out.push(1);
+  var lo = Math.max(2, cur - 1), hi = Math.min(total - 1, cur + 1);
+  if (cur <= 3) { lo = 2; hi = 4; }
+  if (cur >= total - 2) { lo = total - 3; hi = total - 1; }
+  if (lo > 2) out.push('…');
+  for (var j = lo; j <= hi; j++) out.push(j);
+  if (hi < total - 1) out.push('…');
+  out.push(total);
+  return out;
+}
+function renderPager(shown, base) {
+  var total = current.length, pages = totalPages();
+  var sum = document.getElementById('pgSummary');
+  if (!total) {
+    sum.innerHTML = '共 <b>0</b> 条' + (WD.SKU_LABELS.length ? '<span class="pg-filter">已筛选，池内样本共 ' + n(WD.SKU_LABELS.length) + ' 条</span>' : '');
+  } else {
+    sum.innerHTML = '第 <b>' + (base + 1) + '</b>–<b>' + (base + shown) + '</b> 条，共 <b>' + n(total) + '</b> 条'
+      + (total < WD.SKU_LABELS.length ? '<span class="pg-filter">已筛选，池内样本共 ' + n(WD.SKU_LABELS.length) + ' 条</span>' : '')
+      + '<span class="pg-filter">第 ' + pageNo + '/' + pages + ' 页</span>';
+  }
+  var nav = document.getElementById('pgNav');
+  function btn(label, page, disabled, active, title) {
+    return '<button type="button" class="page-btn' + (active ? ' active' : '') + (disabled ? ' disabled' : '') + '"'
+      + ' data-page="' + page + '"' + (disabled ? ' disabled aria-disabled="true"' : '')
+      + (active ? ' aria-current="page"' : '') + ' title="' + esc(title || '') + '" aria-label="' + esc(title || label) + '">' + label + '</button>';
+  }
+  var html = btn('«', 1, pageNo === 1, false, '首页')
+    + btn('‹', pageNo - 1, pageNo === 1, false, '上一页');
+  pageNums(pageNo, pages).forEach(function(x) {
+    html += (x === '…') ? '<span class="pg-ellipsis">…</span>' : btn(String(x), x, false, x === pageNo, '第 ' + x + ' 页');
+  });
+  html += btn('›', pageNo + 1, pageNo === pages, false, '下一页')
+    + btn('»', pages, pageNo === pages, false, '末页');
+  nav.innerHTML = html;
+  var jump = document.getElementById('pgJump');
+  jump.value = pageNo;
+  jump.max = pages;
+  jump.classList.remove('bad');
+  document.getElementById('pageSize').value = String(pageSize);
+}
+function gotoPage(p, scroll) {
+  var pages = totalPages();
+  var n2 = Math.min(Math.max(1, parseInt(p, 10) || 1), pages);
+  if (n2 === pageNo) { render(); return; }
+  pageNo = n2;
+  render();
+  if (scroll !== false) {
+    var area = document.querySelector('.table-area');
+    if (area && area.scrollIntoView) area.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+document.getElementById('pgNav').addEventListener('click', function(e) {
+  var b = e.target.closest ? e.target.closest('button[data-page]') : null;
+  if (!b || b.disabled) return;
+  gotoPage(b.dataset.page);
+});
+document.getElementById('pageSize').addEventListener('change', function() {
+  pageSize = parseInt(this.value, 10) || 10;
+  pageNo = 1;
+  render();
+  toast('每页显示 ' + pageSize + ' 条，共 ' + totalPages() + ' 页', 'info');
+});
+function jumpPage() {
+  var el = document.getElementById('pgJump');
+  var v = parseInt(el.value, 10);
+  var pages = totalPages();
+  if (!v || v < 1 || v > pages) {
+    el.classList.add('bad');
+    toast('请输入 1 ~ ' + pages + ' 之间的页码', 'error');
+    el.focus();
+    return;
+  }
+  el.classList.remove('bad');
+  gotoPage(v);
+}
+document.getElementById('pgGo').addEventListener('click', jumpPage);
+document.getElementById('pgJump').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); jumpPage(); }
+});
+document.getElementById('pgJump').addEventListener('input', function() { this.classList.remove('bad'); });
 
 function setView(v) {
   view = v;
+  focusKey = '';
   document.getElementById('btnIn').classList.toggle('on', v === 'in');
   document.getElementById('btnAll').classList.toggle('on', v === 'all');
   apply();
+  renderStats();
 }
 function quick(el) {
   var k = el.dataset.q;
   quickKey = quickKey === k ? '' : k;
+  focusKey = '';
   document.querySelectorAll('.qf').forEach(function(x) { x.classList.toggle('on', x.dataset.q === quickKey); });
   if (quickKey) { view = 'all'; document.getElementById('btnIn').classList.remove('on'); document.getElementById('btnAll').classList.add('on'); }
   apply();
+  renderStats();
 }
 function doSearch() { apply(); toast('命中 ' + current.length + ' 款', 'info'); }
 function resetSearch() {
-  ['fSku','fBrand','fMid','fStatus','fShip','fRate','fMargin','fTag','fFlip'].forEach(function(id) { document.getElementById(id).value = ''; });
+  ['fSku','fShop','fBrand','fMid','fStatus','fShip','fRate','fMargin','fTag','fFlip'].forEach(function(i) { document.getElementById(i).value = ''; });
   quickKey = '';
+  focusKey = 'wd';
   document.querySelectorAll('.qf').forEach(function(x) { x.classList.remove('on'); });
   view = 'in';
   document.getElementById('btnIn').classList.add('on');
@@ -437,6 +1103,7 @@ function resetSearch() {
     x.querySelector('.arr').textContent = x.dataset.k === sortKey ? '↓' : '↕';
   });
   apply();
+  renderStats();
   toast('已重置', 'info');
 }
 function manalRun() {
@@ -444,198 +1111,158 @@ function manalRun() {
 }
 
 // ===== 判据抽屉：按真实维度的规则逐步骤复现判定过程 =====
-function shopCodeOf(brand) {
-  var s = WD.shopByBrand(brand);
-  return s ? s.code : '';
+function shopNameOf(code) {
+  var s = WD.TAG_SHOPS.filter(function(x) { return x.code === code; })[0];
+  return s ? s.name : '';
 }
+// 取策略一律用行上的店铺编码（(店铺,款) 复合键），不再由品牌反推
 function ruleFor(r) {
-  var code = shopCodeOf(r.brand);
-  var list = WD.TAG_RULES.filter(function(x) { return x.shopCode === code; });
-  var ru = list.filter(function(x) { return x.status === 'ACTIVE'; })[0] || list[0] || null;
-  return { shopCode: code, shopName: (WD.shopByBrand(r.brand) || {}).name || '', rule: ru, d: ru ? ru.dims : WD.tagDims() };
-}
-function tierOf(code) {
-  return WD.TIERS.filter(function(t) { return t.code === code; })[0] || null;
+  var code = r.shopCode || '';
+  var ru = WD.ruleForShop(code);
+  return { shopCode: code, shopName: shopNameOf(code), rule: ru, d: ru ? ru.dims : WD.tagDims() };
 }
 function rangeTxt(lo, hi, unit) {
   var f = function(v) { return unit === '×' ? Number(v).toFixed(2) : String(v); };
   return f(lo) + unit + ' ~ ' + (hi === null || hi === undefined || hi === '' ? '无上限' : f(hi) + unit);
 }
-function evaluate(r) {
-  var ctx = ruleFor(r), d = ctx.d, ru = ctx.rule;
-  var steps = [], blocked = false;
-  function add(title, rows, verdict, tone) {
-    steps.push({ title: title, rows: rows, verdict: verdict, tone: tone });
-    if (tone === 'stop') blocked = true;
-  }
-  function idle(title) {
-    steps.push({ title: title, rows: [{ k: '说明', v: '前置步骤已拦截，本步未参与判定' }], verdict: '未参与', tone: 'idle' });
-  }
-
-  /* 第1步 适用范围（店铺归属 + 商品状态 + 中类包含排除 + 平台映射） */
+function midParam(d) {
   var inc = (d.midCat && d.midCat.include) || [], exc = (d.midCat && d.midCat.exclude) || [];
-  var s1 = [
-    { k: '策略归属店铺', v: esc(ctx.shopCode) + ' ' + esc(ctx.shopName) + '（品牌 ' + esc(r.brand) + '）' },
-    { k: '商品状态', v: esc(r.status) },
-    { k: '中类', v: esc(r.mid) + '　包含范围：' + (inc.length ? esc(inc.join('、')) : '不限') + '　排除：' + (exc.length ? esc(exc.join('、')) : '无') },
-    { k: '平台商品映射', v: r.skip === 'NO_PLATFORM_ITEM' ? '未建立映射' : '已建立映射' }
-  ];
-  if (r.skip === 'BLACKLIST') add('第 1 步 · 适用范围', s1, '业务黑名单排除', 'stop');
-  else if (r.skip === 'NO_PLATFORM_ITEM') add('第 1 步 · 适用范围', s1, '无平台商品映射', 'stop');
-  else if (exc.indexOf(r.mid) > -1) add('第 1 步 · 适用范围', s1, '中类已排除', 'stop');
-  else if (inc.length && inc.indexOf(r.mid) === -1) add('第 1 步 · 适用范围', s1, '中类不在包含范围', 'stop');
-  else if (!ru) add('第 1 步 · 适用范围', s1, '该店铺无生效策略', 'stop');
-  else add('第 1 步 · 适用范围', s1, '在范围内', 'pass');
-
-  /* 第2步 基准可用性 */
-  if (blocked) idle('第 2 步 · 同品类基准');
-  else {
-    var s2 = [
-      { k: '基准来源', v: srcTxt(r.src) },
-      { k: '同品类基准退货率', v: pct(r.baseline) }
-    ];
-    if (r.src === 'missing') { s2.push({ k: '结论', v: '无同品类基准，无法算出倍数，不进入判定区间' }); add('第 2 步 · 同品类基准', s2, '基准缺失', 'stop'); }
-    else if (r.src === 'fallback') { s2.push({ k: '结论', v: '同品类样本不足，改用全店分位作基准' }); add('第 2 步 · 同品类基准', s2, '分位退化', 'pass'); }
-    else { s2.push({ k: '结论', v: '基准可用，继续判三个区间' }); add('第 2 步 · 同品类基准', s2, '基准可用', 'pass'); }
-  }
-
-  /* 第3步 销售件数判定区间 */
-  if (blocked) idle('第 3 步 · 销售件数');
-  else {
-    var s3 = [
-      { k: '销售件数（发货口径）', v: n(r.ship) + ' 件' },
-      { k: '判定区间', v: rangeTxt(d.sales.lo, d.sales.hi, '件') },
-      { k: '成交件数', v: n(r.paid) + '（仅旁证，不作圈款口径）' }
-    ];
-    if (r.ship < d.sales.lo) { s3.push({ k: '结论', v: '销量过低，退货率没有统计意义' }); add('第 3 步 · 销售件数', s3, '低于区间下界', 'stop'); }
-    else if (d.sales.hi !== null && d.sales.hi !== undefined && r.ship > d.sales.hi) { s3.push({ k: '结论', v: '销量高于区间上限，不依赖补偿' }); add('第 3 步 · 销售件数', s3, '高于区间上限', 'stop'); }
-    else { s3.push({ k: '结论', v: '销量在区间内，继续判退货率' }); add('第 3 步 · 销售件数', s3, '在区间内', 'pass'); }
-  }
-
-  /* 第4步 退货率判定区间 */
-  if (blocked) idle('第 4 步 · 退货率');
-  else {
-    var ratio = r.ratio || (r.baseline ? r.retRate / r.baseline : r.retRate / 0.09);
-    var s4 = [
-      { k: '剔挽退货率', v: pct(r.retRate) + '　同品类基准 ' + pct(r.baseline) },
-      { k: '基准倍数', v: '<b>' + ratio.toFixed(2) + '×</b>' },
-      { k: '判定区间', v: rangeTxt(d.rate.lo, d.rate.hi, '×') }
-    ];
-    if (d.rate.hi !== null && d.rate.hi !== undefined && ratio >= d.rate.hi) { s4.push({ k: '结论', v: '退货率远高于基准，先排查商品与直播表达，不投补偿' }); add('第 4 步 · 退货率', s4, '高于区间上限', 'stop'); }
-    else if (ratio < d.rate.lo) { s4.push({ k: '结论', v: '退货率低于区间下界，不投补偿' }); add('第 4 步 · 退货率', s4, '低于区间下界', 'stop'); }
-    else { s4.push({ k: '结论', v: '倍数在区间内，继续判毛利率' }); add('第 4 步 · 退货率', s4, '在区间内', 'pass'); }
-  }
-
-  /* 第5步 毛利率判定区间 */
-  if (blocked) idle('第 5 步 · 毛利率');
-  else {
-    var tier = tierOf(r.tier);
-    var s5 = [
-      { k: '毛利率（实付口径）', v: (r.margin ? r.margin.toFixed(1) + '%' : '') },
-      { k: '判定区间', v: rangeTxt(d.margin.lo, d.margin.hi, '%') },
-      { k: '命中档位', v: tier ? '<span class="hit">' + esc(tier.code) + ' 档</span>（' + tier.marginLower + '%~' + (tier.marginUpper === null ? '无上限' : tier.marginUpper + '%') + '）' : '无档位归属' }
-    ];
-    if (r.margin < d.margin.lo) { s5.push({ k: '结论', v: '毛利率低于区间下界，不值得挽' }); add('第 5 步 · 毛利率', s5, '低于区间下界', 'stop'); }
-    else if (d.margin.hi !== null && d.margin.hi !== undefined && r.margin >= d.margin.hi) { s5.push({ k: '结论', v: '毛利率高于区间上限，不投补偿' }); add('第 5 步 · 毛利率', s5, '高于区间上限', 'stop'); }
-    else if (!tier) { s5.push({ k: '结论', v: '未命中任何毛利率档位，不参与批处理' }); add('第 5 步 · 毛利率', s5, '无档位归属', 'stop'); }
-    else { s5.push({ k: '结论', v: '归入 ' + tier.code + ' 档，继续算价格带与补偿额' }); add('第 5 步 · 毛利率', s5, '命中 ' + tier.code + ' 档', 'pass'); }
-  }
-
-  /* 第6步 价格带与补偿额 */
-  if (blocked) idle('第 6 步 · 价格带与补偿额');
-  else {
-    var t2 = tierOf(r.tier);
-    var s6 = [
-      { k: '实付金额分位', v: r.paidP50 ? 'P25 ' + r.paidP25 + ' / <b>P50 ' + r.paidP50 + '</b> / P75 ' + r.paidP75 : '' },
-      { k: '命中策略带', v: esc(r.band || '') },
-      { k: '带内保守上限', v: r.capBand === null ? '' : '¥' + r.capBand + '（= 安全系数 0.80 × 平台上限 × 带下界）' },
-      { k: '档位目标补偿', v: (t2 && t2.target !== undefined && t2.target !== null) ? '¥' + t2.target + '（' + esc(t2.code) + ' 档）' : '' },
-      { k: '建议补偿上限', v: r.cap === null ? '' : '<b>¥' + r.cap.toFixed(2) + '</b>' },
-      { k: '有感校验', v: r.cap === null ? '' : (r.cap < 5 ? '低于有感下限 5 元 → 本期不生成挽单策略'
-          : (r.cap <= 5 ? '恰在有感下限且与相邻低档同值 → 已告警并合并档位' : '通过')) }
-    ];
-    add('第 6 步 · 价格带与补偿额', s6, r.cap === null ? '未生成' : (r.cap < 5 ? '补偿额过小' : '补偿额成立'), r.cap === null || r.cap < 5 ? 'idle' : 'pass');
-  }
-
-  return { ctx: ctx, steps: steps, blocked: blocked };
+  return '包含：' + (inc.length ? inc.join('、') : '不限') + '；排除：' + (exc.length ? exc.join('、') : '无');
+}
+function dimParam(name, d) {
+  if (name === '商品中类') return midParam(d);
+  if (name === '销售件数') return rangeTxt(d.sales.lo, d.sales.hi, '件');
+  if (name === '退货率') return rangeTxt(d.rate.lo, d.rate.hi, '×');
+  return WD.tiersText(d.tiers);
 }
 
-/* 结论行：根据本次区间实时生成，不沿用快照静态文案 */
-function summaryOf(ev, r, stopStep) {
-  var d = ev.ctx.d;
-  var ratio = r.ratio || (r.baseline ? r.retRate / r.baseline : 0);
-  var hit = ev.steps.filter(function(s) { return s.title.indexOf('销售件数') > -1 || s.title.indexOf('退货率') > -1 || s.title.indexOf('毛利率') > -1; });
-  var detail = hit.map(function(s) {
-    return s.title.replace(/^第 \d+ 步 · /, '') + '：' + s.verdict;
-  }).join('、');
-  // 只有已判到退货率（第 4 步及之后）才输出倍数，否则无意义
-  var stopNo = stopStep ? Number((/第 (\d+) 步/.exec(stopStep.title) || [])[1] || 0) : 99;
-  var rateJudged = stopNo >= 4;
-  if (stopStep) {
-    return '拦截于<b>' + esc(stopStep.title) + '</b>（' + esc(stopStep.verdict) + '）'
-      + (rateJudged ? '　｜　退货率 ' + ratio.toFixed(2) + '× 对应判定区间 ' + rangeTxt(d.rate.lo, d.rate.hi, '×') : '')
-      + '　｜　' + esc(detail);
-  }
-  return '三个区间全部命中：退货率 ' + ratio.toFixed(2) + '× 在 '
-    + rangeTxt(d.rate.lo, d.rate.hi, '×') + ' 内　｜　' + esc(detail);
+/* 两段式判定：
+   第一段 大数据前置资格（候选）——只看客观事实与数据可用性
+   第二段 店铺规则匹配——商品中类 → 销售件数 → 退货率 → 分档规则（毛利率只定档） */
+function checkSku(r) {
+  var ctx = ruleFor(r), d = ctx.d, ru = ctx.rule;
+  var gate = WD.deriveCand(r);
+  var cand = gate.cand === 'CAND';
+  var pre = cand
+    ? { tone: 'pass', verdict: '候选', note: '在售、已建立平台商品映射、未命中业务黑名单、同品类基准可用、销量达到大数据样本下限' }
+    : { tone: 'stop', verdict: gate.reason.split('（')[0].split('，')[0], note: gate.reason };
+  var m = cand ? WD.matchShop(r, ru) : null;
+  var rows = [], stopped = !cand;
+  var byDim = {};
+  (m ? m.checks : []).forEach(function(k) { byDim[k.dim] = k; });
+  var NOTES = {
+    '商品中类': function(k) {
+      if (!k.ok) return k.verdict === '被排除' ? '该中类在策略排除列表内，排除优先于包含' : '策略仅对所列中类生效，本款中类不在其中';
+      return ((d.midCat && d.midCat.include) || []).length ? '中类在策略包含列表内且未被排除' : '策略不限中类，本款未被排除';
+    },
+    '销售件数': function(k) {
+      if (!k.ok) return k.verdict === '出区间' && r.ship < d.sales.lo ? '销量过低，退货率没有统计意义，不投补偿' : '销量高于策略上限，不依赖补偿拉动';
+      return '发货口径销量落在策略区间内（左闭右开）';
+    },
+    '退货率': function(k) {
+      if (!k.ok) return k.verdict === '高于上界' || k.verdict === '高于区间上界'
+        ? '退货率远高于同品类基准，先排查商品与直播表达，不投补偿' : '退货率未达策略下界，挽单必要性不足';
+      return '基准倍数落在策略区间内（左闭右开）';
+    },
+    '分档规则': function(k) {
+      if (!k.ok) return '毛利率未落入本策略任一分档区间，不能定档，因此不生成挽单方案';
+      return '毛利率定档只决定补偿力度，不影响是否挽单';
+    }
+  };
+  ['商品中类', '销售件数', '退货率', '分档规则'].forEach(function(name) {
+    if (stopped) {
+      rows.push({ dim: name, param: dimParam(name, d), actual: '', verdict: '未参与', tone: 'idle',
+        note: cand ? '前一项未通过，本项不再参与判定' : '未通过大数据前置资格，店铺规则不参与判定' });
+      return;
+    }
+    var k = byDim[name];
+    if (!k) {
+      rows.push({ dim: name, param: dimParam(name, d), actual: '', verdict: '未参与', tone: 'idle', note: '前一项未通过，本项不再参与判定' });
+      stopped = true; return;
+    }
+    rows.push({ dim: k.dim, param: k.param, actual: k.actual, verdict: k.verdict,
+      tone: k.ok ? 'pass' : 'stop', note: NOTES[name](k) });
+    if (!k.ok) stopped = true;
+  });
+  var wd = !!(m && m.wd);
+  return { ctx: ctx, cand: cand, candReason: gate.reason, pre: pre, rows: rows, wd: wd, m: m, blocked: !wd };
 }
 
-function openDrawer(sku) {
-  var r = WD.SKU_LABELS.filter(function(x) { return x.sku === sku; })[0];
+/* 结论句：只陈述两段式校验结果 */
+function checkSummary(ck) {
+  if (!ck.cand) return '未通过大数据前置资格：' + ck.candReason + '，店铺规则不参与判定';
+  if (!ck.ctx.rule) return '该店铺没有生效中的判定策略，无法完成店铺规则匹配';
+  var stop = ck.rows.filter(function(x) { return x.tone === 'stop'; })[0];
+  if (stop) return '「' + stop.dim + '」未通过（' + stop.verdict + '），后续项不再参与判定';
+  return '商品中类、销售件数、退货率、分档规则四项全部通过，判为挽单并归入' + (ck.m.tierName || '') + '（退款 ' + ck.m.refundRate + '%，最高 ¥' + ck.m.maxRefund + '）';
+}
+
+function rowKey(r) { return r.shopCode + '|' + r.sku; }
+function findRow(key) {
+  var parts = String(key).split('|');
+  return WD.SKU_LABELS.filter(function(x) { return x.shopCode === parts[0] && x.sku === parts[1]; })[0];
+}
+function openDrawer(key) {
+  var r = findRow(key);
   if (!r) return;
   currentRow = r;
-  var ev = evaluate(r);
-  var ru = ev.ctx.rule;
-  currentEval = ev;
+  var ck = checkSku(r);
+  var ru = ck.ctx.rule;
+  currentEval = ck;
+  // 结论以本次实算为准（可能与池内快照标签不一致，不一致时说明口径）
+  var ckTag = ck.wd ? 'WD' : 'NOWD';
+  var diff = ckTag !== r.tag;
 
-  document.getElementById('dlTitle').textContent = r.tag === 'WD' ? '为什么这款标为挽单' : '为什么这款不挽单';
+  document.getElementById('dlTitle').textContent = '判定校验：' + WD.POOL_TAG[ckTag].text;
   document.getElementById('dlSub').innerHTML = '款号 ' + esc(r.sku) + ' · ' + esc(r.brand) + ' · ' + esc(r.mid)
-    + ' ｜ 数据周期 ' + esc(P.week) + ' ｜ 按「' + esc(ru ? ru.name : '默认策略') + '」逐步骤复现';
+    + '　｜　店铺 ' + esc(ck.ctx.shopCode) + ' ' + esc(ck.ctx.shopName)
+    + '　｜　参数来源：' + (ru ? '<code>' + esc(ru.id) + '</code> ' + esc(ru.name) : '该店铺无生效策略');
 
-  var stopStep = ev.steps.filter(function(s) { return s.tone === 'stop'; })[0];
-  var dd = ev.ctx.d;
   var html = '';
   html += '<div class="dl-section"><div class="dl-title">判定结论</div>'
-    + '<div class="ev-conc">'
-    + '<span class="tag-big wd-tag ' + WD.POOL_TAG[r.tag].cls + '">' + esc(WD.POOL_TAG[r.tag].text) + '</span>'
-    + '<span class="kv">归属档位：<b>' + esc(r.tier || '') + '</b></span>'
-    + '<span class="kv">建议补偿上限：<b>' + (r.cap === null ? '未生成' : '¥' + r.cap.toFixed(2)) + '</b></span>'
-    + '<span class="kv">本周动态：<b>' + esc(flipOf(r)) + '</b></span>'
-    + '<div style="width:100%;" class="kv">' + summaryOf(ev, r, stopStep) + '</div>'
+    + '<div class="ev-conc ' + (ck.wd ? 'ok' : 'no') + '">'
+    + '<span class="tag-big wd-tag ' + WD.POOL_TAG[ckTag].cls + '">' + esc(WD.POOL_TAG[ckTag].text) + '</span>'
+    + (ck.wd ? '<span class="ck-tier">' + esc(ck.m.tierName || '') + '｜退款 ' + ck.m.refundRate + '%｜最高退款 ¥' + ck.m.maxRefund + '｜价格带 ' + esc(ck.m.band || '') + '</span>' : '')
+    + '<div class="kv" style="width:100%;">' + esc(checkSummary(ck)) + '</div>'
+    + (diff ? '<div class="ck-diff">商品池快照标签为「' + esc(WD.POOL_TAG[r.tag].text)
+        + '」，与本次实算结果不一致；标签于下周一批处理按最新策略参数重算，周内不翻转。</div>' : '')
     + '</div></div>';
 
-  html += '<div class="dl-section"><div class="dl-title">逐维度判定过程</div>'
-    + ev.steps.map(function(s) {
-        return '<div class="ev-step' + (s.tone === 'idle' ? ' blocked' : '') + '">'
-          + '<div class="ev-head"><span class="ev-title">' + esc(s.title) + '</span>'
-          + '<span class="ev-badge ' + s.tone + '">' + esc(s.verdict) + '</span></div>'
-          + '<div class="ev-kv">' + s.rows.map(function(x) { return '<div>' + x.k + '</div><div>' + x.v + '</div>'; }).join('') + '</div></div>';
+  html += '<div class="dl-section"><div class="dl-title">店铺规则校验<span class="dl-sub">参数来自 ' + (ru ? esc(ru.id) : '默认模板') + '</span></div>'
+    + '<table class="ck-tbl"><thead><tr>'
+    + '<th style="width:88px;">维度</th><th style="width:190px;">策略参数</th>'
+    + '<th style="width:150px;">商品实测</th><th style="width:104px;">校验结果</th>'
+    + '</tr></thead><tbody>'
+    + ck.rows.map(function(x) {
+        return '<tr class="ck-row ' + x.tone + '">'
+          + '<td class="ck-dim">' + esc(x.dim) + '</td>'
+          + '<td class="ck-param">' + esc(x.param) + '</td>'
+          + '<td class="ck-actual">' + x.actual + '</td>'
+          + '<td><span class="ev-badge ' + x.tone + '">' + esc(x.verdict) + '</span></td></tr>'
+          + '<tr class="ck-note-row ' + x.tone + '"><td colspan="4">' + esc(x.note) + '</td></tr>';
       }).join('')
-    + '<div class="ev-rule">判定顺序固定：适用范围（店铺归属、商品状态、中类包含排除、平台映射）→ 同品类基准可用性 → 销售件数区间 → 退货率区间 → 毛利率区间 → 价格带与补偿额；三个区间必须同时命中才判挽单，任一步拦截即不挽单。</div>'
+    + '</tbody></table>'
+    + '<div class="ck-note">校验顺序：商品中类 → 销售件数 → 退货率 → 分档规则；前三项全部通过才判挽单，最后一项只决定归入哪一档。'
+    + '毛利率不参与是否挽单，只用于定档；区间均为左闭右开，上限留空表示无上限。'
+    + '<span class="ck-link" onclick="gotoRule()">去维护策略参数</span></div>'
     + '</div>';
 
-  html += '<div class="dl-section"><div class="dl-title">规则来源与标签周期</div><div class="dl-kv">'
-    + '<div>判定策略</div><div>' + (ru ? '<code>' + esc(ru.id) + '</code> ' + esc(ru.name) : '未匹配到策略，用默认区间') + '</div>'
-    + '<div>判定区间</div><div>退货率 ' + rangeTxt(dd.rate.lo, dd.rate.hi, '×')
-      + '　｜　销售件数 ' + rangeTxt(dd.sales.lo, dd.sales.hi, '件')
-      + '　｜　毛利率 ' + rangeTxt(dd.margin.lo, dd.margin.hi, '%') + '</div>'
-    + '<div>中类范围</div><div>包含：' + (dd.midCat && dd.midCat.include.length ? esc(dd.midCat.include.join('、')) : '不限')
-      + '　排除：' + (dd.midCat && dd.midCat.exclude.length ? esc(dd.midCat.exclude.join('、')) : '无') + '</div>'
-    + '<div>打标时间</div><div>' + esc(P.tagUpdatedAt) + '（每周一 04:00 与快照同批重算）</div>'
-    + '<div>下次更新</div><div>' + esc(P.tagNextAt) + '；周内不翻转，人工改标走黑/白名单且下周生效</div>'
-    + '<div>上期→本期</div><div>' + esc(WD.POOL_TAG[r.prevTag].text) + ' → ' + esc(WD.POOL_TAG[r.tag].text) + '（' + esc(flipOf(r)) + '）</div>'
-    + '</div></div>';
-
-  if (r.skip) {
-    html += '<div class="dl-section"><div class="dl-note warn">人工处理提示：' + esc(r.tagReason || '') + '。该款不会静默进入商品池，已计入本周待处理清单。</div></div>';
+  if (!ck.cand) {
+    html += '<div class="dl-section"><div class="dl-title">未参与店铺判定的原因</div>'
+      + '<div class="ck-pre stop"><span class="ev-badge stop">不参与</span>'
+      + '<span class="ck-pre-note">' + esc(ck.candReason) + '，该类商品由大数据侧单独统计表记录，不进入本店铺挽单判定。</span></div></div>';
   }
+
   document.getElementById('dlBody').innerHTML = html;
+  document.getElementById('dlDel').style.display = r.manual ? '' : 'none';
   document.getElementById('drawerMask').classList.add('show');
   document.getElementById('drawer').classList.add('show');
 }
 function closeDrawer() {
   document.getElementById('drawerMask').classList.remove('show');
   document.getElementById('drawer').classList.remove('show');
+  currentRow = null;
+  currentEval = null;
 }
 function excludeSku() {
   if (!currentRow) return;
@@ -651,28 +1278,38 @@ function forceWd() {
 }
 function copyBasis() {
   if (!currentRow) return;
-  var ev = currentEval || evaluate(currentRow);
-  var ru = ev.ctx.rule;
-  var strip = function(h) { return h.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&'); };
+  var ck = currentEval || checkSku(currentRow);
+  var ru = ck.ctx.rule;
+  var strip = function(h) { return String(h).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(); };
   var txt = JSON.stringify({
-    sku: currentRow.sku, week: P.week,
-    tag: WD.POOL_TAG[currentRow.tag].text, prevTag: WD.POOL_TAG[currentRow.prevTag].text, flip: flipOf(currentRow),
-    tier: currentRow.tier || null, suggestCap: currentRow.cap, band: currentRow.band || null,
-    rule: ru ? { id: ru.id, name: ru.name, shop: ev.ctx.shopCode } : null,
-    steps: ev.steps.map(function(s) {
-      return { step: s.title, verdict: s.verdict, detail: s.rows.map(function(x) { return x.k + ': ' + strip(x.v); }) };
+    sku: currentRow.sku,
+    shopCode: ck.ctx.shopCode,
+    shopName: ck.ctx.shopName,
+    checkResult: WD.POOL_TAG[ck.blocked ? 'NOWD' : 'WD'].text,
+    poolTag: WD.POOL_TAG[currentRow.tag].text,
+    conclusion: checkSummary(ck),
+    rule: ru ? { id: ru.id, name: ru.name, shop: ck.ctx.shopCode } : null,
+    tier: ck.wd ? { code: ck.m.tier, name: ck.m.tierName, refundRate: ck.m.refundRate, maxRefund: ck.m.maxRefund, cap: ck.m.cap, band: ck.m.band } : null,
+    notJudgedReason: ck.cand ? '' : ck.candReason,
+    checks: ck.rows.map(function(x) {
+      return { dimension: x.dim, strategyParam: x.param, actual: strip(x.actual), verdict: x.verdict, note: x.note };
     })
   }, null, 2);
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(txt).then(function() { toast('判据已复制到剪贴板', 'success'); }, function() { toast('复制失败，请手动选择文本', 'error'); });
+    navigator.clipboard.writeText(txt).then(function() { toast('校验明细已复制到剪贴板', 'success'); }, function() { toast('复制失败，请手动选择文本', 'error'); });
   } else { toast('当前环境不支持剪贴板', 'info'); }
 }
 
 function exportCsv() {
-  var head = ['序号','款号','品牌','中类','商品状态','销售件数','退货件数','退货率','毛利率','是否挽单','本周动态','数据周期'];
+  if (!current.length) { toast('当前筛选条件下没有可导出的商品', 'warning'); return; }
+  var head = ['序号','店铺编码','店铺名称','款号','品牌','中类','商品状态','销售件数','退货件数','退货率','毛利率','是否挽单','不挽原因','分档','退款比例','最高退款金额','预估单笔退款','价格带','本周动态','判定策略','数据来源','数据周期'];
   var rows = current.map(function(r, i) {
-    return [i + 1, r.sku, r.brand, r.mid, r.status, r.ship, r.retDone, r.retRate, r.margin,
-            WD.POOL_TAG[r.tag].text, flipOf(r), P.week];
+    var m = r.cand === 'CAND' ? WD.matchShop(r, WD.ruleForShop(r.shopCode)) : null;
+    return [i + 1, r.shopCode, shopNameOf(r.shopCode), r.sku, r.brand, r.mid, r.status, r.ship, r.retDone, r.retRate, r.margin,
+            WD.POOL_TAG[r.tag].text, r.tagReason || '',
+            r.tag === 'WD' ? (WD.RUN_TIER_NAME[r.tier] || r.tier) : '',
+            m && m.wd ? m.refundRate : '', m && m.wd ? m.maxRefund : '', m && m.wd ? m.cap : '', m && m.wd ? m.band : '',
+            flipOf(r), r.finalRule || '', r.manual ? '人工补录' : '周度批处理', P.week];
   });
   var csv = '\uFEFF' + [head].concat(rows).map(function(a) { return a.join(','); }).join('\n');
   var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -681,18 +1318,480 @@ function exportCsv() {
   a.download = '挽单商品池_' + P.week + '.csv';
   a.click();
   URL.revokeObjectURL(a.href);
-  toast('已导出 ' + current.length + ' 款', 'success');
+  toast('已导出 ' + current.length + ' 款（当前筛选全部结果，不只本页）', 'success');
 }
 
-function toast(msg, type) {
+/* ===== 新增商品：表单 + 实时判定预览 + 入池 ===== */
+var ADD_IDS = ['aSku','aShop','aBrand','aMid','aStatus','aShip','aRet','aMargin','aP50','aMapping','aRemark'];
+(function initAddForm() {
+  var sh = document.getElementById('aShop');
+  WD.TAG_SHOPS.forEach(function(x) { sh.insertAdjacentHTML('beforeend', '<option value="' + esc(x.code) + '">' + esc(x.code) + ' ' + esc(x.name) + '</option>'); });
+  var b = document.getElementById('aBrand');
+  WD.BRANDS.forEach(function(x) { b.insertAdjacentHTML('beforeend', '<option value="' + esc(x) + '">' + esc(x) + '</option>'); });
+  var m = document.getElementById('aMid');
+  WD.MID_CATS.forEach(function(x) { m.insertAdjacentHTML('beforeend', '<option value="' + esc(x) + '">' + esc(x) + '</option>'); });
+  var s = document.getElementById('aStatus');
+  WD.SKU_STATUS.forEach(function(x) { s.insertAdjacentHTML('beforeend', '<option value="' + esc(x) + '">' + esc(x) + '</option>'); });
+  ADD_IDS.forEach(function(id) {
+    var el = document.getElementById(id);
+    el.addEventListener('input', onAddInput);
+    el.addEventListener('change', onAddInput);
+  });
+})();
+
+function addInput() {
+  return {
+    sku: document.getElementById('aSku').value.trim(),
+    shopCode: document.getElementById('aShop').value,
+    brand: document.getElementById('aBrand').value,
+    mid: document.getElementById('aMid').value,
+    status: document.getElementById('aStatus').value,
+    ship: document.getElementById('aShip').value,
+    retDone: document.getElementById('aRet').value,
+    margin: document.getElementById('aMargin').value,
+    paidP50: document.getElementById('aP50').value,
+    hasMapping: document.getElementById('aMapping').checked,
+    remark: document.getElementById('aRemark').value.trim()
+  };
+}
+function openAdd() {
+  ADD_IDS.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (id === 'aMapping') el.checked = true;
+    else if (el.tagName === 'SELECT') el.selectedIndex = 0;
+    else el.value = '';
+  });
+  ['eSku','eShip','eRet','eMargin','eP50'].forEach(function(i) {
+    document.getElementById(i).classList.remove('show');
+  });
+  ADD_IDS.forEach(function(id) { document.getElementById(id).classList.remove('bad'); });
+  document.getElementById('addMask').classList.add('show');
+  document.getElementById('addModal').classList.add('show');
+  renderPreview();
+  setTimeout(function() { document.getElementById('aSku').focus(); }, 120);
+}
+function closeAdd() {
+  document.getElementById('addMask').classList.remove('show');
+  document.getElementById('addModal').classList.remove('show');
+}
+function onAddInput() {
+  renderPreview();
+}
+function rangeStr(g, unit, dec) {
+  var f = function(v) { return dec ? Number(v).toFixed(dec) : String(v); };
+  return f(g.lo) + unit + ' ~ ' + (g.hi === null || g.hi === undefined || g.hi === '' ? '无上限' : f(g.hi) + unit);
+}
+function renderPreview() {
+  var v = addInput();
+  var j = WD.judgeSku(v);
+  var ok = !!j.wd;
+  var html = '<div class="pv-verdict ' + (ok ? 'wd' : 'nowd') + '">'
+    + '<span class="big">' + (ok ? '挽单' : '不挽') + '</span>'
+    + '<span class="why">' + esc(ok ? '三个维度均落在该店铺判定区间内，入池后可生成挽单方案'
+        : (j.reason || '未满足判定条件')) + '</span></div>';
+  html += '<div class="pv-kv">'
+    + '<div>适用店铺</div><div>' + esc(v.shopCode || '') + '</div>'
+    + '<div>退货率</div><div>' + (Number(v.ship) > 0 ? (j.retRate * 100).toFixed(2) + '%' : '') + '</div>'
+    + '<div>同品类基准</div><div>' + (j.baseline * 100).toFixed(2) + '%</div>'
+    + '<div>基准倍数</div><div><b>' + j.ratio.toFixed(2) + '×</b></div>'
+    + '<div>毛利率</div><div>' + WD.marginPct(v.margin) + '</div>'
+    + '<div>适用策略</div><div>' + (j.rule ? esc(j.rule.id) + ' ' + esc(j.rule.name) : '该店铺未配置生效策略') + '</div>'
+    + '<div>中类规则</div><div>' + midParam(j.dims) + '</div>'
+    + '<div>销量区间</div><div>' + rangeStr(j.dims.sales, '件', 0) + '</div>'
+    + '<div>退货率区间</div><div>' + rangeStr(j.dims.rate, '×', 2) + '</div>'
+    + '<div>分档区间</div><div>' + esc(WD.tiersText(j.dims.tiers)) + '</div>'
+    + '<div>命中档位</div><div>' + (ok ? esc(j.tierName || '') + '（退款 ' + j.refundRate + '%，最高 ¥' + j.maxRefund + '）' : '') + '</div>'
+    + '<div>命中价格带</div><div>' + (ok ? esc(j.band || '') : '') + '</div>'
+    + '<div>预估单笔退款</div><div>' + (ok && j.cap !== null && j.cap !== undefined ? '<b>¥' + Number(j.cap).toFixed(2) + '</b>' : '') + '</div>'
+    + '</div>';
+  html += '<div class="pv-steps">' + j.steps.map(function(s) {
+    return '<div class="pv-step ' + s.tone + '"><span class="dot"></span>'
+      + '<div style="min-width:0;flex:1;"><div style="display:flex;gap:8px;"><span class="nm">' + esc(s.name) + '</span>'
+      + '<span class="vd">' + esc(s.verdict) + '</span></div>'
+      + '<div class="dt">' + esc(s.detail) + '</div></div></div>';
+  }).join('') + '</div>';
+  document.getElementById('pvBox').innerHTML = html;
+}
+
+function markBad(inputId, errId, msg) {
+  document.getElementById(inputId).classList.add('bad');
+  var e = document.getElementById(errId);
+  e.textContent = msg; e.classList.add('show');
+}
+function validateAdd(v) {
+  var ok = true;
+  [['aSku','eSku'],['aShip','eShip'],['aRet','eRet'],['aMargin','eMargin'],['aP50','eP50']].forEach(function(p) {
+    document.getElementById(p[0]).classList.remove('bad');
+    document.getElementById(p[1]).classList.remove('show');
+  });
+  if (!v.sku) { markBad('aSku', 'eSku', '请填写款号'); ok = false; }
+  else if (WD.skuExists(v.sku, v.shopCode)) { markBad('aSku', 'eSku', '该款号已在该店铺商品池中，不能重复录入'); ok = false; }
+  else if (v.shopCode && !WD.ruleForShop(v.shopCode)) { markBad('aSku', 'eSku', '该店铺暂无生效中的判定策略，请先去维护策略'); ok = false; }
+  if (!(Number(v.ship) > 0)) { markBad('aShip', 'eShip', '销售件数必须大于 0'); ok = false; }
+  if (v.retDone === '' || Number(v.retDone) < 0) { markBad('aRet', 'eRet', '请填写退货件数（可为 0）'); ok = false; }
+  else if (Number(v.retDone) > Number(v.ship)) { markBad('aRet', 'eRet', '退货件数不能大于销售件数'); ok = false; }
+  if (v.margin === '' || Number(v.margin) < 0 || Number(v.margin) > 100) { markBad('aMargin', 'eMargin', '毛利率需在 0 ~ 100 之间'); ok = false; }
+  if (v.paidP50 !== '' && Number(v.paidP50) < 0) { markBad('aP50', 'eP50', '实付金额不能为负数'); ok = false; }
+  return ok;
+}
+function saveAdd() {
+  var v = addInput();
+  if (!validateAdd(v)) { toast('请先修正表单中标红的字段', 'error'); return; }
+  var row = WD.addManualSku(v);
+  closeAdd();
+  renderStats();
+  refreshMidFilter();
+  if (row.tag !== 'WD') setView('all');
+  apply();
+  // 新增后定位到该款所在页，避免“保存了却看不到”
+  pageNo = pageOfSku(rowKey(row));
+  render();
+  if (row.tag === 'WD') {
+    toast('已入池：' + row.sku + ' 判为挽单（' + (WD.RUN_TIER_NAME[row.tier] || row.tier || '') + '，预估单笔退款 ¥' + (row.cap === null ? '-' : row.cap.toFixed(2)) + '）', 'success', '查看判据', function() { openDrawer(rowKey(row)); });
+  } else {
+    toast('已入池：' + row.sku + ' 判为不挽（' + row.tagReason + '）', 'warning', '查看判据', function() { openDrawer(rowKey(row)); });
+  }
+}
+function refreshMidFilter() {
+  var sel = document.getElementById('fMid');
+  var keep = sel.value;
+  var mids = [];
+  WD.SKU_LABELS.forEach(function(r) { if (mids.indexOf(r.mid) === -1) mids.push(r.mid); });
+  sel.innerHTML = '<option value="">全部</option>' + mids.map(function(m) {
+    return '<option value="' + esc(m) + '">' + esc(m) + '</option>';
+  }).join('');
+  sel.value = keep;
+}
+
+/* ===== 导入商品：上传/粘贴 → 逐行校验 + 判定预览 → 批量入池 ===== */
+var IMP_COLS = [
+  { key: 'sku',      label: '款号',       alias: ['款号', '货号', 'sku'] },
+  { key: 'shop',     label: '店铺',       alias: ['店铺', '店铺编码', '店铺名称', '适用店铺'] },
+  { key: 'brand',    label: '品牌',       alias: ['品牌'] },
+  { key: 'mid',      label: '中类',       alias: ['中类', '商品中类'] },
+  { key: 'status',   label: '商品状态',   alias: ['商品状态', '状态'] },
+  { key: 'ship',     label: '销售件数',   alias: ['销售件数', '销量', '发货件数'] },
+  { key: 'retDone',  label: '退货件数',   alias: ['退货件数', '退货量'] },
+  { key: 'margin',   label: '毛利率',     alias: ['毛利率', '毛利率(%)', '毛利率（%）'] },
+  { key: 'paidP50',  label: '实付P50',    alias: ['实付p50', '实付p50(元)', '实付p50（元）', '实付金额p50', 'p50'] },
+  { key: 'mapping',  label: '平台映射',   alias: ['平台映射', '已建立平台商品映射', '平台商品映射', '有无映射'] },
+  { key: 'remark',   label: '备注',       alias: ['备注', '说明'] }
+];
+var IMP_MAX = 500;
+var impRows = [], impTimer = null;
+
+// 单行 CSV 切分：支持双引号包裹与转义，保留款号内部连字符
+function splitCsvLine(line, delim) {
+  var out = [], cur = '', q = false;
+  for (var i = 0; i < line.length; i++) {
+    var c = line[i];
+    if (q) {
+      if (c === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else q = false; }
+      else cur += c;
+    } else if (c === '"') q = true;
+    else if (c === delim) { out.push(cur); cur = ''; }
+    else cur += c;
+  }
+  out.push(cur);
+  return out.map(function(s) { return s.trim(); });
+}
+function impDelimOf(line) {
+  var t = (line.match(/\t/g) || []).length,
+      c = (line.match(/,/g) || []).length,
+      s = (line.match(/;/g) || []).length;
+  if (t >= c && t >= s && t > 0) return '\t';
+  if (s > c && s > 0) return ';';
+  return ',';
+}
+function impNormHead(s) { return String(s).toLowerCase().replace(/[\s*＊]/g, '').replace(/（[^）]*）|\([^)]*\)/g, ''); }
+function impShopOf(v) {
+  var t = String(v || '').trim();
+  if (!t) return null;
+  return WD.TAG_SHOPS.filter(function(x) { return x.code === t || x.name === t; })[0] || null;
+}
+// 解析文本 → 逐行校验（必填/枚举/数值/重复）+ 同一引擎判定预览
+function parseImport(raw) {
+  var lines = String(raw || '').replace(/\r\n?/g, '\n').split('\n').filter(function(l) { return l.trim() !== ''; });
+  impRows = [];
+  if (!lines.length) { renderImport(); return; }
+  var delim = impDelimOf(lines[0]);
+  var first = splitCsvLine(lines[0], delim);
+  var headMap = null;
+  if (first.some(function(c) { return IMP_COLS.some(function(col) { return col.alias.indexOf(impNormHead(c)) > -1; }); })) {
+    headMap = {};
+    first.forEach(function(c, i) {
+      var hit = IMP_COLS.filter(function(col) { return col.alias.indexOf(impNormHead(c)) > -1; })[0];
+      if (hit && headMap[hit.key] === undefined) headMap[hit.key] = i;
+    });
+    lines = lines.slice(1);
+  }
+  var truncated = lines.length > IMP_MAX;
+  if (truncated) lines = lines.slice(0, IMP_MAX);
+  var seen = {};
+  lines.forEach(function(line, idx) {
+    var cells = splitCsvLine(line, delim);
+    var get = function(key) {
+      var i = headMap ? headMap[key] : IMP_COLS.findIndex(function(c) { return c.key === key; });
+      return i === undefined || i < 0 ? '' : String(cells[i] === undefined ? '' : cells[i]).trim();
+    };
+    var v = {
+      sku: get('sku'), shopRaw: get('shop'), brand: get('brand'), mid: get('mid'),
+      status: get('status') || '在售', ship: get('ship'), retDone: get('retDone'),
+      margin: get('margin'), paidP50: get('paidP50'),
+      hasMapping: ['否', '无', 'no', 'false', '0', 'n'].indexOf(get('mapping').toLowerCase()) < 0,
+      remark: get('remark')
+    };
+    var shop = impShopOf(v.shopRaw);
+    var errs = [];
+    if (!v.sku) errs.push('缺款号');
+    if (!v.shopRaw) errs.push('缺店铺');
+    else if (!shop) errs.push('店铺「' + v.shopRaw + '」不存在');
+    if (!v.brand) errs.push('缺品牌');
+    else if (WD.BRANDS.indexOf(v.brand) < 0) errs.push('品牌「' + v.brand + '」不在枚举内');
+    if (!v.mid) errs.push('缺中类');
+    else if (WD.MID_CATS.indexOf(v.mid) < 0) errs.push('中类「' + v.mid + '」不在枚举内');
+    if (WD.SKU_STATUS.indexOf(v.status) < 0) errs.push('商品状态「' + v.status + '」无效');
+    if (!(Number(v.ship) > 0)) errs.push('销售件数需大于 0');
+    if (v.retDone === '' || Number(v.retDone) < 0) errs.push('退货件数需填写且 ≥ 0');
+    else if (Number(v.ship) > 0 && Number(v.retDone) > Number(v.ship)) errs.push('退货件数不能大于销售件数');
+    if (v.margin === '' || Number(v.margin) < 0 || Number(v.margin) > 100) errs.push('毛利率需在 0~100');
+    if (v.paidP50 !== '' && Number(v.paidP50) < 0) errs.push('实付金额不能为负');
+    var row = { line: idx + 1, v: v, shop: shop, errs: errs, state: 'bad', j: null };
+    if (!errs.length) {
+      var key = shop.code + '|' + v.sku;
+      if (WD.skuExists(v.sku, shop.code)) { row.state = 'dup'; row.dupNote = '该店铺商品池中已存在，跳过'; }
+      else if (seen[key]) { row.state = 'dup'; row.dupNote = '与文件内第 ' + seen[key] + ' 行重复，跳过'; }
+      else {
+        seen[key] = row.line;
+        row.state = 'ok';
+        row.j = WD.judgeSku({
+          sku: v.sku, shopCode: shop.code, brand: v.brand, mid: v.mid, status: v.status,
+          ship: v.ship, retDone: v.retDone, margin: v.margin, paidP50: v.paidP50,
+          hasMapping: v.hasMapping, remark: v.remark
+        });
+      }
+    }
+    impRows.push(row);
+  });
+  impRows.truncated = truncated;
+  renderImport();
+}
+function renderImport() {
+  var sum = document.getElementById('impSum'), body = document.getElementById('impBody');
+  var go = document.getElementById('impGo');
+  if (!impRows.length) {
+    sum.innerHTML = '<span class="ph">尚未解析数据：上传文件或粘贴内容后，此处展示逐行校验与判定预览</span>';
+    body.innerHTML = '<tr><td colspan="6"><div class="imp-empty"><span class="ico">&#128228;</span>'
+      + '上传 CSV 文件或粘贴表格数据后，逐行展示校验结果与判定预览<br>可先下载导入模板，按列顺序填写后再上传</div></td></tr>';
+    go.disabled = true; go.textContent = '确认导入';
+    return;
+  }
+  var ok = impRows.filter(function(r) { return r.state === 'ok'; });
+  var dup = impRows.filter(function(r) { return r.state === 'dup'; }).length;
+  var bad = impRows.filter(function(r) { return r.state === 'bad'; }).length;
+  var wdCnt = ok.filter(function(r) { return r.j && r.j.wd; }).length;
+  sum.innerHTML = '<span class="imp-chip dim">解析 <b>' + impRows.length + '</b> 行' + (impRows.truncated ? '（超 ' + IMP_MAX + ' 行已截断）' : '') + '</span>'
+    + '<span class="imp-chip ok">可导入 <b>' + ok.length + '</b></span>'
+    + '<span class="imp-chip dim">其中判为挽单 <b>' + wdCnt + '</b> · 不挽 <b>' + (ok.length - wdCnt) + '</b></span>'
+    + (dup ? '<span class="imp-chip dup">重复跳过 <b>' + dup + '</b></span>' : '')
+    + (bad ? '<span class="imp-chip bad">校验失败 <b>' + bad + '</b></span>' : '');
+  body.innerHTML = impRows.map(function(r) {
+    var v = r.v;
+    var st = r.state === 'ok' ? '<span class="imp-st ok">可导入</span>'
+      : r.state === 'dup' ? '<span class="imp-st dup">重复跳过</span>'
+      : '<span class="imp-st bad">校验失败</span>';
+    var jd = '', why = '';
+    if (r.state === 'ok') {
+      jd = r.j.wd
+        ? '<span class="imp-jd wd">挽单 · ' + esc(r.j.tierName || '') + '</span>'
+        : '<span class="imp-jd nowd">不挽</span>';
+      why = r.j.wd
+        ? '退款 ' + r.j.refundRate + '%，最高 ¥' + r.j.maxRefund + '；预估单笔退款 ¥' + Number(r.j.cap).toFixed(2)
+        : esc(r.j.reason || '未满足判定条件');
+    } else if (r.state === 'dup') {
+      why = esc(r.dupNote);
+    } else {
+      why = '<span class="imp-why err">' + esc(r.errs.join('；')) + '</span>';
+    }
+    var shopTxt = r.shop ? esc(r.shop.code) + '<div class="sub">' + esc(r.shop.name) + '</div>' : esc(v.shopRaw || '');
+    return '<tr class="' + (r.state === 'bad' ? 'r-bad' : r.state === 'dup' ? 'r-dup' : '') + '">'
+      + '<td>' + r.line + '</td>'
+      + '<td><span class="mono">' + esc(v.sku || '') + '</span>'
+      + (v.brand || v.mid ? '<div class="sub">' + esc([v.brand, v.mid].filter(Boolean).join(' · ')) + '</div>' : '') + '</td>'
+      + '<td>' + shopTxt + '</td>'
+      + '<td>' + st + '</td>'
+      + '<td>' + jd + '</td>'
+      + '<td><div class="imp-why">' + why + '</div></td>'
+      + '</tr>';
+  }).join('');
+  go.disabled = !ok.length;
+  go.textContent = ok.length ? '确认导入（' + ok.length + ' 行）' : '确认导入';
+}
+function openImport() {
+  impRows = [];
+  document.getElementById('impText').value = '';
+  document.getElementById('impFile').value = '';
+  document.getElementById('impFileName').style.display = 'none';
+  renderImport();
+  document.getElementById('impMask').classList.add('show');
+  document.getElementById('impModal').classList.add('show');
+  setTimeout(function() { document.getElementById('impText').focus(); }, 120);
+}
+function closeImport() {
+  document.getElementById('impMask').classList.remove('show');
+  document.getElementById('impModal').classList.remove('show');
+}
+function downloadImpTpl() {
+  var head = ['款号', '店铺', '品牌', '中类', '商品状态', '销售件数', '退货件数', '毛利率(%)', '实付P50(元)', '平台映射', '备注'];
+  var demo = [
+    ['SN-26A-9001', 'DY-S001', '森马', '针织上衣', '在售', 2600, 330, 66.5, 268, '是', '直播专供款'],
+    ['SN-26B-9002', '巴拉旗舰店', '巴拉', '连衣裙', '在售', 1800, 240, 58.2, 143, '是', '']
+  ];
+  var csv = '\uFEFF' + [head].concat(demo).map(function(a) { return a.join(','); }).join('\n');
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '挽单商品池导入模板.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('模板已下载：店铺可填编码或名称，* 列为必填', 'success');
+}
+function readImpFile(file) {
+  if (!file) return;
+  if (!/\.(csv|txt)$/i.test(file.name) && !/text\/(csv|plain)/.test(file.type)) {
+    toast('仅支持 CSV / TXT 文件，Excel 请先另存为 CSV', 'error'); return;
+  }
+  if (file.size > 1024 * 1024) { toast('文件超过 1MB，请拆分后导入', 'error'); return; }
+  var reader = new FileReader();
+  reader.onload = function() {
+    document.getElementById('impText').value = String(reader.result || '').replace(/^\uFEFF/, '');
+    var fn = document.getElementById('impFileName');
+    fn.textContent = file.name;
+    fn.style.display = '';
+    parseImport(document.getElementById('impText').value);
+  };
+  reader.onerror = function() { toast('文件读取失败，请重试', 'error'); };
+  reader.readAsText(file, 'utf-8');
+}
+function confirmImport() {
+  var ok = impRows.filter(function(r) { return r.state === 'ok'; });
+  if (!ok.length) { toast('没有可导入的行，请先修正校验失败项', 'warning'); return; }
+  var added = [];
+  ok.forEach(function(r) {
+    var v = r.v;
+    added.push(WD.addManualSku({
+      sku: v.sku, shopCode: r.shop.code, brand: v.brand, mid: v.mid, status: v.status,
+      ship: v.ship, retDone: v.retDone, margin: v.margin, paidP50: v.paidP50,
+      hasMapping: v.hasMapping, remark: v.remark || '批量导入'
+    }));
+  });
+  var dup = impRows.filter(function(r) { return r.state === 'dup'; }).length;
+  var bad = impRows.filter(function(r) { return r.state === 'bad'; }).length;
+  var wdCnt = added.filter(function(r) { return r.tag === 'WD'; }).length;
+  closeImport();
+  renderStats();
+  refreshMidFilter();
+  // 导入后定位到「人工补录」快捷筛选，直接看到本批新行
+  quickKey = 'manual'; focusKey = ''; view = 'all';
+  document.getElementById('btnIn').classList.remove('on');
+  document.getElementById('btnAll').classList.add('on');
+  document.querySelectorAll('.qf').forEach(function(x) { x.classList.toggle('on', x.dataset.q === 'manual'); });
+  apply();
+  var msg = '已导入 ' + added.length + ' 款：挽单 ' + wdCnt + ' · 不挽 ' + (added.length - wdCnt)
+    + (dup ? '；重复跳过 ' + dup : '') + (bad ? '；校验失败 ' + bad + ' 行未导入' : '');
+  toast(msg, wdCnt ? 'success' : 'warning', '查看人工补录', function() {
+    quickKey = 'manual'; focusKey = ''; view = 'all';
+    document.getElementById('btnIn').classList.remove('on');
+    document.getElementById('btnAll').classList.add('on');
+    document.querySelectorAll('.qf').forEach(function(x) { x.classList.toggle('on', x.dataset.q === 'manual'); });
+    apply(); renderStats();
+  });
+}
+(function initImport() {
+  var text = document.getElementById('impText');
+  text.addEventListener('input', function() {
+    document.getElementById('impFileName').style.display = 'none';
+    clearTimeout(impTimer);
+    var v = this.value;
+    impTimer = setTimeout(function() { parseImport(v); }, 200);
+  });
+  var file = document.getElementById('impFile');
+  file.addEventListener('change', function() { readImpFile(this.files && this.files[0]); this.value = ''; });
+  var drop = document.getElementById('impDrop');
+  drop.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); file.click(); }
+  });
+  ['dragenter', 'dragover'].forEach(function(ev) {
+    drop.addEventListener(ev, function(e) { e.preventDefault(); drop.classList.add('over'); });
+  });
+  ['dragleave', 'drop'].forEach(function(ev) {
+    drop.addEventListener(ev, function(e) { e.preventDefault(); drop.classList.remove('over'); });
+  });
+  drop.addEventListener('drop', function(e) {
+    var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) readImpFile(f);
+  });
+})();
+
+function deleteManual(key) {
+  var row = findRow(key);
+  if (!row || !row.manual) { toast('只能删除人工补录的商品', 'error'); return; }
+  if (!confirm('删除补录商品「' + row.shopCode + ' · ' + row.sku + '」？删除后可在提示条内撤销。')) return;
+  var removed = WD.removeManualSku(row.sku, row.shopCode);
+  closeDrawer();
+  renderStats();
+  refreshMidFilter();
+  apply({ keepPage: true });
+  toast('已删除补录商品 ' + row.sku, 'info', '撤销', function() {
+    if (WD.restoreManualSku(removed)) {
+      renderStats(); refreshMidFilter(); apply();
+      pageNo = pageOfSku(rowKey(removed));
+      render();
+      toast('已恢复 ' + removed.sku, 'success');
+    }
+  });
+}
+function deleteFromDrawer() {
+  if (currentRow) deleteManual(rowKey(currentRow));
+}
+
+function toast(msg, type, actLabel, actFn) {
   var c = document.getElementById('toastContainer');
-  var t = document.createElement('div'); t.className = 'toast toast-' + (type || 'info'); t.textContent = msg;
+  var t = document.createElement('div'); t.className = 'toast toast-' + (type || 'info');
+  t.textContent = msg;
+  if (actLabel && actFn) {
+    // 带操作的提示常驻，不自动消失，避免用户来不及点撤销
+    t.classList.add('sticky');
+    var a = document.createElement('span');
+    a.className = 'toast-act'; a.textContent = actLabel;
+    a.onclick = function() { actFn(); t.remove(); };
+    t.appendChild(a);
+    var x = document.createElement('span');
+    x.className = 'toast-x'; x.innerHTML = '&times;'; x.title = '关闭提示';
+    x.onclick = function() { t.remove(); };
+    t.appendChild(x);
+    c.appendChild(t);
+    return;
+  }
   c.appendChild(t);
   setTimeout(function(){ t.classList.add('toast-hide'); }, 3400);
   setTimeout(function(){ t.remove(); }, 3900);
 }
 
 document.querySelector('th.sortable[data-k="retRate"]').classList.add('act');
+
+// ESC 关闭弹窗与抽屉（同时监听 window / document，兼容 key 与 keyCode）
+function onEsc(e) {
+  if (e.key !== 'Escape' && e.keyCode !== 27) return;
+  var im = document.getElementById('impModal');
+  if (im && im.classList.contains('show')) { closeImport(); e.preventDefault(); return; }
+  var m = document.getElementById('addModal');
+  if (m && m.classList.contains('show')) { closeAdd(); e.preventDefault(); return; }
+  var d = document.getElementById('drawer');
+  if (d && d.classList.contains('show')) { closeDrawer(); e.preventDefault(); }
+}
+document.addEventListener('keydown', onEsc);
+window.addEventListener('keydown', onEsc);
 document.querySelector('th.sortable[data-k="retRate"] .arr').textContent = '↓';
 apply();
 </script>

@@ -93,7 +93,6 @@
   .cr .cr-t { font-size:14px; font-weight:700; color:var(--txt); }
   .cr.on .cr-t { color:var(--blue); }
   .cr .cr-d { font-size:12px; color:var(--sub); margin-top:8px; }
-  .cr .rec { position:absolute; top:-9px; right:12px; background:#f53f3f; color:#fff; font-size:10px; padding:1px 8px; border-radius:9px; }
 
   .seg { display:inline-flex; gap:8px; flex-wrap:wrap; }
   .sg { padding:7px 16px; border-radius:6px; background:#f2f3f5; font-size:13px; color:#4e5969; cursor:pointer; }
@@ -105,6 +104,8 @@
   .ck-sub { font-size:12px; color:var(--sub); margin-top:8px; }
   .ck-sub .dashed { border-bottom:1px dashed var(--sub); }
   .ck-sub .lnk { color:var(--blue); cursor:pointer; margin-left:10px; }
+  .lnk { color:var(--blue); cursor:pointer; }
+  .lnk:hover { text-decoration:underline; }
 
   .txt-in { width:100%; max-width:420px; padding:8px 12px; border:1px solid var(--line); border-radius:6px; font-size:13px; outline:none; color:var(--txt); }
   .txt-in:focus { border-color:var(--blue); }
@@ -115,32 +116,259 @@
   .chip2 { display:inline-flex; align-items:center; gap:6px; background:#f2f3f5; border-radius:4px; padding:3px 9px; font-size:12px; color:var(--txt); }
   .chip2 i { font-style:normal; color:#c9cdd4; cursor:pointer; font-size:13px; line-height:1; }
   .chip2 i:hover { color:#f53f3f; }
-  .chip2.more { color:var(--sub); }
-  .pick { position:relative; }
-  .pick-menu { display:none; position:absolute; left:0; bottom:calc(100% + 6px); z-index:30; background:#fff; border:1px solid var(--line); border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,.12); padding:6px; width:260px; max-height:220px; overflow-y:auto; }
-  .pick-menu.show { display:block; }
-  .pick-item { display:flex; align-items:center; gap:8px; padding:6px 8px; font-size:12.5px; border-radius:5px; cursor:pointer; color:var(--txt); }
-  .pick-item:hover { background:#f2f3f5; }
 
-  .ratio-tbl { border:1px solid var(--line); border-radius:8px; max-width:640px; overflow:hidden; }
-  .rt-head { display:grid; grid-template-columns:1fr 1.2fr; background:#f7f8fa; padding:11px 14px; gap:10px; }
-  .rt-head .h { font-size:13px; font-weight:700; color:var(--txt); }
-  .rt-head .s { font-size:11px; color:var(--sub); margin-top:4px; font-weight:400; }
-  .rt-head .s .lnk { color:var(--blue); cursor:pointer; }
-  .rt-row { display:grid; grid-template-columns:1fr 1.2fr; gap:10px; padding:10px 14px; border-top:1px solid #f2f3f5; align-items:center; }
-  .rt-band { font-size:13px; color:#4e5969; }
-  .rt-right { display:flex; align-items:center; gap:8px; }
-  .num-in { width:82px; padding:6px 8px; border:1px solid var(--line); border-radius:6px; font-size:13px; outline:none; text-align:center; color:var(--txt); }
-  .num-in:focus { border-color:var(--blue); }
+  /* 本期不开放的选项：保留可见但锁定，不可点选 */
+  .sg.off { cursor:not-allowed; opacity:.6; }
+  .sg.off:hover { background:#f2f3f5; }
+  .sg.off.on { background:#f2f3f5; color:#86909c; font-weight:600; box-shadow:inset 0 0 0 1px #e5e6eb; opacity:.85; }
+  .sg .lk, .cr .lk, .ck .lk { display:inline-flex; vertical-align:-2px; margin-left:5px; color:#86909c; }
+  .cr.off { cursor:not-allowed; opacity:.62; }
+  .cr.off:hover { border-color:var(--line); }
+  .cr.off .cr-t { color:#86909c; }
+  .cr.off.on { border-color:#c9cdd4; background:#fafafa; box-shadow:inset 0 0 0 1px #e5e6eb; }
+  .cr .lock-tag { position:absolute; top:-9px; right:12px; background:#86909c; color:#fff; font-size:10px; padding:1px 8px; border-radius:9px; }
+  .ck.off { cursor:not-allowed; color:#86909c; }
+  .ck.off input { cursor:not-allowed; }
+  .off-note { display:flex; align-items:center; gap:5px; font-size:11.5px; color:var(--sub); margin-top:8px; line-height:1.5; }
+  .off-note svg { flex-shrink:0; color:#86909c; }
+
+  /* 生效售后原因：下拉多选（四类固定枚举） */
+  .msel { position:relative; max-width:520px; }
+  .msel-ctl { display:flex; align-items:center; gap:8px; min-height:38px; padding:5px 10px 5px 8px;
+    border:1px solid var(--line); border-radius:8px; background:#fff; cursor:pointer;
+    transition:border-color .16s, box-shadow .16s; }
+  .msel-ctl:hover { border-color:#c9cdd4; }
+  .msel.open .msel-ctl, .msel-ctl:focus-visible { border-color:var(--blue); box-shadow:0 0 0 3px rgba(59,130,246,.13); outline:none; }
+  .msel.ro .msel-ctl { cursor:default; background:#fafbfc; }
+  .msel.ro .msel-ctl:hover { border-color:var(--line); }
+  .msel-tags { display:flex; flex-wrap:wrap; gap:5px; flex:1; min-width:0; }
+  .msel-ph { font-size:12.5px; color:#c9cdd4; padding:2px 4px; }
+  .msel-tag { display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:5px;
+    background:#f2f3f5; font-size:12px; color:var(--txt); animation:tagIn .18s ease both; }
+  @keyframes tagIn { from { opacity:0; transform:scale(.9); } to { opacity:1; transform:none; } }
+  .msel-tag i { font-style:normal; cursor:pointer; color:#a9aeb8; font-size:13px; line-height:1; transition:color .14s; }
+  .msel-tag i:hover { color:#f53f3f; }
+  .msel-caret { flex-shrink:0; color:#86909c; transition:transform .2s; }
+  .msel.open .msel-caret { transform:rotate(180deg); color:var(--blue); }
+  .msel-panel { position:absolute; left:0; top:calc(100% + 6px); z-index:60; width:100%; min-width:280px;
+    background:#fff; border:1px solid var(--line); border-radius:10px; box-shadow:0 12px 32px rgba(15,23,42,.16);
+    overflow:hidden; display:none; }
+  .msel.up .msel-panel { top:auto; bottom:calc(100% + 6px); }
+  .msel.open .msel-panel { display:block; animation:msIn .18s cubic-bezier(.22,.9,.3,1) both; }
+  .msel.up.open .msel-panel { animation:msInUp .18s cubic-bezier(.22,.9,.3,1) both; }
+  @keyframes msIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:none; } }
+  @keyframes msInUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+  .msel-head { display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:9px 12px; border-bottom:1px solid #f2f3f5; background:#fafbfc; }
+  .msel-head .t { font-size:11.5px; color:var(--sub); }
+  .msel-acts { display:flex; gap:10px; }
+  .msel-acts span { font-size:11.5px; color:var(--blue); cursor:pointer; }
+  .msel-acts span:hover { text-decoration:underline; }
+  .msel-acts span.off { color:#c9cdd4; cursor:not-allowed; text-decoration:none; }
+  .msel-list { max-height:212px; overflow-y:auto; padding:5px; }
+  .msel-list::-webkit-scrollbar { width:8px; }
+  .msel-list::-webkit-scrollbar-track { background:#f7f8fa; border-radius:8px; }
+  .msel-list::-webkit-scrollbar-thumb { background:#dfe3ec; border-radius:8px; border:2px solid #f7f8fa; }
+  .msel-list::-webkit-scrollbar-thumb:hover { background:var(--blue); }
+  .msel-opt { display:flex; align-items:center; gap:9px; padding:8px 9px; border-radius:6px; cursor:pointer;
+    font-size:12.5px; color:var(--txt); transition:background .14s; }
+  .msel-opt:hover, .msel-opt.cursor { background:#f5f7fa; }
+  .msel-opt.cursor { box-shadow:inset 0 0 0 1px #d6e4ff; }
+  .msel-opt .bx { width:15px; height:15px; border-radius:4px; border:1.5px solid #c9cdd4; flex-shrink:0;
+    display:inline-flex; align-items:center; justify-content:center; transition:all .16s; }
+  .msel-opt .bx svg { opacity:0; color:#fff; transition:opacity .16s; }
+  .msel-opt.on { color:var(--blue); font-weight:600; }
+  .msel-opt.on .bx { background:var(--blue); border-color:var(--blue); }
+  .msel-opt.on .bx svg { opacity:1; }
+  .msel-opt .tick { margin-left:auto; color:var(--blue); opacity:0; transition:opacity .16s; }
+  .msel-opt.on .tick { opacity:1; }
+  .msel-foot { display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:8px 12px; border-top:1px solid #f2f3f5; background:#fafbfc; }
+  .msel-foot .n { font-size:11.5px; color:var(--sub); }
+  .msel-foot .n b { color:var(--blue); font-weight:700; }
+  .msel-done { padding:4px 14px; border:none; border-radius:6px; background:var(--blue); color:#fff;
+    font-family:inherit; font-size:12px; cursor:pointer; transition:filter .16s; }
+  .msel-done:hover { filter:brightness(1.08); }
+  @media (prefers-reduced-motion: reduce) {
+    .msel-panel, .msel-tag, .msel-caret { animation:none !important; transition:none !important; }
+  }
+
   .unit { font-size:13px; color:#4e5969; }
-  .del-btn { width:70px; text-align:center; border:1px solid var(--line); border-radius:6px; padding:6px 0; color:var(--sub); cursor:pointer; background:#fff; }
-  .del-btn:hover { color:#f53f3f; border-color:#f53f3f; }
-  .rt-more { padding:10px 14px; border-top:1px solid #f2f3f5; font-size:12.5px; color:var(--blue); cursor:pointer; }
-
-  .cost-line { display:flex; align-items:center; gap:10px; margin-top:12px; }
+  /* 每日挽留成本上限：建议额度与说明气泡 */
+  .cost-sug { font-size:13.5px; color:#ff7d00; font-weight:600; cursor:pointer; white-space:nowrap; transition:color .14s; }
+  .cost-sug:hover { color:#f56a00; text-decoration:underline; }
+  .cost-sug.ro { cursor:default; }
+  .cost-sug.ro:hover { color:#ff7d00; text-decoration:none; }
+  .cost-help-wrap { position:relative; display:inline-flex; align-items:center; }
+  .cost-help { width:17px; height:17px; border:none; background:none; color:#a9aeb8; cursor:pointer; padding:0;
+    display:inline-flex; align-items:center; justify-content:center; border-radius:50%; transition:color .14s, transform .14s; }
+  .cost-help:hover, .cost-help:focus-visible { color:var(--blue); transform:scale(1.12); outline:none; }
+  .cost-tip { position:absolute; left:50%; bottom:calc(100% + 9px); width:288px; z-index:80;
+    background:#fff; border:1px solid var(--line); border-radius:10px; box-shadow:0 12px 32px rgba(15,23,42,.16);
+    padding:11px 13px; font-size:12px; font-weight:400; color:var(--txt); line-height:1.75; text-align:left; display:none; }
+  .cost-tip.show { display:block; animation:msIn .16s cubic-bezier(.22,.9,.3,1) both; }
+  .cost-tip.below { bottom:auto; top:calc(100% + 9px); animation:msInUp .16s cubic-bezier(.22,.9,.3,1) both; }
+  .cost-tip::after { content:""; position:absolute; left:var(--ax,50%); bottom:-5px; width:8px; height:8px; background:#fff;
+    border-right:1px solid var(--line); border-bottom:1px solid var(--line); transform:translateX(-50%) rotate(45deg); }
+  .cost-tip.below::after { bottom:auto; top:-5px; transform:translateX(-50%) rotate(225deg); }
+  .cost-tip .t { font-weight:700; color:var(--txt); margin-bottom:4px; }
+  .cost-tip b { color:#ff7d00; }
   .err-tip { display:none; font-size:11.5px; color:#f53f3f; margin-top:7px; }
   .err-tip.show { display:block; }
   .foot-bar { display:flex; justify-content:flex-end; gap:10px; padding:18px 0 6px; border-top:1px solid #eef0f5; margin-top:10px; }
+  /* ===== 商品范围：已选商品与添加入口 ===== */
+  .sc-extra { margin-top:12px; }
+  .sc-bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .sc-stat { font-size:12px; color:var(--sub); }
+  .sc-stat b { color:var(--txt); font-weight:700; }
+  .sc-clear { font-size:12px; color:#f53f3f; cursor:pointer; }
+  .sc-clear:hover { text-decoration:underline; }
+  .sc-list { display:flex; flex-wrap:wrap; gap:7px; margin-top:10px; padding:10px 12px;
+    border:1px solid var(--line); border-radius:8px; background:#fafbfc; max-width:760px; max-height:132px; overflow-y:auto; }
+  .sc-list.empty-box { color:#c9cdd4; font-size:12px; background:#fff; }
+  .sc-item { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:5px;
+    background:#fff; border:1px solid var(--line); font-size:12px; color:var(--txt); transition:border-color .14s; }
+  .sc-item:hover { border-color:#c9cdd4; }
+  .sc-item .iid { font-family:"SF Mono","Menlo",monospace; font-size:11.5px; color:var(--blue); }
+  .sc-item .ttl { color:var(--sub); max-width:190px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .sc-item.off { border-color:#fed7aa; background:#fffaf3; }
+  .sc-item.off .iid { color:#d97706; }
+  .sc-item i { font-style:normal; cursor:pointer; color:#c9cdd4; font-size:14px; line-height:1; }
+  .sc-item i:hover { color:#f53f3f; }
+  .sc-more { display:inline-flex; align-items:center; height:24px; padding:0 9px; border-radius:5px;
+    background:#f2f3f5; color:var(--sub); font-size:11.5px; }
+
+  /* ===== 平台商品抽屉 ===== */
+  /* 协商部分退款规则：下方一行填写 */
+  .rf-line { display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:14px; color:var(--txt); font-weight:600; }
+  .rf-line .txt { white-space:nowrap; }
+  .rf-line .sep { color:var(--txt); font-weight:600; }
+  .rf-box { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:10px;
+    padding:7px 13px; background:#fff; transition:border-color .16s, box-shadow .16s; }
+  .rf-box:hover { border-color:#c9cdd4; }
+  .rf-box:focus-within { border-color:var(--blue); box-shadow:0 0 0 3px rgba(59,130,246,.12); }
+  .rf-box input { border:none; outline:none; background:none; width:96px; font-family:inherit; font-size:14px;
+    color:var(--txt); font-variant-numeric:tabular-nums; }
+  .rf-box input::placeholder { color:#c9cdd4; font-size:13px; font-weight:400; }
+  .rf-box input:disabled { color:#a9aeb8; background:none; cursor:default; }
+  .rf-box .unit { font-size:14px; color:var(--txt); font-weight:600; }
+  .rf-hint { font-size:12.5px; color:#a9aeb8; margin-top:10px; line-height:1.6; }
+  .rf-err { display:none; font-size:13px; color:#f53f3f; font-weight:600; margin-bottom:10px; }
+  .rf-err.show { display:block; }
+  .rf-lock { display:inline-flex; align-items:center; gap:5px; font-size:12px; color:var(--sub); font-weight:400; }
+  .aa-state { display:flex; align-items:center; gap:7px; margin-top:10px; padding:8px 12px; border-radius:8px;
+    border:1px solid var(--line); background:#fafbfc; font-size:12.5px; color:var(--sub); max-width:640px; flex-wrap:wrap; }
+  .aa-state.on { border-color:#d3f0e2; background:#f5fdf9; color:#0b8a5b; }
+  .aa-state .lnk { color:var(--blue); cursor:pointer; margin-left:auto; }
+  .aa-state .lnk:hover { text-decoration:underline; }
+
+  /* 小金额自动同意退款配置弹层 */
+  .aa-mask { position:fixed; inset:0; background:rgba(29,33,41,.45); z-index:1300; opacity:0; visibility:hidden;
+    transition:opacity .22s; display:flex; align-items:center; justify-content:center; padding:24px; }
+  .aa-mask.show { opacity:1; visibility:visible; }
+  .aa-modal { width:520px; max-width:100%; max-height:calc(100vh - 48px); overflow-y:auto; background:#fff; border-radius:14px;
+    box-shadow:0 24px 64px rgba(29,33,41,.24); transform:translateY(14px) scale(.985); transition:transform .24s cubic-bezier(.4,0,.2,1); }
+  .aa-mask.show .aa-modal { transform:none; }
+  .aa-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px 20px 12px; border-bottom:1px solid var(--line); }
+  .aa-head h3 { margin:0; font-size:15px; font-weight:700; color:var(--txt); }
+  .aa-body { padding:16px 20px; }
+  .aa-desc { font-size:12.5px; color:var(--sub); line-height:1.7; }
+  .aa-row { display:flex; align-items:center; gap:12px; margin-top:14px; flex-wrap:wrap; }
+  .aa-row .lb { font-size:13px; color:var(--txt); font-weight:600; }
+  .aa-sw { width:40px; height:22px; border-radius:11px; background:#e5e6eb; position:relative; cursor:pointer; transition:background .18s; flex-shrink:0; border:none; padding:0; }
+  .aa-sw::after { content:""; position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:50%; background:#fff;
+    box-shadow:0 1px 3px rgba(0,0,0,.2); transition:left .18s; }
+  .aa-sw.on { background:#00b42a; }
+  .aa-sw.on::after { left:21px; }
+  .aa-preview { margin-top:14px; padding:11px 13px; border-radius:8px; border:1px dashed var(--line); background:#fafbfc;
+    font-size:12.5px; color:var(--txt); line-height:1.8; }
+  .aa-preview b { color:var(--blue); }
+  .aa-preview .warn { color:#d97706; }
+  .aa-err { display:none; font-size:12px; color:#f53f3f; margin-top:8px; }
+  .aa-err.show { display:block; }
+  .aa-foot { display:flex; justify-content:flex-end; gap:10px; padding:12px 20px 16px; border-top:1px solid var(--line); }
+  @media (prefers-reduced-motion: reduce) { .aa-mask, .aa-modal, .aa-sw, .aa-sw::after { transition:none !important; } }
+
+  .drawer-mask { position:fixed; inset:0; background:rgba(29,33,41,.42); z-index:1200; opacity:0; visibility:hidden;
+    transition:opacity .26s; }
+  .drawer-mask.show { opacity:1; visibility:visible; }
+  .item-drawer { position:fixed; top:0; right:0; bottom:0; width:780px; max-width:96vw; z-index:1201;
+    background:#fff; box-shadow:-12px 0 40px rgba(29,33,41,.16); display:flex; flex-direction:column;
+    transform:translateX(100%); transition:transform .28s cubic-bezier(.4,0,.2,1); }
+  .item-drawer.show { transform:translateX(0); }
+  .dw-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:16px 20px 14px; border-bottom:1px solid var(--line); }
+  .dw-head h3 { margin:0; font-size:15px; font-weight:700; color:var(--txt); }
+  .dw-sub { font-size:11.5px; color:var(--sub); margin-top:5px; line-height:1.5; }
+  .dw-close { border:none; background:none; font-size:22px; line-height:1; color:var(--sub); cursor:pointer; padding:2px 6px; border-radius:6px; }
+  .dw-close:hover { background:#f2f3f5; color:var(--txt); }
+  .dw-tabs { display:flex; gap:4px; padding:0 20px; border-bottom:1px solid var(--line); background:#fafbfc; }
+  .dw-tab { border:none; background:none; padding:10px 14px; font-family:inherit; font-size:13px; color:var(--sub);
+    cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:color .16s, border-color .16s; }
+  .dw-tab:hover { color:var(--txt); }
+  .dw-tab.on { color:var(--blue); font-weight:600; border-bottom-color:var(--blue); }
+  .dw-body { flex:1; min-height:0; overflow-y:auto; padding:16px 20px; }
+  .dw-query { display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap; padding-bottom:12px; border-bottom:1px dashed var(--line); }
+  .dq-item label { display:block; font-size:11.5px; color:var(--sub); margin-bottom:5px; }
+  .dq-item input, .dq-item select { padding:7px 10px; border:1px solid var(--line); border-radius:6px; font-size:12.5px;
+    outline:none; background:#fff; color:var(--txt); font-family:inherit; transition:border-color .16s, box-shadow .16s; }
+  .dq-item input { width:250px; font-family:"SF Mono","Menlo",monospace; }
+  .dq-item input:focus, .dq-item select:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(59,130,246,.12); }
+  .dq-btns { display:flex; gap:8px; }
+  .dw-sel-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 0 9px; flex-wrap:wrap; }
+  .ck2 { display:inline-flex; align-items:center; gap:7px; font-size:12.5px; color:var(--txt); cursor:pointer; }
+  .ck2 input { width:15px; height:15px; accent-color:var(--blue); cursor:pointer; }
+  .ck2 input:disabled { cursor:not-allowed; }
+  .dw-stat { font-size:12px; color:var(--sub); }
+  .dw-stat b { color:var(--txt); font-weight:700; }
+  .dw-stat .miss { color:#d97706; }
+  .dw-table-wrap { border:1px solid var(--line); border-radius:8px; overflow:auto; max-height:calc(100vh - 320px); min-height:180px; }
+  .dw-table-wrap::-webkit-scrollbar { width:9px; height:9px; }
+  .dw-table-wrap::-webkit-scrollbar-track { background:#f7f8fa; border-radius:8px; }
+  .dw-table-wrap::-webkit-scrollbar-thumb { background:#dfe3ec; border-radius:8px; border:2px solid #f7f8fa; }
+  .dw-table-wrap::-webkit-scrollbar-thumb:hover { background:var(--blue); }
+  .dw-table { width:100%; border-collapse:separate; border-spacing:0; }
+  .dw-table th { position:sticky; top:0; z-index:2; background:#f7f8fa; text-align:center; font-size:11.5px; font-weight:600;
+    color:var(--sub); padding:9px 8px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  .dw-table th.col-left, .dw-table td.col-left { text-align:left; }
+  .dw-table td { padding:9px 8px; font-size:12.5px; color:var(--txt); text-align:center; border-bottom:1px solid #f2f3f5; white-space:nowrap; }
+  .dw-table tbody tr { cursor:pointer; transition:background .14s; }
+  .dw-table tbody tr:hover { background:#f7f9ff; }
+  .dw-table tbody tr.sel { background:#f2f6ff; }
+  .dw-table tbody tr:last-child td { border-bottom:none; }
+  .dw-table .iid { font-family:"SF Mono","Menlo",monospace; font-size:12px; color:var(--blue); }
+  .dw-table td.col-left { max-width:260px; overflow:hidden; text-overflow:ellipsis; }
+  .dw-table input[type=checkbox] { width:15px; height:15px; accent-color:var(--blue); cursor:pointer; }
+  .tag-soft { display:inline-block; padding:1px 8px; border-radius:9px; font-size:11px; }
+  .tag-soft.on { background:#e8f3ff; color:var(--blue); }
+  .tag-soft.off2 { background:#fff7e8; color:#d97706; }
+  .dw-empty { padding:34px 12px; text-align:center; color:var(--sub); font-size:12.5px; line-height:1.7; }
+  .dw-empty .ico { font-size:24px; display:block; margin-bottom:8px; opacity:.5; }
+  .dw-imp-tip { font-size:12px; color:var(--sub); line-height:1.65; margin-bottom:10px; }
+  .dw-textarea { width:100%; min-height:150px; padding:11px 12px; border:1px solid var(--line); border-radius:8px;
+    font-family:"SF Mono","Menlo",monospace; font-size:12.5px; line-height:1.8; color:var(--txt); outline:none; resize:vertical;
+    transition:border-color .16s, box-shadow .16s; }
+  .dw-textarea:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(59,130,246,.12); }
+  .dw-imp-btns { display:flex; gap:8px; margin-top:10px; }
+  .dw-imp-res { margin-top:12px; }
+  .imp-card { border:1px solid var(--line); border-radius:8px; padding:11px 13px; font-size:12px; color:var(--txt); line-height:1.7; }
+  .imp-card.ok { border-color:#d3f0e2; background:#f5fdf9; }
+  .imp-card.warn { border-color:#fed7aa; background:#fffaf3; }
+  .imp-card b { color:var(--blue); }
+  .imp-card .miss { color:#d97706; font-family:"SF Mono","Menlo",monospace; font-size:11.5px; }
+  .imp-card .row { margin-top:6px; }
+  .dw-foot { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 20px;
+    border-top:1px solid var(--line); background:#fafbfc; }
+  .dw-count { font-size:12.5px; color:var(--sub); }
+  .dw-count b { color:var(--txt); font-size:15px; font-weight:800; }
+  .dw-btns { display:flex; gap:10px; }
+  @media (max-width:760px) {
+    .item-drawer { width:100%; }
+    .dq-item input { width:100%; }
+    .dw-query { align-items:stretch; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .item-drawer, .drawer-mask, .sc-item { transition:none !important; }
+  }
   </style>
 </head>
 <body>
@@ -200,9 +428,23 @@
     <div class="f-row">
       <div class="f-label"><span class="req">*</span>生效售后原因</div>
       <div class="f-ctl">
-        <div class="pick">
-          <div class="chips" id="reasonChips" onclick="toggleReasonMenu(event)"></div>
-          <div class="pick-menu" id="reasonMenu"></div>
+        <div class="msel" id="reasonSel">
+          <div class="msel-ctl" id="reasonCtl" role="combobox" tabindex="0" aria-haspopup="listbox"
+               aria-expanded="false" aria-controls="reasonPanel" aria-label="生效售后原因（可多选）">
+            <div class="msel-tags" id="reasonTags"></div>
+            <svg class="msel-caret" id="reasonCaret" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="msel-panel" id="reasonPanel" role="listbox" aria-multiselectable="true" aria-label="生效售后原因">
+            <div class="msel-head">
+              <span class="t">生效售后原因（可多选）</span>
+              <span class="msel-acts"><span id="reasonAll">全选</span><span id="reasonNone">清空</span></span>
+            </div>
+            <div class="msel-list" id="reasonList"></div>
+            <div class="msel-foot">
+              <span class="n" id="reasonCount"></span>
+              <button type="button" class="msel-done" id="reasonDone">完成</button>
+            </div>
+          </div>
         </div>
         <div class="err-tip" id="errReason">请至少选择一个生效售后原因</div>
       </div>
@@ -214,7 +456,10 @@
     <div class="sec-title">挽留条件</div>
     <div class="f-row">
       <div class="f-label"><span class="req">*</span>商品范围</div>
-      <div class="f-ctl"><div class="seg" id="scopeSeg"></div></div>
+      <div class="f-ctl">
+        <div class="seg" id="scopeSeg"></div>
+        <div id="scopeExtra"></div>
+      </div>
     </div>
     <div class="f-row">
       <div class="f-label"><span class="req">*</span>人群范围</div>
@@ -246,25 +491,29 @@
     <div class="f-row">
       <div class="f-label" style="padding-top:14px;"></div>
       <div class="f-ctl">
-        <div class="ratio-tbl">
-          <div class="rt-head">
-            <div><div class="h">订单金额范围</div><div class="s">按近30天支付订单数从大到小排序</div></div>
-            <div><div class="h">最大挽留比例</div><div class="s">平台智能判断最佳挽留金额 <span class="lnk" onclick="toast('实际以抖店后台为准','info')">详情</span></div></div>
-          </div>
-          <div id="ratioRows"></div>
-        </div>
-        <div class="err-tip" id="errRatio">存在超出平台上限的比例，请修正后保存</div>
+        <div class="rf-err" id="errRatio">请设置百分比</div>
+        <div id="ruleForm"></div>
       </div>
     </div>
     <div class="f-row">
       <div class="f-label"><span class="req">*</span>每日挽留成本上限</div>
       <div class="f-ctl">
         <div class="seg" id="costSeg"></div>
-        <div class="cost-line" id="costLine" style="display:none;">
-          <input type="number" class="num-in" id="costInput" style="width:120px;text-align:left;" min="0" step="100">
-          <span class="unit">元</span>
+        <div class="rf-err" id="errCost">请设置成本上限金额</div>
+        <div id="costLine" style="display:none;">
+          <div class="rf-line">
+            <span class="txt">成本不超过</span>
+            <span class="rf-box"><input type="number" id="costInput" min="0" step="50" placeholder="请输入"><span class="unit">元</span></span>
+            <span class="cost-sug" id="costSug"></span>
+            <span class="cost-help-wrap" id="costHelpWrap">
+              <button type="button" class="cost-help" id="costHelp" aria-label="建议额度说明" aria-expanded="false">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.2a2.5 2.5 0 0 1 4.9.6c0 1.6-2.4 2.1-2.4 3.4"/><line x1="12" y1="16.6" x2="12" y2="16.7"/></svg>
+              </button>
+              <div class="cost-tip" id="costTip" role="tooltip"></div>
+            </span>
+          </div>
+          <div class="rf-hint">当日补偿总额超过该上限时，将不会推送挽单方案给用户。</div>
         </div>
-        <div class="err-tip" id="errCost">请填写挽留成本上限金额</div>
       </div>
     </div>
   </div>
@@ -292,7 +541,104 @@
   </div>
 </div>
 
-<script src="../../js/wd/retention-data.js"></script>
+<!-- 选择 / 导入平台商品 右侧抽屉 -->
+<div class="drawer-mask" id="itemMask" onclick="closeItemDrawer()"></div>
+<div class="item-drawer" id="itemDrawer" role="dialog" aria-modal="true" aria-labelledby="itemDrawerTitle">
+  <div class="dw-head">
+    <div>
+      <h3 id="itemDrawerTitle">选择或导入平台商品</h3>
+      <div class="dw-sub" id="itemDrawerSub"></div>
+    </div>
+    <button type="button" class="dw-close" onclick="closeItemDrawer()" aria-label="关闭">&times;</button>
+  </div>
+  <div class="dw-tabs" role="tablist">
+    <button type="button" class="dw-tab on" id="tabPick" role="tab" aria-selected="true" onclick="switchItemTab('pick')">按店铺选择</button>
+    <button type="button" class="dw-tab" id="tabImport" role="tab" aria-selected="false" onclick="switchItemTab('import')">导入平台商品ID</button>
+  </div>
+  <div class="dw-body">
+    <div class="dw-pane" id="panePick">
+      <div class="dw-query">
+        <div class="dq-item">
+          <label for="itKw">平台商品ID</label>
+          <input type="text" id="itKw" placeholder="完整ID或片段，多个用逗号分隔" autocomplete="off">
+        </div>
+        <div class="dq-item">
+          <label for="itStatus">商品状态</label>
+          <select id="itStatus"><option value="">全部</option><option value="在售">在售</option><option value="已下架">已下架</option></select>
+        </div>
+        <div class="dq-btns">
+          <button type="button" class="btn btn-sm btn-primary" onclick="applyItemQuery()">查询</button>
+          <button type="button" class="btn btn-sm" onclick="resetItemQuery()">重置</button>
+        </div>
+      </div>
+      <div class="dw-sel-bar">
+        <label class="ck2"><input type="checkbox" id="itAll" onchange="toggleAllVisible(this.checked)"><span>全选本页结果</span></label>
+        <span class="dw-stat" id="itStat"></span>
+      </div>
+      <div class="dw-table-wrap">
+        <table class="dw-table">
+          <thead><tr>
+            <th style="width:38px;"></th>
+            <th style="width:132px;">平台商品ID</th>
+            <th class="col-left">商品标题</th>
+            <th style="width:112px;">款号</th>
+            <th style="width:88px;">中类</th>
+            <th style="width:74px;">价格</th>
+            <th style="width:70px;">状态</th>
+          </tr></thead>
+          <tbody id="itBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="dw-pane" id="paneImport" style="display:none;">
+      <div class="dw-imp-tip">每行一个平台商品ID，也可用逗号分隔；粘贴后点「解析并添加」，系统按当前店铺的平台商品清单精确匹配。</div>
+      <textarea class="dw-textarea" id="itInput" placeholder="DY_3829100005&#10;DY_3829100042&#10;DY_3829100116" spellcheck="false"></textarea>
+      <div class="dw-imp-btns">
+        <button type="button" class="btn btn-sm btn-primary" onclick="parseImportIds()">解析并添加</button>
+        <button type="button" class="btn btn-sm" onclick="document.getElementById('itInput').value='';renderItemDrawer()">清空输入</button>
+      </div>
+      <div class="dw-imp-res" id="impRes"></div>
+    </div>
+  </div>
+  <div class="dw-foot">
+    <span class="dw-count" id="dwCount"></span>
+    <div class="dw-btns">
+      <button type="button" class="btn" onclick="closeItemDrawer()">取消</button>
+      <button type="button" class="btn btn-primary" onclick="confirmItemDrawer()">确定添加</button>
+    </div>
+  </div>
+</div>
+
+<!-- 小金额自动同意退款配置 -->
+<div class="aa-mask" id="aaMask">
+  <div class="aa-modal" role="dialog" aria-modal="true" aria-labelledby="aaTitle">
+    <div class="aa-head">
+      <h3 id="aaTitle">小金额自动同意退款</h3>
+      <button type="button" class="dw-close" onclick="closeAutoApprove()" aria-label="关闭">&times;</button>
+    </div>
+    <div class="aa-body">
+      <div class="aa-desc">统一退款金额超过消费者售后申请金额时，平台不执行本挽留方案。开启后，售后申请金额在阈值内的单子由自动审核助手直接同意退款，不再进入挽留与人工审核。</div>
+      <div class="aa-row">
+        <span class="lb">启用自动同意</span>
+        <button type="button" class="aa-sw" id="aaSw" role="switch" aria-checked="false" aria-label="启用小金额自动同意退款" onclick="toggleAa()"></button>
+        <span class="lb" style="font-weight:400;color:var(--sub);" id="aaSwTxt">未开启</span>
+      </div>
+      <div class="aa-row">
+        <span class="lb">自动同意阈值</span>
+        <span class="rf-box"><input type="number" id="aaCap" min="0" step="0.5" placeholder="选填"><span class="unit">元</span></span>
+        <span style="font-size:12px;color:var(--sub);">留空表示不限金额</span>
+      </div>
+      <div class="aa-preview" id="aaPreview"></div>
+      <div class="aa-err" id="aaErr">阈值需大于 0，或留空表示不限金额</div>
+    </div>
+    <div class="aa-foot">
+      <button type="button" class="btn" onclick="closeAutoApprove()">取消</button>
+      <button type="button" class="btn btn-primary" onclick="saveAutoApprove()">保存配置</button>
+    </div>
+  </div>
+</div>
+
+<script src="../../js/wd/retention-data.js?v=20261120b"></script>
 <script>
 function esc(s) {
   if (s === null || s === undefined) return '';
@@ -303,8 +649,7 @@ function clone(o) { return JSON.parse(JSON.stringify(o)); }
 var pid = (location.search.match(/[?&]id=([^&]+)/) || [])[1] || '';
 var CURRENT_USER = '当前用户（业务运营）';
 var isNewDraft = /[?&]new=1/.test(location.search);   // 列表页「新增」带来的未保存草稿
-var plan = null, base = null, editing = /[?&]mode=edit/.test(location.search);
-var showAllRows = false;
+var plan = null, base = null, normBase = null, editing = /[?&]mode=edit/.test(location.search);
 
 plan = WD.STRATEGIES.filter(function(s){ return s.id === pid; })[0];
 if (!plan) {
@@ -315,28 +660,59 @@ if (!plan) {
   base = clone(plan);
 }
 
+/* 本期开放范围：off=true 的选项保留可见但锁定，不可点选 */
 var RECOVER = [ { v:'custom', t:'自定义挽单', d:'商家自行手动设置挽单方案' },
-                { v:'smart', t:'智能挽单', d:'系统智能推荐，省心省力挽回更多订单', rec:true } ];
-var SCENES = [ { v:'after_sale', t:'消费者申请售后后' }, { v:'feige', t:'飞鸽进线有退款诉求' } ];
-var AS_TYPES = ['退货退款', '已发货退款(未签收)'];
-var SCOPE = [ { v:'all', t:'不限制商品' }, { v:'include', t:'添加商品支持方案' }, { v:'exclude', t:'添加商品不支持方案' } ];
-var CROWD = [ { v:'all', t:'不限制' }, { v:'spec', t:'指定生效范围' } ];
-var AMT = [ { v:'all', t:'不限制' }, { v:'spec', t:'指定金额范围' }, { v:'custom', t:'自定义金额范围' } ];
-var RULE_OPT = [ { v:'percent', t:'按订单实付金额百分比退款' }, { v:'ratio', t:'按固定比例退款' }, { v:'fixed', t:'按固定金额退款' } ];
+                { v:'smart', t:'智能挽单', d:'系统智能推荐，省心省力挽回更多订单', off:true } ];
+var SCENES = [ { v:'after_sale', t:'消费者申请售后后' }, { v:'feige', t:'飞鸽进线有退款诉求', off:true } ];
+var AS_TYPES = [ { t:'退货退款' }, { t:'已发货退款(未签收)', off:true } ];
+var SCOPE = [ { v:'all', t:'不限制商品' }, { v:'include', t:'添加商品支持方案' }, { v:'exclude', t:'添加商品不支持方案', off:true } ];
+var CROWD = [ { v:'all', t:'不限制' }, { v:'spec', t:'指定生效范围', off:true } ];
+var AMT = [ { v:'all', t:'不限制' }, { v:'spec', t:'指定金额范围', off:true }, { v:'custom', t:'自定义金额范围', off:true } ];
+var RULE_OPT = [ { v:'percent', t:'按订单实付金额百分比退款', off:true }, { v:'ratio', t:'按固定比例退款' }, { v:'fixed', t:'按固定金额退款' } ];
 var COST = [ { v:'all', t:'不限制' }, { v:'limit', t:'挽留成本不超过' } ];
+
+/* 生效售后原因：四类固定枚举 */
+var REASONS = ['商品品质原因', '物流品质原因', '无理由原因', '其他原因'];
+/* 存量方案的平台明细原因 → 四类枚举的归并映射 */
+var REASON_MAP = {
+  '商品品质': '商品品质原因', '商品与描述不符': '商品品质原因', '质量问题（开线/破损）': '商品品质原因',
+  '物流品质': '物流品质原因', '物流未按承诺时效送达': '物流品质原因', '包裹破损/缺件': '物流品质原因',
+  '无理由': '无理由原因', '不想要了': '无理由原因', '尺码不合适': '无理由原因', '多拍/错拍': '无理由原因',
+  '其他': '其他原因', '优惠券挽单': '其他原因'
+};
+var LOCK_SVG = '<svg class="lk" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+var CHECK_SVG = '<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="3.4"><polyline points="20 6 9 17 4 12"/></svg>';
+function labelOf(opts, v) {
+  var o = opts.filter(function(x) { return x.v === v; })[0];
+  return o ? o.t : v;
+}
 
 function p() { return plan.plan; }
 function setVal(key, v) {
   if (!editing) return;
+  var opts = { recoverType:RECOVER, scene:SCENES, productScope:SCOPE, crowdScope:CROWD, amountMode:AMT, ruleType:RULE_OPT, costMode:COST }[key];
+  if (opts) {
+    var hit = opts.filter(function(o) { return o.v === v; })[0];
+    if (!hit || hit.off) { toast('「' + (hit ? hit.t : v) + '」本期暂不开放', 'warning'); return; }
+  }
   p()[key] = v;
   if (key === 'costMode') { renderCost(); }
-  if (key === 'amountMode') { renderAmount(); }
+  if (key === 'amountMode') { ensureAllRow(); renderAmount(); }
+  if (key === 'ruleType') { renderSolution(); }
+  if (key === 'productScope') {
+    if (v === 'all' && planItems().length) { p().items = []; toast('已切换为不限制商品，原商品清单不再参与判定', 'info'); }
+    renderScopeExtra();
+  }
   renderAll();
 }
 function seg(el, opts, value, key) {
   el.innerHTML = opts.map(function(o) {
-    return '<span class="sg' + (o.v === value ? ' on' : '') + '"'
-      + (editing ? ' onclick="setVal(\'' + key + '\',\'' + o.v + '\')"' : '') + '>' + esc(o.t) + '</span>';
+    var off = !!o.off, on = o.v === value;
+    var clickable = editing && !off;
+    return '<span class="sg' + (on ? ' on' : '') + (off ? ' off' : '') + '"'
+      + (clickable ? ' onclick="setVal(\'' + key + '\',\'' + o.v + '\')" role="button" tabindex="0"'
+                   : (off ? ' title="本期暂不开放" aria-disabled="true"' : '')) + '>'
+      + esc(o.t) + (off ? LOCK_SVG : '') + '</span>';
   }).join('');
 }
 
@@ -353,69 +729,478 @@ function renderHead() {
 function renderInfo() {
   var d = p();
   document.getElementById('recoverType').innerHTML = RECOVER.map(function(o) {
-    return '<div class="cr' + (o.v === d.recoverType ? ' on' : '') + '"'
-      + (editing ? ' onclick="setVal(\'recoverType\',\'' + o.v + '\')"' : '') + '>'
-      + (o.rec ? '<span class="rec">官方推荐</span>' : '')
-      + '<div class="cr-t">' + esc(o.t) + '</div><div class="cr-d">' + esc(o.d) + '</div></div>';
+    var off = !!o.off, on = o.v === d.recoverType, click = editing && !off;
+    return '<div class="cr' + (on ? ' on' : '') + (off ? ' off' : '') + '"'
+      + (click ? ' onclick="setVal(\'recoverType\',\'' + o.v + '\')" role="button" tabindex="0"'
+               : (off ? ' title="本期暂不开放" aria-disabled="true"' : '')) + '>'
+      + (off ? '<span class="lock-tag">暂不开放</span>' : '')
+      + '<div class="cr-t">' + esc(o.t) + (off ? LOCK_SVG : '') + '</div><div class="cr-d">' + esc(o.d) + '</div></div>';
   }).join('');
   var nm = document.getElementById('planName');
   nm.value = d.name || '';
   document.getElementById('nameCount').textContent = (d.name || '').length + '/40';
   nm.oninput = function() { d.name = nm.value; document.getElementById('nameCount').textContent = nm.value.length + '/40'; };
   seg(document.getElementById('sceneSeg'), SCENES, d.scene, 'scene');
-  document.getElementById('asTypeBox').innerHTML = AS_TYPES.map(function(t) {
-    var on = d.afterSaleTypes.indexOf(t) > -1;
-    return '<label class="ck"><input type="checkbox" ' + (on ? 'checked' : '') + (editing ? '' : ' disabled')
-      + ' onchange="toggleAsType(\'' + esc(t) + '\',this.checked)">' + esc(t) + '</label>';
-  }).join('');
+  document.getElementById('asTypeBox').innerHTML = AS_TYPES.map(function(o) {
+    var on = d.afterSaleTypes.indexOf(o.t) > -1, off = !!o.off;
+    return '<label class="ck' + (off ? ' off' : '') + '"><input type="checkbox" ' + (on ? 'checked' : '')
+      + ((editing && !off) ? '' : ' disabled')
+      + ' onchange="toggleAsType(\'' + esc(o.t) + '\',this.checked)">' + esc(o.t) + (off ? LOCK_SVG : '') + '</label>';
+  }).join('') + '<div class="off-note">' + LOCK_SVG + '本期仅开放「退货退款」，其余售后类型暂不支持</div>';
   renderReasons();
 }
+var reasonCursor = -1;
 function renderReasons() {
-  var d = p(), el = document.getElementById('reasonChips');
-  el.innerHTML = (d.reasons.length ? d.reasons.map(function(rn) {
-    return '<span class="chip2">' + esc(rn) + (editing ? '<i onclick="removeReason(event,\'' + esc(rn) + '\')">&times;</i>' : '') + '</span>';
-  }).join('') : '<span style="font-size:12px;color:#c9cdd4;">请选择售后原因</span>')
-    + (d.reasons.length < reasonDict().length ? '<span class="chip2 more">+' + (reasonDict().length - d.reasons.length) + '</span>' : '');
-  document.getElementById('reasonMenu').innerHTML = reasonDict().map(function(x) {
-    var sel = d.reasons.indexOf(x.name) > -1;
-    return '<div class="pick-item"' + (sel || !editing ? '' : ' onclick="addReason(event,\'' + esc(x.name) + '\')"') + '>'
-      + '<input type="checkbox" ' + (sel ? 'checked' : '') + ' disabled>' + esc(x.name)
-      + '<span style="color:var(--sub);font-size:11px;margin-left:auto;">' + esc(x.group) + '</span></div>';
+  var d = p(), sel = document.getElementById('reasonSel');
+  sel.classList.toggle('ro', !editing);
+  document.getElementById('reasonCaret').style.display = editing ? '' : 'none';
+  document.getElementById('reasonCtl').setAttribute('aria-expanded', sel.classList.contains('open') ? 'true' : 'false');
+  if (!editing) { document.getElementById('reasonCtl').removeAttribute('tabindex'); closeReasonPanel(); }
+  else document.getElementById('reasonCtl').setAttribute('tabindex', '0');
+
+  document.getElementById('reasonTags').innerHTML = d.reasons.length
+    ? d.reasons.map(function(rn) {
+        return '<span class="msel-tag">' + esc(rn)
+          + (editing ? '<i title="移除" onclick="removeReasonTag(event,\'' + esc(rn) + '\')">&times;</i>' : '') + '</span>';
+      }).join('')
+    : '<span class="msel-ph">' + (editing ? '请选择生效售后原因（可多选）' : '') + '</span>';
+
+  document.getElementById('reasonList').innerHTML = REASONS.map(function(rn, i) {
+    var on = d.reasons.indexOf(rn) > -1;
+    return '<div class="msel-opt' + (on ? ' on' : '') + (i === reasonCursor ? ' cursor' : '') + '" role="option"'
+      + ' id="reasonOpt' + i + '" aria-selected="' + on + '" data-i="' + i + '" data-name="' + esc(rn) + '">'
+      + '<span class="bx">' + CHECK_SVG + '</span><span>' + esc(rn) + '</span>'
+      + '<span class="tick">' + CHECK_SVG + '</span></div>';
   }).join('');
+
+  document.getElementById('reasonCount').innerHTML = '已选 <b>' + d.reasons.length + '</b> / ' + REASONS.length + ' 项';
+  document.getElementById('reasonAll').classList.toggle('off', d.reasons.length === REASONS.length);
+  document.getElementById('reasonNone').classList.toggle('off', !d.reasons.length);
 }
-function reasonDict() { return WD.RULES.reason.map(function(r) { return { name:r.name, group:r.group }; }); }
-function toggleReasonMenu(e) {
+function toggleReason(rn) {
   if (!editing) return;
-  e.stopPropagation();
-  document.getElementById('reasonMenu').classList.toggle('show');
-}
-function addReason(e, name) {
-  e.stopPropagation();
-  p().reasons.push(name);
+  var arr = p().reasons, i = arr.indexOf(rn);
+  if (i > -1) arr.splice(i, 1); else arr.push(rn);
   document.getElementById('errReason').classList.remove('show');
   renderReasons();
 }
-function removeReason(e, name) {
+function removeReasonTag(e, rn) {
   e.stopPropagation();
-  p().reasons = p().reasons.filter(function(x){ return x !== name; });
-  renderReasons();
+  toggleReason(rn);
 }
+function openReasonPanel() {
+  if (!editing) return;
+  var sel = document.getElementById('reasonSel'), ctl = document.getElementById('reasonCtl');
+  sel.classList.add('open');
+  ctl.setAttribute('aria-expanded', 'true');
+  if (reasonCursor < 0) reasonCursor = 0;
+  renderReasons();
+  // 控件被视口边缘截断时先滚入视野，再决定弹出方向
+  var r = ctl.getBoundingClientRect();
+  if (r.top < 8 || r.bottom > window.innerHeight - 8) {
+    if (ctl.scrollIntoView) ctl.scrollIntoView({ block: 'nearest' });
+  }
+  placeReasonPanel();
+}
+/* 下方空间不够时向上翻转，避免面板被视口截断 */
+function placeReasonPanel() {
+  var sel = document.getElementById('reasonSel'), panel = document.getElementById('reasonPanel');
+  if (!sel || !panel) return;
+  sel.classList.remove('up');
+  var r = sel.getBoundingClientRect(), h = panel.offsetHeight || 240;
+  var below = window.innerHeight - r.bottom - 10;
+  var above = r.top - 10;
+  if (below < h && above > below) sel.classList.add('up');
+}
+function closeReasonPanel() {
+  var sel = document.getElementById('reasonSel');
+  if (!sel) return;
+  sel.classList.remove('open');
+  reasonCursor = -1;
+  var ctl = document.getElementById('reasonCtl');
+  if (ctl) ctl.setAttribute('aria-expanded', 'false');
+}
+function toggleReasonPanel() {
+  if (document.getElementById('reasonSel').classList.contains('open')) closeReasonPanel();
+  else openReasonPanel();
+}
+function setReasonCursor(i) {
+  reasonCursor = Math.max(0, Math.min(REASONS.length - 1, i));
+  renderReasons();
+  var el = document.getElementById('reasonOpt' + reasonCursor);
+  if (el && el.scrollIntoView) el.scrollIntoView({ block: 'nearest' });
+}
+document.getElementById('reasonCtl').addEventListener('click', function(e) {
+  if (e.target.closest && e.target.closest('.msel-tag i')) return;
+  toggleReasonPanel();
+});
+document.getElementById('reasonCtl').addEventListener('keydown', function(e) {
+  if (!editing) return;
+  var open = document.getElementById('reasonSel').classList.contains('open');
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (!open) { openReasonPanel(); return; }
+    setReasonCursor(reasonCursor + (e.key === 'ArrowDown' ? 1 : -1));
+  } else if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    if (!open) openReasonPanel();
+    else if (reasonCursor >= 0) toggleReason(REASONS[reasonCursor]);
+  } else if (e.key === 'Escape') {
+    if (open) { e.preventDefault(); e.stopPropagation(); closeReasonPanel(); }
+  } else if (e.key === 'Home' && open) { e.preventDefault(); setReasonCursor(0); }
+  else if (e.key === 'End' && open) { e.preventDefault(); setReasonCursor(REASONS.length - 1); }
+  else if (e.key === 'Tab') closeReasonPanel();
+});
+document.getElementById('reasonList').addEventListener('click', function(e) {
+  var el = e.target.closest ? e.target.closest('.msel-opt') : null;
+  if (!el || !editing) return;
+  // 多选不关面板；阻止冒泡，避免重渲染后旧节点脱离 DOM 被误判为“点击外部”
+  e.stopPropagation();
+  reasonCursor = Number(el.dataset.i);
+  toggleReason(el.dataset.name);
+  placeReasonPanel();
+});
+document.getElementById('reasonList').addEventListener('mousemove', function(e) {
+  var el = e.target.closest ? e.target.closest('.msel-opt') : null;
+  if (!el) return;
+  var i = Number(el.dataset.i);
+  if (i === reasonCursor) return;
+  reasonCursor = i;
+  // 只切光标类，不重建 DOM，避免悬停抖动
+  Array.prototype.forEach.call(document.querySelectorAll('#reasonList .msel-opt'), function(o, k) {
+    o.classList.toggle('cursor', k === i);
+  });
+});
+document.getElementById('reasonAll').addEventListener('click', function(e) {
+  if (!editing) return;
+  e.stopPropagation();
+  p().reasons = REASONS.slice();
+  document.getElementById('errReason').classList.remove('show');
+  renderReasons();
+  placeReasonPanel();
+});
+document.getElementById('reasonNone').addEventListener('click', function(e) {
+  if (!editing) return;
+  e.stopPropagation();
+  p().reasons = [];
+  renderReasons();
+  placeReasonPanel();
+});
+document.getElementById('reasonDone').addEventListener('click', function() {
+  closeReasonPanel();
+  document.getElementById('reasonCtl').focus();
+});
+document.addEventListener('click', function(e) {
+  var sel = document.getElementById('reasonSel');
+  if (!sel || !sel.classList.contains('open')) return;
+  var path = e.composedPath ? e.composedPath() : [];
+  if (sel.contains(e.target) || path.indexOf(sel) > -1) return;
+  closeReasonPanel();
+});
+// 焦点离开组件（包括 Tab）即关闭；点击面板内非聚焦元素导致的 body 失焦不算离开
+document.addEventListener('focusin', function(e) {
+  var sel = document.getElementById('reasonSel');
+  if (!sel || !sel.classList.contains('open')) return;
+  var t = e.target;
+  if (!t || t === document.body || t === document.documentElement) return;
+  if (!sel.contains(t)) closeReasonPanel();
+});
+// 兼容程序化移焦：relatedTarget 明确落在组件外才关闭（null/body 是点选项造成的失焦，忽略）
+document.getElementById('reasonSel').addEventListener('focusout', function(e) {
+  if (!this.classList.contains('open')) return;
+  var to = e.relatedTarget;
+  if (!to || to === document.body || to === document.documentElement) return;
+  if (!this.contains(to)) closeReasonPanel();
+});
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    if (document.getElementById('costTip').classList.contains('show')) { closeCostTip(); return; }
+    if (document.getElementById('aaMask').classList.contains('show')) { closeAutoApprove(); return; }
+    if (drawerOpen) { closeItemDrawer(); return; }
+    closeReasonPanel();
+  }
+  if (e.key === 'Tab') {
+    var sel2 = document.getElementById('reasonSel');
+    if (sel2 && sel2.classList.contains('open') && !sel2.contains(e.target)) closeReasonPanel();
+  }
+});
+// 抽屉内行选中（事件委托，重渲染不丢绑定）
+document.getElementById('aaMask').addEventListener('click', function(e) {
+  if (e.target === this) closeAutoApprove();
+});
+document.getElementById('aaCap').addEventListener('input', function() {
+  document.getElementById('aaErr').classList.remove('show');
+  renderAa();
+});
+document.getElementById('itBody').addEventListener('click', function(e) {
+  var tr = e.target.closest ? e.target.closest('tr[data-id]') : null;
+  if (!tr) return;
+  var id = tr.dataset.id;
+  var on = drawerSel.indexOf(id) < 0;
+  toggleItemRow(id, on);
+});
+document.getElementById('itKw').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); applyItemQuery(); }
+});
+document.getElementById('itStatus').addEventListener('change', function() {
+  itStatus = this.value; renderItemDrawer();
+});
+document.getElementById('itInput').addEventListener('input', function() {
+  if (impResult) { impResult = null; document.getElementById('impRes').innerHTML = ''; }
+});
+window.addEventListener('resize', function() {
+  var sel = document.getElementById('reasonSel');
+  if (sel && sel.classList.contains('open')) placeReasonPanel();
+});
 function toggleAsType(t, on) {
+  if (!editing) return;
+  var opt = AS_TYPES.filter(function(o) { return o.t === t; })[0];
+  if (opt && opt.off) { toast('「' + t + '」本期暂不开放', 'warning'); renderInfo(); return; }
   var arr = p().afterSaleTypes, i = arr.indexOf(t);
   if (on && i === -1) arr.push(t);
   if (!on && i > -1) arr.splice(i, 1);
+  if (!arr.length) { arr.push('退货退款'); toast('生效售后类型本期固定为「退货退款」，不可取消', 'warning'); }
+  renderInfo();
 }
 
 function renderConditions() {
   var d = p();
   seg(document.getElementById('scopeSeg'), SCOPE, d.productScope, 'productScope');
   seg(document.getElementById('crowdSeg'), CROWD, d.crowdScope, 'crowdScope');
-  seg(document.getElementById('amountSeg'), AMT, d.amountMode || 'spec', 'amountMode');
+  seg(document.getElementById('amountSeg'), AMT, d.amountMode || 'all', 'amountMode');
+  renderScopeExtra();
   renderAmount();
+}
+
+/* ===== 商品范围（添加商品支持方案）已选清单与抽屉 ===== */
+function planItems() {
+  var d = p();
+  if (!Array.isArray(d.items)) d.items = [];
+  return d.items;
+}
+function renderScopeExtra() {
+  var box = document.getElementById('scopeExtra'), d = p();
+  if (d.productScope !== 'include') { box.innerHTML = ''; box.className = ''; return; }
+  var ids = planItems(), shown = ids.slice(0, 12);
+  var chips = ids.length ? shown.map(function(id) {
+    var it = WD.platItemById(id);
+    var off = it && it.status !== '在售';
+    return '<span class="sc-item' + (off ? ' off' : '') + '" title="' + esc(it ? it.id + '｜' + it.title + '｜' + it.shopName + (off ? '｜已下架' : '') : id) + '">'
+      + '<span class="iid">' + esc(id) + '</span>'
+      + (it ? '<span class="ttl">' + esc(it.title) + '</span>' : '')
+      + (editing ? '<i title="移除" onclick="removePlanItem(\'' + esc(id) + '\')">&times;</i>' : '') + '</span>';
+  }).join('') + (ids.length > shown.length ? '<span class="sc-more">共 ' + ids.length + ' 个，点击上方抽屉可查看全部</span>' : '')
+    : '<span class="sc-item" style="border:none;background:none;color:#c9cdd4;">尚未添加商品</span>';
+  box.className = 'sc-extra';
+  box.innerHTML = '<div class="sc-bar">'
+    + (editing ? '<button type="button" class="btn btn-sm btn-primary" onclick="openItemDrawer()">'
+        + '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-2px;margin-right:4px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>添加商品</button>' : '')
+    + '<span class="sc-stat">支持挽单的商品：<b>' + ids.length + '</b> 个'
+    + (ids.length ? '（在售 <b>' + ids.filter(function(x) { var t = WD.platItemById(x); return t && t.status === '在售'; }).length + '</b> 个）' : '') + '</span>'
+    + (editing && ids.length ? '<span class="sc-clear" onclick="clearPlanItems()">清空</span>' : '')
+    + '</div><div class="sc-list' + (ids.length ? '' : ' empty-box') + '">' + chips + '</div>'
+    + '<div class="err-tip" id="errItems">选择「添加商品支持方案」时，请至少添加 1 个平台商品</div>';
+}
+function removePlanItem(id) {
+  var ids = planItems();
+  var i = ids.indexOf(id);
+  if (i > -1) ids.splice(i, 1);
+  document.getElementById('scopeExtra') && (document.getElementById('errItems').classList.remove('show'));
+  renderScopeExtra();
+  toast('已移除 ' + id, 'info');
+}
+function clearPlanItems() {
+  if (!planItems().length) return;
+  if (!confirm('清空已添加的 ' + planItems().length + ' 个平台商品？')) return;
+  p().items = [];
+  renderScopeExtra();
+  toast('已清空商品清单', 'info');
+}
+
+var drawerOpen = false, drawerTab = 'pick', drawerSel = [], itKw = '', itStatus = '', impResult = null;
+function openItemDrawer() {
+  if (!editing) return;
+  drawerSel = planItems().slice();
+  drawerTab = 'pick'; itKw = ''; itStatus = ''; impResult = null;
+  document.getElementById('itKw').value = '';
+  document.getElementById('itStatus').value = '';
+  document.getElementById('itInput').value = '';
+  drawerOpen = true;
+  document.getElementById('itemMask').classList.add('show');
+  document.getElementById('itemDrawer').classList.add('show');
+  renderItemDrawer();
+  setTimeout(function() { document.getElementById('itKw').focus(); }, 320);
+}
+function closeItemDrawer() {
+  if (!drawerOpen) return;
+  drawerOpen = false;
+  document.getElementById('itemMask').classList.remove('show');
+  document.getElementById('itemDrawer').classList.remove('show');
+}
+function switchItemTab(tab) {
+  drawerTab = tab;
+  var pick = tab === 'pick';
+  document.getElementById('tabPick').classList.toggle('on', pick);
+  document.getElementById('tabPick').setAttribute('aria-selected', pick ? 'true' : 'false');
+  document.getElementById('tabImport').classList.toggle('on', !pick);
+  document.getElementById('tabImport').setAttribute('aria-selected', pick ? 'false' : 'true');
+  document.getElementById('panePick').style.display = pick ? '' : 'none';
+  document.getElementById('paneImport').style.display = pick ? 'none' : '';
+  renderItemDrawer();
+}
+function shopPool() {
+  return WD.platItemsOfShop(plan.shopCode || '');
+}
+function visibleItems() {
+  var list = shopPool();
+  var kw = itKw.trim();
+  if (kw) {
+    var keys = kw.split(/[,，\s]+/).filter(function(s) { return !!s; });
+    list = list.filter(function(x) {
+      return keys.some(function(k) {
+        var norm = /^\d+$/.test(k) ? 'DY_' + k : k.toUpperCase();
+        return x.id === norm || x.id.indexOf(norm) > -1 || x.sku.toUpperCase().indexOf(k.toUpperCase()) > -1;
+      });
+    });
+  }
+  if (itStatus) list = list.filter(function(x) { return x.status === itStatus; });
+  return list;
+}
+function applyItemQuery() {
+  itKw = document.getElementById('itKw').value;
+  itStatus = document.getElementById('itStatus').value;
+  renderItemDrawer();
+  var n = visibleItems().length;
+  toast(n ? '命中 ' + n + ' 个平台商品' : '未命中平台商品，请调整查询条件', n ? 'info' : 'warning');
+}
+function resetItemQuery() {
+  itKw = ''; itStatus = '';
+  document.getElementById('itKw').value = '';
+  document.getElementById('itStatus').value = '';
+  renderItemDrawer();
+}
+function toggleItemRow(id, on) {
+  var i = drawerSel.indexOf(id);
+  if (on && i < 0) drawerSel.push(id);
+  if (!on && i > -1) drawerSel.splice(i, 1);
+  renderItemDrawer();
+}
+function toggleAllVisible(on) {
+  visibleItems().forEach(function(x) {
+    var i = drawerSel.indexOf(x.id);
+    if (on && i < 0) drawerSel.push(x.id);
+    if (!on && i > -1) drawerSel.splice(i, 1);
+  });
+  renderItemDrawer();
+}
+function renderItemDrawer() {
+  if (!drawerOpen) return;
+  var shopName = plan.shopName || shopNameOf(plan.shopCode) || '未指定店铺';
+  document.getElementById('itemDrawerSub').innerHTML = '当前店铺 ' + esc((plan.shopCode || '') + ' ' + shopName)
+    + '｜已选 <b>' + drawerSel.length + '</b> 个商品（仅可选本店铺平台商品）';
+
+  var list = visibleItems(), total = shopPool().length;
+  var rows = list.map(function(x) {
+    var sel = drawerSel.indexOf(x.id) > -1;
+    return '<tr class="' + (sel ? 'sel' : '') + '" data-id="' + esc(x.id) + '">'
+      + '<td><input type="checkbox"' + (sel ? ' checked' : '') + ' aria-label="选择 ' + esc(x.id) + '"></td>'
+      + '<td><span class="iid">' + esc(x.id) + '</span></td>'
+      + '<td class="col-left" title="' + esc(x.title) + '">' + esc(x.title) + '</td>'
+      + '<td>' + esc(x.sku) + '</td>'
+      + '<td>' + esc(x.mid) + '</td>'
+      + '<td>¥' + x.price + '</td>'
+      + '<td><span class="tag-soft ' + (x.status === '在售' ? 'on' : 'off2') + '">' + esc(x.status) + '</span></td></tr>';
+  }).join('');
+  document.getElementById('itBody').innerHTML = rows || '<tr><td colspan="7"><div class="dw-empty"><span class="ico">&#128269;</div>'
+    + (total ? '当前查询条件下无匹配商品<br>可调整平台商品ID或状态，或清空条件后重试' : '该店铺暂无平台商品清单，请先在抖店后台同步商品') + '</td></tr>';
+  var allOn = list.length > 0 && list.every(function(x) { return drawerSel.indexOf(x.id) > -1; });
+  var box = document.getElementById('itAll');
+  box.checked = allOn;
+  box.indeterminate = !allOn && list.some(function(x) { return drawerSel.indexOf(x.id) > -1; });
+  box.disabled = !list.length;
+  document.getElementById('itStat').innerHTML = '本店铺共 <b>' + total + '</b> 个平台商品，当前结果 <b>' + list.length + '</b> 个，已选 <b>' + drawerSel.length + '</b> 个';
+
+  // 导入面板结果
+  var res = impResView();
+  document.getElementById('impRes').innerHTML = res;
+  document.getElementById('dwCount').innerHTML = '已选 <b>' + drawerSel.length + '</b> 个平台商品'
+    + (itKw.trim() ? '<span style="color:var(--sub);">　检索：' + esc(itKw.trim()) + '</span>' : '');
+}
+function impResView() {
+  if (!impResult) return '';
+  var add = impResult.added.length, miss = impResult.missed.length, dup = impResult.dup.length;
+  var cls = add ? (miss ? 'warn' : 'ok') : 'warn';
+  var html = '<div class="imp-card ' + cls + '">解析完成：新增 <b>' + add + '</b> 个'
+    + (dup ? '，已在清单中 <b>' + dup + '</b> 个' : '')
+    + (miss ? '，<span class="miss">未匹配 ' + miss + ' 个：' + esc(impResult.missed.join('、')) + '</span>' : '')
+    + '<div class="row" style="color:var(--sub);">'
+    + (miss ? '未匹配的条目已跳过，请核对平台商品ID或款号是否属于当前店铺。'
+            : (add ? '新增 ID 已加入待选清单，点底部「确定添加」生效。' : '输入的商品均已在清单中，未产生重复。'))
+    + '</div></div>';
+  return html;
+}
+function parseImportIds() {
+  var raw = document.getElementById('itInput').value || '';
+  // 按行/逗号/分号/空白切分，保留款号内部的连字符与下划线
+  var ids = raw.split(/[\s,，;；]+/).map(function(s) { return s.trim(); }).filter(function(s) { return !!s; });
+  if (!ids.length) { toast('请先粘贴或输入平台商品ID', 'warning'); impResult = null; renderItemDrawer(); return; }
+  var pool = shopPool(), added = [], missed = [], dup = [];
+  ids.forEach(function(token) {
+    var id = /^\d+$/.test(token) ? 'DY_' + token : token.toUpperCase();
+    if (!/^DY_/.test(id)) id = 'DY_' + id.replace(/^DY_/, '');
+    // 优先按平台商品ID精确匹配，其次支持粘贴款号（一个款号可对应多条链接）
+    var hits = pool.filter(function(x) { return x.id === id; });
+    if (!hits.length) hits = pool.filter(function(x) { return x.sku.toUpperCase() === token.toUpperCase(); });
+    if (!hits.length) { if (missed.indexOf(token) < 0) missed.push(token); return; }
+    hits.forEach(function(it) {
+      if (drawerSel.indexOf(it.id) > -1) { if (dup.indexOf(it.id) < 0) dup.push(it.id); return; }
+      drawerSel.push(it.id); added.push(it.id);
+    });
+  });
+  impResult = { added: added, missed: missed, dup: dup };
+  renderItemDrawer();
+  var msg, type;
+  if (added.length) {
+    msg = '已添加 ' + added.length + ' 个平台商品'
+      + (dup.length ? '，' + dup.length + ' 个已在清单中' : '')
+      + (missed.length ? '，' + missed.length + ' 个未匹配已跳过' : '');
+    type = 'success';
+  } else if (missed.length) {
+    msg = dup.length ? '输入的 ' + dup.length + ' 个商品已在清单中' + (missed.length ? '，' + missed.length + ' 个未在当前店铺匹配到' : '')
+      : '输入的 ID 均未在当前店铺匹配到';
+    type = dup.length && !missed.length ? 'info' : 'error';
+  } else {
+    msg = '输入的 ' + dup.length + ' 个商品均已在清单中';
+    type = 'info';
+  }
+  toast(msg, type);
+}
+function confirmItemDrawer() {
+  p().items = drawerSel.slice();
+  document.getElementById('errItems') && document.getElementById('errItems').classList.remove('show');
+  closeItemDrawer();
+  renderScopeExtra();
+  toast('已选择 ' + p().items.length + ' 个平台商品', 'success');
+}
+/* 订单金额范围本期只开放「不限制」：收拢为单行统一规则 */
+function isAllAmount() { return (p().amountMode || 'all') === 'all'; }
+function ensureAllRow() {
+  var d = p();
+  if (!isAllAmount()) return;
+  if (d.amountRows.length === 1 && d.amountRows[0].band === '全部订单金额') return;
+  var prev = d.amountRows[0];
+  d.amountRows = [{ band: '全部订单金额', lower: 0, upper: null, maxRatio: 100, capPct: 100,
+    raw: prev ? prev.suggest : 0, suggest: prev ? prev.suggest : 0,
+    fixed: prev && prev.fixed ? prev.fixed : 0, over: false, clamped: false }];
 }
 function renderAmount() {
   var d = p(), ac = document.getElementById('amountChips');
-  if ((d.amountMode || 'spec') === 'all') { ac.style.display = 'none'; ac.innerHTML = ''; return; }
+  if (isAllAmount()) {
+    ac.style.display = '';
+    ac.innerHTML = '<span class="off-note" style="margin-top:10px;">' + LOCK_SVG
+      + '不限制订单金额，全部售后订单按下方统一规则执行；指定/自定义金额范围本期暂不开放</span>';
+    return;
+  }
   ac.style.display = '';
   ac.innerHTML = d.amountRows.map(function(r) {
     return '<span class="chip2">' + fmtRange(r.lower, r.upper) + (editing ? '<i onclick="removeBand(' + r.lower + ')">&times;</i>' : '') + '</span>';
@@ -424,6 +1209,7 @@ function renderAmount() {
 function fmtRange(lo, up) { return up === null ? (lo + '元以上') : (lo + '–' + up + '元'); }
 function removeBand(lower) {
   if (!editing) return;
+  if (isAllAmount()) { toast('不限制订单金额时只有一行统一规则，不可删除', 'warning'); return; }
   p().amountRows = p().amountRows.filter(function(r){ return r.lower !== lower; });
   renderAmount(); renderSolution();
 }
@@ -431,30 +1217,131 @@ function removeBand(lower) {
 function renderSolution() {
   var d = p();
   seg(document.getElementById('ruleSeg'), RULE_OPT, d.ruleType, 'ruleType');
-  var rows = showAllRows ? d.amountRows : d.amountRows.slice(0, 3);
-  document.getElementById('ratioRows').innerHTML = rows.map(function(r) {
-    var i = d.amountRows.indexOf(r);
-    return '<div class="rt-row"><div class="rt-band">' + fmtRange(r.lower, r.upper) + '</div>'
-      + '<div class="rt-right">'
-      + '<input type="number" class="num-in" value="' + r.suggest + '" min="0" max="100"' + (editing ? '' : ' disabled')
-      + ' oninput="setRatio(' + i + ',this.value)"><span class="unit">%</span>'
-      + (editing ? '<span class="del-btn" onclick="removeRow(' + i + ')">'
-        + '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></span>' : '')
-      + '</div></div>';
-  }).join('') + (d.amountRows.length > 3
-      ? '<div class="rt-more" onclick="toggleRows()">' + (showAllRows ? '收起 ∧' : '展开全部 ⌄') + '</div>' : '');
+  var dis = editing ? '' : ' disabled';
+  var row0 = (d.amountRows && d.amountRows[0]) || { suggest: 0, fixed: 0 };
+  var box = document.getElementById('ruleForm');
+  if (d.ruleType === 'fixed') {
+    var aa = d.autoApprove || { on: false, cap: null };
+    box.innerHTML = '<div class="rf-line"><span class="txt">统一退款</span>'
+      + '<span class="rf-box"><input type="number" id="rfFixed" min="0" step="0.1" value="' + (row0.fixed || '') + '" placeholder="请输入"' + dis
+      + ' oninput="setFixedVal(this.value)"><span class="unit">元</span></span></div>'
+      + '<div class="rf-hint">若超过消费者售后申请金额则不执行挽留方案，可配置自动审核助手的 <span class="lnk" onclick="openAutoApprove()">小金额自动同意退款</span> 方案</div>'
+      + '<div class="aa-state' + (aa.on ? ' on' : '') + '" id="aaState">'
+      + '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+      + (aa.on ? '小金额自动同意退款已开启：售后申请金额 ≤ ' + (aa.cap === null ? '不限' : aa.cap + ' 元') + ' 时自动同意退款'
+               : '小金额自动同意退款未开启：超过申请金额的挽留不执行，需人工审核')
+      + (editing ? '<span class="lnk" onclick="openAutoApprove()">配置</span>' : '')
+      + '</div>';
+  } else if (d.ruleType === 'ratio') {
+    box.innerHTML = '<div class="rf-line"><span class="txt">退款订单实付金额的</span>'
+      + '<span class="rf-box"><input type="number" id="rfPct" min="0" max="100" step="1" value="' + (row0.suggest === 0 ? '' : row0.suggest) + '" placeholder="请输入"' + dis
+      + ' oninput="setPctVal(this.value)"><span class="unit">%</span></span>'
+      + '<span class="sep">，且最高不超过</span>'
+      + '<span class="rf-box"><input type="number" id="rfCap" min="0" step="1" value="' + (d.ratioCap === null || d.ratioCap === undefined ? '' : d.ratioCap) + '" placeholder="选填"' + dis
+      + ' oninput="setRatioCapVal(this.value)"><span class="unit">元</span></span></div>'
+      + '<div class="rf-hint">选填内容为空则表示不设置金额上限；若计算后的退款金额小于1元，则按1元挽留。</div>';
+  } else {
+    // 存量「按订单实付金额百分比退款」已不开放，只读展示原分档比例
+    var pcts = (d.amountRows || []).map(function(r) { return r.suggest; });
+    var uniq = pcts.filter(function(v, i) { return pcts.indexOf(v) === i; });
+    box.innerHTML = '<div class="rf-line"><span class="txt">存量规则：按订单实付金额百分比退款</span>'
+      + '<span class="rf-lock">' + LOCK_SVG + '本期已不开放，进入编辑后改为按固定比例退款</span></div>'
+      + '<div class="rf-hint">当前分档比例：' + (uniq.length ? esc(uniq.join('% / ') + '%') : '未设置')
+      + '，共 ' + (d.amountRows || []).length + ' 档。</div>';
+  }
   renderCost();
 }
-function toggleRows() { showAllRows = !showAllRows; renderSolution(); }
-function setRatio(i, v) {
-  var r = p().amountRows[i];
-  if (!r) return;
-  r.suggest = v === '' ? 0 : parseFloat(v);
+function firstRow() {
+  var d = p();
+  if (!d.amountRows || !d.amountRows.length) ensureAllRow();
+  return d.amountRows[0];
 }
-function removeRow(i) {
+function num(v) { var n2 = parseFloat(v); return isNaN(n2) ? 0 : n2; }
+function setPctVal(v) {
   if (!editing) return;
-  p().amountRows.splice(i, 1);
-  renderAmount(); renderSolution();
+  var d = p(), r = firstRow();
+  r.suggest = num(v); r.raw = num(v);
+  d.ratioPct = num(v);
+  document.getElementById('errRatio').classList.remove('show');
+}
+function setRatioCapVal(v) {
+  if (!editing) return;
+  p().ratioCap = v === '' || v === null ? null : num(v);
+  document.getElementById('errRatio').classList.remove('show');
+}
+function setFixedVal(v) {
+  if (!editing) return;
+  firstRow().fixed = num(v);
+  document.getElementById('errRatio').classList.remove('show');
+}
+
+/* ===== 小金额自动同意退款（自动审核助手）配置 ===== */
+var aaDraft = null;
+function aaOf() {
+  var d = p();
+  if (!d.autoApprove || typeof d.autoApprove !== 'object') d.autoApprove = { on: false, cap: null };
+  return d.autoApprove;
+}
+function openAutoApprove() {
+  if (!editing) { toast('请先进入编辑态再配置自动同意退款', 'warning'); return; }
+  var aa = aaOf();
+  aaDraft = { on: !!aa.on, cap: aa.cap === undefined ? null : aa.cap };
+  document.getElementById('aaCap').value = aaDraft.cap === null ? '' : aaDraft.cap;
+  document.getElementById('aaErr').classList.remove('show');
+  document.getElementById('aaMask').classList.add('show');
+  renderAa();
+  setTimeout(function() { document.getElementById('aaCap').focus(); }, 240);
+}
+function closeAutoApprove() {
+  document.getElementById('aaMask').classList.remove('show');
+  aaDraft = null;
+}
+function toggleAa() {
+  if (!aaDraft) return;
+  aaDraft.on = !aaDraft.on;
+  renderAa();
+}
+function renderAa() {
+  if (!aaDraft) return;
+  var sw = document.getElementById('aaSw');
+  sw.classList.toggle('on', aaDraft.on);
+  sw.setAttribute('aria-checked', aaDraft.on ? 'true' : 'false');
+  document.getElementById('aaSwTxt').textContent = aaDraft.on ? '已开启' : '未开启';
+  var capInput = document.getElementById('aaCap');
+  capInput.disabled = !aaDraft.on;
+  var raw = capInput.value;
+  aaDraft.cap = raw === '' ? null : num(raw);
+  var fixed = (p().amountRows[0] || {}).fixed || 0;
+  var capTxt = aaDraft.cap === null ? '不限金额' : '≤ ' + aaDraft.cap + ' 元';
+  var html;
+  if (!aaDraft.on) {
+    html = '未开启：统一退款 <b>¥' + fixed + '</b> 超过售后申请金额的单子不执行挽留，需人工审核。';
+  } else {
+    html = '售后申请金额 <b>' + capTxt + '</b>：自动审核助手直接同意退款；'
+      + '<br>超出阈值的单子：执行统一退款 <b>¥' + fixed + '</b> 挽留，超过申请金额则不执行并转人工。';
+    if (aaDraft.cap !== null && fixed > 0 && aaDraft.cap < fixed) {
+      html += '<br><span class="warn">提示：阈值低于统一退款金额，小金额单子将全部直接退款，不再进入挽留。</span>';
+    }
+  }
+  document.getElementById('aaPreview').innerHTML = html;
+}
+function saveAutoApprove() {
+  if (!aaDraft) return;
+  var raw = document.getElementById('aaCap').value;
+  var cap = raw === '' ? null : num(raw);
+  if (aaDraft.on && cap !== null && !(cap > 0)) {
+    document.getElementById('aaErr').classList.add('show');
+    toast('阈值需大于 0，或留空表示不限金额', 'error');
+    return;
+  }
+  document.getElementById('aaErr').classList.remove('show');
+  var aa = aaOf();
+  var before = { on: aa.on, cap: aa.cap };
+  aa.on = aaDraft.on; aa.cap = aaDraft.on ? cap : null;
+  closeAutoApprove();
+  renderSolution();
+  var changed = before.on !== aa.on || before.cap !== aa.cap;
+  toast(changed ? '小金额自动同意退款配置已更新' : '配置未变化', changed ? 'success' : 'info');
 }
 function renderCost() {
   var d = p();
@@ -463,8 +1350,72 @@ function renderCost() {
   var ci = document.getElementById('costInput');
   ci.value = d.dailyBudget || '';
   ci.disabled = !editing;
-  ci.oninput = function() { d.dailyBudget = parseFloat(ci.value) || 0; };
+  ci.oninput = function() {
+    d.dailyBudget = parseFloat(ci.value) || 0;
+    document.getElementById('errCost').classList.remove('show');
+  };
+  var sug = d.suggestBudget || 200;
+  var sugEl = document.getElementById('costSug');
+  sugEl.textContent = '建议额度 ' + sug + ' 元';
+  sugEl.className = 'cost-sug' + (editing ? '' : ' ro');
+  sugEl.title = editing ? '点击填入建议额度' : '';
+  sugEl.onclick = editing ? applySuggestBudget : null;
+  renderCostTip();
 }
+function suggestBudgetOf() { return p().suggestBudget || 200; }
+function applySuggestBudget() {
+  if (!editing) return;
+  var sug = suggestBudgetOf();
+  p().dailyBudget = sug;
+  document.getElementById('costInput').value = sug;
+  document.getElementById('errCost').classList.remove('show');
+  renderCostTip();
+  toast('已填入建议额度 ' + sug + ' 元', 'success');
+}
+function renderCostTip() {
+  document.getElementById('costTip').innerHTML = '<div class="t">建议额度说明</div>'
+    + '基于店铺历史订单、售后退款数据等，系统预测该金额可覆盖店铺最大挽回金额。';
+}
+var costTipPinned = false;
+function openCostTip() {
+  var tip = document.getElementById('costTip'), help = document.getElementById('costHelp'), wrap = document.getElementById('costHelpWrap');
+  var r = help.getBoundingClientRect();
+  if (r.top < 8 || r.bottom > window.innerHeight - 8) {
+    help.scrollIntoView({ block: 'center' });
+    r = help.getBoundingClientRect();
+  }
+  tip.classList.add('show');
+  help.setAttribute('aria-expanded', 'true');
+  var th = tip.offsetHeight, tw = tip.offsetWidth;
+  var below = r.top < th + 20;
+  if (below && r.bottom + th + 12 > window.innerHeight) below = false;
+  tip.classList.toggle('below', below);
+  // 水平夹取：气泡不超出视口左右缘，箭头仍指向图标
+  var wr = wrap.getBoundingClientRect();
+  var hc = r.left + r.width / 2;
+  var cx = Math.min(Math.max(hc, tw / 2 + 8), window.innerWidth - tw / 2 - 8);
+  tip.style.marginLeft = (-tw / 2) + 'px';
+  tip.style.left = (cx - wr.left) + 'px';
+  tip.style.setProperty('--ax', (hc - (cx - tw / 2)) + 'px');
+}
+function closeCostTip() {
+  costTipPinned = false;
+  document.getElementById('costTip').classList.remove('show');
+  document.getElementById('costHelp').setAttribute('aria-expanded', 'false');
+}
+document.getElementById('costHelp').addEventListener('click', function(e) {
+  e.stopPropagation();
+  costTipPinned = !costTipPinned;
+  if (costTipPinned) openCostTip(); else closeCostTip();
+});
+document.getElementById('costHelpWrap').addEventListener('mouseenter', openCostTip);
+document.getElementById('costHelpWrap').addEventListener('mouseleave', function() { if (!costTipPinned) closeCostTip(); });
+document.getElementById('costHelp').addEventListener('focus', openCostTip);
+document.getElementById('costHelp').addEventListener('blur', function() { if (!costTipPinned) closeCostTip(); });
+document.addEventListener('click', function(e) {
+  var wrap = document.getElementById('costHelpWrap');
+  if (wrap && !wrap.contains(e.target)) closeCostTip();
+});
 
 function renderAll() {
   if (!plan) return;
@@ -513,21 +1464,56 @@ function diffPlan(a, b) {
   if (pa.name !== pb.name) out.push('方案名称「' + pa.name + '」→「' + pb.name + '」');
   if (a.shopCode !== b.shopCode) out.push('目标店铺 ' + a.shopCode + ' ' + a.shopName + ' → ' + b.shopCode + ' ' + b.shopName);
   if ((a.schemeId || '') !== (b.schemeId || '')) out.push('平台方案ID「' + (a.schemeId || '') + '」→「' + (b.schemeId || '') + '」');
-  if (pa.recoverType !== pb.recoverType) out.push('挽回类型 ' + (pa.recoverType === 'smart' ? '智能挽单' : '自定义挽单') + ' → ' + (pb.recoverType === 'smart' ? '智能挽单' : '自定义挽单'));
-  if (pa.scene !== pb.scene) out.push('挽单场景变更');
+  if (pa.recoverType !== pb.recoverType) out.push('挽回类型 ' + labelOf(RECOVER, pa.recoverType) + ' → ' + labelOf(RECOVER, pb.recoverType));
+  if (pa.scene !== pb.scene) out.push('挽单场景 ' + labelOf(SCENES, pa.scene) + ' → ' + labelOf(SCENES, pb.scene));
   if (pa.afterSaleTypes.join('、') !== pb.afterSaleTypes.join('、')) out.push('生效售后类型 ' + pa.afterSaleTypes.join('、') + ' → ' + pb.afterSaleTypes.join('、'));
   if (pa.reasons.join('、') !== pb.reasons.join('、')) out.push('生效售后原因 ' + (pa.reasons.join('、') || '无') + ' → ' + (pb.reasons.join('、') || '无'));
-  if (pa.productScope !== pb.productScope) out.push('商品范围 ' + pa.productScope + ' → ' + pb.productScope);
-  if (pa.crowdScope !== pb.crowdScope) out.push('人群范围 ' + pa.crowdScope + ' → ' + pb.crowdScope);
-  if ((pa.amountMode || 'spec') !== (pb.amountMode || 'spec')) out.push('订单金额范围模式变更');
-  if (pa.ruleType !== pb.ruleType) out.push('退款规则 ' + pa.ruleType + ' → ' + pb.ruleType);
-  if (pa.amountRows.length !== pb.amountRows.length) out.push('金额档位 ' + pa.amountRows.length + ' 档 → ' + pb.amountRows.length + ' 档');
-  pb.amountRows.forEach(function(r, i) {
-    var o = pa.amountRows[i];
-    if (o && o.lower === r.lower && o.suggest !== r.suggest) out.push(fmtRange(r.lower, r.upper) + ' 比例 ' + o.suggest + '% → ' + r.suggest + '%');
-  });
-  if (pa.costMode !== pb.costMode) out.push('每日成本上限模式 ' + pa.costMode + ' → ' + pb.costMode);
+  if (pa.productScope !== pb.productScope) out.push('商品范围 ' + labelOf(SCOPE, pa.productScope) + ' → ' + labelOf(SCOPE, pb.productScope));
+  var ai = (pa.items || []).slice(), bi = (pb.items || []).slice();
+  if (ai.join(',') !== bi.join(',')) {
+    var added = bi.filter(function(x) { return ai.indexOf(x) < 0; });
+    var removed = ai.filter(function(x) { return bi.indexOf(x) < 0; });
+    var seg2 = '商品清单 ' + ai.length + ' 个 → ' + bi.length + ' 个';
+    if (added.length) seg2 += '（新增 ' + added.slice(0, 3).join('、') + (added.length > 3 ? ' 等 ' + added.length + ' 个' : '') + '）';
+    if (removed.length) seg2 += (added.length ? '；' : '（') + '移除 ' + removed.slice(0, 3).join('、') + (removed.length > 3 ? ' 等 ' + removed.length + ' 个' : '') + (added.length ? '' : '）');
+    out.push(seg2);
+  }
+  if (pa.crowdScope !== pb.crowdScope) out.push('人群范围 ' + labelOf(CROWD, pa.crowdScope) + ' → ' + labelOf(CROWD, pb.crowdScope));
+  if ((pa.amountMode || 'all') !== (pb.amountMode || 'all')) out.push('订单金额范围 ' + labelOf(AMT, pa.amountMode || 'all') + ' → ' + labelOf(AMT, pb.amountMode || 'all'));
+  if (pa.ruleType !== pb.ruleType) out.push('协商部分退款规则 ' + labelOf(RULE_OPT, pa.ruleType) + ' → ' + labelOf(RULE_OPT, pb.ruleType));
+  var unified = (pb.amountMode || pa.amountMode || 'all') === 'all';
+  if (unified) {
+    // 不限制订单金额时只有一行统一规则，按规则类型输出一行，不再重复输出分档行
+    if (pb.ruleType === 'ratio' || pa.ruleType === 'ratio') {
+      var ap = (pa.amountRows[0] || {}).suggest || 0, bp = (pb.amountRows[0] || {}).suggest || 0;
+      if (ap !== bp) out.push('退款比例 实付金额的 ' + ap + '% → ' + bp + '%');
+      var ac = pa.ratioCap === undefined ? null : pa.ratioCap, bc = pb.ratioCap === undefined ? null : pb.ratioCap;
+      if (ac !== bc) out.push('退款金额上限 ' + (ac === null ? '不设置' : '¥' + ac) + ' → ' + (bc === null ? '不设置' : '¥' + bc));
+    }
+    if (pb.ruleType === 'fixed' || pa.ruleType === 'fixed') {
+      var af = (pa.amountRows[0] || {}).fixed || 0, bf = (pb.amountRows[0] || {}).fixed || 0;
+      if (af !== bf) out.push('退款金额 ¥' + af + ' → ¥' + bf);
+    }
+  } else {
+    if (pa.amountRows.length !== pb.amountRows.length) out.push('金额档位 ' + pa.amountRows.length + ' 档 → ' + pb.amountRows.length + ' 档');
+    pb.amountRows.forEach(function(r, i) {
+      var o = pa.amountRows[i];
+      if (!o) return;
+      var bandTxt = fmtRange(r.lower, r.upper);
+      if (pb.ruleType === 'fixed' || pa.ruleType === 'fixed') {
+        if ((o.fixed || 0) !== (r.fixed || 0)) out.push(bandTxt + ' 退款金额 ¥' + (o.fixed || 0) + ' → ¥' + (r.fixed || 0));
+      } else if (o.lower === r.lower && o.suggest !== r.suggest) {
+        out.push(bandTxt + ' 比例 ' + o.suggest + '% → ' + r.suggest + '%');
+      }
+    });
+  }
+  if (pa.costMode !== pb.costMode) out.push('每日挽留成本上限 ' + labelOf(COST, pa.costMode) + ' → ' + labelOf(COST, pb.costMode));
   else if (pa.dailyBudget !== pb.dailyBudget) out.push('每日成本上限 ¥' + pa.dailyBudget + ' → ¥' + pb.dailyBudget);
+  var aa1 = pa.autoApprove || { on: false, cap: null }, aa2 = pb.autoApprove || { on: false, cap: null };
+  if (aa1.on !== aa2.on || (aa1.cap === undefined ? null : aa1.cap) !== (aa2.cap === undefined ? null : aa2.cap)) {
+    out.push('小金额自动同意退款 ' + (aa1.on ? '开启（' + (aa1.cap === null || aa1.cap === undefined ? '不限金额' : '≤ ¥' + aa1.cap) + '）' : '未开启')
+      + ' → ' + (aa2.on ? '开启（' + (aa2.cap === null || aa2.cap === undefined ? '不限金额' : '≤ ¥' + aa2.cap) + '）' : '未开启'));
+  }
   return out;
 }
 
@@ -604,12 +1590,42 @@ function syncToList() {
   if (idx > -1) WD.STRATEGIES[idx] = plan;
 }
 
-function enterEdit() { editing = true; renderAll(); toast('已进入编辑态', 'info'); }
+/* 进入编辑时把存量方案收敛到本期开放范围，避免保存出不被允许的组合 */
+function normalizePlan() {
+  if (!plan || !plan.plan) return;
+  var d = p();
+  d.recoverType = 'custom';
+  d.scene = 'after_sale';
+  d.afterSaleTypes = ['退货退款'];
+  var mapped = [];
+  (d.reasons || []).forEach(function(r) {
+    var m = REASONS.indexOf(r) > -1 ? r : REASON_MAP[r];
+    if (m && mapped.indexOf(m) === -1) mapped.push(m);
+  });
+  d.reasons = mapped;
+  if (['all', 'include'].indexOf(d.productScope) < 0) d.productScope = 'include';
+  if (!Array.isArray(d.items)) d.items = [];
+  d.crowdScope = 'all';
+  d.amountMode = 'all';
+  if (['ratio', 'fixed'].indexOf(d.ruleType) < 0) d.ruleType = 'ratio';
+  if (d.ratioCap === undefined) d.ratioCap = null;
+  if (!d.autoApprove || typeof d.autoApprove !== 'object') d.autoApprove = { on: false, cap: null };
+  if (d.ratioPct === undefined) d.ratioPct = (d.amountRows && d.amountRows[0]) ? d.amountRows[0].suggest : 0;
+  ensureAllRow();
+}
+
+function enterEdit() {
+  editing = true;
+  normalizePlan();
+  normBase = clone(plan);
+  renderAll();
+  toast('已进入编辑态', 'info');
+}
 function cancelEdit() {
   if (isNewDraft) { discardDraft(); return; }
   plan = Object.assign(plan, clone(base));
   syncToList();
-  editing = false; showAllRows = false; renderAll();
+  editing = false; renderAll();
   toast('已取消编辑', 'info');
 }
 // 新增草稿未保存就退出 → 不留残留记录
@@ -622,23 +1638,73 @@ function discardDraft() {
   setTimeout(goBack, 700);   // 留时间让提示可见再返回
 }
 function savePlan() {
+  if (!editing || !plan) { toast('请先进入编辑态再保存', 'warning'); return; }
   var d = p();
   var errN = document.getElementById('errName');
   if (!d.name || !d.name.trim()) { errN.classList.add('show'); toast('请填写方案名称', 'error'); return; }
   errN.classList.remove('show');
   var errR = document.getElementById('errReason');
+  var errR2 = document.getElementById('errRatio');
   if (!d.reasons.length) { errR.classList.add('show'); toast('请至少选择一个生效售后原因', 'error'); return; }
+  var badReason = d.reasons.filter(function(r) { return REASONS.indexOf(r) < 0; });
+  if (badReason.length) { errR.classList.add('show'); toast('生效售后原因仅支持：' + REASONS.join('、'), 'error'); return; }
   errR.classList.remove('show');
-  var over = d.amountRows.filter(function(r){ return r.suggest > r.capPct; });
-  if (over.length) {
-    document.getElementById('errRatio').classList.add('show');
-    toast(fmtRange(over[0].lower, over[0].upper) + ' 的比例超出平台上限 ' + over[0].capPct + '%', 'error');
+  var errI = document.getElementById('errItems');
+  if (d.productScope === 'include' && !planItems().length) {
+    if (errI) errI.classList.add('show');
+    toast('请点「添加商品」至少选择 1 个平台商品', 'error');
     return;
   }
-  document.getElementById('errRatio').classList.remove('show');
+  if (errI) errI.classList.remove('show');
+  if (d.recoverType !== 'custom' || d.scene !== 'after_sale'
+      || d.afterSaleTypes.join('、') !== '退货退款'
+      || ['all', 'include'].indexOf(d.productScope) < 0
+      || d.crowdScope !== 'all' || (d.amountMode || 'all') !== 'all'
+      || ['ratio', 'fixed'].indexOf(d.ruleType) < 0) {
+    toast('存在本期暂不开放的选项，请修正后保存', 'error');
+    return;
+  }
+  if (d.ruleType === 'fixed') {
+    var fv = (d.amountRows[0] || {}).fixed || 0;
+    if (!(Number(fv) > 0)) {
+      errR2.textContent = '请设置金额';
+      errR2.classList.add('show');
+      toast('请设置金额', 'error');
+      return;
+    }
+  } else if (d.ruleType === 'ratio') {
+    var pv = (d.amountRows[0] || {}).suggest || 0;
+    if (!(Number(pv) > 0)) {
+      errR2.textContent = '请设置百分比';
+      errR2.classList.add('show');
+      toast('请填写退款订单实付金额的百分比', 'error');
+      return;
+    }
+    if (Number(pv) > 100) {
+      errR2.textContent = '百分比不能大于 100';
+      errR2.classList.add('show');
+      toast('百分比不能大于 100', 'error');
+      return;
+    }
+    if (d.ratioCap !== null && d.ratioCap !== undefined && !(Number(d.ratioCap) > 0)) {
+      errR2.textContent = '金额上限需大于 0，或留空表示不设置上限';
+      errR2.classList.add('show');
+      toast('金额上限需大于 0，或留空表示不设置上限', 'error');
+      return;
+    }
+    var over = d.amountRows.filter(function(r) { return r.suggest > r.capPct; });
+    if (over.length) {
+      errR2.textContent = '存在超出平台上限的比例，请修正后保存';
+      errR2.classList.add('show');
+      toast((isAllAmount() ? '全部订单金额' : fmtRange(over[0].lower, over[0].upper)) + ' 的比例超出平台上限 ' + over[0].capPct + '%', 'error');
+      return;
+    }
+  }
+  errR2.classList.remove('show');
   if (d.costMode === 'limit' && !d.dailyBudget) {
+    document.getElementById('errCost').textContent = '请设置成本上限金额';
     document.getElementById('errCost').classList.add('show');
-    toast('请填写挽留成本上限金额', 'error');
+    toast('请设置成本上限金额', 'error');
     return;
   }
   document.getElementById('errCost').classList.remove('show');
@@ -653,9 +1719,10 @@ function savePlan() {
   plan.reasons = d.reasons.slice();
   plan.updated = nowStr();
   plan.updatedBy = CURRENT_USER;
-  var ch = diffPlan(base, plan);
+  var ch = diffPlan(normBase || base, plan);
   pushLog(ch.length ? '编辑方案配置' : '保存配置', ch.length ? ch.join('；') : '无字段变化，重新保存当前配置');
   base = clone(plan);
+  normBase = clone(plan);
   syncToList();
   editing = false;
   isNewDraft = false;
@@ -676,10 +1743,6 @@ function goBack() {
     window.parent.postMessage({type:'closeTab'}, '*');
   } else { location.href = 'wd-strategy.html'; }
 }
-document.addEventListener('click', function(e) {
-  var m = document.getElementById('reasonMenu');
-  if (m && m.classList.contains('show') && !e.target.closest('.pick')) m.classList.remove('show');
-});
 function toast(msg, type) {
   var c = document.getElementById('toastContainer');
   var t = document.createElement('div'); t.className = 'toast toast-' + (type || 'info'); t.textContent = msg;
@@ -687,6 +1750,7 @@ function toast(msg, type) {
   setTimeout(function(){ t.classList.add('toast-hide'); }, 2400);
   setTimeout(function(){ t.remove(); }, 2900);
 }
+if (editing) { normalizePlan(); normBase = clone(plan); }
 renderAll();
 </script>
 </body>

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>客户子表维护 - 分销枢纽</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+    .page-container { min-height: 100vh; background: var(--bg, #f5f7fb); padding: 24px 28px; box-sizing: border-box; }
+
+    /* ===== 页头 ===== */
+    .page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .page-header .btn { display: flex; align-items: center; gap: 4px; padding: 6px 12px; height: auto; }
+    .page-title { font-size: 18px; font-weight: 700; color: var(--text); }
+    .page-sub { font-size: 12.5px; color: var(--text-tertiary); padding: 3px 10px; background: var(--bg-white);
+      border: 1px solid var(--border); border-radius: 20px; }
+
+    /* ===== 表单卡片 ===== */
+    .form-card { background: var(--bg-white, #fff); border: 1px solid var(--border); border-radius: 12px;
+      padding: 22px 24px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
+    .form-card-title { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: var(--text);
+      margin: 0 0 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border-light); }
+    .form-card-title::before { content: ''; width: 3px; height: 15px; background: var(--primary); border-radius: 2px; }
+    .form-card-title .hint { font-size: 12px; font-weight: 400; color: var(--text-muted); }
+    .form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 24px; }
+
+    /* ===== 字段 ===== */
+    .cf-item { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+    .cf-item.span-2 { grid-column: span 2; }
+    .cf-item.span-4 { grid-column: span 4; }
+    .cf-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+    .cf-label .req { color: var(--danger, #ef4444); margin-left: 2px; }
+    .cf-item input, .cf-item select, .cf-item textarea { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 9px;
+      font: inherit; font-size: 13px; outline: none; background: #fafbfd; box-sizing: border-box; color: var(--text);
+      transition: border-color .18s, box-shadow .18s, background .18s; }
+    .cf-item textarea { resize: vertical; min-height: 64px; }
+    .cf-item input:focus, .cf-item select:focus, .cf-item textarea:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 3px var(--primary-light); }
+    .cf-item input.invalid, .cf-item select.invalid, .cf-item textarea.invalid { border-color: var(--danger, #ef4444); background: #fef2f2; box-shadow: 0 0 0 3px var(--danger-light); }
+
+    /* 百分比输入（佣金比例）：右侧内嵌 % 后缀 */
+    .cf-percent { position: relative; display: flex; align-items: center; }
+    .cf-percent input { padding-right: 34px; }
+    .cf-percent-sign { position: absolute; right: 14px; font-size: 13px; font-weight: 600; color: var(--text-muted); pointer-events: none; }
+    .cf-percent input:focus + .cf-percent-sign { color: var(--primary); }
+
+    /* ===== 底部操作条（吸底常驻，保存随时可达） ===== */
+    .form-actions { position: sticky; bottom: 16px; display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+      padding: 14px 20px; margin-top: 8px; background: rgba(255, 255, 255, .95); backdrop-filter: blur(6px);
+      border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 4px 16px rgba(15, 23, 42, .08); }
+    .cf-err { font-size: 12.5px; color: var(--danger); margin-right: auto; }
+
+    @media (max-width: 1100px) {
+      .form-grid { grid-template-columns: repeat(2, 1fr); }
+      .cf-item.span-4 { grid-column: span 2; }
+    }
+    @media (max-width: 640px) {
+      .page-container { padding: 16px; }
+      .form-card { padding: 16px; }
+      .form-grid { grid-template-columns: 1fr; gap: 14px; }
+      .cf-item.span-2, .cf-item.span-4 { grid-column: span 1; }
+      .page-sub { display: none; }
+    }
+  /* 资质附件：上传 / 链接 */
+  .att-item .att-box { display:flex; flex-direction:column; gap:7px; }
+  .att-item .att-name, .att-item .att-link { width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:8px; font-size:12.5px; outline:none; background:#fff; }
+  .att-item .att-name:focus, .att-item .att-link:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(91,108,245,.12); }
+  .att-item .att-ops { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .att-item .att-btn { padding:6px 14px; border:1px solid var(--primary); color:var(--primary); background:#fff; border-radius:8px; font-size:12.5px; cursor:pointer; }
+  .att-item .att-btn:hover { background:#f0f1ff; }
+  .att-item .att-or { font-size:11.5px; color:#64748b; }
+  .att-item .att-cur { display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:12px; }
+  .att-item .att-cur:empty { display:none; }
+  .att-badge { font-size:11px; padding:1px 8px; border-radius:10px; font-weight:600; }
+  .att-badge.file { background:#ecfdf5; color:#059669; }
+  .att-badge.link { background:#e8f3ff; color:#2563eb; }
+  .att-size { color:#64748b; font-size:11px; }
+  .att-clear { border:none; background:none; color:#dc2626; font-size:12px; cursor:pointer; text-decoration:underline; }
+  .att-open { color:var(--primary); cursor:pointer; }
+  .att-open:hover { text-decoration:underline; }
+  .att-tag { font-size:10.5px; color:#64748b; margin-left:4px; }
+  .att-name.invalid { border-color:#dc2626; box-shadow:0 0 0 3px rgba(220,38,38,.12); }
+  </style>
+</head>
+<body>
+<div class="page-container">
+  <div id="toastContainer" class="toast-container"></div>
+
+  <div class="page-header">
+    <button class="btn" type="button" onclick="goBack()">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      返回
+    </button>
+    <div class="page-title" id="pageTitle">子表维护</div>
+    <span class="page-sub" id="pageSub"></span>
+  </div>
+
+  <form id="mainForm" autocomplete="off">
+    <div id="formBody"></div>
+    <div class="form-actions">
+      <span class="cf-err" id="cfErr"></span>
+      <button class="btn" type="button" onclick="goBack()">取消</button>
+      <button class="btn btn-primary" type="submit">保存</button>
+    </div>
+  </form>
+</div>
+
+<script src="../../js/auth.js"></script>
+<script src="../../js/recruit/customer-profile-data.js"></script>
+<script>
+if (!Auth.requireAuth()) { /* 已跳转登录页 */ }
+if (window.parent) {
+  window.parent.postMessage({ type: 'breadcrumb', text: '分销枢纽 <span>/</span> 运营视角 <span>/</span> 客户档案库 <span>/</span> 子表维护' }, '*');
+}
+
+// ===== 数据层（与档案库一致） =====
+var STORE_KEY = 'recruit_customer_profiles';
+var currentUser = Auth.getCurrentUser();
+var canManage = !!(currentUser && ['operator', 'bd', 'admin'].indexOf(currentUser.role) >= 0);
+function loadProfiles() {
+  try {
+    var raw = localStorage.getItem(STORE_KEY);
+    if (raw) { var arr = JSON.parse(raw); if (arr && arr.length) return arr.map(function(p){ return window.CUSTOMER_PROFILE_MIGRATE ? window.CUSTOMER_PROFILE_MIGRATE(p) : p; }); }
+  } catch (e) {}
+  return JSON.parse(JSON.stringify(window.CUSTOMER_PROFILE_SEED));
+}
+var profiles = loadProfiles();
+function persistProfiles() { try { localStorage.setItem(STORE_KEY, JSON.stringify(profiles)); } catch (e) {} }
+function byId(id) { for (var i = 0; i < profiles.length; i++) if (profiles[i].id === id) return profiles[i]; return null; }
+function esc(s) { if (s === null || s === undefined) return ''; var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
+
+// ===== 路由参数：cid 客户 / tab 子表 / row 行下标（缺省=新增） =====
+function g(name) { var r = location.search.match(new RegExp('[?&]' + name + '=([^&]*)')); return r ? decodeURIComponent(r[1]) : ''; }
+var TAB_NAMES = ['账号子表', '跟进记录', '回款订单', '资质附件'];
+var cid = parseInt(g('cid')) || 0;
+var tabName = TAB_NAMES.indexOf(g('tab')) >= 0 ? g('tab') : '账号子表';
+var rowIdx = g('row') === '' ? -1 : parseInt(g('row'));
+var profile = byId(cid);
+var isEdit = rowIdx >= 0;
+
+// ===== 列级控件配置（与主档编辑页共用数据层 SUBFORM，单一来源） =====
+var SUBFORM = window.CUSTOMER_PROFILE_SUBFORM;
+var COL_SELECT = SUBFORM.select;
+var COL_PERCENT = SUBFORM.percent;
+var COL_TEXTAREA = SUBFORM.textarea;
+var COL_SPAN2 = SUBFORM.span2;
+var COL_PLACEHOLDER = SUBFORM.placeholder;
+var REQUIRED = SUBFORM.required;
+var NUMERIC = SUBFORM.numeric;
+var ATTACH = window.CUSTOMER_PROFILE_ATTACH;
+
+// ===== 新增行默认值（审计类字段自动带出） =====
+function defaultRow(columns) {
+  return window.CUSTOMER_PROFILE_SUB_DEFAULT(columns, (currentUser && currentUser.name) || '当前用户');
+}
+
+// ===== 控件渲染 =====
+function cfInput(key, label, val, opt) {
+  opt = opt || {};
+  var ctl;
+  if (opt.opts) {
+    var ph = '<option value=""' + (val ? '' : ' selected') + '>请选择</option>';
+    ctl = '<select data-fkey="' + key + '">' + ph + opt.opts.map(function(o){ return '<option value="' + esc(o) + '"' + (o === val ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('') + '</select>';
+  } else if (opt.percent) {
+    var pv = String(val == null ? '' : val).trim().replace(/[%％]\s*$/, '');
+    ctl = '<div class="cf-percent"><input type="text" inputmode="decimal" data-fkey="' + key + '" value="' + esc(pv) + '"' + (opt.placeholder ? ' placeholder="' + esc(opt.placeholder) + '"' : '') + '><span class="cf-percent-sign">%</span></div>';
+  } else if (opt.textarea) {
+    ctl = '<textarea data-fkey="' + key + '" rows="2"' + (opt.placeholder ? ' placeholder="' + esc(opt.placeholder) + '"' : '') + '>' + esc(val == null ? '' : val) + '</textarea>';
+  } else {
+    ctl = '<input type="text" data-fkey="' + key + '" value="' + esc(val == null ? '' : val) + '"' + (opt.placeholder ? ' placeholder="' + esc(opt.placeholder) + '"' : '') + '>';
+  }
+  var spanCls = opt.span ? (' span-' + opt.span) : '';
+  return '<div class="cf-item' + spanCls + '"><span class="cf-label">' + esc(label) + (opt.req ? '<span class="req">*</span>' : '') + '</span>' + ctl + '</div>';
+}
+function renderForm(columns, values) {
+  var req = REQUIRED[tabName] || [];
+  var html = '<div class="form-card"><h3 class="form-card-title">' + esc(tabName) +
+    '<span class="hint">' + (isEdit ? '编辑第 ' + (rowIdx + 1) + ' 条记录' : '新增记录') + ' · 共 ' + columns.length + ' 个字段</span></h3><div class="form-grid">';
+  columns.forEach(function(c, ci) {
+    var opt = {};
+    if (req.indexOf(c) >= 0) opt.req = true;
+    if (SUBFORM.attach[c]) { html += ATTACH.fieldHtml('c' + ci, c, values[ci], req.indexOf(c) >= 0); return; }
+    if (COL_SELECT[c]) opt.opts = COL_SELECT[c];
+    if (COL_PERCENT[c]) { opt.percent = true; opt.placeholder = '如 17'; }
+    if (COL_TEXTAREA[c]) opt.textarea = true;
+    if (COL_SPAN2[c]) opt.span = 2;
+    if (COL_PLACEHOLDER[c]) opt.placeholder = COL_PLACEHOLDER[c];
+    html += cfInput('c' + ci, c, values[ci], opt);
+  });
+  html += '</div></div>';
+  document.getElementById('formBody').innerHTML = html;
+  ATTACH.bind(document.getElementById('formBody'), showToast);
+}
+
+// ===== 取值 / 校验 / 保存 =====
+function fv(key) { var el = document.querySelector('#formBody [data-fkey="' + key + '"]'); return el ? el.value.trim() : ''; }
+function markInvalid(key) { var el = document.querySelector('#formBody [data-fkey="' + key + '"]'); if (el) { el.classList.add('invalid'); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } }
+function clearInvalid() { document.querySelectorAll('#formBody .invalid').forEach(function(el){ el.classList.remove('invalid'); }); }
+function saveForm() {
+  var errEl = document.getElementById('cfErr'); errEl.textContent = ''; clearInvalid();
+  if (!canManage) { errEl.textContent = '当前账号无编辑权限'; return; }
+  var tb = profile.tables[tabName];
+  var columns = tb.columns;
+  var req = REQUIRED[tabName] || [];
+  var body = document.getElementById('formBody');
+  var attErr = '';
+  var values = columns.map(function(c, ci){
+    if (SUBFORM.attach[c]) {
+      var r = ATTACH.read('c' + ci, body);
+      if (r.error) { if (!attErr) { attErr = r.error; markInvalid('c' + ci); } }
+      return r.cell;
+    }
+    return fv('c' + ci);
+  });
+  if (attErr) { errEl.textContent = attErr; return; }
+  for (var i = 0; i < columns.length; i++) {
+    var c = columns[i], v = values[i];
+    if (req.indexOf(c) >= 0 && !v) { errEl.textContent = '请填写「' + c + '」'; markInvalid('c' + i); return; }
+    if (COL_PERCENT[c] && v && (!/^\d+(\.\d+)?$/.test(v) || Number(v) > 100)) { errEl.textContent = '「' + c + '」需为 0~100 的数字'; markInvalid('c' + i); return; }
+    if (NUMERIC[c] && v && isNaN(Number(v.replace(/[,，\s]/g, '')))) { errEl.textContent = '「' + c + '」需为数字'; markInvalid('c' + i); return; }
+  }
+  if (isEdit) tb.rows[rowIdx] = values; else tb.rows.push(values);
+  // 同步主档审计字段：最后更新人
+  (profile.sections || []).forEach(function(sec){ (sec.fields || []).forEach(function(f){
+    if (f.label === '最后更新人') f.value = (currentUser && currentUser.name) || '当前用户';
+  }); });
+  persistProfiles();
+  showToast(isEdit ? '记录已保存' : '记录新增成功', 'success');
+  setTimeout(function(){ location.href = backUrl(); }, 800);
+}
+function backUrl() { return 'customer-profile-library.html?focus=' + cid + '&tab=' + encodeURIComponent(tabName); }
+function goBack() { location.href = backUrl(); }
+
+// ===== Toast =====
+function showToast(message, type) {
+  type = type || 'info';
+  var container = document.getElementById('toastContainer');
+  if (!container) return;
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(function () {
+    if (toast.parentNode) { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s';
+      setTimeout(function () { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300); }
+  }, 2500);
+}
+
+// ===== 初始化 =====
+function initForm() {
+  if (!profile) { showToast('未找到该客户', 'error'); setTimeout(function(){ location.href = 'customer-profile-library.html'; }, 1200); return; }
+  var tb = profile.tables[tabName];
+  if (isEdit && (!tb.rows || !tb.rows[rowIdx])) { showToast('未找到该条记录', 'error'); setTimeout(goBack, 1200); return; }
+  var values = isEdit ? tb.rows[rowIdx].slice() : defaultRow(tb.columns);
+  // 历史行可能短于列数，补齐空值
+  while (values.length < tb.columns.length) values.push('');
+  document.getElementById('pageTitle').textContent = (isEdit ? '编辑' : '新增') + tabName;
+  document.getElementById('pageSub').textContent = profile.code + ' · ' + profile.name;
+  renderForm(tb.columns, values);
+}
+document.getElementById('mainForm').addEventListener('submit', function(e){ e.preventDefault(); saveForm(); });
+initForm();
+</script>
+</body>
+</html>

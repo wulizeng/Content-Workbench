@@ -14,6 +14,20 @@
   .mode-tag { font-size:11.5px; padding:3px 10px; border-radius:12px; background:#eef0ff; color:#5b6cf5; font-weight:600; }
   .mode-tag.edit { background:#fff7ed; color:#ea580c; }
 
+  /* 新建向导步骤条 */
+  .wz { background:linear-gradient(135deg,#eef0ff,#f8f9ff); border:1px solid #dce0f8; border-radius:10px; padding:12px 16px; margin-bottom:12px; }
+  .wz-steps { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .wz-step { display:inline-flex; align-items:center; gap:7px; font-size:12.5px; color:var(--text-tertiary); }
+  .wz-step i { width:19px; height:19px; border-radius:50%; background:#fff; border:1px solid #dce0f8; color:var(--text-tertiary);
+    font-style:normal; font-size:11px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; }
+  .wz-step.on { color:#3f4a9e; font-weight:600; }
+  .wz-step.on i { background:#5b6cf5; border-color:#5b6cf5; color:#fff; }
+  .wz-step.done { color:#059669; }
+  .wz-step.done i { background:#ecfdf5; border-color:#a7f3d0; color:#059669; }
+  .wz-line { flex:1; min-width:30px; height:1px; background:#dce0f8; }
+  .wz-tip { font-size:11.5px; color:#3f4a9e; margin-top:9px; line-height:1.7; }
+  .ig-label .req { color:#f53f3f; margin-right:3px; }
+
   .card { background:var(--bg-white); border:1px solid var(--border); border-radius:10px; margin-bottom:12px; overflow:hidden; }
   .card-head { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; padding:12px 18px; border-bottom:1px solid var(--border-light); background:#fafbfd; }
   .card-head h3 { margin:0; font-size:14px; font-weight:700; color:var(--ink); display:flex; align-items:center; gap:6px; }
@@ -59,9 +73,13 @@
   .pv.list-wrap { flex-direction:column; align-items:stretch; gap:6px; }
   .pv .list-row { display:flex; align-items:center; gap:6px; }
 
+  .tier-note { margin-top:10px; font-size:11.5px; color:var(--text-tertiary); line-height:1.7; }
+  .tier-note b { color:var(--ink); }
+  .ti-in { width:88px; padding:6px 8px; border:1px solid var(--border); border-radius:6px; font-size:12.5px;
+    outline:none; text-align:center; color:var(--ink); font-family:inherit; }
+  .ti-in:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(91,108,245,.12); }
   .warn-bar { margin-top:12px; padding:10px 14px; border-radius:8px; font-size:12px; line-height:1.65; }
   .warn-bar.err { background:#fef2f2; border:1px solid #fecaca; color:#991b1b; }
-  .warn-bar.ok { background:#ecfdf5; border:1px solid #a7f3d0; color:#065f46; }
 
   .timeline { position:relative; padding-left:22px; }
   .timeline::before { content:''; position:absolute; left:6px; top:6px; bottom:6px; width:2px; background:var(--border-light); }
@@ -71,6 +89,37 @@
   .tl-title { font-size:12.5px; font-weight:600; color:var(--ink); }
   .tl-meta { font-size:11.5px; color:var(--text-tertiary); margin-top:3px; line-height:1.6; }
   .foot-bar { display:flex; justify-content:flex-end; gap:10px; padding:14px 18px; background:var(--bg-white); border:1px solid var(--border); border-radius:10px; }
+  /* 本策略执行概览 */
+  .ov-head { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex-wrap:wrap; padding-bottom:12px; border-bottom:1px solid var(--border-light, #eef1f6); }
+  .ov-batch { font-size:15px; font-weight:800; color:#0f172a; font-family:"SF Mono","Menlo",monospace; }
+  .ov-at { font-size:11.5px; color:var(--text-tertiary); margin-top:4px; }
+  .ov-status { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+  .ov-tag { display:inline-block; padding:3px 10px; border-radius:11px; font-size:11.5px; font-weight:600; white-space:nowrap; }
+  .ov-done { background:#ecfdf5; color:#059669; }
+  .ov-doing { background:#eef4ff; color:#2563eb; }
+  .ov-wait { background:#fef3c7; color:#d97706; }
+  .ov-fail { background:#fef2f2; color:#dc2626; }
+  .ov-cnt { font-size:11.5px; color:var(--text-secondary); }
+  .ov-kpi { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin-top:12px; }
+  .ov-box { border:1px solid var(--border, #e2e8f0); border-radius:8px; padding:9px 11px; background:#fafbfd; }
+  .ov-box .k { font-size:11px; color:var(--text-tertiary); }
+  .ov-box .v { font-size:18px; font-weight:800; color:#0f172a; margin-top:3px; font-variant-numeric:tabular-nums; }
+  .ov-box.in .v { color:#059669; }
+  .ov-box.out .v { color:#94a3b8; }
+  .ov-cmp { margin-top:12px; font-size:12px; color:var(--text-secondary); line-height:1.8; }
+  .ov-cmp b { color:#0f172a; font-weight:700; }
+  .ov-cmp b.up { color:#059669; }
+  .ov-cmp b.down { color:#dc2626; }
+  .ov-fail-msg { margin-top:10px; padding:9px 12px; border-radius:8px; border:1px solid #fecaca; background:#fef2f2;
+    font-size:12px; color:#b91c1c; line-height:1.7; }
+  .ov-tbl { width:100%; border-collapse:separate; border-spacing:0; border:1px solid var(--border, #e2e8f0); border-radius:8px; overflow:hidden; margin-top:12px; }
+  .ov-tbl th { background:#f7f8fa; font-size:11.5px; font-weight:600; color:var(--text-secondary); padding:8px; text-align:center; white-space:nowrap; }
+  .ov-tbl td { font-size:12px; color:#0f172a; padding:8px; text-align:center; border-top:1px solid #eef1f6; white-space:nowrap; }
+  .ov-tbl .mono { font-family:"SF Mono","Menlo",monospace; font-size:11.5px; color:var(--primary, #5b6cf5); }
+  .ov-on { color:#059669; font-size:11.5px; font-weight:600; }
+  .ov-none { font-size:12.5px; color:var(--text-secondary); line-height:1.8; padding:6px 0; }
+  .ov-none b { color:#0f172a; }
+  @media (max-width:900px) { .ov-kpi { grid-template-columns:repeat(3,1fr); } }
   </style>
 </head>
 <body>
@@ -96,20 +145,30 @@
 
   <div class="page-title" id="pgTitle">商品判定策略明细</div>
 
+  <!-- 新建向导步骤条（仅新增时显示）-->
+  <div class="wz" id="wzBar" style="display:none;">
+    <div class="wz-steps">
+      <span class="wz-step on" id="wzS1"><i>1</i>填写表头信息</span>
+      <span class="wz-line"></span>
+      <span class="wz-step" id="wzS2"><i>2</i>配置明细参数</span>
+    </div>
+    <div class="wz-tip" id="wzTip"></div>
+  </div>
+
   <!-- 1 基本信息 -->
-  <div class="card">
+  <div class="card" id="cardBase">
     <div class="card-head">
       <h3><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>基本信息</h3>
-      <span class="ch-sub">一条策略只对一个店铺生效，店铺编码即该策略的同步目标</span>
+      <span class="ch-sub" id="baseSub"></span>
     </div>
     <div class="card-body"><div class="info-grid" id="baseGrid"></div></div>
   </div>
 
   <!-- 2 判定维度参数 -->
-  <div class="card">
+  <div class="card" id="cardDims">
     <div class="card-head">
       <h3><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>判定维度参数</h3>
-      <span class="ch-sub">退货率 / 销售件数 / 毛利率 三个数值维度各维护一个区间，商品中类维护包含/排除名单；四项同时命中才判挽单，任一不命中即不挽单</span>
+      <span class="ch-sub">商品中类 / 销售件数 / 退货率倍数 三个维度决定「是否挽单」</span>
     </div>
     <div class="card-body">
       <table class="dim-tbl">
@@ -125,8 +184,39 @@
     </div>
   </div>
 
-  <!-- 3 操作日志 -->
-  <div class="card">
+  <!-- 2.1 分档规则 -->
+  <div class="card" id="cardTiers">
+    <div class="card-head">
+      <h3><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="4" width="3" height="14"/></svg>分档规则</h3>
+      <span class="ch-sub">对已判为挽单的商品按毛利率定档</span>
+    </div>
+    <div class="card-body">
+      <table class="dim-tbl">
+        <thead><tr>
+          <th style="width:96px;">档位</th>
+          <th style="width:280px;">毛利率区间（%）</th>
+          <th style="width:150px;">退款比例（%）</th>
+          <th style="width:150px;">最高退款金额（元）</th>
+          <th>作用</th>
+        </tr></thead>
+        <tbody id="tierBody"></tbody>
+      </table>
+      <div class="warn-bar" id="tierBar" style="display:none;"></div>
+      <div class="tier-note" id="tierNote"></div>
+    </div>
+  </div>
+
+  <!-- 3 本策略执行概览 -->
+  <div class="card" id="cardRun">
+    <div class="card-head">
+      <h3><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>本策略执行概览</h3>
+      <span class="ch-sub">只读汇总最近批次的批处理结果</span>
+    </div>
+    <div class="card-body" id="runOverview"></div>
+  </div>
+
+  <!-- 4 操作日志 -->
+  <div class="card" id="cardLog">
     <div class="card-head">
       <h3><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>操作日志</h3>
       <span class="ch-sub">记录每次保存的参数变动流水，新记录在上</span>
@@ -137,10 +227,13 @@
   <div class="foot-bar">
     <button class="btn" id="btnCancel2" style="display:none;" onclick="cancelEdit()">取消</button>
     <button class="btn btn-primary" id="btnSave2" style="display:none;" onclick="saveRule()">保存</button>
+    <button class="btn" id="btnWzPrev" style="display:none;" onclick="wzPrev()">上一步</button>
+    <button class="btn btn-primary" id="btnWzNext" style="display:none;" onclick="wzNext()">下一步：配置明细参数</button>
+    <button class="btn btn-primary" id="btnWzSave" style="display:none;" onclick="wzSave()">保存参数并创建</button>
   </div>
 </div>
 
-<script src="../../js/wd/retention-data.js"></script>
+<script src="../../js/wd/retention-data.js?v=20261120b"></script>
 <script>
 function esc(s) {
   if (s === null || s === undefined) return '';
@@ -160,6 +253,7 @@ var CURRENT_USER = '当前用户（业务运营）';
 var id = qs('id');
 var editing = qs('mode') === 'edit';
 var rule, base, draft;
+var wzStep = 0;   // 0=普通查看/编辑；1=新建第一步（表头信息）；2=新建第二步（明细参数）
 
 if (id === 'new' || !id) {
   // 策略编号规则：PD + 年月日 + 3位流水（当日已有最大流水 +1）
@@ -173,6 +267,8 @@ if (id === 'new' || !id) {
   rule = clone(WD.TAG_RULE_TPL);
   rule.id = prefix + String(maxSeq + 1).padStart(3, '0');
   rule.isNew = true;
+  wzStep = 1;      // 新增必须先填表头信息，再配明细参数
+  editing = true;
 } else {
   rule = clone(WD.TAG_RULES.filter(function(r) { return r.id === id; })[0] || WD.TAG_RULE_TPL);
 }
@@ -185,10 +281,15 @@ var DIMS = [
     note: '该款剔挽退货率与同品类基准的倍数落在区间内才判挽单；上限用于排除退货率异常款（先排查商品与直播表达，不投补偿）' },
   { key: 'sales',  dim: '销售件数', name: '销售件数判定区间', unit: '件', step: 1, dec: 0,
     note: '按发货口径统计的近 30 天销售件数落在区间内才挽单；上限用于排除销量过高、无需补偿的款' },
-  { key: 'margin', dim: '毛利率',   name: '毛利率判定区间', unit: '%', step: 1, dec: 0,
-    note: '毛利率不低于区间下界才值得挽；上限用于排除价格失真的高毛利清仓盘' },
   { key: 'midCat', dim: '商品中类', name: '中类包含/排除规则', type: 'list',
     note: '仅包含列表内的商品中类参与判定（包含留空表示不限中类）；排除列表内的中类一律不挽单，排除优先于包含' }
+];
+
+// 分档表：毛利率只用于定档，不再参与是否挽单；每档维护区间、退款比例与最高退款金额
+var TIER_ROWS = [
+  { code: 'L',  name: '低档', note: '毛利率最低的一档，退款比例与金额上限均收紧' },
+  { code: 'YM', name: '中档', note: '主力毛利区，兼顾挽回效果与成本' },
+  { code: 'YH', name: '高档', note: '高毛利款可投更高退款（毛利率上限留空表示无上限）' }
 ];
 
 function splitList(s) {
@@ -246,7 +347,8 @@ function shopNameOf(code) {
 }
 
 function renderBase() {
-  var editable = editing;
+  // 向导第 1 步：表头字段可编辑；向导第 2 步：表头只读（要改需回上一步）
+  var editable = editing && wzStep !== 2;
   var shopCtl = editable
     ? '<select id="shopSel"><option value="">请选择店铺</option>' + WD.TAG_SHOPS.map(function(s) {
         return '<option value="' + esc(s.code) + '"' + (s.code === draft.shopCode ? ' selected' : '') + '>' + esc(s.code) + ' ' + esc(s.name) + '</option>';
@@ -254,19 +356,24 @@ function renderBase() {
     : '<code>' + esc(draft.shopCode || '') + '</code>';
   var items = [
     ['策略编号', '<code>' + esc(draft.id) + '</code>'],
-    ['策略名称', editable ? '<input type="text" id="nameIn" value="' + esc(draft.name) + '" maxlength="40">' : esc(draft.name)],
-    ['店铺编码', shopCtl],
+    [editable ? '<span class="req">*</span>策略名称' : '策略名称', editable ? '<input type="text" id="nameIn" value="' + esc(draft.name) + '" maxlength="40" placeholder="例如：巴拉旗舰店挽单判定策略">' : esc(draft.name)],
+    [editable ? '<span class="req">*</span>店铺编码' : '店铺编码', shopCtl],
     ['店铺名称', '<span class="ro">' + esc(shopNameOf(draft.shopCode)) + '</span>'],
-    ['状态', '<span class="st-tag st-' + draft.status + '">' + esc(WD.TAG_STATUS[draft.status]) + '</span>'],
-    ['覆盖款数', draft.skuCnt ? draft.skuCnt.toLocaleString() + ' 款' : ''],
-    ['备注', editable ? '<input type="text" id="remarkIn" value="' + esc(draft.remark || '') + '" maxlength="60">' : esc(draft.remark || '')],
-    ['创建人', esc(draft.createdBy || '')],
-    ['创建时间', esc(draft.createdAt || '')],
-    ['更新人', esc(draft.updatedBy || '')],
-    ['更新时间', esc(draft.updatedAt || '')]
+    ['备注', editable ? '<input type="text" id="remarkIn" value="' + esc(draft.remark || '') + '" maxlength="60" placeholder="选填，说明该策略的适用背景">' : esc(draft.remark || '')]
   ];
+  if (wzStep === 0) {
+    // 普通查看/编辑态：保留完整的 11 个基本信息字段
+    items = items.concat([
+      ['状态', '<span class="st-tag st-' + draft.status + '">' + esc(WD.TAG_STATUS[draft.status]) + '</span>'],
+      ['覆盖款数', draft.skuCnt ? draft.skuCnt.toLocaleString() + ' 款' : ''],
+      ['创建人', esc(draft.createdBy || '')],
+      ['创建时间', esc(draft.createdAt || '')],
+      ['更新人', esc(draft.updatedBy || '')],
+      ['更新时间', esc(draft.updatedAt || '')]
+    ]);
+  }
   document.getElementById('baseGrid').innerHTML = items.map(function(r) {
-    return '<div class="ig-item"><div class="ig-label">' + esc(r[0]) + '</div><div class="ig-value">' + r[1] + '</div></div>';
+    return '<div class="ig-item"><div class="ig-label">' + r[0] + '</div><div class="ig-value">' + r[1] + '</div></div>';
   }).join('');
 }
 
@@ -279,8 +386,51 @@ function renderDims() {
   }).join('');
 }
 
+/* ===== 分档规则表 ===== */
+function tierRowsOf(obj) {
+  if (!obj.dims.tiers || !obj.dims.tiers.length) {
+    obj.dims.tiers = WD.tagDims().tiers.map(function(t) {
+      return { code: t.code, name: t.name, lo: t.lo, hi: t.hi, refundRate: t.refundRate, maxRefund: t.maxRefund };
+    });
+  }
+  return obj.dims.tiers;
+}
+function tierText(t) {
+  return t.lo + '% ~ ' + (t.hi === null || t.hi === undefined || t.hi === '' ? '无上限' : t.hi + '%');
+}
+function renderTiers() {
+  var tiers = tierRowsOf(draft);
+  document.getElementById('tierBody').innerHTML = TIER_ROWS.map(function(row, i) {
+    var t = tiers[i] || { lo: '', hi: '', refundRate: '', maxRefund: '' };
+    var ctl;
+    if (!editing) {
+      ctl = '<span class="ro">' + esc(t.lo) + '% ~ ' + (t.hi === null || t.hi === undefined || t.hi === ''
+          ? '<span class="none">无上限</span>' : esc(t.hi) + '%') + '</span>';
+    } else {
+      ctl = '<div class="pv">'
+        + '<input type="number" data-tpath="' + i + '.lo" value="' + fmtNum(t.lo, 0) + '" step="1">'
+        + '<span class="unit">%</span><span class="tilde">~</span>'
+        + '<input type="number" data-tpath="' + i + '.hi" value="' + fmtNum(t.hi, 0) + '" step="1" placeholder="无上限">'
+        + '<span class="unit">%</span></div>';
+    }
+    var rate = editing
+      ? '<input type="number" class="ti-in" data-tpath="' + i + '.refundRate" value="' + fmtNum(t.refundRate, 1) + '" step="0.5">'
+      : '<span class="ro">' + esc(t.refundRate) + '%</span>';
+    var mx = editing
+      ? '<input type="number" class="ti-in" data-tpath="' + i + '.maxRefund" value="' + fmtNum(t.maxRefund, 1) + '" step="1">'
+      : '<span class="ro">¥ ' + esc(t.maxRefund) + '</span>';
+    return '<tr><td class="dim-name">' + row.name + '</td><td class="p-val">' + ctl + '</td>'
+      + '<td>' + rate + '</td><td>' + mx + '</td><td class="p-note">' + esc(row.note) + '</td></tr>';
+  }).join('');
+  var st = poolStat();
+  document.getElementById('tierNote').innerHTML = draft.shopCode && st.cand
+    ? '按当前参数实算：该店商品 <b>' + st.all + '</b> 行，候选 <b>' + st.cand + '</b> 行、判为挽单 <b>' + st.wd + '</b> 行；低档 <b>' + st.tiers.L
+      + '</b>／中档 <b>' + st.tiers.YM + '</b>／高档 <b>' + st.tiers.YH + '</b> 行。'
+    : '分档只作用于已判为挽单的商品。';
+}
+
 /* 日志中的变动对象统一转为中文（不得出现内部字段名） */
-var OBJ_LABEL = { 'dims.rate': '退货率', 'dims.sales': '销售件数', 'dims.margin': '毛利率', 'dims.midCat': '商品中类', base: '基本信息', status: '方案状态' };
+var OBJ_LABEL = { 'dims.rate': '退货率', 'dims.sales': '销售件数', 'dims.margin': '毛利率', 'dims.midCat': '商品中类', '分档规则': '分档规则', base: '基本信息', status: '方案状态', '策略状态': '方案状态' };
 function renderTimeline() {
   var list = draft.audit || [];
   document.getElementById('timeline').innerHTML = list.length ? list.map(function(a) {
@@ -291,15 +441,93 @@ function renderTimeline() {
 }
 
 function renderHead() {
-  document.getElementById('modeTag').textContent = editing ? '编辑' : '查看';
+  var wz = wzStep > 0;
+  document.getElementById('modeTag').textContent = wz ? (wzStep === 1 ? '新建·第1步' : '新建·第2步') : (editing ? '编辑' : '查看');
   document.getElementById('modeTag').className = 'mode-tag' + (editing ? ' edit' : '');
-  document.getElementById('btnEdit').style.display = editing ? 'none' : '';
+  document.getElementById('btnEdit').style.display = (editing || wz) ? 'none' : '';
   ['btnSave', 'btnCancel', 'btnSave2', 'btnCancel2'].forEach(function(i) {
-    var el = document.getElementById(i); if (el) el.style.display = editing ? '' : 'none';
+    var el = document.getElementById(i); if (el) el.style.display = (!wz && editing) ? '' : 'none';
   });
   var tb = document.getElementById('btnToggle');
   tb.textContent = draft.status === 'ACTIVE' ? '停用' : '启用';
-  tb.style.display = editing ? 'none' : '';
+  tb.style.display = (!wz && editing) || wzStep === 2 ? 'none' : (wz ? 'none' : '');
+  applyWz();
+}
+
+/* ===== 新建两步向导：先表头信息，后明细参数 ===== */
+function applyWz() {
+  var wz = wzStep > 0;
+  document.getElementById('wzBar').style.display = wz ? '' : 'none';
+  if (!wz) {
+    ['cardBase', 'cardDims', 'cardTiers', 'cardRun', 'cardLog'].forEach(function(i) { document.getElementById(i).style.display = ''; });
+    ['btnWzPrev', 'btnWzNext', 'btnWzSave'].forEach(function(i) { document.getElementById(i).style.display = 'none'; });
+    document.getElementById('baseSub').textContent = '';
+    return;
+  }
+  document.getElementById('wzS1').className = 'wz-step' + (wzStep === 1 ? ' on' : ' done');
+  document.getElementById('wzS2').className = 'wz-step' + (wzStep === 2 ? ' on' : '');
+  document.getElementById('wzS1').innerHTML = wzStep === 1 ? '<i>1</i>填写表头信息' : '<i>✓</i>表头信息已填写';
+  document.getElementById('cardBase').style.display = '';
+  document.getElementById('cardDims').style.display = wzStep === 2 ? '' : 'none';
+  document.getElementById('cardTiers').style.display = wzStep === 2 ? '' : 'none';
+  document.getElementById('cardRun').style.display = 'none';
+  document.getElementById('cardLog').style.display = 'none';
+  document.getElementById('baseSub').textContent = wzStep === 1
+    ? '判定参数与分档规则在下一步配置'
+    : '如需修改表头可点下方「上一步」';
+  document.getElementById('wzTip').textContent = wzStep === 1
+    ? '先确定这条策略叫什么、属于哪个店铺。'
+    : '配置该店铺的进池区间与分档规则；保存后为草稿，需启用才会生效。';
+  document.getElementById('btnWzNext').style.display = wzStep === 1 ? '' : 'none';
+  document.getElementById('btnWzPrev').style.display = wzStep === 2 ? '' : 'none';
+  document.getElementById('btnWzSave').style.display = wzStep === 2 ? '' : 'none';
+}
+
+// 第 1 步：只校验表头，通过后创建草稿记录并进入第 2 步
+function wzNext() {
+  if (!draft.name || !draft.name.trim()) { toast('请填写策略名称', 'error'); return; }
+  if (!draft.shopCode) { toast('请选择适用店铺（一条策略只对一个店铺生效）', 'error'); return; }
+  var dup = WD.TAG_RULES.filter(function(r) {
+    return r.id !== draft.id && r.shopCode === draft.shopCode && (r.status === 'ACTIVE' || r.status === 'PENDING');
+  })[0];
+  if (dup) { toast('该店铺已有策略 ' + dup.id + '（' + esc(WD.TAG_STATUS[dup.status]) + '），请先停用后再新建', 'error'); return; }
+  // 表头提交即创建记录（以草稿态存在），中途离开不会丢失
+  var existed = WD.TAG_RULES.some(function(r) { return r.id === rule.id; });
+  rule.name = draft.name.trim();
+  rule.shopCode = draft.shopCode;
+  rule.shopName = shopNameOf(draft.shopCode);
+  rule.remark = draft.remark || '';
+  var ts = nowStr();
+  if (!existed) { rule.createdBy = CURRENT_USER; rule.createdAt = ts; }
+  rule.updatedBy = CURRENT_USER; rule.updatedAt = ts;
+  if (!rule.audit) rule.audit = [];
+  rule.audit.unshift({ at: ts, by: CURRENT_USER, obj: '基本信息',
+    txt: existed
+      ? '修改表头信息：「' + rule.name + '」适用店铺 ' + rule.shopCode + ' ' + rule.shopName
+      : '新建策略表头：「' + rule.name + '」适用店铺 ' + rule.shopCode + ' ' + rule.shopName });
+  base = clone(rule); draft = clone(rule);
+  var idx = WD.TAG_RULES.findIndex(function(r) { return r.id === rule.id; });
+  if (idx > -1) WD.TAG_RULES[idx] = rule; else WD.TAG_RULES.push(rule);
+  WD.persistTagRules();
+  wzStep = 2;
+  editing = true;
+  renderAll();
+  toast(existed ? '表头信息已更新，请继续配置明细参数' : '表头信息已保存，请继续配置明细参数', 'success');
+}
+
+function wzPrev() {
+  wzStep = 1; editing = true; draft = clone(rule);
+  renderAll();
+  toast(rule.name ? '已回到第 1 步，可修改表头信息；改完再点「下一步」保存表头' : '已回到第 1 步', 'info');
+}
+
+// 第 2 步：走完整参数校验与保存，成功后结束向导并回到普通查看态
+function wzSave() {
+  if (!saveRule()) return;
+  wzStep = 0;
+  editing = false;
+  document.getElementById('pgTitle').textContent = '商品判定策略明细';
+  renderAll();
 }
 
 /* 参数区间自检：下界>0、上限若填写必须大于下界 */
@@ -319,15 +547,44 @@ function checkGuards() {
     }
   });
   var bar = document.getElementById('guardBar');
-  if (!editing) { bar.style.display = 'none'; return errs; }
+  // 自检只在拦截时提示：无错时整条不显示，不占用展示位也不复述校验规则
+  if (!editing || !errs.length) { bar.style.display = 'none'; bar.className = 'warn-bar'; bar.innerHTML = ''; return errs; }
   bar.style.display = 'block';
-  if (errs.length) {
-    bar.className = 'warn-bar err';
-    bar.innerHTML = '区间自检未通过，保存已拦截：<br>' + errs.map(function(e) { return '· ' + esc(e); }).join('<br>');
-  } else {
-    bar.className = 'warn-bar ok';
-    bar.textContent = '自检通过：三个数值维度下界均大于 0、上限留空或严格大于下界；商品中类包含/排除无冲突。';
+  bar.className = 'warn-bar err';
+  bar.innerHTML = '区间自检未通过，保存已拦截：<br>' + errs.map(function(e) { return '· ' + esc(e); }).join('<br>');
+  return errs;
+}
+
+// 分档自检：下界大于 0、上限留空或严格大于下界、相邻档必须无缝、末档上限必须为空、退款比例 0~100、最高退款金额大于 0
+function checkTiers() {
+  var errs = [];
+  var tiers = tierRowsOf(draft);
+  for (var i = 0; i < tiers.length; i++) {
+    var t = tiers[i], row = TIER_ROWS[i];
+    var openHi = t.hi === null || t.hi === undefined || t.hi === '';
+    if (!(Number(t.lo) > 0)) errs.push(row.name + '毛利率下界必须大于 0');
+    if (!openHi && !(Number(t.hi) > Number(t.lo))) errs.push(row.name + '毛利率上限必须大于下界，或留空表示无上限');
+    if (!(Number(t.refundRate) > 0)) errs.push(row.name + '退款比例必须大于 0');
+    else if (Number(t.refundRate) > 100) errs.push(row.name + '退款比例不得大于 100');
+    if (!(Number(t.maxRefund) > 0)) errs.push(row.name + '最高退款金额必须大于 0');
+    if (i === tiers.length - 1 && !openHi) errs.push(row.name + '为最高档，毛利率上限必须留空（表示无上限）');
+    if (i > 0) {
+      var prev = tiers[i - 1];
+      if (prev.hi === null || prev.hi === undefined || prev.hi === '') {
+        errs.push(TIER_ROWS[i - 1].name + '上限留空会导致后续档位无法命中，请只保留最高档上限为空');
+      } else if (Number(prev.hi) !== Number(t.lo)) {
+        errs.push(TIER_ROWS[i - 1].name + '上限（' + prev.hi + '%）与' + row.name + '下界（' + t.lo + '%）必须无缝衔接，不得留缺口或重叠');
+      }
+      if (Number(prev.refundRate) > Number(t.refundRate) || Number(prev.maxRefund) > Number(t.maxRefund)) {
+        errs.push(TIER_ROWS[i - 1].name + '的退款比例或最高退款金额不应高于' + row.name + '，高档需更宽松');
+      }
+    }
   }
+  var tb = document.getElementById('tierBar');
+  if (!editing || !errs.length) { tb.style.display = 'none'; tb.className = 'warn-bar'; tb.innerHTML = ''; return errs; }
+  tb.style.display = 'block';
+  tb.className = 'warn-bar err';
+  tb.innerHTML = '分档自检未通过，保存已拦截：<br>' + errs.map(function(e) { return '· ' + esc(e); }).join('<br>');
   return errs;
 }
 
@@ -335,8 +592,96 @@ function renderAll() {
   renderHead();
   renderBase();
   renderDims();
+  renderTiers();
+  renderRunOverview();
   renderTimeline();
   checkGuards();
+  checkTiers();
+}
+
+/* ===== 店铺级池实算（仅供分档规则的统计说明使用，不再单独展示）=====
+   一律用本页当前参数（draft）实算：编辑中与保存后（待生效）都能得到正确数字，
+   不会因为状态不是生效中而清零 */
+function poolRows() {
+  if (!draft.shopCode) return [];
+  var ru = { id: draft.id, name: draft.name, dims: draft.dims };
+  return WD.SKU_LABELS.filter(function(r) { return r.shopCode === draft.shopCode; }).map(function(r) {
+    var c = WD.deriveCand(r);
+    return { r: r, cand: c.cand, m: c.cand === 'CAND' ? WD.matchShop(r, ru) : null };
+  });
+}
+function poolStat() {
+  var rows = poolRows(), s = { all: rows.length, cand: 0, wd: 0, tiers: { L: 0, YM: 0, YH: 0 } };
+  rows.forEach(function(x) {
+    if (x.cand !== 'CAND') return;
+    s.cand++;
+    if (x.m && x.m.wd) { s.wd++; if (s.tiers[x.m.tier] !== undefined) s.tiers[x.m.tier]++; }
+  });
+  return s;
+}
+
+/* ===== 本策略执行概览（只读）===== */
+var SY_TONE = { SUCCESS: 'ov-done', SYNCING: 'ov-doing', PENDING: 'ov-wait', FAILED: 'ov-fail' };
+function renderRunOverview() {
+  var box = document.getElementById('runOverview');
+  var runs = WD.tagRunsOfRule(rule.id).slice().reverse();   // 新批在上
+  if (rule.status !== 'ACTIVE' && rule.status !== 'PENDING') {
+    box.innerHTML = '<div class="ov-none">该策略当前为<b>' + esc(WD.TAG_STATUS[rule.status] || rule.status) + '</b>'
+      + (rule.shopCode ? '' : '且未指定店铺') + '，未参与批处理。'
+      + '生效后的下一个批处理周会按本页参数重算标签、生成执行记录并同步到抖店。</div>';
+    return;
+  }
+  if (!runs.length) {
+    box.innerHTML = '<div class="ov-none">该策略尚无批处理记录，将于下一个批处理周期生成。</div>';
+    return;
+  }
+  var cur = runs[0], imp = WD.runImpact(cur.id);
+  var head = '<div class="ov-head">'
+    + '<div><div class="ov-batch">' + esc(cur.batch) + (cur.rolledBack ? '（已回滚）' : '') + '</div>'
+    + '<div class="ov-at">计算于 ' + esc(cur.at) + '｜当前线上生效批次 ' + esc(cur.effective ? cur.batch : WD.prevBatchOf(cur.batch) || '无') + '</div></div>'
+    + '<div class="ov-status">'
+    + '<span class="ov-tag ' + SY_TONE[cur.status] + '" title="' + esc(cur.statusNote) + '">' + esc(cur.statusLabel) + '</span>'
+    + '<span class="ov-cnt">成功 ' + cur.okCnt + ' / 失败 ' + cur.failCnt + ' / 待同步 ' + cur.pendCnt + '</span>'
+    + (cur.failCnt ? '<button type="button" class="btn btn-sm btn-danger" onclick="retryHere(\'' + esc(cur.id) + '\')">重试失败方案</button>' : '')
+    + '<button type="button" class="btn btn-sm" onclick="openRunsTab()">查看全部执行记录</button>'
+    + '</div></div>';
+  var kpi = '<div class="ov-kpi">'
+    + [['覆盖款数', cur.coverCnt, ''], ['进池挽单', cur.inCnt, 'in'], ['未进池', cur.outCnt, 'out'],
+       ['低档', cur.tiers.L, ''], ['中档', cur.tiers.YM, ''], ['高档', cur.tiers.YH, '']].map(function(k) {
+      return '<div class="ov-box' + (k[2] ? ' ' + k[2] : '') + '"><div class="k">' + k[0] + '</div><div class="v">'
+        + Number(k[1]).toLocaleString() + '</div></div>';
+    }).join('') + '</div>';
+  var noPlan = cur.noPlanNote ? '<div class="ov-fail-msg">' + esc(cur.noPlanNote) + '。方案按「店铺 × 分档」自动生成，属于批处理下一环。</div>' : '';
+  var cmp = '<div class="ov-cmp">较上一批' + (imp.hasPrev ? ' ' + esc(imp.prevBatch) : '（无对比基准）') + '：'
+    + '进池 <b class="' + (imp.dIn >= 0 ? 'up' : 'down') + '">' + (imp.dIn >= 0 ? '+' : '') + imp.dIn + '</b> 款，'
+    + '出池 <b class="' + (imp.dOut <= 0 ? 'up' : 'down') + '">' + (imp.dOut >= 0 ? '+' : '') + imp.dOut + '</b> 款，'
+    + '档位迁移 <b>' + imp.movedTierCnt + '</b> 款，本批生成/更新方案 <b>' + cur.planCnt + '</b> 条。</div>';
+  var fail = cur.failReason ? '<div class="ov-fail-msg">' + esc(cur.failReason) + '</div>' : '';
+  var hist = '<table class="ov-tbl"><thead><tr>'
+    + '<th style="width:96px;">批次</th><th style="width:112px;">计算时间</th><th style="width:74px;">进池</th><th style="width:74px;">出池</th>'
+    + '<th style="width:66px;">低档</th><th style="width:66px;">中档</th><th style="width:66px;">高档</th><th style="width:80px;">方案数</th>'
+    + '<th style="width:96px;">同步状态</th><th style="width:70px;">生效</th></tr></thead><tbody>'
+    + runs.map(function(x) {
+        return '<tr><td class="mono">' + esc(x.batch) + '</td><td>' + esc(x.at) + '</td>'
+          + '<td>' + x.inCnt.toLocaleString() + '</td><td>' + x.outCnt.toLocaleString() + '</td>'
+          + '<td>' + x.tiers.L + '</td><td>' + x.tiers.YM + '</td><td>' + x.tiers.YH + '</td>'
+          + '<td>' + x.planCnt + '</td>'
+          + '<td><span class="ov-tag ' + SY_TONE[x.status] + '" title="' + esc(x.statusNote) + '">' + esc(x.statusLabel) + '</span></td>'
+          + '<td>' + (x.effective ? '<span class="ov-on">生效中</span>' : (x.rolledBack ? '已回滚' : '')) + '</td></tr>';
+      }).join('') + '</tbody></table>';
+  box.innerHTML = head + kpi + noPlan + cmp + fail + hist;
+}
+function retryHere(runId) {
+  var res = WD.retryRun(runId);
+  if (!res.ok) { toast(res.msg, 'warning'); return; }
+  toast(res.msg + '，回读校验已通过', 'success');
+  renderRunOverview();
+}
+function openRunsTab() {
+  var page = 'pages/store-engine/wd-tag-rule.html?tab=runs&rule=' + encodeURIComponent(rule.id);
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type:'openTab', page: page, title:'商品判定策略' }, '*');
+  } else { location.href = 'wd-tag-rule.html?tab=runs&rule=' + encodeURIComponent(rule.id); }
 }
 
 function enterEdit() {
@@ -346,13 +691,21 @@ function enterEdit() {
   }
   editing = true; base = clone(rule); draft = clone(rule);
   renderAll();
-  toast('已进入编辑态', 'info');
 }
 function cancelEdit() {
+  if (wzStep === 1) { goBack(); return; }   // 尚未创建任何记录，直接离开
+  if (wzStep === 2) {
+    // 表头已创建为草稿：保留记录，并结束向导回到普通查看态，可直接继续编辑或启用
+    wzStep = 0; editing = false;
+    draft = clone(rule); base = clone(rule);
+    document.getElementById('pgTitle').textContent = '商品判定策略明细';
+    renderAll();
+    toast('已退出参数配置；该策略以草稿保留在列表中，可继续编辑或启用', 'info');
+    return;
+  }
   if (rule.isNew) { discardNew(); return; }
   editing = false; draft = clone(rule);
   renderAll();
-  toast('已取消编辑', 'info');
 }
 function discardNew() {
   var i = WD.TAG_RULES.findIndex(function(r) { return r.id === rule.id; });
@@ -378,6 +731,20 @@ function diffDraft() {
         + ' → ' + bound(b.lo, g.unit, g.dec) + ' ~ ' + bound(b.hi, g.unit, g.dec) });
     }
   });
+  var bt = tierRowsOf(base), dt = tierRowsOf(draft);
+  for (var i = 0; i < TIER_ROWS.length; i++) {
+    var a = bt[i] || {}, b = dt[i] || {};
+    var aRange = tierText(a), bRange = tierText(b);
+    if (aRange !== bRange) {
+      out.push({ obj: '分档规则', txt: TIER_ROWS[i].name + '毛利率区间 ' + aRange + ' → ' + bRange });
+    }
+    if (Number(a.refundRate) !== Number(b.refundRate)) {
+      out.push({ obj: '分档规则', txt: TIER_ROWS[i].name + '退款比例 ' + a.refundRate + '% → ' + b.refundRate + '%' });
+    }
+    if (Number(a.maxRefund) !== Number(b.maxRefund)) {
+      out.push({ obj: '分档规则', txt: TIER_ROWS[i].name + '最高退款金额 ¥' + a.maxRefund + ' → ¥' + b.maxRefund });
+    }
+  }
   if (base.name !== draft.name) out.push({ obj: 'base', txt: '策略名称「' + base.name + '」→「' + draft.name + '」' });
   if (base.shopCode !== draft.shopCode) out.push({ obj: 'base', txt: '适用店铺 ' + (base.shopCode || '未指定') + ' → ' + (draft.shopCode || '未指定') });
   if ((base.remark || '') !== (draft.remark || '')) out.push({ obj: 'base', txt: '备注「' + (base.remark || '') + '」→「' + (draft.remark || '') + '」' });
@@ -385,16 +752,19 @@ function diffDraft() {
 }
 
 function saveRule() {
-  if (!draft.name) { toast('请填写策略名称', 'error'); return; }
-  if (!draft.shopCode) { toast('请选择适用店铺（一条策略只对一个店铺生效）', 'error'); return; }
+  if (!draft.name) { toast('请填写策略名称', 'error'); return false; }
+  if (!draft.shopCode) { toast('请选择适用店铺（一条策略只对一个店铺生效）', 'error'); return false; }
   var dup = WD.TAG_RULES.filter(function(r) {
     return r.id !== draft.id && r.shopCode === draft.shopCode && (r.status === 'ACTIVE' || r.status === 'PENDING');
   })[0];
-  if (dup) { toast('该店铺已存在生效中/待生效策略 ' + dup.id + '，请先停用后再保存', 'error'); return; }
-  var errs = checkGuards();
-  if (errs.length) { toast('区间自检未通过，请先修正', 'error'); return; }
+  if (dup) { toast('该店铺已存在生效中/待生效策略 ' + dup.id + '，请先停用后再保存', 'error'); return false; }
+  var errs = checkGuards().concat(checkTiers());
+  if (errs.length) { toast('区间或分档自检未通过，请先修正', 'error'); return false; }
   var ch = diffDraft();
-  if (!ch.length) { toast('无参数变更', 'info'); return; }
+  if (!ch.length) {
+    // 新建向导中“未改动参数”是正常情况（默认区间可直接采用），不能当成错误拦住创建
+    if (!(rule.isNew || wzStep === 2)) { toast('无参数变更', 'info'); return false; }
+  }
 
   var ts = nowStr();
   rule.name = draft.name;
@@ -407,7 +777,12 @@ function saveRule() {
   rule.updatedAt = ts;
   if (!rule.createdBy) { rule.createdBy = CURRENT_USER; rule.createdAt = ts; }
   if (!rule.audit) rule.audit = [];
-  ch.slice().reverse().forEach(function(c) { rule.audit.unshift({ at: ts, by: CURRENT_USER, obj: c.obj, txt: c.txt }); });
+  if (ch.length) {
+    ch.slice().reverse().forEach(function(c) { rule.audit.unshift({ at: ts, by: CURRENT_USER, obj: c.obj, txt: c.txt }); });
+  } else if (rule.isNew || wzStep === 2) {
+    rule.audit.unshift({ at: ts, by: CURRENT_USER, obj: '判定参数',
+      txt: '完成明细参数配置：沿用当前进池区间与分档规则，无变更' });
+  }
   base = clone(rule);
   draft = clone(rule);
   editing = false;
@@ -420,6 +795,7 @@ function saveRule() {
     if (history.replaceState) history.replaceState(null, '', location.pathname + '?id=' + encodeURIComponent(rule.id));
   }
   toast('保存成功，下周一批处理按新区间重算标签', 'success');
+  return true;
 }
 
 function toggleStatus() {
@@ -470,6 +846,17 @@ document.getElementById('dimBody').addEventListener('change', function(e) {
   else draft.dims[ks[0]][ks[1]] = el.value === '' ? null : parseFloat(el.value);
   renderDims();
   checkGuards();
+});
+/* 分档表事件委托：同样不在打字过程中重渲染整块 */
+document.getElementById('tierBody').addEventListener('change', function(e) {
+  var el = e.target.closest ? e.target.closest('[data-tpath]') : null;
+  if (!el || !editing) return;
+  var parts = el.dataset.tpath.split('.');
+  var t = tierRowsOf(draft)[Number(parts[0])];
+  if (!t) return;
+  t[parts[1]] = el.value === '' ? null : parseFloat(el.value);
+  renderTiers();
+  checkTiers();
 });
 document.getElementById('baseGrid').addEventListener('input', function(e) {
   if (!editing) return;

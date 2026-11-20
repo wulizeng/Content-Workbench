@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>客户档案编辑 - 分销枢纽</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+    .page-container { min-height: 100vh; background: var(--bg, #f5f7fb); padding: 24px 28px; box-sizing: border-box; }
+
+    /* ===== 页头 ===== */
+    .page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .page-header .btn { display: flex; align-items: center; gap: 4px; padding: 6px 12px; height: auto; }
+    .page-title { font-size: 18px; font-weight: 700; color: var(--text); }
+    .page-sub { font-size: 12.5px; color: var(--text-tertiary); padding: 3px 10px; background: var(--bg-white);
+      border: 1px solid var(--border); border-radius: 20px; }
+
+    /* ===== 表单卡片 ===== */
+    .form-card { background: var(--bg-white, #fff); border: 1px solid var(--border); border-radius: 12px;
+      padding: 22px 24px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
+    .form-card-title { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: var(--text);
+      margin: 0 0 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border-light); }
+    .form-card-title::before { content: ''; width: 3px; height: 15px; background: var(--primary); border-radius: 2px; }
+    .form-card-title .hint { font-size: 12px; font-weight: 400; color: var(--text-muted); }
+    .form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 24px; }
+
+    /* ===== 字段 ===== */
+    .cf-item { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+    .cf-item.span-2 { grid-column: span 2; }
+    .cf-item.span-4 { grid-column: span 4; }
+    .cf-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+    .cf-label .req { color: var(--danger, #ef4444); margin-left: 2px; }
+    .cf-item input, .cf-item select, .cf-item textarea { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 9px;
+      font: inherit; font-size: 13px; outline: none; background: #fafbfd; box-sizing: border-box; color: var(--text);
+      transition: border-color .18s, box-shadow .18s, background .18s; }
+    .cf-item textarea { resize: vertical; min-height: 64px; }
+    .cf-item input:focus, .cf-item select:focus, .cf-item textarea:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 3px var(--primary-light); }
+    .cf-item input.invalid, .cf-item select.invalid, .cf-item textarea.invalid { border-color: var(--danger, #ef4444); background: #fef2f2; box-shadow: 0 0 0 3px var(--danger-light); }
+    .cf-item input[readonly] { background: var(--bg); color: var(--text-muted); }
+
+    /* 百分比输入（佣金比例）：右侧内嵌 % 后缀 */
+    .cf-percent { position: relative; display: flex; align-items: center; }
+    .cf-percent input { padding-right: 34px; }
+    .cf-percent-sign { position: absolute; right: 14px; font-size: 13px; font-weight: 600; color: var(--text-muted); pointer-events: none; }
+    .cf-percent input:focus + .cf-percent-sign { color: var(--primary); }
+
+    /* 多选下拉 */
+    .cf-multi { position: relative; }
+    .cf-multi-trigger { width: 100%; min-height: 41px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 9px;
+      background: #fafbfd; font: inherit; font-size: 13px; color: var(--text); display: flex; align-items: center; gap: 6px;
+      cursor: pointer; text-align: left; box-sizing: border-box; transition: border-color .18s, box-shadow .18s, background .18s; }
+    .cf-multi-trigger .val { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cf-multi-trigger .val.empty { color: var(--text-muted); }
+    .cf-multi-trigger svg { flex-shrink: 0; color: var(--text-muted); transition: transform .18s; }
+    .cf-multi.open .cf-multi-trigger { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 3px var(--primary-light); }
+    .cf-multi.open .cf-multi-trigger svg { transform: rotate(180deg); }
+    .cf-multi-pop { display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 30; background: #fff;
+      border: 1px solid var(--border); border-radius: 9px; box-shadow: var(--shadow-md); max-height: 220px; overflow-y: auto; padding: 4px; }
+    .cf-multi.open .cf-multi-pop { display: block; }
+    .cf-multi-pop label { display: flex; align-items: center; gap: 8px; padding: 8px 10px; font-size: 13px; color: var(--text); border-radius: 6px; cursor: pointer; }
+    .cf-multi-pop label:hover { background: var(--bg-hover, #f4f6fb); }
+    .cf-multi-pop input { width: auto; height: auto; padding: 0; accent-color: var(--primary); }
+    .cf-multi-pop::-webkit-scrollbar { width: 6px; }
+    .cf-multi-pop::-webkit-scrollbar-thumb { background: var(--primary-200); border-radius: 3px; }
+
+    /* 省市区三级联动 */
+    .cf-region { display: flex; gap: 8px; }
+    .cf-region select { flex: 1; min-width: 0; }
+
+    /* ===== 子表明细卡片（页内维护，随主档保存落库） ===== */
+    .st-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+    .st-tab { font-size: 13.5px; color: var(--text-secondary); padding: 8px 14px; cursor: pointer; border-bottom: 2px solid transparent; }
+    .st-tab .cnt { color: var(--text-muted); font-size: 12px; margin-left: 3px; }
+    .st-tab.active { color: var(--primary); font-weight: 600; border-bottom-color: var(--primary); }
+    .st-toolbar { display: flex; margin-bottom: 10px; }
+    .st-toolbar .btn { height: 30px; padding: 0 12px; font-size: 12.5px; }
+    .st-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 9px; }
+    .st-table { border-collapse: collapse; min-width: 100%; font-size: 12.5px; white-space: nowrap; }
+    .st-table th { background: var(--bg); color: var(--text-secondary); font-weight: 600; text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+    .st-table td { padding: 8px 12px; border-bottom: 1px solid var(--border-light); color: var(--text); }
+    .st-table tr:last-child td { border-bottom: none; }
+    .st-empty { padding: 18px; text-align: center; color: var(--text-muted); font-size: 13px; border: 1px dashed var(--border); border-radius: 9px; }
+    .st-rowbtn { border: none; background: none; padding: 0; font-size: 12.5px; color: var(--primary); cursor: pointer; }
+    .st-rowbtn:hover { text-decoration: underline; }
+    .st-rowbtn.danger { color: var(--danger); }
+    .st-rowbtn + .st-rowbtn { margin-left: 10px; }
+
+    /* ===== 子表记录维护弹窗 ===== */
+    .stm-overlay { position: fixed; inset: 0; z-index: 120; background: rgba(15, 23, 42, .45); display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .stm-modal { max-width: 100%; max-height: calc(100vh - 40px); background: #fff; border-radius: 14px;
+      box-shadow: 0 20px 60px rgba(15, 23, 42, .25); display: flex; flex-direction: column; }
+    .stm-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border-light); }
+    .stm-head h3 { margin: 0; font-size: 15px; color: var(--text); }
+    .stm-close { border: none; background: none; font-size: 20px; line-height: 1; color: var(--text-muted); cursor: pointer; }
+    .stm-close:hover { color: var(--text); }
+    .stm-body { padding: 18px 20px; overflow-y: auto; }
+    .stm-grid { display: grid; gap: 14px 18px; }
+    .stm-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+    .stm-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+    .stm-foot { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding: 14px 20px; border-top: 1px solid var(--border-light); }
+    @media (max-width: 900px) { .stm-grid.cols-4 { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 640px) { .stm-grid.cols-4, .stm-grid.cols-2 { grid-template-columns: 1fr; } .stm-grid .cf-item.span-2 { grid-column: span 1; } }
+
+    /* ===== 底部操作条（吸顶常驻，保存随时可达） ===== */
+    .form-actions { position: sticky; bottom: 16px; display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+      padding: 14px 20px; margin-top: 8px; background: rgba(255, 255, 255, .95); backdrop-filter: blur(6px);
+      border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 4px 16px rgba(15, 23, 42, .08); }
+    .cf-err { font-size: 12.5px; color: var(--danger); margin-right: auto; }
+
+    @media (max-width: 1100px) {
+      .form-grid { grid-template-columns: repeat(2, 1fr); }
+      .cf-item.span-4 { grid-column: span 2; }
+    }
+    @media (max-width: 640px) {
+      .page-container { padding: 16px; }
+      .form-card { padding: 16px; }
+      .form-grid { grid-template-columns: 1fr; gap: 14px; }
+      .cf-item.span-2, .cf-item.span-4 { grid-column: span 1; }
+      .cf-region { flex-direction: column; }
+      .page-sub { display: none; }
+    }
+  /* 资质附件：上传 / 链接 */
+  .att-item .att-box { display:flex; flex-direction:column; gap:7px; }
+  .att-item .att-name, .att-item .att-link { width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:8px; font-size:12.5px; outline:none; background:#fff; }
+  .att-item .att-name:focus, .att-item .att-link:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(91,108,245,.12); }
+  .att-item .att-ops { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .att-item .att-btn { padding:6px 14px; border:1px solid var(--primary); color:var(--primary); background:#fff; border-radius:8px; font-size:12.5px; cursor:pointer; }
+  .att-item .att-btn:hover { background:#f0f1ff; }
+  .att-item .att-or { font-size:11.5px; color:#64748b; }
+  .att-item .att-cur { display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:12px; }
+  .att-item .att-cur:empty { display:none; }
+  .att-badge { font-size:11px; padding:1px 8px; border-radius:10px; font-weight:600; }
+  .att-badge.file { background:#ecfdf5; color:#059669; }
+  .att-badge.link { background:#e8f3ff; color:#2563eb; }
+  .att-size { color:#64748b; font-size:11px; }
+  .att-clear { border:none; background:none; color:#dc2626; font-size:12px; cursor:pointer; text-decoration:underline; }
+  .att-open { color:var(--primary); cursor:pointer; }
+  .att-open:hover { text-decoration:underline; }
+  .att-tag { font-size:10.5px; color:#64748b; margin-left:4px; }
+  .att-name.invalid { border-color:#dc2626; box-shadow:0 0 0 3px rgba(220,38,38,.12); }
+  </style>
+</head>
+<body>
+<div class="page-container">
+  <div id="toastContainer" class="toast-container"></div>
+
+  <div class="page-header">
+    <button class="btn" type="button" onclick="goBack()">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      返回
+    </button>
+    <div class="page-title" id="pageTitle">新增客户</div>
+    <span class="page-sub" id="pageSub"></span>
+  </div>
+
+  <form id="mainForm" autocomplete="off">
+    <div id="formBody"></div>
+    <div id="subTablesCard"></div>
+    <div class="form-actions">
+      <span class="cf-err" id="cfErr"></span>
+      <button class="btn" type="button" onclick="goBack()">取消</button>
+      <button class="btn btn-primary" type="submit">保存</button>
+    </div>
+  </form>
+
+  <!-- 子表记录维护弹窗（独立于主表单，避免 Enter 误触发主档保存） -->
+  <div class="stm-overlay" id="stmOverlay" style="display:none;" onclick="if(event.target===this) closeSubModal()">
+    <div class="stm-modal" id="stmModal" role="dialog" aria-modal="true" aria-labelledby="stmTitle">
+      <div class="stm-head"><h3 id="stmTitle">子表记录</h3><button type="button" class="stm-close" onclick="closeSubModal()" title="关闭">×</button></div>
+      <div class="stm-body"><div id="stmBody" class="stm-grid cols-4"></div></div>
+      <div class="stm-foot"><span class="cf-err" id="stmErr"></span>
+        <button type="button" class="btn" onclick="closeSubModal()">取消</button>
+        <button type="button" class="btn btn-primary" onclick="saveSubModal()">确定</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../../js/auth.js"></script>
+<script src="../../js/recruit/customer-profile-data.js"></script>
+<script>
+if (!Auth.requireAuth()) { /* 已跳转登录页 */ }
+if (window.parent) {
+  window.parent.postMessage({ type: 'breadcrumb', text: '分销枢纽 <span>/</span> 运营视角 <span>/</span> 客户档案库 <span>/</span> 编辑' }, '*');
+}
+
+// ===== 枚举字典（与档案库保持一致） =====
+var TYPES = ['DP', '零售商', 'KOC', '达播', '分销商', '自播'];
+var TYPE_CODE = { 'DP': 'DP', '零售商': 'LS', 'KOC': 'KOC', '达播': 'DB', '分销商': 'FX', '自播': 'ZB' };
+var LEVELS = ['ka', '非ka'];
+var STATUSES = ['洽谈中', '已合作', '退出', '黑名单'];
+var BRAND_OPTIONS = ['巴拉巴拉', '迷你巴拉', '森马', '马卡乐'];
+var PLATFORM_OPTIONS = ['抖音', '快手', '视频号', '小红书', '淘宝', '京东', '拼多多'];
+var SECTION_SELECT = {
+  '主体性质': ['小规模纳税人', '一般纳税人'],
+  '是否为线下零售商': ['是', '否'],
+  '是否整店经营': ['是', '否'],
+  '合作模式': ['纯佣+阶梯返利', '坑位费+佣金', '分销代发', '纯佣'],
+  '结算方式': ['月结', '单结', '按单结算'],
+  '开票能力': ['专票', '普票', '不可开票']
+};
+var REGION = {
+  '浙江省': { '杭州市': ['余杭区', '西湖区', '滨江区'], '宁波市': ['鄞州区', '海曙区'] },
+  '北京市': { '北京市': ['朝阳区', '海淀区', '东城区'] },
+  '广东省': { '广州市': ['白云区', '天河区'], '深圳市': ['南山区', '福田区'] },
+  '江苏省': { '苏州市': ['工业园区', '姑苏区'], '南京市': ['鼓楼区'] },
+  '湖北省': { '武汉市': ['江汉区', '武昌区'] },
+  '四川省': { '成都市': ['高新区', '武侯区'] },
+  '湖南省': { '长沙市': ['岳麓区', '芙蓉区'] },
+  '上海市': { '上海市': ['徐汇区', '浦东新区'] },
+  '河南省': { '郑州市': ['金水区', '二七区'] }
+};
+
+// ===== 数据层 =====
+var STORE_KEY = 'recruit_customer_profiles';
+var currentUser = Auth.getCurrentUser();
+var canManage = !!(currentUser && ['operator', 'bd', 'admin'].indexOf(currentUser.role) >= 0);
+function loadProfiles() {
+  try {
+    var raw = localStorage.getItem(STORE_KEY);
+    if (raw) { var arr = JSON.parse(raw); if (arr && arr.length) return arr.map(function(p){ return window.CUSTOMER_PROFILE_MIGRATE ? window.CUSTOMER_PROFILE_MIGRATE(p) : p; }); }
+  } catch (e) {}
+  return JSON.parse(JSON.stringify(window.CUSTOMER_PROFILE_SEED));
+}
+var profiles = loadProfiles();
+function persistProfiles() { try { localStorage.setItem(STORE_KEY, JSON.stringify(profiles)); } catch (e) {} }
+function byId(id) { for (var i = 0; i < profiles.length; i++) if (profiles[i].id === id) return profiles[i]; return null; }
+function esc(s) { if (s === null || s === undefined) return ''; var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
+
+// ===== 路由参数 =====
+function g(name) { var r = location.search.match(new RegExp('[?&]' + name + '=([^&]*)')); return r ? decodeURIComponent(r[1]) : ''; }
+var recordId = parseInt(g('id')) || 0;
+var isEdit = recordId > 0;
+
+// ===== 表单状态 =====
+var formKeys = {};
+var MANAGED_FIELDS = { '客户编号':1, '客户名称':1, '客户类型':1, '客户等级':1, '合作状态':1, '所属品牌线':1, '所在城市':1, '主营平台':1 };
+var READONLY_FIELDS = { '创建人':1, '创建时间':1, '最后更新人':1 };
+var formMulti = { platforms: [], brandLines: [] };
+var formRegion = { prov: '', city: '', dist: '' };
+function splitTags(s) { var seen = {}, out = []; String(s || '').split(/[,，、;；\s]+/).forEach(function(t){ t = t.trim(); if (t && !seen[t]) { seen[t] = 1; out.push(t); } }); return out; }
+function genCode(type) {
+  var prefix = (TYPE_CODE[type] || 'KH') + '-' + new Date().getFullYear() + '-';
+  var max = 0;
+  profiles.forEach(function(p){ if (String(p.code).indexOf(prefix) === 0) { var n = parseInt(String(p.code).slice(prefix.length), 10); if (n > max) max = n; } });
+  return prefix + String(max + 1).padStart(3, '0');
+}
+function blankProfile() {
+  var tpl = JSON.parse(JSON.stringify(window.CUSTOMER_PROFILE_SEED[0]));
+  var uname = (currentUser && currentUser.name) || '当前用户';
+  var now = new Date();
+  var stamp = now.toISOString().slice(0, 10) + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+  tpl.sections.forEach(function(sec){ sec.fields.forEach(function(f){
+    if (f.label === '客户编号') f.value = genCode('DP');
+    else if (f.label === '建档日期') f.value = now.toISOString().slice(0, 10);
+    else if (f.label === '创建人' || f.label === '最后更新人') f.value = uname;
+    else if (f.label === '创建时间') f.value = stamp;
+    else f.value = '';
+  }); });
+  return { code: genCode('DP'), name: '', type: 'DP', level: '非ka', status: '洽谈中', city: '', platforms: '', brandLines: [], tags: [], sections: tpl.sections };
+}
+
+// ===== 控件渲染 =====
+function cfInput(key, label, val, opt) {
+  opt = opt || {};
+  var ctl;
+  if (opt.opts) {
+    var ph = opt.placeholder ? '<option value=""' + (val ? '' : ' selected') + '>' + esc(opt.placeholder) + '</option>' : '';
+    ctl = '<select data-fkey="' + key + '">' + ph + opt.opts.map(function(o){ return '<option value="' + esc(o) + '"' + (o === val ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('') + '</select>';
+  } else if (opt.percent) {
+    var pv = String(val == null ? '' : val).trim().replace(/[%％]\s*$/, '');
+    ctl = '<div class="cf-percent"><input type="text" inputmode="decimal" data-fkey="' + key + '" value="' + esc(pv) + '"' + (opt.placeholder ? ' placeholder="' + esc(opt.placeholder) + '"' : '') + '><span class="cf-percent-sign">%</span></div>';
+  } else if (opt.textarea) {
+    ctl = '<textarea data-fkey="' + key + '" rows="2"' + (opt.placeholder ? ' placeholder="' + esc(opt.placeholder) + '"' : '') + '>' + esc(val == null ? '' : val) + '</textarea>';
+  } else {
+    ctl = '<input type="text" data-fkey="' + key + '" value="' + esc(val == null ? '' : val) + '"' + (opt.readonly ? ' readonly' : '') + (opt.placeholder ? ' placeholder="' + esc(opt.placeholder) + '"' : '') + '>';
+  }
+  var spanCls = opt.span ? (' span-' + opt.span) : '';
+  return '<div class="cf-item' + spanCls + '"><span class="cf-label">' + esc(label) + (opt.req ? '<span class="req">*</span>' : '') + '</span>' + ctl + '</div>';
+}
+function cfMulti(key, label, options, selected, placeholder, span) {
+  var sel = selected || [];
+  var txt = sel.join('、');
+  return '<div class="cf-item' + (span ? ' span-' + span : '') + '"><span class="cf-label">' + esc(label) + '</span><div class="cf-multi" data-multi="' + key + '">'
+    + '<button type="button" class="cf-multi-trigger" onclick="toggleMulti(\'' + key + '\')"><span class="val' + (txt ? '' : ' empty') + '">' + esc(txt || placeholder) + '</span>'
+    + '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>'
+    + '<div class="cf-multi-pop">' + options.map(function(o){
+        return '<label><input type="checkbox" value="' + esc(o) + '"' + (sel.indexOf(o) >= 0 ? ' checked' : '') + ' onchange="onMultiChange(\'' + key + '\',this)">' + esc(o) + '</label>';
+      }).join('') + '</div></div></div>';
+}
+function toggleMulti(key) {
+  var el = document.querySelector('.cf-multi[data-multi="' + key + '"]');
+  var wasOpen = el.classList.contains('open');
+  document.querySelectorAll('.cf-multi.open').forEach(function(m){ m.classList.remove('open'); });
+  if (!wasOpen) el.classList.add('open');
+}
+function onMultiChange(key, cb) {
+  var arr = formMulti[key]; var i = arr.indexOf(cb.value);
+  if (cb.checked && i < 0) arr.push(cb.value);
+  if (!cb.checked && i >= 0) arr.splice(i, 1);
+  var val = document.querySelector('.cf-multi[data-multi="' + key + '"] .val');
+  val.textContent = arr.length ? arr.join('、') : (key === 'platforms' ? '请选择主营平台' : '请选择品牌线');
+  val.classList.toggle('empty', !arr.length);
+}
+function cfRegion() {
+  var provs = Object.keys(REGION);
+  var cities = formRegion.prov ? Object.keys(REGION[formRegion.prov] || {}) : [];
+  var dists = (formRegion.prov && formRegion.city) ? ((REGION[formRegion.prov] || {})[formRegion.city] || []) : [];
+  function sel(key, opts, cur, ph) {
+    return '<select data-fkey="' + key + '" onchange="onRegionChange()"><option value="">' + ph + '</option>'
+      + opts.map(function(o){ return '<option value="' + esc(o) + '"' + (o === cur ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('') + '</select>';
+  }
+  return '<div class="cf-item span-2"><span class="cf-label">所在城市</span><div class="cf-region">'
+    + sel('regionProv', provs, formRegion.prov, '省')
+    + sel('regionCity', cities, formRegion.city, '市')
+    + sel('regionDist', dists, formRegion.dist, '区')
+    + '</div></div>';
+}
+function onRegionChange() {
+  formRegion.prov = fv('regionProv'); formRegion.city = fv('regionCity'); formRegion.dist = fv('regionDist');
+  var cities = formRegion.prov ? Object.keys(REGION[formRegion.prov] || {}) : [];
+  if (cities.indexOf(formRegion.city) < 0) { formRegion.city = ''; formRegion.dist = ''; }
+  var dists = (formRegion.prov && formRegion.city) ? ((REGION[formRegion.prov] || {})[formRegion.city] || []) : [];
+  if (dists.indexOf(formRegion.dist) < 0) formRegion.dist = '';
+  document.getElementById('regionHolder').innerHTML = cfRegion();
+}
+function renderForm(src) {
+  formKeys = {};
+  var html = '<div class="form-card"><h3 class="form-card-title">客户概要</h3><div class="form-grid">'
+    + cfInput('code', '客户编码', src.code, { req: true, span: 2, placeholder: '如 DP-2026-001' })
+    + cfInput('name', '客户名称', src.name, { req: true, span: 2 })
+    + cfInput('type', '客户类型', src.type, { req: true, opts: TYPES })
+    + cfInput('level', '客户等级', src.level, { opts: LEVELS })
+    + cfInput('status', '合作状态', src.status, { opts: STATUSES })
+    + cfInput('tags', '标签', (src.tags || []).join('、'), { placeholder: '多个用、分隔' })
+    + '<div id="regionHolder" style="display:contents">' + cfRegion() + '</div>'
+    + cfMulti('platforms', '主营平台', PLATFORM_OPTIONS, formMulti.platforms, '请选择主营平台', 2)
+    + cfMulti('brandLines', '品牌线', BRAND_OPTIONS, formMulti.brandLines, '请选择品牌线', 2)
+    + '</div></div>';
+  src.sections.forEach(function(sec, si) {
+    html += '<div class="form-card"><h3 class="form-card-title">' + esc(sec.title) +
+      (sec.hint ? '<span class="hint">' + esc(sec.hint) + '</span>' : '') + '</h3><div class="form-grid">';
+    sec.fields.forEach(function(f, fi) {
+      if (MANAGED_FIELDS[f.label]) return; // 由概要区统一维护（编码/名称/类型/等级/状态/品牌线/城市/平台）
+      var key = 's' + si + 'f' + fi;
+      formKeys[f.label] = key;
+      var opt = {};
+      if (f.label === '公司地址' || f.label === '公司主体地址' || f.label === '客户关联主体名称') opt.span = 2;
+      if (SECTION_SELECT[f.label]) { opt.opts = SECTION_SELECT[f.label]; opt.placeholder = '请选择'; }
+      if (f.label === '佣金比例') { opt.percent = true; opt.placeholder = '如 17'; }
+      if (READONLY_FIELDS[f.label]) opt.readonly = true;
+      html += cfInput(key, f.label, f.value, opt);
+    });
+    html += '</div></div>';
+  });
+  document.getElementById('formBody').innerHTML = html;
+}
+
+// ===== 取值 / 校验 =====
+function fv(key) { var el = document.querySelector('#formBody [data-fkey="' + key + '"]'); return el ? el.value.trim() : ''; }
+function markInvalid(key) { var el = document.querySelector('#formBody [data-fkey="' + key + '"]'); if (el) { el.classList.add('invalid'); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } }
+function clearInvalid() { document.querySelectorAll('#formBody .invalid').forEach(function(el){ el.classList.remove('invalid'); }); }
+function saveForm() {
+  var errEl = document.getElementById('cfErr'); errEl.textContent = ''; clearInvalid();
+  if (!canManage) { errEl.textContent = '当前账号无编辑权限'; return; }
+  var code = fv('code');
+  if (!code) { errEl.textContent = '请填写客户编码'; markInvalid('code'); return; }
+  var dupCode = profiles.filter(function(p){ return p.code === code && p.id !== recordId; })[0];
+  if (dupCode) { errEl.textContent = '客户编码 ' + code + ' 已存在'; markInvalid('code'); return; }
+  var name = fv('name');
+  if (!name) { errEl.textContent = '请填写客户名称'; markInvalid('name'); return; }
+  if (!fv(formKeys['联系人'])) { errEl.textContent = '请填写联系人'; markInvalid(formKeys['联系人']); return; }
+  var commission = fv(formKeys['佣金比例']);
+  if (commission && (!/^\d+(\.\d+)?$/.test(commission) || Number(commission) > 100)) { errEl.textContent = '佣金比例需为 0~100 的数字'; markInvalid(formKeys['佣金比例']); return; }
+  var type = fv('type'), level = fv('level'), status = fv('status');
+  var city = [formRegion.prov, formRegion.city, formRegion.dist].filter(Boolean).join(' ');
+  var platforms = formMulti.platforms.join('/');
+  var brandLines = formMulti.brandLines.slice();
+  var struct = (isEdit ? byId(recordId) : window.CUSTOMER_PROFILE_SEED[0]).sections;
+  var sections = struct.map(function(sec, si) {
+    return { title: sec.title, hint: sec.hint, fields: sec.fields.map(function(f, fi) {
+      var val;
+      if (f.label === '客户编号') val = code;
+      else if (f.label === '客户名称') val = name;
+      else if (f.label === '客户类型') val = type;
+      else if (f.label === '客户等级') val = level;
+      else if (f.label === '合作状态') val = status;
+      else if (f.label === '所属品牌线') val = brandLines.join('、');
+      else if (f.label === '所在城市') val = city;
+      else if (f.label === '主营平台') val = formMulti.platforms.join('、');
+      else if (f.label === '最后更新人') val = (currentUser && currentUser.name) || '当前用户';
+      else val = fv('s' + si + 'f' + fi);
+      return { label: f.label, value: val };
+    }) };
+  });
+  var tags = splitTags(fv('tags'));
+  var expiring = String(fv(formKeys['到期提醒'])).indexOf('90') >= 0;
+  var savedId;
+  if (!isEdit) {
+    var maxId = 0; profiles.forEach(function(p){ if (p.id > maxId) maxId = p.id; });
+    var tables = workingTables;
+    var np = { id: maxId + 1, code: code, name: name, type: type, level: level, status: status,
+      city: city, platforms: platforms, brandLines: brandLines, tags: tags,
+      sections: sections, tables: tables, flags: { expiringSoon: expiring, risk: false } };
+    profiles.push(np); savedId = np.id;
+  } else {
+    var p = byId(recordId);
+    p.code = code; p.name = name; p.type = type; p.level = level; p.status = status;
+    p.city = city; p.platforms = platforms; p.brandLines = brandLines; p.tags = tags;
+    p.sections = sections;
+    p.tables = workingTables;
+    p.flags = { expiringSoon: expiring, risk: !!(p.flags && p.flags.risk) };
+    savedId = p.id;
+  }
+  persistProfiles();
+  showToast(isEdit ? '客户编辑已保存' : '客户新增成功', 'success');
+  setTimeout(function(){ location.href = 'customer-profile-library.html?focus=' + savedId; }, 800);
+}
+function goBack() { location.href = 'customer-profile-library.html' + (isEdit ? '?focus=' + recordId : ''); }
+
+// ===== 子表维护（页内弹窗增改删，暂存 workingTables，随主档「保存」一并落库） =====
+var SUBFORM = window.CUSTOMER_PROFILE_SUBFORM;
+var ATTACH = window.CUSTOMER_PROFILE_ATTACH;
+var activeSubTab = '账号子表';
+var workingTables = null;
+var subModal = { open: false, row: -1 };
+function emptyTables() {
+  var C = window.CUSTOMER_PROFILE_COLUMNS;
+  return {
+    '账号子表': { columns: C.account.slice(), rows: [] },
+    '跟进记录': { columns: C.followup.slice(), rows: [] },
+    '回款订单': { columns: C.payment.slice(), rows: [] },
+    '资质附件': { columns: C.attach.slice(), rows: [] }
+  };
+}
+function renderSubTables() {
+  var holder = document.getElementById('subTablesCard');
+  if (!holder || !workingTables) return;
+  var tb = workingTables[activeSubTab];
+  var html = '<div class="form-card"><h3 class="form-card-title">子表明细<span class="hint">账号 / 跟进 / 回款 / 附件，随主档「保存」一并落库</span></h3>';
+  html += '<div class="st-tabs">' + SUBFORM.tabs.map(function(t){
+    var cnt = workingTables[t] ? workingTables[t].rows.length : 0;
+    return '<div class="st-tab' + (t === activeSubTab ? ' active' : '') + '" onclick="setSubTab(\'' + t + '\')">' + t + '<span class="cnt">' + cnt + '</span></div>';
+  }).join('') + '</div>';
+  html += '<div class="st-toolbar"><button type="button" class="btn btn-primary" onclick="openSubModal(-1)">＋ 新增</button></div>';
+  if (!tb.rows.length) {
+    html += '<div class="st-empty">暂无记录，点击「＋ 新增」添加</div>';
+  } else {
+    html += '<div class="st-scroll"><table class="st-table"><thead><tr>' + tb.columns.map(function(c){ return '<th>' + esc(c) + '</th>'; }).join('') + '<th>操作</th></tr></thead><tbody>';
+    tb.rows.forEach(function(row, ri){
+      html += '<tr>' + row.map(function(cell, ci){
+        if (SUBFORM.attach[tb.columns[ci]]) return '<td>' + ATTACH.linkHtml(cell) + '</td>';
+        var v = (tb.columns[ci] === '佣金比例' && String(cell || '').trim()) ? String(cell).trim().replace(/[%％]\s*$/, '') + '%' : (cell || '');
+        return '<td>' + esc(v) + '</td>';
+      }).join('') + '<td><button type="button" class="st-rowbtn" onclick="openSubModal(' + ri + ')">编辑</button>' +
+        '<button type="button" class="st-rowbtn danger" onclick="delSubRow(' + ri + ')">删除</button></td></tr>';
+    });
+    html += '</tbody></table></div>';
+  }
+  html += '</div>';
+  holder.innerHTML = html;
+}
+function setSubTab(t) { activeSubTab = t; renderSubTables(); }
+function openSubModal(row) {
+  subModal = { open: true, row: row };
+  var tb = workingTables[activeSubTab];
+  var values = row >= 0 ? tb.rows[row].slice() : window.CUSTOMER_PROFILE_SUB_DEFAULT(tb.columns, (currentUser && currentUser.name) || '当前用户');
+  while (values.length < tb.columns.length) values.push('');
+  var req = SUBFORM.required[activeSubTab] || [];
+  var html = '';
+  tb.columns.forEach(function(c, ci){
+    var opt = {};
+    if (req.indexOf(c) >= 0) opt.req = true;
+    if (SUBFORM.attach[c]) { html += ATTACH.fieldHtml('m' + ci, c, values[ci], req.indexOf(c) >= 0); return; }
+    if (SUBFORM.select[c]) { opt.opts = SUBFORM.select[c]; opt.placeholder = '请选择'; }
+    if (SUBFORM.percent[c]) { opt.percent = true; opt.placeholder = '如 17'; }
+    if (SUBFORM.textarea[c]) opt.textarea = true;
+    if (SUBFORM.span2[c]) opt.span = 2;
+    if (SUBFORM.placeholder[c]) opt.placeholder = SUBFORM.placeholder[c];
+    html += cfInput('m' + ci, c, values[ci], opt);
+  });
+  document.getElementById('stmTitle').textContent = (row >= 0 ? '编辑' : '新增') + activeSubTab +
+    (activeSubTab.indexOf('记录') === activeSubTab.length - 2 ? '' : '记录');
+  var body = document.getElementById('stmBody');
+  body.className = 'stm-grid' + (tb.columns.length > 10 ? ' cols-4' : ' cols-2');
+  body.innerHTML = html;
+  ATTACH.bind(body, showToast);
+  document.getElementById('stmErr').textContent = '';
+  document.getElementById('stmModal').style.width = tb.columns.length > 10 ? '960px' : '680px';
+  document.getElementById('stmOverlay').style.display = 'flex';
+  var first = body.querySelector('input,select,textarea'); if (first) first.focus();
+}
+function closeSubModal() { subModal.open = false; document.getElementById('stmOverlay').style.display = 'none'; }
+function smv(key) { var el = document.querySelector('#stmBody [data-fkey="' + key + '"]'); return el ? el.value.trim() : ''; }
+function markSubInvalid(key) { var el = document.querySelector('#stmBody [data-fkey="' + key + '"]'); if (el) { el.classList.add('invalid'); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } }
+function saveSubModal() {
+  var errEl = document.getElementById('stmErr'); errEl.textContent = '';
+  document.querySelectorAll('#stmBody .invalid').forEach(function(el){ el.classList.remove('invalid'); });
+  var tb = workingTables[activeSubTab];
+  var req = SUBFORM.required[activeSubTab] || [];
+  var body = document.getElementById('stmBody');
+  var attErr = '';
+  var values = tb.columns.map(function(c, ci){
+    if (SUBFORM.attach[c]) {
+      var r = ATTACH.read('m' + ci, body);
+      if (r.error) { if (!attErr) { attErr = r.error; markSubInvalid('m' + ci); } }
+      return r.cell;
+    }
+    return smv('m' + ci);
+  });
+  if (attErr) { errEl.textContent = attErr; return; }
+  for (var i = 0; i < tb.columns.length; i++) {
+    var c = tb.columns[i], v = values[i];
+    if (req.indexOf(c) >= 0 && !v) { errEl.textContent = '请填写「' + c + '」'; markSubInvalid('m' + i); return; }
+    if (SUBFORM.percent[c] && v && (!/^\d+(\.\d+)?$/.test(v) || Number(v) > 100)) { errEl.textContent = '「' + c + '」需为 0~100 的数字'; markSubInvalid('m' + i); return; }
+    if (SUBFORM.numeric[c] && v && isNaN(Number(v.replace(/[,，\s]/g, '')))) { errEl.textContent = '「' + c + '」需为数字'; markSubInvalid('m' + i); return; }
+  }
+  if (subModal.row >= 0) tb.rows[subModal.row] = values; else tb.rows.push(values);
+  closeSubModal();
+  renderSubTables();
+  showToast('子表记录已更新，点击「保存」随客户一并落库', 'success');
+}
+function delSubRow(row) {
+  var tb = workingTables[activeSubTab];
+  if (!tb.rows[row]) return;
+  if (!confirm('确定删除该条「' + activeSubTab + '」记录？')) return;
+  tb.rows.splice(row, 1);
+  renderSubTables();
+  showToast('记录已删除，点击「保存」随客户一并落库', 'info');
+}
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && subModal.open) closeSubModal(); });
+
+// ===== Toast =====
+function showToast(message, type) {
+  type = type || 'info';
+  var container = document.getElementById('toastContainer');
+  if (!container) return;
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(function () {
+    if (toast.parentNode) { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s';
+      setTimeout(function () { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300); }
+  }, 2500);
+}
+
+// ===== 初始化 =====
+function initForm() {
+  var src;
+  if (isEdit) {
+    var p = byId(recordId);
+    if (!p) { showToast('未找到该客户', 'error'); setTimeout(goBack, 1200); return; }
+    src = JSON.parse(JSON.stringify(p));
+    workingTables = p.tables ? JSON.parse(JSON.stringify(p.tables)) : emptyTables();
+    formMulti = { platforms: String(p.platforms || '').split(/[\/、,，\s]+/).filter(Boolean), brandLines: (p.brandLines || []).slice() };
+    var rc = String(p.city || '').split(/\s+/); formRegion = { prov: rc[0] || '', city: rc[1] || '', dist: rc[2] || '' };
+    document.getElementById('pageTitle').textContent = '编辑客户';
+    document.getElementById('pageSub').textContent = p.code + ' · ' + p.name;
+  } else {
+    src = blankProfile();
+    workingTables = emptyTables();
+    formMulti = { platforms: [], brandLines: [] }; formRegion = { prov: '', city: '', dist: '' };
+    document.getElementById('pageTitle').textContent = '新增客户';
+    document.getElementById('pageSub').textContent = '填写客户主档信息';
+  }
+  renderForm(src);
+  renderSubTables();
+}
+document.getElementById('mainForm').addEventListener('submit', function(e){ e.preventDefault(); saveForm(); });
+// 点击多选控件外部时收起弹层
+document.addEventListener('click', function(e){ if (!e.target.closest('.cf-multi')) document.querySelectorAll('.cf-multi.open').forEach(function(m){ m.classList.remove('open'); }); });
+initForm();
+</script>
+</body>
+</html>

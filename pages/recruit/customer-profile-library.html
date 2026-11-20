@@ -99,19 +99,22 @@
     .cp-tag { display: inline-flex; align-items: center; font-size: 12px; font-weight: 600; border-radius: 6px;
       padding: 2px 8px; line-height: 1.6; }
     .cp-tag.type { background: var(--primary-light); color: var(--primary); }
-    .cp-tag.level-S { background: #fff7ed; color: #ea580c; }
-    .cp-tag.level-A { background: #fef9c3; color: #ca8a04; }
-    .cp-tag.level-B { background: #e0f2fe; color: #0284c7; }
-    .cp-tag.level-C { background: #f1f5f9; color: #64748b; }
+    .cp-tag.level-ka { background: #fff7ed; color: #ea580c; }
+    .cp-tag.level-nka { background: #f1f5f9; color: #64748b; }
     .cp-tag.city { background: var(--bg); color: var(--text-secondary); font-weight: 500; }
+    .cp-bool { display: inline-flex; align-items: center; font-size: 12px; font-weight: 600; border-radius: 6px; padding: 1px 8px; }
+    .cp-bool.yes { background: var(--success-light); color: var(--success-hover); }
+    .cp-bool.no { background: #f1f5f9; color: #64748b; }
     .cp-status { display: inline-flex; align-items: center; font-size: 12px; font-weight: 600; border-radius: 20px; padding: 2px 10px; }
     .cp-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; }
     .cp-status.已合作 { background: var(--success-light); color: var(--success-hover); }
     .cp-status.已合作::before { background: var(--success); }
-    .cp-status.洽谈 { background: var(--warning-light); color: var(--warning-hover); }
-    .cp-status.洽谈::before { background: var(--warning); }
-    .cp-status.暂停 { background: var(--danger-light); color: var(--danger-hover); }
-    .cp-status.暂停::before { background: var(--danger); }
+    .cp-status.洽谈中 { background: var(--warning-light); color: var(--warning-hover); }
+    .cp-status.洽谈中::before { background: var(--warning); }
+    .cp-status.退出 { background: #f1f5f9; color: #64748b; }
+    .cp-status.退出::before { background: #94a3b8; }
+    .cp-status.黑名单 { background: var(--danger-light); color: var(--danger-hover); }
+    .cp-status.黑名单::before { background: var(--danger); }
 
     /* ===== 客户详情 ===== */
     .cp-detail { background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius);
@@ -158,6 +161,22 @@
     .cp-table-scroll::-webkit-scrollbar-track { background: transparent; }
     .cp-table-scroll::-webkit-scrollbar-thumb { background: var(--primary-200); border-radius: 3px; }
 
+    /* ===== 子表维护工具栏与行操作 ===== */
+    .cp-subtoolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .cp-subtoolbar .btn { height: 30px; padding: 0 12px; font-size: 12.5px; }
+    .cp-subtoolbar .tb-note { font-size: 11.5px; color: var(--text-muted); margin-left: auto; }
+    .cp-rowbtn { border: none; background: none; padding: 0; font-size: 12.5px; color: var(--primary); cursor: pointer; }
+    .cp-rowbtn:hover { text-decoration: underline; }
+    .cp-rowbtn.danger { color: var(--danger); }
+    .cp-rowbtn + .cp-rowbtn { margin-left: 10px; }
+
+    /* ===== 列表工具栏（新增） ===== */
+    .cp-toolbar { display: flex; align-items: center; gap: 8px; padding: 8px 10px; flex-shrink: 0;
+      background: var(--bg-white); border-bottom: 1px solid var(--border-light); }
+    .cp-toolbar .btn { height: 30px; padding: 0 12px; font-size: 12.5px; }
+    .cp-toolbar .tb-note { font-size: 11.5px; color: var(--text-muted); margin-left: auto; white-space: nowrap; }
+    .cp-detail-head .d-actions { margin-left: auto; display: flex; gap: 8px; }
+
     @media (max-width: 900px) {
       .cp-kpi-grid { grid-template-columns: repeat(3, 1fr); }
       .cp-kpi:nth-child(3n) { border-right: none; }
@@ -176,6 +195,10 @@
       .cp-list { flex: none; max-height: 46vh; }
       .cp-right { width: 100%; height: auto; overflow: visible; }
     }
+  /* 资质附件：只读渲染（上传/链接可点） */
+  .att-open { color:var(--primary); cursor:pointer; text-decoration:none; }
+  .att-open:hover { text-decoration:underline; }
+  .att-tag { font-size:10.5px; color:#64748b; margin-left:4px; }
   </style>
 </head>
 <body>
@@ -220,28 +243,29 @@
             <select id="fType">
               <option value="">全部</option>
               <option value="DP">DP</option>
+              <option value="零售商">零售商</option>
               <option value="KOC">KOC</option>
-              <option value="KOL">KOL</option>
-              <option value="MCN">MCN</option>
+              <option value="达播">达播</option>
+              <option value="分销商">分销商</option>
+              <option value="自播">自播</option>
             </select>
           </div>
           <div class="cp-extra-row">
             <span class="f-label">合作状态</span>
             <select id="fStatus">
               <option value="">全部</option>
+              <option value="洽谈中">洽谈中</option>
               <option value="已合作">已合作</option>
-              <option value="洽谈">洽谈</option>
-              <option value="暂停">暂停</option>
+              <option value="退出">退出</option>
+              <option value="黑名单">黑名单</option>
             </select>
           </div>
           <div class="cp-extra-row">
             <span class="f-label">客户等级</span>
             <select id="fLevel">
               <option value="">全部</option>
-              <option value="S">S级</option>
-              <option value="A">A级</option>
-              <option value="B">B级</option>
-              <option value="C">C级</option>
+              <option value="ka">KA</option>
+              <option value="非ka">非KA</option>
             </select>
           </div>
           <div class="cp-extra-row">
@@ -253,6 +277,10 @@
             <input type="text" id="fBd" placeholder="按归属商务模糊查询">
           </div>
         </div>
+      </div>
+      <div class="cp-toolbar">
+        <button type="button" class="btn btn-primary" id="btnCreate" onclick="goCreate()">＋ 新增</button>
+        <span class="tb-note">客户主档维护</span>
       </div>
       <div class="cp-list" id="customerList"></div>
       <div class="cp-pager">
@@ -279,8 +307,19 @@
 <script>
 var BRANDS = ['全部', '巴拉巴拉', '迷你巴拉', '森马', '马卡乐'];
 
-// 纯查询浏览页：数据直接取种子，不落 localStorage
-var profiles = JSON.parse(JSON.stringify(window.CUSTOMER_PROFILE_SEED));
+// 数据层：localStorage 持久化（新增/编辑落库），无存量时回退种子
+var STORE_KEY = 'recruit_customer_profiles';
+var currentUser = Auth.getCurrentUser();
+var canManage = !!(currentUser && ['operator', 'bd', 'admin'].indexOf(currentUser.role) >= 0);
+function loadProfiles() {
+  try {
+    var raw = localStorage.getItem(STORE_KEY);
+    if (raw) { var arr = JSON.parse(raw); if (arr && arr.length) return arr.map(function(p){ return window.CUSTOMER_PROFILE_MIGRATE ? window.CUSTOMER_PROFILE_MIGRATE(p) : p; }); }
+  } catch (e) {}
+  return JSON.parse(JSON.stringify(window.CUSTOMER_PROFILE_SEED));
+}
+function persistProfiles() { try { localStorage.setItem(STORE_KEY, JSON.stringify(profiles)); } catch (e) {} }
+var profiles = loadProfiles();
 var state = {
   selectedId: profiles.length ? profiles[0].id : null,
   brand: '全部',
@@ -298,6 +337,12 @@ function findField(p, label) {
     if (secs[i].fields[j].label === label) return secs[i].fields[j].value;
   return '';
 }
+// 百分比展示：去掉已有 %／全角％ 后统一追加 %（空值保持空）
+function pct(v) { var s = String(v == null ? '' : v).trim().replace(/[%％]\s*$/, ''); return s ? s + '%' : ''; }
+// 是/否 布尔标签
+function boolTag(v) { var s = String(v == null ? '' : v).trim(); if (s !== '是' && s !== '否') return esc(s || '—'); return '<span class="cp-bool ' + (s === '是' ? 'yes' : 'no') + '">' + s + '</span>'; }
+// 金额展示：¥ + 千分位
+function money(v) { var n = String(v == null ? '' : v).replace(/[¥￥,\s]/g, ''); if (!n || isNaN(Number(n))) return String(v == null ? '' : v) || '—'; return '¥' + Number(n).toLocaleString('zh-CN'); }
 
 // ===== 筛选（品牌视角即时生效；左侧条件点「查询」生效） =====
 function contains(hay, needle) {
@@ -352,15 +397,15 @@ function toggleMore() {
 function renderKPI(list) {
   var total = list.length;
   var coop = list.filter(function (p) { return p.status === '已合作'; }).length;
-  var talking = list.filter(function (p) { return p.status === '洽谈'; }).length;
-  var sa = list.filter(function (p) { return p.level === 'S' || p.level === 'A'; }).length;
+  var talking = list.filter(function (p) { return p.status === '洽谈中'; }).length;
+  var sa = list.filter(function (p) { return p.level === 'ka'; }).length;
   var expiring = list.filter(function (p) { return p.flags && p.flags.expiringSoon; }).length;
   var risk = list.filter(function (p) { return p.flags && p.flags.risk; }).length;
   var cards = [
     { l: '客户总数', v: total, s: '达人+分销合计' },
     { l: '已合作', v: coop, s: '状态=已合作', accent: true },
     { l: '洽谈中', v: talking, s: '状态=洽谈' },
-    { l: 'S/A 级客户', v: sa, s: '核心客户池' },
+    { l: 'KA 客户', v: sa, s: '核心客户池' },
     { l: '到期提醒', v: expiring, s: '合同/授权 90 天内', warn: true },
     { l: '风险客户', v: risk, s: '命中风控标记', warn: true }
   ];
@@ -383,6 +428,7 @@ function setBrand(b) { state.brand = b; state.page = 1; renderBrandPills(); refr
 
 // ===== 客户列表 =====
 function statusTag(s) { return '<span class="cp-status ' + s + '">' + s + '</span>'; }
+function levelTag(p) { var ka = p.level === 'ka'; return '<span class="cp-tag ' + (ka ? 'level-ka' : 'level-nka') + '">' + (ka ? 'KA' : '非KA') + '</span>'; }
 function renderList(list) {
   var totalPages = Math.max(1, Math.ceil(list.length / state.pageSize));
   if (state.page > totalPages) state.page = totalPages;
@@ -400,7 +446,7 @@ function renderList(list) {
     el.innerHTML = pageItems.map(function (p) {
       return '<div class="cp-card' + (p.id === state.selectedId ? ' active' : '') + '" onclick="selectCustomer(' + p.id + ')">' +
         '<div class="c-top"><span class="c-name">' + esc(p.name) + '</span>' + statusTag(p.status) + '</div>' +
-        '<div class="c-sub">' + esc(p.code) + ' · ' + esc(p.type) + ' · ' + esc(p.level) + '级 · ' + esc(p.city) + '</div>' +
+        '<div class="c-sub">' + esc(p.code) + ' · ' + esc(p.type) + ' · ' + (p.level === 'ka' ? 'KA' : '非KA') + ' · ' + esc(p.city) + '</div>' +
         '</div>';
     }).join('');
   }
@@ -429,9 +475,11 @@ function renderDetail() {
     '<div style="margin-top:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
       '<span class="cp-tag type" style="background:var(--bg);color:var(--text-secondary);">' + esc(p.code) + '</span>' +
       '<span class="cp-tag type">' + esc(p.type) + '</span>' +
-      '<span class="cp-tag level-' + esc(p.level) + '">' + esc(p.level) + '级</span>' +
+      levelTag(p) +
       statusTag(p.status) +
-    '</div></div></div>';
+    '</div></div>' +
+    (canManage ? '<div class="d-actions"><button type="button" class="btn btn-primary" onclick="goEdit(' + p.id + ')">编辑</button></div>' : '') +
+    '</div>';
   // 摘要行
   html += '<div class="cp-summary-line">联系人：<b>' + esc(findField(p, '联系人')) + ' ' + esc(findField(p, '联系手机')) +
     '</b>&nbsp;&nbsp;' + esc(p.city) + '&nbsp;&nbsp; 归属商务：<b>' + esc(findField(p, '归属商务')) +
@@ -441,16 +489,21 @@ function renderDetail() {
     return '<span class="cp-chip">' + esc(t) + '</span>';
   }).join('') + '</div>';
 
-  // 四个键值分区
+  // 键值分区（基础身份/经营画像/商务条款/资质与合规/系统信息）
   p.sections.forEach(function (sec) {
     html += '<div class="cp-section"><div class="cp-section-title">' + esc(sec.title) +
       (sec.hint ? '<span class="hint">' + esc(sec.hint) + '</span>' : '') + '</div>';
     html += '<div class="cp-kv">';
     sec.fields.forEach(function (f) {
       var linkCls = (f.label === '客户编号') ? ' link' : '';
+      var inner;
+      if (f.label === '佣金比例') inner = esc(pct(f.value) || '—');
+      else if (f.label === '是否为线下零售商' || f.label === '是否整店经营') inner = boolTag(f.value);
+      else if (f.label === '保证金' || f.label === '样衣授信' || f.label === '客户持有样衣金额') inner = esc(money(f.value));
+      else inner = esc(f.value || '—');
       html += '<div class="cp-kv-cell">' +
         '<span class="kv-label">' + esc(f.label) + '</span>' +
-        '<span class="kv-value' + linkCls + '">' + esc(f.value || '—') + '</span>' +
+        '<span class="kv-value' + linkCls + '">' + inner + '</span>' +
         '</div>';
     });
     html += '</div></div>';
@@ -471,14 +524,62 @@ function setTab(t) { state.activeTab = t; renderDetail(); }
 
 function renderTable(p) {
   var tb = p.tables[state.activeTab];
-  if (!tb || !tb.rows.length) return '<div class="cp-table-scroll"><div class="cp-empty">暂无记录</div></div>';
-  var head = '<tr>' + tb.columns.map(function (c) { return '<th>' + esc(c) + '</th>'; }).join('') + '</tr>';
-  var body = tb.rows.map(function (row) {
-    return '<tr>' + row.map(function (cell) {
-      return '<td>' + esc(cell || '') + '</td>';
-    }).join('') + '</tr>';
+  var SUBW = window.CUSTOMER_PROFILE_SUBFORM, ATW = window.CUSTOMER_PROFILE_ATTACH;
+  // 子表维护工具栏：新增入口（仅管理角色）
+  var toolbar = canManage
+    ? '<div class="cp-subtoolbar"><button type="button" class="btn btn-primary" onclick="goSubCreate()">＋ 新增</button>' +
+      '<span class="tb-note">' + esc(state.activeTab) + '维护，保存后自动落库</span></div>'
+    : '';
+  if (!tb || !tb.rows.length) return toolbar + '<div class="cp-table-scroll"><div class="cp-empty">暂无记录</div></div>';
+  var head = '<tr>' + tb.columns.map(function (c) { return '<th>' + esc(c) + '</th>'; }).join('') +
+    (canManage ? '<th>操作</th>' : '') + '</tr>';
+  var body = tb.rows.map(function (row, ri) {
+    return '<tr>' + row.map(function (cell, ci) {
+      if (SUBW && SUBW.attach[tb.columns[ci]]) return '<td>' + ATW.linkHtml(cell) + '</td>';
+      var v = (tb.columns[ci] === '佣金比例') ? pct(cell) : (cell || '');
+      return '<td>' + esc(v) + '</td>';
+    }).join('') +
+    (canManage ? '<td><button type="button" class="cp-rowbtn" onclick="goSubEdit(' + ri + ')">编辑</button>' +
+      '<button type="button" class="cp-rowbtn danger" onclick="delSubRow(' + ri + ')">删除</button></td>' : '') +
+    '</tr>';
   }).join('');
-  return '<div class="cp-table-scroll"><table class="cp-table"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>';
+  return toolbar + '<div class="cp-table-scroll"><table class="cp-table"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>';
+}
+
+// ===== 新增 / 编辑（字段较多，跳转独立整页表单编辑页） =====
+function goCreate() { if (!canManage) return; location.href = 'customer-profile-edit.html'; }
+function goEdit(id) { if (!canManage) return; location.href = 'customer-profile-edit.html?id=' + id; }
+
+// ===== 子表维护（账号子表/跟进记录/回款订单/资质附件，统一整页表单） =====
+function subEditUrl(rowIdx) {
+  return 'customer-profile-sub-edit.html?cid=' + state.selectedId + '&tab=' + encodeURIComponent(state.activeTab) +
+    (rowIdx >= 0 ? '&row=' + rowIdx : '');
+}
+function goSubCreate() { if (!canManage || !state.selectedId) return; location.href = subEditUrl(-1); }
+function goSubEdit(rowIdx) { if (!canManage || !state.selectedId) return; location.href = subEditUrl(rowIdx); }
+function delSubRow(rowIdx) {
+  if (!canManage) return;
+  var p = byId(state.selectedId);
+  var tb = p && p.tables[state.activeTab];
+  if (!tb || !tb.rows[rowIdx]) return;
+  if (!confirm('确定删除该条「' + state.activeTab + '」记录？删除后不可恢复。')) return;
+  tb.rows.splice(rowIdx, 1);
+  persistProfiles();
+  refresh();
+  showToast('记录已删除', 'success');
+}
+// 从编辑页返回时按 ?focus 定位刚保存的客户（并翻到所在页），?tab 恢复子表页签
+function focusFromUrl() {
+  var m = location.search.match(/[?&]focus=([^&]*)/);
+  var fid = m ? parseInt(decodeURIComponent(m[1])) : 0;
+  if (fid && byId(fid)) {
+    state.selectedId = fid;
+    var list = filtered();
+    for (var i = 0; i < list.length; i++) if (list[i].id === fid) { state.page = Math.floor(i / state.pageSize) + 1; break; }
+  }
+  var tm = location.search.match(/[?&]tab=([^&]*)/);
+  var tab = tm ? decodeURIComponent(tm[1]) : '';
+  if (['账号子表', '跟进记录', '回款订单', '资质附件'].indexOf(tab) >= 0) state.activeTab = tab;
 }
 
 // ===== 主渲染 =====
@@ -500,7 +601,9 @@ function showToast(message, type) {
   }, 2500);
 }
 
+focusFromUrl();
 render();
+if (!canManage) { var bc = document.getElementById('btnCreate'); if (bc) bc.style.display = 'none'; }
 </script>
 </body>
 </html>

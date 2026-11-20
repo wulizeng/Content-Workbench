@@ -13,18 +13,17 @@
   .plan-no:hover { text-decoration:underline; }
   .plan-name { font-size:12.5px; color:var(--ink); font-weight:600; }
   .plan-src { font-size:11px; color:var(--text-tertiary); margin-top:3px; }
-  .pri-badge { display:inline-block; min-width:34px; padding:2px 8px; border-radius:6px; background:#eef0ff; color:#5b6cf5; font-weight:700; font-size:12px; }
   .rt-chip { display:inline-block; padding:1px 7px; border-radius:4px; background:#f2f3f5; color:#4e5969; font-size:11px; margin:1px 3px 1px 0; }
   .rt-chip.bad { background:#fef2f2; color:#dc2626; }
   .ratio-cell { text-align:left; }
   .ratio-cell .r { font-size:11.5px; color:var(--text-secondary); }
   .ratio-cell .r b { color:#059669; font-family:"SF Mono","Menlo",monospace; }
   .ratio-cell .r.over b { color:#dc2626; }
-  .money { color:#059669; font-weight:700; }
-  .money.na { color:var(--text-disabled); font-weight:400; }
-  .rt-type { display:inline-block; padding:2px 9px; border-radius:12px; font-size:11.5px; font-weight:600; }
-  .rt-custom { background:#e8f3ff; color:#3b82f6; }
-  .rt-smart { background:#fff7ed; color:#ea580c; }
+  .tier-tag { display:inline-flex; align-items:center; gap:5px; padding:2px 9px; border-radius:10px; font-size:11.5px; font-weight:600; white-space:nowrap; }
+  .tier-tag::before { content:''; width:5px; height:5px; border-radius:50%; background:currentColor; }
+  .tier-tag.t-yh { background:#ecfdf5; color:#059669; }
+  .tier-tag.t-ym { background:#dbeafe; color:#2563eb; }
+  .tier-tag.t-l { background:#f1f5f9; color:#647084; }
   .st-tag { display:inline-block; padding:2px 10px; border-radius:12px; font-size:11.5px; font-weight:600; }
   .ps-tag { display:inline-flex; align-items:center; gap:6px; padding:3px 12px; border-radius:13px; font-size:11.5px; font-weight:700; cursor:pointer; border:1px solid transparent; }
   .ps-tag::before { content:''; width:6px; height:6px; border-radius:50%; background:currentColor; }
@@ -37,7 +36,6 @@
   .ps-tag.sy-fail { background:#fef2f2; color:#dc2626; border-color:#fecaca; }
   .ps-tag.ro { cursor:default; }
   .ps-tag.ro:hover { box-shadow:none; }
-  .fail-reason { font-size:11.5px; color:#dc2626; line-height:1.55; }
   .shop-code { font-family:"SF Mono","Menlo",monospace; font-size:11.5px; color:var(--primary); font-weight:600; }
   .st-draft { background:#f1f5f9; color:#475569; }
   .st-guard-passed { background:#dbeafe; color:#2563eb; }
@@ -69,20 +67,6 @@
   .mx-id { font-size:11px; font-weight:700; color:var(--primary); font-family:"SF Mono","Menlo",monospace; }
   .mx-meta { font-size:11px; color:var(--text-tertiary); margin-top:2px; }
   .mx-empty { color:var(--text-disabled); font-size:12px; }
-
-  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:9999; display:none; align-items:center; justify-content:center; }
-  .modal-overlay.show { display:flex; }
-  .modal { background:#fff; border-radius:12px; width:640px; max-width:94vw; max-height:88vh; display:flex; flex-direction:column; box-shadow:0 24px 60px rgba(0,0,0,.2); }
-  .modal-head { display:flex; justify-content:space-between; align-items:center; padding:16px 22px 12px; border-bottom:1px solid #e4e9f1; }
-  .modal-head h3 { margin:0; font-size:15px; font-weight:700; color:var(--ink); }
-  .modal-close { width:28px; height:28px; border:none; background:transparent; border-radius:6px; cursor:pointer; color:#647084; font-size:18px; }
-  .modal-body { padding:16px 22px; overflow-y:auto; flex:1; }
-  .modal-foot { display:flex; justify-content:flex-end; gap:10px; padding:14px 22px 18px; border-top:1px solid #e4e9f1; }
-  .pri-item { display:flex; align-items:center; gap:10px; padding:9px 12px; border:1px solid var(--border-light); border-radius:8px; margin-bottom:8px; background:#fff; }
-  .pri-item code { font-size:11.5px; color:var(--primary); font-weight:700; font-family:"SF Mono","Menlo",monospace; }
-  .pri-item .pi-meta { flex:1; font-size:12px; color:var(--text-secondary); }
-  .pri-item input[type=number] { width:76px; padding:6px 8px; border:1px solid var(--border); border-radius:6px; font-size:12.5px; outline:none; }
-  .modal-note { font-size:11.5px; color:#92400e; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:9px 12px; margin-bottom:12px; line-height:1.6; }
   </style>
 </head>
 <body>
@@ -111,6 +95,10 @@
       <div class="search-item">
         <label>店铺：</label>
         <select id="fShop"><option value="">全部</option></select>
+      </div>
+      <div class="search-item">
+        <label>分档：</label>
+        <select id="fTier"><option value="">全部</option><option value="YH">高档</option><option value="YM">中档</option><option value="L">低档</option></select>
       </div>
       <div class="search-item">
         <label>挽回类型：</label>
@@ -142,12 +130,12 @@
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           新增
         </button>
-        <button class="btn" onclick="openPriModal()">优先级排序</button>
-        <span class="tb-note">方案由每周一批处理生成，也可手工新建草稿；<span class="op-link" onclick="resetDemo()">恢复演示数据</span></span>
+        <button class="btn" onclick="regenPlans()">按商品池重新生成</button>
+        <span class="tb-note">方案按挽单商品池「店铺 × 分档」自动生成，也可手工新建草稿；<span class="op-link" onclick="resetDemo()">恢复演示数据</span></span>
       </div>
       <div class="view-toggle">
         <button id="btnList" class="on" onclick="switchView('list')">列表视图</button>
-        <button id="btnMatrix" onclick="switchView('matrix')">档×带×品牌矩阵</button>
+        <button id="btnMatrix" onclick="switchView('matrix')">店铺×分档矩阵</button>
       </div>
     </div>
 
@@ -159,20 +147,12 @@
             <th style="width:120px;">方案编号</th>
             <th style="width:96px;">店铺编码</th>
             <th style="width:120px;">店铺名称</th>
-            <th style="width:120px;">平台方案ID</th>
+            <th style="width:76px;">分档</th>
             <th class="col-left" style="width:250px;">方案名称</th>
-            <th style="width:76px;">品牌</th>
-            <th style="width:96px;">挽回类型</th>
-            <th style="width:130px;">挽单场景</th>
-            <th class="col-left" style="width:170px;">生效售后原因</th>
             <th style="width:110px;">商品范围</th>
-            <th class="col-left" style="width:190px;">订单金额范围</th>
             <th class="col-left" style="width:210px;">最大挽留比例</th>
-            <th style="width:104px;">每日成本上限</th>
-            <th style="width:66px;">优先级</th>
             <th style="width:104px;">状态</th>
             <th style="width:118px;">同步平台状态</th>
-            <th class="col-left" style="width:230px;">同步失败原因</th>
             <th style="width:126px;">更新时间</th>
             <th style="width:96px;">操作</th>
           </tr>
@@ -192,24 +172,7 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="priModal" onclick="if(event.target===this)closePriModal()">
-  <div class="modal">
-    <div class="modal-head">
-      <h3>平台方案优先级排序</h3>
-      <button type="button" class="modal-close" onclick="closePriModal()" aria-label="关闭">&times;</button>
-    </div>
-    <div class="modal-body">
-      <div class="modal-note">多方案命中优先级由<b>抖店</b>判定：本系统必须输出显式 priority，否则命中权交给创建时间。数值越小优先级越高；保存后需人工在抖店后台同步，回读校验一致才生效。</div>
-      <div id="priList"></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn" onclick="closePriModal()">取消</button>
-      <button class="btn btn-primary" onclick="savePriority()">保存优先级</button>
-    </div>
-  </div>
-</div>
-
-<script src="../../js/wd/retention-data.js"></script>
+<script src="../../js/wd/retention-data.js?v=20261120b"></script>
 <script>
 function esc(s) {
   if (s === null || s === undefined) return '';
@@ -241,8 +204,15 @@ cleanUnnamedDrafts();
 var current = WD.STRATEGIES.slice();
 var viewMode = 'list';
 
-var SCENE_TXT = { after_sale:'消费者申请售后后', feige:'飞鸽进线有退款诉求' };
-var SCOPE_TXT = { all:'不限制商品', include:'指定支持商品', exclude:'指定不支持商品' };
+var SCOPE_TXT = { all:'不限制商品', include:'添加商品支持方案', exclude:'添加商品不支持方案' };
+function scopeCell(p, s) {
+  var ids = Array.isArray(p.items) ? p.items : null;
+  var sub = p.productScope === 'include'
+    ? ((ids ? ids.length : s.itemCnt) + ' 个平台商品 / ' + s.physicalCnt + ' 条物理方案')
+    : (s.itemCnt + ' 款 / ' + s.physicalCnt + ' 条物理方案');
+  return '<td><div style="font-size:11.5px;">' + esc(SCOPE_TXT[p.productScope] || p.productScope) + '</div>'
+    + '<div style="font-size:11px;color:var(--text-tertiary);">' + esc(sub) + '</div></td>';
+}
 var RECOVER_TXT = { custom:'自定义挽单', smart:'智能挽单' };
 
 (function initFilters() {
@@ -263,49 +233,54 @@ var RECOVER_TXT = { custom:'自定义挽单', smart:'智能挽单' };
 })();
 
 function planOf(s) { return s.plan || (s.plan = WD.planOf(s)); }
-function money(v) { return v > 0 ? '<span class="money">¥' + v.toLocaleString() + '</span>' : '<span class="money na">不限制</span>'; }
+// 分档徽章：仅自动生成的分组方案有档位；存量/手工方案无分档，单元格留空
+function tierCell(s) {
+  var tn = WD.RUN_TIER_NAME[s.tier];
+  return '<td>' + (tn ? '<span class="tier-tag t-' + String(s.tier).toLowerCase() + '">' + esc(tn) + '</span>' : '') + '</td>';
+}
 
 function renderTable(data) {
   var tb = document.getElementById('tableBody');
   if (!data.length) {
-    tb.innerHTML = '<tr><td colspan="20" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无方案</div><div class="empty-hint">点击「新增」手工新建挽单方案草稿</div></td></tr>';
+    tb.innerHTML = '<tr><td colspan="12" class="empty-state"><span class="empty-icon">&#128203;</span><div class="empty-text">暂无方案</div><div class="empty-hint">点击「新增」手工新建挽单方案草稿</div></td></tr>';
   } else {
     tb.innerHTML = data.map(function(s, i) {
       var p = planOf(s);
       var ss = s.syncStatus || WD.syncStatusOf(s);
       var fr = s.syncFailReason !== undefined ? s.syncFailReason : WD.syncFailReason(s);
-      var bands = p.amountRows.slice(0, 4).map(function(r) {
-        return '<span class="rt-chip">' + esc(r.lower + '–' + (r.upper === null ? '∞' : r.upper)) + '</span>';
-      }).join('') + (p.amountRows.length > 4 ? '<span class="rt-chip">+' + (p.amountRows.length - 4) + '</span>' : '');
       var clampedCnt = p.amountRows.filter(function(r){ return r.clamped; }).length;
-      var ratios = p.amountRows.slice(0, 3).map(function(r) {
-        var note = r.clamped ? '<span style="color:#d97706;">（目标 ' + r.raw + '% 已压回上限 ' + r.capPct + '%）</span>' : '（上限 ' + r.capPct + '%）';
-        return '<div class="r' + (r.suggest > r.capPct ? ' over' : '') + '">' + esc(r.lower + '–' + (r.upper === null ? '∞' : r.upper)) + ' 元：<b>' + r.suggest + '%</b>' + note + '</div>';
-      }).join('')
-        + (clampedCnt && !p.amountRows.slice(0, 3).some(function(r){ return r.clamped; })
-            ? '<div class="r" style="color:#d97706;">含 ' + clampedCnt + ' 档目标比例超平台上限，已压回（详见比例表）</div>' : '')
-        + (p.amountRows.length > 3 ? '<div class="r" style="color:var(--text-tertiary);">共 ' + p.amountRows.length + ' 档，详情页可展开全部</div>' : '');
+      var isAll = p.amountMode === 'all';
+      var isFixed = p.ruleType === 'fixed';
+      var ratios;
+      if (isAll) {
+        var r0 = p.amountRows[0] || { suggest: 0, fixed: 0, capPct: 100 };
+        ratios = '<div class="r">' + (isFixed ? '统一退款' : '全部订单金额') + '：<b>'
+          + (isFixed ? '¥' + (r0.fixed || 0) : r0.suggest + '%') + '</b>'
+          + '<span style="color:var(--text-tertiary);">（' + (isFixed ? '固定金额退款' : '固定比例退款')
+          + (!isFixed && p.ratioCap ? '，最高不超 ' + p.ratioCap + ' 元' : '')
+          + (isFixed && p.autoApprove && p.autoApprove.on ? '，小金额自动同意' : '') + '）</span></div>';
+      } else {
+        ratios = p.amountRows.slice(0, 3).map(function(r) {
+          var note = r.clamped ? '<span style="color:#d97706;">（目标 ' + r.raw + '% 已压回上限 ' + r.capPct + '%）</span>' : '（上限 ' + r.capPct + '%）';
+          return '<div class="r' + (!isFixed && r.suggest > r.capPct ? ' over' : '') + '">' + esc(r.lower + '–' + (r.upper === null ? '∞' : r.upper)) + ' 元：<b>'
+            + (isFixed ? '¥' + (r.fixed || 0) : r.suggest + '%') + '</b>' + (isFixed ? '' : note) + '</div>';
+        }).join('')
+          + (clampedCnt && !p.amountRows.slice(0, 3).some(function(r){ return r.clamped; })
+              ? '<div class="r" style="color:#d97706;">含 ' + clampedCnt + ' 档目标比例超平台上限，已压回（详见比例表）</div>' : '')
+          + (p.amountRows.length > 3 ? '<div class="r" style="color:var(--text-tertiary);">共 ' + p.amountRows.length + ' 档，详情页可展开全部</div>' : '');
+      }
       return '<tr>'
         + '<td>' + (i + 1) + '</td>'
         + '<td><span class="plan-no" onclick="viewDetail(\'' + esc(s.id) + '\')">' + esc(s.id) + '</span></td>'
         + '<td><span class="shop-code">' + esc(s.shopCode || '') + '</span></td>'
         + '<td>' + esc(s.shopName || '') + '</td>'
-        + '<td><span class="rt-chip">' + esc(s.schemeId || '') + '</span></td>'
+        + tierCell(s)
         + '<td class="col-left"><div class="plan-name">' + esc(p.name) + '</div>'
         + '<div class="plan-src">' + esc(p.source) + '</div></td>'
-        + '<td>' + esc(s.brand) + '</td>'
-        + '<td><span class="rt-type rt-' + p.recoverType + '">' + esc(RECOVER_TXT[p.recoverType]) + '</span></td>'
-        + '<td>' + esc(SCENE_TXT[p.scene]) + '</td>'
-        + '<td class="col-left" style="white-space:normal;font-size:11.5px;">' + esc(p.reasons.join('、')) + '</td>'
-        + '<td><div style="font-size:11.5px;">' + esc(SCOPE_TXT[p.productScope]) + '</div>'
-        + '<div style="font-size:11px;color:var(--text-tertiary);">' + s.itemCnt + ' 款 / ' + s.physicalCnt + ' 条物理方案</div></td>'
-        + '<td class="col-left">' + (p.amountMode === 'all' ? '<span class="rt-chip">不限制</span>' : bands) + '</td>'
+        + scopeCell(p, s)
         + '<td class="ratio-cell">' + ratios + '</td>'
-        + '<td>' + money(p.costMode === 'limit' ? p.dailyBudget : 0) + '</td>'
-        + '<td><span class="pri-badge">' + s.priority + '</span></td>'
         + '<td><span class="ps-tag ' + (s.planStatus === 'DISABLED' ? 'ps-off' : 'ps-on') + '" onclick="togglePlanStatus(\'' + esc(s.id) + '\')">' + esc(WD.PLAN_STATUS[s.planStatus] || '启用') + '</span></td>'
-        + '<td><span class="ps-tag ro ' + ss.tone + '" title="' + esc(ss.note) + '">' + esc(ss.label) + '</span></td>'
-        + '<td class="col-left" style="white-space:normal;">' + (fr ? '<span class="fail-reason">' + esc(fr) + '</span>' : '') + '</td>'
+        + '<td><span class="ps-tag ro ' + ss.tone + '" title="' + esc(fr ? (ss.label + '：' + fr) : ss.note) + '">' + esc(ss.label) + '</span></td>'
         + '<td style="font-size:11.5px;">' + esc(s.updated) + '</td>'
         + '<td><span class="op-link" onclick="viewDetail(\'' + esc(s.id) + '\')">查看</span>'
         + '<span class="op-sep">|</span><span class="op-link" onclick="editDetail(\'' + esc(s.id) + '\')">编辑</span></td>'
@@ -320,34 +295,33 @@ var ST_CLS = { DRAFT:'draft', GUARD_PASSED:'guard-passed', GUARD_BLOCKED:'verify
   DISABLED:'disabled', RETIRED:'draft' };
 
 function renderMatrix(data) {
-  var bands = WD.BANDS.map(function(b){ return b.label; });
+  var tiers = ['YH', 'YM', 'L'];
+  var tierName = { YH: '高档', YM: '中档', L: '低档' };
   var html = '<table class="matrix"><thead><tr><th></th>';
-  bands.forEach(function(bd) { html += '<th>' + esc(bd) + '</th>'; });
+  tiers.forEach(function(t) { html += '<th>' + esc(tierName[t]) + '</th>'; });
   html += '<th style="width:120px;">存量/全店</th></tr></thead><tbody>';
-  WD.BRANDS.forEach(function(br) {
-    ['YH','YM','L'].forEach(function(t, ri) {
-      html += '<tr><th class="row-h">' + esc(br) + ' · ' + esc(t) + '</th>';
-      bands.forEach(function(bd) {
-        var s = data.filter(function(x){ return x.brand === br && x.tier === t && x.band === bd; })[0];
-        if (s) {
-          var p = planOf(s);
-          html += '<td><div class="mx-cell on" onclick="viewDetail(\'' + esc(s.id) + '\')">'
-            + '<div class="mx-id">' + esc(s.id) + '</div>'
-            + '<div class="mx-meta">' + esc(WD.PLAN_STATUS[s.planStatus] || '启用') + ' · 补偿 ¥' + s.cap.toFixed(0) + ' · P' + s.priority + '</div>'
-            + '<div class="mx-meta">' + esc(RECOVER_TXT[p.recoverType]) + ' · ' + s.itemCnt + ' 款</div></div></td>';
-        } else {
-          html += '<td><div class="mx-cell"><span class="mx-empty">—</span></div></td>';
-        }
-      });
-      var legacy = ri === 1 ? data.filter(function(x){ return x.brand === br && x.tier === '—'; })[0] : null;
-      html += legacy
-        ? '<td><div class="mx-cell legacy" onclick="viewDetail(\'' + esc(legacy.id) + '\')"><div class="mx-id">' + esc(legacy.id) + '</div><div class="mx-meta">' + esc(WD.PLAN_STATUS[legacy.planStatus] || '启用') + ' · 存量智能挽单</div><div class="mx-meta">' + legacy.itemCnt + ' 款</div></div></td>'
-        : '<td><div class="mx-cell"><span class="mx-empty">—</span></div></td>';
-      html += '</tr>';
+  WD.TAG_SHOPS.forEach(function(sh) {
+    html += '<tr><th class="row-h">' + esc(sh.name) + '</th>';
+    tiers.forEach(function(t) {
+      var s = data.filter(function(x){ return x.shopCode === sh.code && x.tier === t && !x.isLegacy; })[0];
+      if (s) {
+        var p = planOf(s);
+        html += '<td><div class="mx-cell on" onclick="viewDetail(\'' + esc(s.id) + '\')">'
+          + '<div class="mx-id">' + esc(s.id) + '</div>'
+          + '<div class="mx-meta">' + esc(WD.PLAN_STATUS[s.planStatus] || '启用') + ' · 退款 ' + s.ratio + '% 最高 ¥' + s.cap + '</div>'
+          + '<div class="mx-meta">' + esc(RECOVER_TXT[p.recoverType]) + ' · ' + s.itemCnt + ' 款</div></div></td>';
+      } else {
+        html += '<td><div class="mx-cell"><span class="mx-empty">—</span></div></td>';
+      }
     });
+    var legacy = data.filter(function(x){ return x.isLegacy && x.shopCode === sh.code; })[0];
+    html += legacy
+      ? '<td><div class="mx-cell legacy" onclick="viewDetail(\'' + esc(legacy.id) + '\')"><div class="mx-id">' + esc(legacy.id) + '</div><div class="mx-meta">' + esc(WD.PLAN_STATUS[legacy.planStatus] || '启用') + ' · 存量智能挽单</div><div class="mx-meta">' + legacy.itemCnt + ' 款</div></div></td>'
+      : '<td><div class="mx-cell"><span class="mx-empty">—</span></div></td>';
+    html += '</tr>';
   });
   html += '</tbody></table>';
-  html += '<div style="font-size:11px;color:var(--text-tertiary);margin-top:6px;">行 = 品牌 × 档位（YH→YM→L），列 = 策略带（切点取自平台价格带断点子集）；橙色为抖店存量导入方案。矩阵用于核对同一商品是否被多条方案重复覆盖（门检 G3）。</div>';
+  html += '<div style="font-size:11px;color:var(--text-tertiary);margin-top:6px;">行 = 店铺，列 = 分档；方案按挽单商品池「店铺 × 分档」生成，退款比例与最高退款金额取自该店铺商品判定策略的分档规则；橙色为抖店存量导入方案。矩阵用于核对同一商品是否被多条方案重复覆盖。</div>';
   document.getElementById('matrixView').innerHTML = html;
 }
 
@@ -365,6 +339,7 @@ function runFilter(showToast) {
   var name = document.getElementById('fName').value.trim();
   var brand = document.getElementById('fBrand').value;
   var shop = document.getElementById('fShop').value;
+  var tier = document.getElementById('fTier').value;
   var recover = document.getElementById('fRecover').value;
   var status = document.getElementById('fStatus').value;
   var sync = document.getElementById('fSync').value;
@@ -375,6 +350,7 @@ function runFilter(showToast) {
     if (name && p.name.indexOf(name) === -1) return false;
     if (brand && s.brand !== brand) return false;
     if (shop && s.shopCode !== shop) return false;
+    if (tier && s.tier !== tier) return false;
     if (recover && p.recoverType !== recover) return false;
     if (status && s.planStatus !== status) return false;
     var ss = s.syncStatus || WD.syncStatusOf(s);
@@ -389,7 +365,7 @@ function runFilter(showToast) {
   if (showToast) toast('查询完成，命中 ' + current.length + ' 条方案', 'info');
 }
 function resetSearch() {
-  ['fId','fName','fBrand','fShop','fRecover','fStatus','fSync','fFrom','fTo'].forEach(function(i) { document.getElementById(i).value = ''; });
+  ['fId','fName','fBrand','fShop','fTier','fRecover','fStatus','fSync','fFrom','fTo'].forEach(function(i) { document.getElementById(i).value = ''; });
   current = WD.STRATEGIES.slice();
   renderTable(current);
   if (viewMode === 'matrix') renderMatrix(current);
@@ -419,13 +395,25 @@ function addNew() {
   }, 0);
   var ts = d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
   var s = { id: prefix + String(maxSeq + 1).padStart(3, '0'),
-    brand: '森马', tier: 'YM', band: '100-200元', priority: 50, ratio: 8, cap: 15, dailyBudget: 3000,
-    freq: '1_per_after_sale_order', reasons: ['无理由'], group: 'NONE', status: 'DRAFT',
+    manual: true,
+    brand: '森马', tier: '', band: '全部订单金额', ratio: 8, cap: 15, dailyBudget: 3000,
+    freq: '1_per_after_sale_order', reasons: ['无理由原因'], group: 'NONE', status: 'DRAFT',
     itemCnt: 0, physicalCnt: 0, prevId: '', guard: false, reason: '手工新建草稿', planStatus: 'DISABLED', pendingNew: true,
     shopCode: 'DY-S001', shopName: '森马旗舰店', schemeId: '',
     createdBy: '当前用户（业务运营）', createdAt: ts, updatedBy: '当前用户（业务运营）', updated: ts };
   s.plan = WD.planOf(s);
   s.plan.name = '';
+  // 新建草稿直接落在本期开放范围内
+  s.plan.recoverType = 'custom';
+  s.plan.scene = 'after_sale';
+  s.plan.afterSaleTypes = ['退货退款'];
+  s.plan.reasons = ['无理由原因'];
+  s.plan.productScope = 'all';
+  s.plan.crowdScope = 'all';
+  s.plan.amountMode = 'all';
+  s.plan.ruleType = 'ratio';
+  s.plan.amountRows = [{ band: '全部订单金额', lower: 0, upper: null, maxRatio: 100, capPct: 100,
+    raw: s.ratio, suggest: s.ratio, fixed: 0, over: false, clamped: false }];
   s.logs = [{ at: ts, by: '当前用户（业务运营）', act: '创建方案', detail: '手工新建挽单方案草稿，待填写后保存' }];
   WD.STRATEGIES.push(s);
   WD.persistPlans(s.id);
@@ -470,31 +458,12 @@ function resetDemo() {
   WD.resetPlans();
   location.reload();
 }
-
-function openPriModal() {
-  var act = WD.STRATEGIES.filter(function(s){ return s.planStatus !== 'DISABLED'; })
-    .sort(function(a, b){ return a.priority - b.priority; });
-  document.getElementById('priList').innerHTML = act.map(function(s) {
-    var p = planOf(s);
-    return '<div class="pri-item"><code>' + esc(s.id) + '</code>'
-      + '<span class="pi-meta">' + esc(p.name) + '（' + esc(WD.PLAN_STATUS[s.planStatus] || '启用') + '）</span>'
-      + '<input type="number" min="1" max="99" value="' + s.priority + '" data-id="' + esc(s.id) + '"></div>';
-  }).join('');
-  document.getElementById('priModal').classList.add('show');
-}
-function closePriModal() { document.getElementById('priModal').classList.remove('show'); }
-function savePriority() {
-  var changed = [];
-  document.querySelectorAll('#priList input[type=number]').forEach(function(inp) {
-    var s = WD.STRATEGIES.filter(function(x){ return x.id === inp.dataset.id; })[0];
-    if (s && String(s.priority) !== inp.value) { s.priority = parseInt(inp.value, 10) || s.priority; changed.push(s.id); }
-  });
-  closePriModal();
-  if (changed.length) {
-    changed.forEach(function(id) { WD.persistPlans(id); });
-    runFilter(false);
-    toast('已更新 ' + changed.length + ' 条优先级并本地保存；需人工在抖店后台调整优先级，回读校验一致才生效', 'success');
-  } else { toast('优先级未发生变化', 'info'); }
+function regenPlans() {
+  if (!confirm('将按当前挽单商品池与商品判定策略，按「店铺 × 分档」重新生成方案；自动生成方案上的手工修改将被覆盖，手工新建的方案保留。是否继续？')) return;
+  WD.regeneratePlans();
+  runFilter(false);
+  var n = WD.STRATEGIES.filter(function(s){ return s.gen; }).length;
+  toast('已按当前商品池与判定策略重新生成 ' + n + ' 个方案', 'success');
 }
 
 function toast(msg, type) {
